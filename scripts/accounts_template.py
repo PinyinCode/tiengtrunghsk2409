@@ -3470,6 +3470,33 @@ function processImport(rows) {
     $('importModal').classList.add('show');
 }
 
+function renderImportPreview() {
+    var tbody = $('importTableBody');
+    var html = '';
+    var countOk = 0, countUpdate = 0, countWarn = 0, countErr = 0;
+    importRows.forEach(function(r) {
+        var rowCls = '', statusHtml = '';
+        if (r.status === 'ok' && r.isUpdate) { rowCls = 'row-update'; statusHtml = '<span class="status-badge update"><i class="fas fa-sync-alt"></i> Cập nhật</span>'; countUpdate++; }
+        else if (r.status === 'ok') { rowCls = 'row-new'; statusHtml = '<span class="status-badge ok"><i class="fas fa-plus"></i> Thêm mới</span>'; countOk++; }
+        else if (r.status === 'warn') { rowCls = 'row-warn'; statusHtml = '<span class="status-badge warn">' + escapeHtml(r.reason) + '</span>'; countWarn++; }
+        else { rowCls = 'row-error'; statusHtml = '<span class="status-badge err">' + escapeHtml(r.reason) + '</span>'; countErr++; }
+        var expDisplay = r.expStr
+            ? '<span style="color:#16a34a;font-size:.7rem;font-weight:600;">' + r.expStr + '</span>'
+            : '<span style="color:#dc2626;font-size:.7rem;font-weight:600;">💎 Vĩnh viễn</span>';
+        html += '<tr class="' + rowCls + '"><td>' + r.rowNum + '</td><td><b>' + escapeHtml(r.email) + '</b></td><td>' + escapeHtml(r.name) + '</td><td><span class="role-badge user">user</span></td><td>' + expDisplay + '</td><td>' + statusHtml + '</td></tr>';
+    });
+    tbody.innerHTML = html;
+    $('importSummary').innerHTML =
+        '<div class="import-stat"><div class="num">' + importRows.length + '</div><div class="label">Tổng</div></div>' +
+        '<div class="import-stat ok"><div class="num">' + countOk + '</div><div class="label">Thêm mới</div></div>' +
+        '<div class="import-stat update"><div class="num">' + countUpdate + '</div><div class="label">Cập nhật</div></div>' +
+        '<div class="import-stat warn"><div class="num">' + countWarn + '</div><div class="label">Cảnh báo</div></div>' +
+        '<div class="import-stat err"><div class="num">' + countErr + '</div><div class="label">Lỗi</div></div>';
+    var totalImportable = countOk + countUpdate + countWarn;
+    if ($('importCount')) $('importCount').textContent = totalImportable;
+    if ($('importConfirmBtn')) $('importConfirmBtn').disabled = totalImportable === 0;
+}
+
 async function doImport() {
     if (!isSuperAdmin() && !hasPermission('canImportExport')) {
         alert('Bạn không có quyền Import!');
