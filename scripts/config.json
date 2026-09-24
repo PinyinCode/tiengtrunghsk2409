@@ -96,6 +96,14 @@
             "topics_per_user": 5,
             "title": "Bạn quan tâm chủ đề nào?",
             "subtitle": "Chọn tối đa 5 chủ đề — chúng tôi sẽ gợi ý 150 câu phù hợp nhất"
+        },
+        "active": {
+            "enabled": true,
+            "max_questions": -1,
+            "hsk_allowed": [1, 2, 3, 4, 5, 6],
+            "topics_per_user": -1,
+            "title": "Bạn quan tâm chủ đề nào?",
+            "subtitle": "Chọn bao nhiêu chủ đề cũng được — không giới hạn"
         }
     }
 }
