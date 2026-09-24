@@ -9,6 +9,9 @@ Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 ✅ ĐA DATASET: Tự động quét thư mục `data/`, mỗi file Excel
    → 1 mục "Chuyên ngành" trong dropdown. Thêm file mới = copy
    vào `data/` + chạy lại `python main.py`, không cần sửa code.
+
+✅ ONBOARDING: Demo + Trial được hỏi chọn chủ đề quan tâm
+   → tự động filter + chia đều theo HSK.
 """
 import json
 import os
@@ -902,10 +905,10 @@ html_output = (HTML_SHELL
     .replace("__FILLER_WORDS__", fillers_json)
     .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
     .replace("__TELEGRAM_BOT_TOKEN__", telegram_bot_token)
-   _ .replace("__TELEGRAM_CHAT_ID__HTML", telegram_chat_id,)
+    .replace("__TELEGRAM_CHAT_ID__", telegram_chat_id)
 )
 
-with open(OUTPUT "w", encoding="utf-8") as f:
+with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
     f.write(html_output)
 
 size_kb = os.path.getsize(OUTPUT_HTML) / 1024
