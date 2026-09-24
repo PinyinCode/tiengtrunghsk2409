@@ -11,6 +11,8 @@ LƯU Ý:
 - Không đặt emoji ngoài string/comment để tránh lỗi syntax.
 - Onboarding dùng SUBJECT (chủ đề lớn), KHÔNG dùng TOPIC (chủ điểm nhỏ).
 - Danh sách câu trong onboarding được sort cố định theo stt (deterministic).
+- Demo banner: kêu gọi đăng nhập Gmail miễn phí + bộ đếm lượt nghe/viết còn lại.
+- Bỏ qua onboarding => random 3-5 chủ đề (Demo=3, Trial=5).
 """
 
 
@@ -2046,9 +2048,9 @@ def build_ui_html():
 <div class="container">
 <div class="demo-banner" id="demoBanner" style="display:none">
 <div class="demo-banner-icon"><i class="fas fa-gift"></i></div>
-<div class="demo-banner-text"><div class="title" id="demoBannerTitle">Bạn đang dùng bản Demo</div>
-<div class="desc" id="demoBannerDesc">Xem <b id="demoLimitText">100</b> câu đầu (HSK1-<span id="demoHskMaxText">3</span>). Nghe + Luyện viết giới hạn <b id="demoDailyText">100</b> lượt/ngày (còn lại: <b id="demoRemainingText">50</b> lượt). Đăng nhập để mở khóa toàn bộ!</div></div>
-<button class="demo-banner-btn" id="demoBannerBtn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span id="demoBannerBtnText">Đăng nhập ngay</span></button>
+<div class="demo-banner-text"><div class="title" id="demoBannerTitle">Đăng nhập miễn phí để mở khóa toàn bộ</div>
+<div class="desc" id="demoBannerDesc">Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, không giới hạn nghe và luyện viết.<br>Nghe + Luyện viết còn lại hôm nay: <b id="demoRemainingText" style="color:#16a34a">100</b> lượt.</div></div>
+<button class="demo-banner-btn" id="demoBannerBtn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span id="demoBannerBtnText">Đăng nhập bằng Gmail</span></button>
 </div>
 <div class="expiry-banner" id="expiryBanner" style="display:none">
     <div class="expiry-banner-icon" id="expiryBannerIcon">
@@ -2850,6 +2852,7 @@ function showTagToast(message) {
 /* ONBOARDING - CHON CHU DE (SUBJECT) QUAN TAM                   */
 /* Khong dung TOPIC (chu diem nho) - chi dung SUBJECT            */
 /* Danh sach cau duoc sort co dinh theo stt (deterministic)      */
+/* Bo qua => random 3-5 chu de (Demo=3, Trial=5)                 */
 /* ============================================================ */
 var _onboardingSelected = {};
 var _onboardingConfig = null;
@@ -2901,12 +2904,13 @@ function loadOnboardingSelection() {
     return null;
 }
 
-function saveOnboardingSelection(topics) {
+function saveOnboardingSelection(topics, autoPicked) {
     var key = getOnboardingStorageKey();
     if (!key) return;
     try {
         localStorage.setItem(key, JSON.stringify({
             topics: topics,
+            auto_picked: !!autoPicked,
             savedAt: Date.now()
         }));
     } catch(e) {}
@@ -2923,6 +2927,7 @@ function maybeShowOnboarding() {
 
     var saved = loadOnboardingSelection();
     if (saved) {
+        window.__onboardingAutoPicked = !!saved.auto_picked;
         applyOnboardingSelection(saved.topics, false);
         return;
     }
@@ -3027,7 +3032,8 @@ function onOnboardingStart() {
     var topics = Object.keys(_onboardingSelected);
     if (topics.length === 0) return;
 
-    saveOnboardingSelection(topics);
+    window.__onboardingAutoPicked = false;
+    saveOnboardingSelection(topics, false);
 
     var modal = $('onboardingModal');
     if (modal) modal.classList.remove('show');
@@ -3038,6 +3044,31 @@ function onOnboardingStart() {
 function onOnboardingSkip() {
     var modal = $('onboardingModal');
     if (modal) modal.classList.remove('show');
+
+    var cfg = getOnboardingConfig();
+    if (!cfg) return;
+
+    var allTopics = getAvailableTopicsForTier();
+    if (allTopics.length === 0) return;
+
+    /* So chu de random = topics_per_user (Demo=3, Trial=5) */
+    var wantCount = cfg.topics_per_user || 3;
+    var pickCount = Math.min(wantCount, allTopics.length);
+
+    /* Shuffle lay ngau nhien */
+    var shuffled = allTopics.slice();
+    for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = t;
+    }
+    var pickedTopics = shuffled.slice(0, pickCount).map(function(t) { return t.name; });
+
+    window.__onboardingAutoPicked = true;
+    saveOnboardingSelection(pickedTopics, true);
+
+    applyOnboardingSelection(pickedTopics, true);
+
+    showTagToast('Đã gợi ý ' + pickCount + ' chủ đề phù hợp cho bạn');
 }
 
 /* ============================================================ */
@@ -3143,7 +3174,6 @@ function showOnboardingActiveBanner(topics, count) {
     var container = mainContent.querySelector('.container');
     if (!container) return;
 
-    /* Tinh so cau chua mo khoa */
     var info = getTierInfo();
     var totalAvailable = RAW_DATA.length;
     var lockedCount = Math.max(0, totalAvailable - count);
@@ -3157,11 +3187,18 @@ function showOnboardingActiveBanner(topics, count) {
         return '<span class="ob-chip">' + escapeHtml(t) + '</span>';
     }).join('');
 
-    /* Dong 1: chu de da chon + so cau */
+    /* Dong 1: chu de da chon + so cau (label khac neu auto-pick) */
+    var labelText = window.__onboardingAutoPicked
+        ? 'Chủ đề gợi ý cho bạn:'
+        : 'Chủ đề của bạn:';
+    var starIcon = window.__onboardingAutoPicked
+        ? '<i class="fas fa-magic" style="color:#d946ef"></i>'
+        : '<i class="fas fa-star" style="color:#d946ef"></i>';
+
     var row1 =
         '<div class="ob-row-1">' +
-            '<i class="fas fa-star"></i>' +
-            '<span class="ob-label">Chủ đề của bạn:</span>' +
+            starIcon +
+            '<span class="ob-label">' + labelText + '</span>' +
             chipsHtml +
             '<span class="ob-count">(' + count + ' câu)</span>' +
             '<button type="button" id="onboardingChangeBtn" class="ob-change-btn">Đổi</button>' +
@@ -3195,6 +3232,7 @@ function showOnboardingActiveBanner(topics, count) {
             var key = getOnboardingStorageKey();
             if (key) try { localStorage.removeItem(key); } catch(e) {}
             window.__onboardingOverride = null;
+            window.__onboardingAutoPicked = false;
             showOnboardingModal();
         });
     }
@@ -3451,14 +3489,14 @@ function updateDemoBanner() {
         banner.style.background = 'linear-gradient(135deg, #fecaca, #fca5a5)';
         banner.style.borderColor = '#dc2626';
     } else {
-        if (titleEl) titleEl.innerHTML = 'Bạn đang dùng bản Demo';
+        if (titleEl) titleEl.innerHTML = 'Đăng nhập miễn phí để mở khóa toàn bộ';
         if (descEl) {
-            descEl.innerHTML = 'Xem <b>' + info.maxQuestions + '</b> câu đầu (HSK1-' +
-                info.maxHSK + ').<br>Nghe + Luyện viết giới hạn <b>' + DEMO_DAILY_LIMIT +
-                '</b> lượt/ngày (còn lại: <b id="demoRemainingText">' + getDemoRemaining() +
-                '</b> lượt).<br>Đăng nhập để mở khóa toàn bộ!';
+            descEl.innerHTML = 'Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, ' +
+                'không giới hạn nghe và luyện viết.<br>' +
+                'Nghe + Luyện viết còn lại hôm nay: ' +
+                '<b id="demoRemainingText" style="color:#16a34a">' + getDemoRemaining() + '</b> lượt.';
         }
-        if (btnText) btnText.textContent = 'Đăng nhập ngay';
+        if (btnText) btnText.textContent = 'Đăng nhập bằng Gmail';
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-gift"></i>';
         banner.style.background = '';
         banner.style.borderColor = '';
