@@ -10132,23 +10132,74 @@ function formatTimeDiff(ms) {
 }
 
 /* ============ INIT AUTH UI ============ */
+/* ============ INIT AUTH UI ============ */
 function initAuthUI() {
     if ($('headerLoginBtn')) $('headerLoginBtn').addEventListener('click', showLoginModal);
     if ($('loginClose')) $('loginClose').addEventListener('click', hideLoginModal);
     if ($('loginModal')) $('loginModal').addEventListener('click', function(e) { if (e.target === this) hideLoginModal(); });
+
+    /* ═══════════════════════════════════════════════════════════
+       GOOGLE LOGIN — CHỈ DÙNG signInWithPopup
+       KHÔNG dùng signInWithRedirect để tránh lỗi:
+       "Unable to process request due to missing initial state"
+       (xảy ra khi browser chặn third-party storage)
+       ═══════════════════════════════════════════════════════════ */
     if ($('googleLoginBtn')) {
         $('googleLoginBtn').addEventListener('click', async function() {
+            var btn = this;
+            var originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang đăng nhập...';
+
             var provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
+
             try {
-                await auth.signInWithPopup(provider);
-                hideLoginModal();
-            } catch(e) {
-                if (e.code === 'auth/popup-blocked') await auth.signInWithRedirect(provider);
-                else if (e.code !== 'auth/popup-closed-by-user') showLoginError('Lỗi: ' + e.message);
+                var result = await auth.signInWithPopup(provider);
+                // Thành công — onAuthStateChanged sẽ tự xử lý tiếp
+                if (result && result.user) {
+                    hideLoginModal();
+                }
+            } catch (e) {
+                console.error('Login error:', e);
+
+                // Người dùng tự đóng popup — im lặng
+                if (e.code === 'auth/popup-closed-by-user' ||
+                    e.code === 'auth/cancelled-popup-request') {
+                    // Không báo lỗi
+                }
+                // Popup bị chặn — hướng dẫn user
+                else if (e.code === 'auth/popup-blocked') {
+                    showLoginError(
+                        '<b>Trình duyệt đã chặn popup đăng nhập.</b><br>' +
+                        'Vui lòng <b>cho phép popup</b> cho trang này rồi thử lại.<br>' +
+                        '<span style="font-size:.8em;opacity:.8">' +
+                        '(Thường ở biểu tượng 🔒/⚠️ cạnh thanh địa chỉ → Popups → Allow)' +
+                        '</span>'
+                    );
+                }
+                // Storage bị chặn (chế độ ẩn danh, third-party cookie bị tắt, v.v.)
+                else if (e.code === 'auth/web-storage-unsupported' ||
+                         (e.message && e.message.indexOf('missing initial state') !== -1)) {
+                    showLoginError(
+                        '<b>Trình duyệt đang chặn storage cần thiết.</b><br>' +
+                        'Vui lòng:<br>' +
+                        '• Tắt chế độ ẩn danh (nếu đang dùng)<br>' +
+                        '• Cho phép <b>cookie bên thứ ba</b> cho Google<br>' +
+                        '• Hoặc thử trình duyệt khác (Chrome/Edge mới nhất)'
+                    );
+                }
+                // Lỗi khác
+                else {
+                    showLoginError('Lỗi đăng nhập: <b>' + (e.code || e.message) + '</b>');
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
             }
         });
     }
+
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
             if (confirm('Đăng xuất?')) {
@@ -10237,7 +10288,6 @@ function initAuthUI() {
     }
     initAdminPanel();
 }
-
 /* ============ TIMEOUT FALLBACK ============ */
 setTimeout(function() {
     if (!appInitialized) {
