@@ -102,6 +102,34 @@ def load_config():
     cfg.setdefault("telegram_bot_token", "")
     cfg.setdefault("telegram_chat_id", "")
 
+    # ═══════════════════════════════════════════════════
+    # Onboarding — chọn chủ đề quan tâm (Demo + Trial)
+    # ═══════════════════════════════════════════════════
+    # Mỗi tier có config riêng. Có thể tinh chỉnh trong config.json:
+    #   - enabled:          bật/tắt onboarding
+    #   - max_questions:    số câu tối đa sẽ gợi ý (chia đều theo HSK)
+    #   - hsk_allowed:      danh sách HSK số [1,2,3] → JS tự map thành HSK1,HSK2,HSK3
+    #   - topics_per_user:  số chủ đề tối đa user được chọn
+    #   - title/subtitle:   text hiển thị trên modal
+    cfg.setdefault("onboarding", {
+        "demo": {
+            "enabled": True,
+            "max_questions": cfg.get("demo_limit", 25),
+            "hsk_allowed": list(range(1, cfg.get("demo_hsk_max", 3) + 1)),
+            "topics_per_user": 3,
+            "title": "Bạn quan tâm chủ đề nào?",
+            "subtitle": "Chọn tối đa 3 chủ đề — chúng tôi sẽ gợi ý câu phù hợp nhất"
+        },
+        "trial": {
+            "enabled": True,
+            "max_questions": cfg.get("trial_max_questions", 50),
+            "hsk_allowed": list(range(1, cfg.get("trial_max_hsk", 5) + 1)),
+            "topics_per_user": 5,
+            "title": "Bạn quan tâm chủ đề nào?",
+            "subtitle": "Chọn tối đa 5 chủ đề — chúng tôi sẽ gợi ý câu phù hợp nhất"
+        }
+    })
+
     return cfg
 
 
@@ -120,6 +148,25 @@ def print_banner(CONFIG):
     print(f"   📚 Trial limits: {CONFIG.get('trial_max_questions', 50)} câu, "
           f"HSK1-{CONFIG.get('trial_max_hsk', 5)}, "
           f"nghe viết {'KHÔNG' if CONFIG.get('trial_unlimited_writing', True) else 'CÓ'} giới hạn")
+
+    # ─── Onboarding ───
+    onb = CONFIG.get('onboarding', {})
+    if onb.get('demo', {} 🎯).get('enabled'):
+        d = On onb['demo']
+       boarding print(f"   🎯 Onboarding Demo Demo: {d.get('max_questions', 0)} câu, "
+              f"HSK {d.get('hsk_allowed', [])}, "
+              f"tối đa {d.get('topics_per_user', 3)} chủ đề")
+    else:
+        print(f"  : TẮT")
+
+    if onb.get('trial', {}).get('enabled'):
+        t = onb['trial']
+        print(f"   🎯 Onboarding Trial: {t.get('max_questions', 0)} câu, "
+              f"HSK {t.get('hsk_allowed', [])}, "
+              f"tối đa {t.get('topics_per_user', 5)} chủ đề")
+    else:
+        print(f"   🎯 Onboarding Trial: TẮT")
+
     bank = CONFIG.get('bank_config', {})
     print(f"   🏦 Bank: {bank.get('bank_name', 'N/A')} - {bank.get('account_no', 'N/A')}")
     packages = CONFIG.get('packages', [])
