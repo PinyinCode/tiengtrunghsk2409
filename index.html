@@ -94,6 +94,17 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 [data-theme="dark"] .answer-inline-label{color:#93c5fd}
 .answer-inline-text{font-family:var(--font-zh);font-size:1.05rem;font-weight:600;color:var(--text);letter-spacing:.03em;word-break:break-all}
 .main{padding:clamp(.15rem,.5vh,.5rem) 0 clamp(2rem,5vh,3rem)}
+.demo-banner{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:var(--radius);padding:clamp(.7rem,1.5vw,.9rem) clamp(.8rem,1.5vw,1.1rem);margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+[data-theme="dark"] .demo-banner{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.25));border-color:#f59e0b}
+.demo-banner-icon{width:36px;height:36px;border-radius:50%;background:var(--amber);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.demo-banner-text{flex:1;min-width:200px}
+.demo-banner-text .title{font-weight:700;font-size:.9rem;color:#92400e;margin-bottom:.15rem}
+[data-theme="dark"] .demo-banner-text .title{color:#fcd34d}
+.demo-banner-text .desc{font-size:.78rem;color:#78350f;line-height:1.5}
+[data-theme="dark"] .demo-banner-text .desc{color:#fde68a}
+.demo-banner-text .desc b{color:#dc2626}
+.demo-banner-btn{padding:.5rem .9rem;border-radius:50px;border:none;background:var(--amber);color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:.35rem;white-space:nowrap}
+.demo-banner-btn:hover{background:#d97706}
 .mobile-view{display:grid;grid-template-columns:1fr;gap:clamp(.65rem,1.6vw,1rem);max-width:100%}
 @media(min-width:769px){.mobile-view{grid-template-columns:1fr 1fr;gap:clamp(1rem,2vw,1.3rem)}}
 @media(min-width:1800px){.mobile-view{grid-template-columns:1fr 1fr 1fr;gap:1.3rem}}
@@ -528,7 +539,6 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     border-color:rgba(22,163,74,.4);
 }
 
-/* TAG CLICKABLE - click de search */
 .card-tag.tag-clickable {
     cursor: pointer;
     user-select: none;
@@ -666,14 +676,10 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .end-note i{color:var(--success);margin-right:.35rem}
 .no-data{grid-column:1 / -1;text-align:center;padding:3rem 1rem;color:var(--text-3);background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)}
 .no-data i{font-size:2.5rem;margin-bottom:.75rem;color:var(--border-strong);display:block}
-
-/* ============================================================ */
-/* PRACTICE FULL MODAL                                            */
-/* ============================================================ */
 .practice-full-modal{position:fixed;inset:0;background:var(--bg);z-index:2500;display:none;flex-direction:column;animation:fadeIn .2s;overflow:hidden;height:100vh;height:100dvh}
 .practice-full-modal.show{display:flex}
 body.practice-full-open .search-bar,body.practice-full-open .filters,body.practice-full-open .result-count{display:none!important}
-body.practice-full-open .onboarding-active-banner{display:none!important}
+body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{display:none!important}
 .practice-full-header{display:flex;align-items:center;gap:clamp(.4rem,.8vw,.75rem);padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);background:var(--surface);border-bottom:1px solid var(--border);flex:0 0 auto;min-height:clamp(48px,7vh,60px);box-shadow:0 2px 8px rgba(15,23,42,.04);overflow:visible;flex-wrap:nowrap;width:100%}
 .practice-full-header .pf-counter{font-size:clamp(.68rem,.88vw,.8rem);font-weight:800;color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:.35rem .75rem;border-radius:50px;white-space:nowrap;flex-shrink:0}
 .practice-full-header .pf-tags{display:flex;gap:.3rem;flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:2px 0;max-width:100%}
@@ -1300,9 +1306,6 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     }
 }
 
-/* ============================================================ */
-/* WRITER MODAL                                                   */
-/* ============================================================ */
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .writer-modal{position:fixed;inset:0;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s}
 .writer-modal.show{display:flex}
@@ -1328,11 +1331,9 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
 .writer-score{text-align:center;margin-top:.6rem;font-size:.82rem;color:var(--text-2);min-height:1.2em}
 .writer-score.success{color:var(--success);font-weight:600}
 .writer-score.error{color:var(--danger);font-weight:600}
-
 .trial-badge{display:none;align-items:center;gap:.35rem;padding:clamp(.22rem,.5vw,.35rem) clamp(.45rem,.8vw,.7rem);border-radius:50px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;font-size:clamp(.58rem,.75vw,.68rem);font-weight:800;text-transform:uppercase;white-space:nowrap}
 .trial-badge.show{display:flex}
 [data-theme="dark"] .audio-btn{background:rgba(59,130,246,.22);color:#93c5fd;border:1px solid rgba(59,130,246,.35)}
-
 @media (min-width:1000px){.search-filter-row{display:grid;grid-template-columns:1fr auto;gap:.55rem;align-items:center}.search-bar{margin-bottom:0}.filters{display:grid;grid-template-columns:160px 180px;gap:.4rem;max-width:none;margin-bottom:0}}
 @media (min-width:1400px){.filters{grid-template-columns:180px 200px}}
 @media (min-width:769px) and (max-height:700px){.practice-full-body{padding:.75rem .85rem}.practice-full-content{gap:.75rem}.practice-full-vi{font-size:1.3rem;padding:.7rem .6rem}.practice-full-input{font-size:1.3rem;padding:.7rem .9rem}.practice-speak-btn{min-width:42px}.char-slot{font-size:1.3rem;min-width:1.5rem;height:1.9rem}.practice-full-nav{padding:.5rem .85rem}.pf-nav-icon{width:44px;height:44px;font-size:1rem}}
@@ -1568,9 +1569,6 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     }
 }
 
-/* ============================================================ */
-/* VOICE SETTINGS MODAL                                           */
-/* ============================================================ */
 .voice-modal{position:fixed;inset:0;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s}
 .voice-modal.show{display:flex}
 .voice-box{background:var(--surface);border-radius:20px;width:100%;max-width:460px;max-height:calc(100vh - 2rem);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;animation:voiceSlideUp .3s cubic-bezier(.34,1.56,.64,1)}
@@ -1608,7 +1606,7 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
 [data-theme="dark"] .voice-slider{background:var(--surface-2)}
 
 /* ============================================================ */
-/* ONBOARDING MODAL                                               */
+/* ONBOARDING MODAL - CHON CHU DE QUAN TAM (Demo + Trial)        */
 /* ============================================================ */
 .onboarding-modal {
     position: fixed;
@@ -1681,13 +1679,12 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     font-weight: 900;
     color: var(--text);
     margin-bottom: .3rem;
-    letter-spacing1: -0.02em;
+    letter-spacing: -0.02em;
 }
-.onboarding-subtitle));
- {
-    font-size: .85rem   ;
+.onboarding-subtitle {
+    font-size: .85rem;
     color: var(--text-2);
-    line border-height: 1.5;
+    line-height: 1.5;
     max-width: 480px;
     margin: 0 auto;
 }
@@ -1712,7 +1709,8 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     color: #15803d;
 }
 .onboarding-counter.full {
-    background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(251,191,36,.-color: rgba(245,158,11,.5);
+    background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(251,191,36,.1));
+    border-color: rgba(245,158,11,.5);
     color: #92400e;
 }
 [data-theme="dark"] .onboarding-counter.ok { color: #4ade80; }
@@ -1870,7 +1868,7 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
 }
 
 /* ══════════════════════════════════════════════════════════════ */
-/* BANNER GỘP: Chủ đề + Trial + Lock stats + CTA                  */
+/* BANNER "CHỦ ĐỀ GỢI Ý" - REDESIGN                              */
 /* ══════════════════════════════════════════════════════════════ */
 .onboarding-active-banner {
     display: flex;
@@ -1953,14 +1951,14 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
 }
 
 .onboarding-active-banner .ob-count {
-   anner color: var(--text-3);
-    font .-size: .75rem;
-   ob font-weight: 600;
-    white-change-space: nowrap;
-    flex-shr-btnink: 0;
+    color: var(--text-3);
+    font-size: .75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.onboarding-active-b {
+.onboarding-active-banner .ob-change-btn {
     padding: .38rem .85rem;
     border-radius: 50px;
     border: 1.5px solid var(--primary);
@@ -1994,11 +1992,13 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     transform: translateY(0) scale(.97);
 }
 
-/* Dòng 2: Trial info + Lock stats + CTA */
+/* ═══════════════════════════════════════════════════════════ */
+/* THỐNG KÊ KHOÁ - DÒNG 2 CỦA BANNER CHỦ ĐỀ                     */
+/* ═══════════════════════════════════════════════════════════ */
 .onboarding-active-banner .ob-stats-bar {
     display: flex;
     align-items: center;
-    gap: .6rem;
+    gap: .75rem;
     flex-wrap: wrap;
     width: 100%;
     padding-top: .65rem;
@@ -2072,7 +2072,6 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     color: #fca5a5;
 }
 
-/* Nút CTA duy nhất */
 .onboarding-active-banner .ob-cta-btn {
     margin-left: auto;
     padding: .5rem 1rem;
@@ -2106,81 +2105,6 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     50%      { box-shadow: 0 4px 20px rgba(124,58,237,.7); }
 }
 
-/* ═══════════════════════════════════════════════════════════ */
-/* Style theo tier: Demo / Trial / Urgent / Expired            */
-/* ═══════════════════════════════════════════════════════════ */
-.onboarding-active-banner.ob-tier-demo {
-    background: linear-gradient(135deg,
-        rgba(59,130,246,.10),
-        rgba(99,102,241,.08));
-    border-color: rgba(59,130,246,.4);
-}
-.onboarding-active-banner.ob-tier-demo .ob-icon {
-    background: linear-gradient(135deg, rgba(59,130,246,.18), rgba(99,102,241,.15));
-    color: #2563eb;
-}
-
-.onboarding-active-banner.ob-tier-urgent {
-    background: linear-gradient(135deg,
-        rgba(245,158,11,.12),
-        rgba(234,88,12,.10));
-    border-color: rgba(234,88,12,.45);
-}
-.onboarding-active-banner.ob-tier-urgent .ob-icon {
-    background: linear-gradient(135deg, rgba(234,88,12,.22), rgba(194,65,12,.18));
-    color: #ea580c;
-}
-.onboarding-active-banner.ob-tier-urgent .ob-stat-tier {
-    border-color: rgba(234,88,12,.5);
-    background: rgba(255,237,213,.7);
-}
-
-.onboarding-active-banner.ob-tier-expired {
-    background: linear-gradient(135deg,
-        rgba(220,38,38,.12),
-        rgba(185,28,28,.10));
-    border-color: rgba(220,38,38,.5);
-}
-.onboarding-active-banner.ob-tier-expired .ob-icon {
-    background: linear-gradient(135deg, rgba(220,38,38,.22), rgba(153,27,27,.18));
-    color: #dc2626;
-}
-.onboarding-active-banner.ob-tier-expired .ob-stat-tier {
-    border-color: rgba(220,38,38,.5);
-    background: rgba(254,226,226,.75);
-}
-
-[data-theme="dark"] .onboarding-active-banner.ob-tier-urgent .ob-stat-tier {
-    background: rgba(124,45,18,.5);
-}
-[data-theme="dark"] .onboarding-active-banner.ob-tier-expired .ob-stat-tier {
-    background: rgba(127,29,29,.5);
-}
-
-.onboarding-active-banner .ob-stat-tier {
-    background: rgba(255,255,255,.85);
-    border-color: rgba(245,158,11,.5);
-}
-.onboarding-active-banner .ob-stat-tier .ob-stat-icon {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #b45309;
-}
-[data-theme="dark"] .onboarding-active-banner .ob-stat-tier {
-    background: rgba(30,41,59,.7);
-    border-color: rgba(245,158,11,.55);
-}
-[data-theme="dark"] .onboarding-active-banner .ob-stat-tier .ob-stat-icon {
-    background: linear-gradient(135deg, rgba(245,158,11,.3), rgba(217,119,6,.22));
-    color: #fcd34d;
-}
-
-.onboarding-active-banner .ob-stat-sub {
-    color: var(--text-3);
-    font-size: .9em;
-    font-weight: 50024;
-    margin-left: .15em;
-}
-
 [data-theme="dark"] .onboarding-active-banner {
     background: linear-gradient(135deg,
         rgba(99,102,241,.15),
@@ -2192,29 +2116,6 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
 }
 [data-theme="dark"] .onboarding-active-banner .ob-change-btn {
     background: var(--surface-2);
-}
-[data-theme="dark"] .onboarding-active-banner.ob-tier-demo {
-    background: linear-gradient(135deg,
-        rgba(59,130,246,.18),
-        rgba(99,102,241,.15));
-    border-color: rgba(96,165,250,.45);
-}
-[data-theme="dark"] .onboarding-active-banner.ob-tier-trial {
-    background: linear-gradient(135deg,
-        rgba(99,102,241,.15),
-        rgba(139,92,246,.15));
-}
-[data-theme="dark"] .onboarding-active-banner.ob-tier-urgent {
-    background: linear-gradient(135deg,
-        rgba(234,88,12,.20),
-        rgba(194,65,12,.18));
-    border-color: rgba(251,146,60,.5);
-}
-[data-theme="dark"] .onboarding-active-banner.ob-tier-expired {
-    background: linear-gradient(135deg,
-        rgba(220,38,38,.22),
-        rgba(185,28,28,.18));
-    border-color: rgba(248,113,113,.5);
 }
 
 @media (max-width: 500px) {
@@ -2232,7 +2133,7 @@ body.practice-full-open .onboarding-active-banner{display:none!important}
     }
     .onboarding-active-banner .ob-chip {
         font-size: .7rem;
-        padding: .rem .6rem;
+        padding: .24rem .6rem;
     }
     .onboarding-active-banner .ob-count {
         font-size: .7rem;
@@ -4061,6 +3962,24 @@ body.hide-floating .tiktok-bar { display: none !important; }
 </div>
 <main class="main" id="mainContent" style="display:none">
 <div class="container">
+<div class="demo-banner" id="demoBanner" style="display:none">
+<div class="demo-banner-icon"><i class="fas fa-gift"></i></div>
+<div class="demo-banner-text"><div class="title" id="demoBannerTitle">Đăng nhập miễn phí để mở khóa toàn bộ</div>
+<div class="desc" id="demoBannerDesc">Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, không giới hạn nghe và luyện viết.<br>Nghe + Luyện viết còn lại hôm nay: <b id="demoRemainingText" style="color:#16a34a">100</b> lượt.</div></div>
+<button class="demo-banner-btn" id="demoBannerBtn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span id="demoBannerBtnText">Đăng nhập bằng Gmail</span></button>
+</div>
+<div class="expiry-banner" id="expiryBanner" style="display:none">
+    <div class="expiry-banner-icon" id="expiryBannerIcon">
+        <i class="fas fa-hourglass-half"></i>
+    </div>
+    <div class="expiry-banner-text">
+        <div class="title" id="expiryBannerTitle">Tài khoản sắp hết hạn</div>
+        <div class="desc" id="expiryBannerDesc">Đang cập nhật...</div>
+    </div>
+    <button class="expiry-banner-btn" id="expiryContactBtn" type="button">
+        <i class="fas fa-gem"></i> Gia hạn ngay
+    </button>
+</div>
 <div class="mobile-view" id="mobileWrapper"><div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div></div>
 </div>
 </main>
@@ -5119,7 +5038,14 @@ function canUseFeature() {
 }
 
 function updateDemoRemaining() {
-    /* Không còn demoRemainingText trong DOM (đã gộp banner) — no-op */
+    var el = $('demoRemainingText');
+    if (!el) return;
+    if (!shouldCountUsage()) return;
+    var remaining = getDemoRemaining();
+    el.textContent = remaining;
+    if (remaining < 20) el.style.color = '#dc2626';
+    else if (remaining < 50) el.style.color = '#f59e0b';
+    else el.style.color = '#16a34a';
 }
 
 function showLimitMessage() {
@@ -5163,7 +5089,7 @@ function formatTimeDiff(ms) {
     return mo + ' tháng trước';
 }
 
-/* TAG CLICKABLE */
+/* TAG CLICKABLE - Click vao topic/subject de search */
 window.searchByTag = function(evt, type, value) {
     if (evt) {
         evt.stopPropagation();
@@ -5258,7 +5184,7 @@ function showTagToast(message) {
 }
 
 /* ============================================================ */
-/* ONBOARDING                                                    */
+/* ONBOARDING - CHON CHU DE (SUBJECT) QUAN TAM                   */
 /* ============================================================ */
 var _onboardingSelected = {};
 var _onboardingConfig = null;
@@ -5585,20 +5511,25 @@ function onChangeTopicsClick() {
         }
     }
 
+    /* 1. Clear localStorage đã lưu */
     var key = getOnboardingStorageKey();
     if (key) {
         try { localStorage.removeItem(key); } catch(e) {}
     }
 
+    /* 2. Clear override */
     window.__onboardingOverride = null;
     window.__onboardingAutoPicked = false;
 
+    /* 3. Reset state của modal */
     _onboardingConfig = cfg;
     _onboardingSelected = {};
 
+    /* 4. Ẩn modal cũ (nếu có) rồi hiện lại */
     var modal = $('onboardingModal');
     if (modal) modal.classList.remove('show');
 
+    /* 5. Set lại title/subtitle + max count */
     var titleEl = $('onboardingTitle');
     var subtitleEl = $('onboardingSubtitle');
     var maxCountEl = $('onboardingMaxCount');
@@ -5606,18 +5537,20 @@ function onChangeTopicsClick() {
     if (subtitleEl) subtitleEl.textContent = cfg.subtitle || '';
     if (maxCountEl) maxCountEl.textContent = cfg.topics_per_user || 3;
 
+    /* 6. Render lại danh sách chủ đề */
     renderOnboardingTopics();
     updateOnboardingUI();
 
+    /* 7. Hiện modal */
     if (modal) {
         void modal.offsetWidth;
         modal.classList.add('show');
     }
 }
 
-/* ═══════════════════════════════════════════════════════════ */
-/* BANNER GỘP: Chủ đề + Trial/Expiry + Lock stats + CTA         */
-/* ═══════════════════════════════════════════════════════════ */
+/* ============================================================ */
+/* BANNER "CHỦ ĐỀ GỢI Ý" - UI GỌN + THỐNG KÊ KHOÁ                */
+/* ============================================================ */
 function showOnboardingActiveBanner(topics, count) {
     var old = $('onboardingActiveBanner');
     if (old) old.remove();
@@ -5631,66 +5564,42 @@ function showOnboardingActiveBanner(topics, count) {
     var totalAvailable = RAW_DATA.length;
     var lockedCount = Math.max(0, totalAvailable - count);
     var isLimited = (info.tier !== 'active');
-    var isDemo = (info.tier === 'demo');
-    var isTrial = (info.tier === 'trial');
-    var isExpired = (info.tier === 'expired');
 
     /* Đếm số chuyên ngành bị khoá */
     var lockedIndustryCount = 0;
+    var totalIndustryCount = 0;
     if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
         Object.keys(DATASET_REGISTRY).forEach(function(id) {
             if (id === 'tonghop') return;
+            totalIndustryCount++;
             if (!canAccessChuyenNganh()) lockedIndustryCount++;
         });
     }
 
-    /* Lấy số ngày còn lại (nếu có) */
-    var daysLeft = null;
-    var expDateStr = '';
-    if (!isDemo && !isExpired && typeof currentUser !== 'undefined' && currentUser) {
-        if (typeof getDaysRemaining === 'function') {
-            daysLeft = getDaysRemaining(currentUser);
-        }
-        if (currentUser.expiresAt && typeof getExpiryDate === 'function') {
-            var expDate = getExpiryDate(currentUser.expiresAt);
-            if (expDate && !isNaN(expDate.getTime())) {
-                expDateStr = expDate.toLocaleDateString('vi-VN');
-            }
-        }
-    }
-
-    /* ── Xác định style banner theo tier ── */
     var banner = document.createElement('div');
     banner.id = 'onboardingActiveBanner';
     banner.className = 'onboarding-active-banner';
 
-    if (isDemo) {
-        banner.classList.add('ob-tier-demo');
-    } else if (isExpired) {
-        banner.classList.add('ob-tier-expired');
-    } else if (isTrial && daysLeft !== null && daysLeft <= 3) {
-        banner.classList.add('ob-tier-urgent');
-    } else if (isTrial) {
-        banner.classList.add('ob-tier-trial');
-    }
-
-    /* ═══ HÀNG 1: Chủ đề + chips + count + nút Đổi ═══ */
+    /* Icon */
     var isAuto = !!window.__onboardingAutoPicked;
     var iconHtml = isAuto
         ? '<i class="fas fa-magic"></i>'
         : '<i class="fas fa-star"></i>';
     var labelText = isAuto ? 'Chủ đề gợi ý cho bạn:' : 'Chủ đề của bạn:';
 
+    // Icon
     var iconSpan = document.createElement('span');
     iconSpan.className = 'ob-icon';
     iconSpan.innerHTML = iconHtml;
     banner.appendChild(iconSpan);
 
+    // Label
     var labelSpan = document.createElement('span');
     labelSpan.className = 'ob-label';
     labelSpan.textContent = labelText;
     banner.appendChild(labelSpan);
 
+    // Chips wrapper
     var chipsWrap = document.createElement('span');
     chipsWrap.className = 'ob-chips';
     topics.forEach(function(t) {
@@ -5701,11 +5610,13 @@ function showOnboardingActiveBanner(topics, count) {
     });
     banner.appendChild(chipsWrap);
 
+    // Count
     var countSpan = document.createElement('span');
     countSpan.className = 'ob-count';
     countSpan.textContent = '(' + count + ' câu)';
     banner.appendChild(countSpan);
 
+    // Nút Đổi
     var changeBtn = document.createElement('button');
     changeBtn.type = 'button';
     changeBtn.id = 'onboardingChangeBtn';
@@ -5718,41 +5629,13 @@ function showOnboardingActiveBanner(topics, count) {
     });
     banner.appendChild(changeBtn);
 
-    /* ═══ HÀNG 2: Trial info + Lock stats + CTA ═══ */
-    var showRow2 = isLimited && (lockedCount > 0 || lockedIndustryCount > 0 ||
-                                 isDemo || isExpired || (isTrial && daysLeft !== null));
-
-    if (showRow2) {
+    /* ═══════════════════════════════════════════════════════════ */
+    /* Dòng 2: Thống kê khoá + nút CTA (tránh trùng với banner khác) */
+    /* ═══════════════════════════════════════════════════════════ */
+    if (isLimited) {
         var statsBar = document.createElement('div');
         statsBar.className = 'ob-stats-bar';
 
-        /* ── Chip 1: Trial còn X ngày / Demo / Hết hạn ── */
-        var tierChip = document.createElement('div');
-        tierChip.className = 'ob-stat-item ob-stat-tier';
-
-        if (isDemo) {
-            tierChip.innerHTML =
-                '<span class="ob-stat-icon"><i class="fas fa-gift"></i></span>' +
-                '<span class="ob-stat-text">Đang xem bản <b>Demo</b> giới hạn</span>';
-        } else if (isExpired) {
-            tierChip.innerHTML =
-                '<span class="ob-stat-icon"><i class="fas fa-exclamation-triangle"></i></span>' +
-                '<span class="ob-stat-text">Tài khoản đã <b>HẾT HẠN</b></span>';
-        } else if (isTrial && daysLeft !== null) {
-            var expLine = expDateStr ? ' <span class="ob-stat-sub">(đến ' + expDateStr + ')</span>' : '';
-            if (daysLeft <= 0) {
-                tierChip.innerHTML =
-                    '<span class="ob-stat-icon"><i class="fas fa-exclamation-circle"></i></span>' +
-                    '<span class="ob-stat-text">Trial đã <b>hết hạn</b></span>';
-            } else {
-                tierChip.innerHTML =
-                    '<span class="ob-stat-icon"><i class="fas fa-hourglass-half"></i></span>' +
-                    '<span class="ob-stat-text">Trial còn <b>' + daysLeft + ' ngày</b>' + expLine + '</span>';
-            }
-        }
-        if (tierChip.innerHTML) statsBar.appendChild(tierChip);
-
-        /* ── Chip 2: Số câu chưa mở ── */
         if (lockedCount > 0) {
             var stat1 = document.createElement('div');
             stat1.className = 'ob-stat-item';
@@ -5762,7 +5645,6 @@ function showOnboardingActiveBanner(topics, count) {
             statsBar.appendChild(stat1);
         }
 
-        /* ── Chip 3: Số chuyên ngành chưa mở ── */
         if (lockedIndustryCount > 0) {
             var stat2 = document.createElement('div');
             stat2.className = 'ob-stat-item ob-stat-industry';
@@ -5772,34 +5654,63 @@ function showOnboardingActiveBanner(topics, count) {
             statsBar.appendChild(stat2);
         }
 
-        /* ── Nút CTA duy nhất ── */
-        if (lockedCount > 0 || lockedIndustryCount > 0 || isDemo || isExpired) {
+        /* ═══════════════════════════════════════════════════════ */
+        /* KIỂM TRA TRÙNG CHỨC NĂNG VỚI CÁC BANNER KHÁC */
+        /* ═══════════════════════════════════════════════════════ */
+        /* - demo    : banner Demo đã có nút "Đăng nhập bằng Gmail" → ẩn CTA
+           - expired : banner Demo (chế độ expired) đã có nút "Gia hạn ngay" → ẩn CTA
+           - trial   : nếu expiryBanner đang hiện (sắp hết hạn) → đã có nút
+                       "Gia hạn ngay" → ẩn CTA
+                       nếu không có expiryBanner → hiện CTA "Nâng cấp ngay" */
+        var shouldShowCta = false;
+        var ctaLabel = '';
+        var ctaIcon = '';
+        var ctaAction = null;
+
+        if (info.tier === 'demo') {
+            /* Demo: banner Demo luôn hiện và đã có nút Đăng nhập */
+            shouldShowCta = false;
+        } else if (info.tier === 'expired') {
+            /* Expired: banner Demo (chế độ expired) đã có nút Gia hạn */
+            shouldShowCta = false;
+        } else if (info.tier === 'trial') {
+            /* Trial: kiểm tra expiryBanner có đang hiện không */
+            var expiryEl = $('expiryBanner');
+            var expiryVisible = false;
+            if (expiryEl) {
+                var displayStyle = window.getComputedStyle(expiryEl).display;
+                expiryVisible = (expiryEl.style.display !== 'none' && displayStyle !== 'none');
+            }
+            if (expiryVisible) {
+                /* expiryBanner đã hiện với nút "Gia hạn ngay" → không cần CTA */
+                shouldShowCta = false;
+            } else {
+                /* Không có expiryBanner → hiện CTA "Nâng cấp ngay" */
+                shouldShowCta = true;
+                ctaLabel = 'Nâng cấp ngay';
+                ctaIcon = 'fas fa-gem';
+                ctaAction = function() {
+                    if (typeof openRenewalModal === 'function') openRenewalModal();
+                };
+            }
+        }
+
+        if ((lockedCount > 0 || lockedIndustryCount > 0) && shouldShowCta) {
             var ctaBtn = document.createElement('button');
             ctaBtn.type = 'button';
             ctaBtn.className = 'ob-cta-btn';
-
-            if (isDemo) {
-                ctaBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Đăng nhập để mở khoá';
-                ctaBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (typeof showLoginModal === 'function') showLoginModal();
-                });
-            } else {
-                ctaBtn.innerHTML = '<i class="fas fa-gem"></i> Nâng cấp ngay';
-                ctaBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (typeof openRenewalModal === 'function') openRenewalModal();
-                });
-            }
+            ctaBtn.innerHTML = '<i class="' + ctaIcon + '"></i> ' + ctaLabel;
+            ctaBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof ctaAction === 'function') ctaAction();
+            });
             statsBar.appendChild(ctaBtn);
         }
 
         banner.appendChild(statsBar);
     }
 
-    /* Chèn banner */
     container.insertBefore(banner, container.firstChild);
 }
 
@@ -5982,19 +5893,10 @@ function refreshApp() {
     updateToggleButtons();
     updateResultCount();
     updateTierBadge();
+    updateDemoBanner();
 
     if (typeof maybeShowOnboarding === 'function') {
-        setTimeout(function() {
-            maybeShowOnboarding();
-            /* Refresh banner để update số ngày trial/demo */
-            var oldBanner = $('onboardingActiveBanner');
-            if (oldBanner && window.__onboardingOverride && window.__onboardingOverride.length > 0) {
-                var saved = loadOnboardingSelection();
-                if (saved && saved.topics) {
-                    showOnboardingActiveBanner(saved.topics, window.__onboardingOverride.length);
-                }
-            }
-        }, 800);
+        setTimeout(maybeShowOnboarding, 800);
     }
 }
 
@@ -6020,6 +5922,50 @@ function updateTierBadge() {
         }
     } else {
         badge.classList.remove('show');
+    }
+}
+
+function updateDemoBanner() {
+    var info = getTierInfo();
+    var banner = $('demoBanner');
+    if (!banner) return;
+    if (info.tier !== 'demo' && info.tier !== 'expired') return;
+    var titleEl = $('demoBannerTitle');
+    var descEl  = $('demoBannerDesc');
+    var btnEl   = $('demoBannerBtn');
+    var btnText = $('demoBannerBtnText');
+    var iconEl  = banner.querySelector('.demo-banner-icon');
+
+    if (info.tier === 'expired') {
+        if (titleEl) titleEl.innerHTML = 'Tài khoản đã hết hạn';
+        if (descEl) {
+            descEl.innerHTML = 'Bạn đang xem chế độ giới hạn (' +
+                info.maxQuestions + ' câu đầu, HSK1-' + info.maxHSK + ', ' +
+                DEMO_DAILY_LIMIT + ' lượt/ngày).<br>Gia hạn để mở khóa toàn bộ ' +
+                (typeof RAW_DATA !== 'undefined' ? RAW_DATA.length : '') + ' câu!';
+        }
+        if (btnEl) {
+            btnEl.onclick = function() {
+                if (typeof openRenewalModal === 'function') openRenewalModal();
+            };
+            btnEl.setAttribute('onclick', '');
+        }
+        if (btnText) btnText.textContent = 'Gia hạn ngay';
+        if (iconEl) iconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        banner.style.background = 'linear-gradient(135deg, #fecaca, #fca5a5)';
+        banner.style.borderColor = '#dc2626';
+    } else {
+        if (titleEl) titleEl.innerHTML = 'Đăng nhập miễn phí để mở khóa toàn bộ';
+        if (descEl) {
+            descEl.innerHTML = 'Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, ' +
+                'không giới hạn nghe và luyện viết.<br>' +
+                'Nghe + Luyện viết còn lại hôm nay: ' +
+                '<b id="demoRemainingText" style="color:#16a34a">' + getDemoRemaining() + '</b> lượt.';
+        }
+        if (btnText) btnText.textContent = 'Đăng nhập bằng Gmail';
+        if (iconEl) iconEl.innerHTML = '<i class="fas fa-gift"></i>';
+        banner.style.background = '';
+        banner.style.borderColor = '';
     }
 }
 
@@ -6218,7 +6164,7 @@ window.speakText = function(text, btn, evt) {
     if (evt) evt.stopPropagation();
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-    if (shouldCountUsage()) { incDemoUsage(); }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     if (currentBtn) currentBtn.classList.remove('speaking');
     if (btn) { btn.classList.add('speaking'); currentBtn = btn; }
@@ -6246,10 +6192,10 @@ function populateVoiceSelect() {
         return v.lang && v.lang.toLowerCase().indexOf('zh') === 0;
     });
     if (!zhVoices.length) {
-        sel.innerHTML = '<option value="">-- Đang tải giọ   ng đọc... --</option>';
+        sel.innerHTML = '<option value="">-- Đang tải giọng đọc... --</option>';
         return;
-    sel }
-.innerHTML = '';
+    }
+    sel.innerHTML = '';
     var defaultOpt = document.createElement('option');
     defaultOpt.value = '';
     defaultOpt.textContent = '-- Tự động (mặc định) --';
@@ -6463,6 +6409,10 @@ function updateFilterUI() {
     $('subjectValue').textContent = subject || 'Tất cả';
     $('hskChip').classList.toggle('has-value', !!hsk);
     $('subjectChip').classList.toggle('has-value', !!subject);
+    var info = getTierInfo();
+    var limited = info.tier === 'demo' || info.tier === 'expired';
+    $('hskChip').classList.toggle('demo-limited', limited);
+    $('subjectChip').classList.toggle('demo-limited', limited);
     var count = 0;
     if (state.search) count++;
     if (hsk) count++;
@@ -7497,7 +7447,7 @@ function revealFullAnswer() {
 window.speakPhrase = function(phrase, btn) {
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-    if (shouldCountUsage()) { incDemoUsage(); }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     document.querySelectorAll('.answer-phrase-btn.speaking').forEach(function(b) { b.classList.remove('speaking'); });
     btn.classList.add('speaking');
@@ -7570,7 +7520,7 @@ window.toggleSpeakFull = function() {
         alert('Trình duyệt không hỗ trợ phát âm.');
         return;
     }
-    if (shouldCountUsage()) { incDemoUsage(); }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
 
     if ('speechSynthesis' in window) {
         try { speechSynthesis.cancel(); } catch(e) {}
@@ -7738,7 +7688,7 @@ window.toggleQuickSpeakFull = function() {
         alert('Trình duyệt không hỗ trợ phát âm.');
         return;
     }
-    if (shouldCountUsage()) { incDemoUsage(); }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
 
     if ('speechSynthesis' in window) {
         try { speechSynthesis.cancel(); } catch(e) {}
@@ -8039,7 +7989,7 @@ window.openWriter = function(zh, vi, pinyin, evt) {
     if (isExpiredTier()) { showLimitMessage(); return; }
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (typeof HanziWriter === 'undefined') { alert('Thư viện chưa tải xong.'); return; }
-    if (shouldCountUsage()) { incDemoUsage(); }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
     currentWriteZh = zh || '';
     currentWriteVi = vi || '';
     currentWritePinyin = pinyin || '';
