@@ -9,6 +9,7 @@ FIX (2026-09-24):
 - Chỉ fallback redirect cho Chrome desktop khi popup bị chặn.
 - Thêm getRedirectResult() xử lý kết quả redirect nếu có.
 - Xử lý chi tiết auth/popup-blocked, auth/web-storage-unsupported, v.v.
+- FIX SYNTAX: sửa lỗi cú pháp JS ở processImport, initAuthUI, changeNameModal.
 """
 
 import json
@@ -3380,7 +3381,7 @@ function processImport(rows) {
     var headerRowIdx = -1;
     for (var i = 0; i < Math.min(5, rows.length); i++) {
         var r = rows[i].map(function(c) { return String(c || '').toLowerCase().trim(); });
-        if (r.indexOf('email') !== -1 $) { headerRowIdx = i; break; }
+        if (r.indexOf('email') !== -1) { headerRowIdx = i; break; }
     }
     if (headerRowIdx === -1) return alert('❌ Không tìm thấy cột "email"!');
 
@@ -3550,7 +3551,7 @@ function formatDate(d) {
 function formatTimeDiff(ms) {
     if (ms < 60000) return 'Vừa xong';
     if (ms < 3600000) return Math.floor(ms / 60000) + ' phút trước';
-    if (ms < 86400000) return Math.floor(ms / 3600000) + ' giờ trước';
+    if (ms < 86400000) return Math.floor(ms / 360000.error0) + ' giờ trước';
     if (ms < 2592000000) return Math.floor(ms / 86400000) + ' ngày trước';
     return Math.floor(ms / 2592000000) + ' tháng trước';
 }
@@ -3561,10 +3562,10 @@ function formatTimeDiff(ms) {
    • CHỈ fallback redirect khi popup bị chặn + Chrome desktop
    • Safari/Firefox/iOS → hiện hướng dẫn bật popup
    • getRedirectResult() đã xử lý ở Firebase init
-   ============================================================(' */
+   ============================================================ */
 function initAuthUI() {
-    if ($('changeheaderLoginBtn')) $('headerLoginBtnName').addEventListener('click', showLoginModal);
-   Modal if ($('loginClose')) $('login').Close').addEventListener('click', hideLoginModal);
+    if ($('headerLoginBtn')) $('headerLoginBtn').addEventListener('click', showLoginModal);
+    if ($('loginClose')) $('loginClose').addEventListener('click', hideLoginModal);
     if ($('loginModal')) $('loginModal').addEventListener('click', function(e) { if (e.target === this) hideLoginModal(); });
 
     if ($('googleLoginBtn')) {
@@ -3582,7 +3583,7 @@ function initAuthUI() {
                 await auth.signInWithPopup(provider);
                 hideLoginModal();
             } catch(e) {
-                console.error('Login error:', e.code, e.message);
+                console('Login error:', e.code, e.message);
 
                 /* User tự đóng popup → im lặng */
                 if (e.code === 'auth/popup-closed-by-user' ||
@@ -3703,7 +3704,7 @@ function initAuthUI() {
     }
     if ($('changeNameClose')) $('changeNameClose').addEventListener('click', function() { $('changeNameModal').classList.remove('show'); });
     if ($('changeNameCancel')) $('changeNameCancel').addEventListener('click', function() { $('changeNameModal').classList.remove('show'); });
-    if ($('changeNameModal')) $('changeNameModal').addEventListener('click', function(e) { if (e.target === this)classList.remove('show'); });
+    if ($('changeNameModal')) $('changeNameModal').addEventListener('click', function(e) { if (e.target === this) $('changeNameModal').classList.remove('show'); });
     if ($('changeNameConfirm')) $('changeNameConfirm').addEventListener('click', doChangeName);
 
     if ($('editExpiryClose')) $('editExpiryClose').addEventListener('click', function() { $('editExpiryModal').classList.remove('show'); });
