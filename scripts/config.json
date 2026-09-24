@@ -78,5 +78,24 @@
     "renewal_support_zalo": "0922331886",
 
     "telegram_bot_token": "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU",
-    "telegram_chat_id": "-5459456615"
+    "telegram_chat_id": "-54594566150",
+
+    "onboarding": {
+        "demo": {
+            "enabled": true,
+            "max_questions": 60,
+            "hsk_allowed": [1, 2, 3],
+            "topics_per_user": 3,
+            "title": "Bạn quan tâm chủ đề nào?",
+            "subtitle": "Chọn tối đa 3 chủ đề — chúng tôi sẽ gợi ý 60 câu phù hợp nhất"
+        },
+        "trial": {
+            "enabled": true,
+            "max_questions": 150,
+            "hsk_allowed": [1, 2, 3, 4, 5],
+            "topics_per_user": 5,
+            "title": "Bạn quan tâm chủ đề nào?",
+            "subtitle": "Chọn tối đa 5 chủ đề — chúng tôi sẽ gợi ý 150 câu phù hợp nhất"
+        }
+    }
 }
