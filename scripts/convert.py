@@ -38,6 +38,22 @@ from accounts_template import (
 
 
 # ═══════════════════════════════════════════════════════════════════
+#  HELPER: escape string an toàn khi nhúng vào JS (giữa 2 dấu ")
+# ═══════════════════════════════════════════════════════════════════
+def _js_str(s):
+    """Escape string để nhúng an toàn vào JS (giữa 2 dấu \")."""
+    if s is None:
+        return ""
+    return (str(s)
+            .replace('\\', '\\\\')
+            .replace('"', '\\"')
+            .replace("'", "\\'")
+            .replace('\n', '\\n')
+            .replace('\r', '\\r')
+            .replace('</', '<\\/'))
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  LOAD CONFIG + DATA (đa dataset, tự động quét thư mục data/)
 # ═══════════════════════════════════════════════════════════════════
 CONFIG = load_config()
@@ -179,27 +195,25 @@ else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
     print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
-# ─── 5. Serialize DATASET_REGISTRY → JSON (bỏ field 'data' để nhẹ) ───
-# Nhưng chúng ta cần giữ 'data' vì toàn bộ app dùng client-side.
-# Serialize toàn bộ, không lược bỏ.
+# ─── 5. Serialize DATASET_REGISTRY → JSON (giữ nguyên tiếng Việt) ───
 dataset_registry_json = json.dumps(
     DATASET_REGISTRY,
-    ensure_ascii=True,
+    ensure_ascii=False,
     separators=(",", ":"),
 ).replace("</", "<\\/")
 
 # ─── 6. RAW_DATA = tổng hợp (backward compat với code cũ) ───
-json_data = json.dumps(data_tonghop, ensure_ascii=True, separators=(",", ":"))
+json_data = json.dumps(data_tonghop, ensure_ascii=False, separators=(",", ":"))
 json_data = json_data.replace("</", "<\\/")
 
 firebase_config_json = json.dumps(CONFIG["firebase_config"], ensure_ascii=False)
-synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=True, separators=(",", ":"))
-fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=True, separators=(",", ":"))
+synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=False, separators=(",", ":"))
+fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=False, separators=(",", ":"))
 
 # ─── 7. Onboarding config (Demo + Trial chọn chủ đề quan tâm) ───
 onboarding_config_json = json.dumps(
     CONFIG.get("onboarding", {}),
-    ensure_ascii=True,
+    ensure_ascii=False,
     separators=(",", ":"),
 )
 
@@ -880,32 +894,39 @@ window.__switchRawData = function(datasetId) {
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
 html_output = (HTML_SHELL
-    .replace("__CSS__", full_css)
+    # 1. Nhúng khối lớn TRƯỚC
+    .replace("__CSS__",  full_css)
     .replace("__BODY__", full_body)
-    .replace("__JS__", full_js)
-    .replace("__DATA__", json_data)
-    .replace("__DATASET_REGISTRY__", dataset_registry_json)
-    .replace("__FIREBASE_CONFIG__", firebase_config_json)
-    .replace("__DEMO_LIMIT__", str(CONFIG["demo_limit"]))
-    .replace("__DEMO_DAILY_LIMIT__", str(CONFIG["demo_daily_limit"]))
-    .replace("__DEMO_HSK_MAX__", str(CONFIG["demo_hsk_max"]))
-    .replace("__TRIAL_MAX_QUESTIONS__", str(CONFIG.get("trial_max_questions", 50)))
-    .replace("__TRIAL_MAX_HSK__", str(CONFIG.get("trial_max_hsk", 5)))
+    .replace("__JS__",   full_js)
+
+    # 2. Data blobs (JSON — đã escape </ ở trên)
+    .replace("__DATA__",              json_data)
+    .replace("__DATASET_REGISTRY__",  dataset_registry_json)
+    .replace("__FIREBASE_CONFIG__",   firebase_config_json)
+    .replace("__SYNONYMS__",          synonyms_json)
+    .replace("__FILLER_WORDS__",      fillers_json)
+    .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
+
+    # 3. Numeric configs
+    .replace("__DEMO_LIMIT__",            str(int(CONFIG["demo_limit"])))
+    .replace("__DEMO_DAILY_LIMIT__",      str(int(CONFIG["demo_daily_limit"])))
+    .replace("__DEMO_HSK_MAX__",          str(int(CONFIG["demo_hsk_max"])))
+    .replace("__TRIAL_MAX_QUESTIONS__",   str(int(CONFIG.get("trial_max_questions", 50))))
+    .replace("__TRIAL_MAX_HSK__",         str(int(CONFIG.get("trial_max_hsk", 5))))
     .replace("__TRIAL_UNLIMITED_WRITING__",
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
-    .replace("__TARGET_ADMINS__", str(CONFIG["target_admins"]))
-    .replace("__SUPER_ADMIN__", CONFIG["super_admin"])
-    .replace("__ZALO_PHONE__", CONFIG["zalo_phone"])
-    .replace("__ZALO_NAME__", CONFIG["zalo_name"])
-    .replace("__TIKTOK_USERNAME__", CONFIG["tiktok_username"])
-    .replace("__TIKTOK_NICKNAME__", CONFIG["tiktok_nickname"])
-    .replace("__TIKTOK_AVATAR__", CONFIG["tiktok_avatar"])
-    .replace("__TIKTOK_URL__", CONFIG["tiktok_url"])
-    .replace("__SYNONYMS__", synonyms_json)
-    .replace("__FILLER_WORDS__", fillers_json)
-    .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
-    .replace("__TELEGRAM_BOT_TOKEN__", telegram_bot_token)
-    .replace("__TELEGRAM_CHAT_ID__", telegram_chat_id)
+    .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
+
+    # 4. String configs — dùng _js_str để escape an toàn
+    .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
+    .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
+    .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
+    .replace("__TIKTOK_USERNAME__",    _js_str(CONFIG["tiktok_username"]))
+    .replace("__TIKTOK_NICKNAME__",    _js_str(CONFIG["tiktok_nickname"]))
+    .replace("__TIKTOK_AVATAR__",      _js_str(CONFIG["tiktok_avatar"]))
+    .replace("__TIKTOK_URL__",         _js_str(CONFIG["tiktok_url"]))
+    .replace("__TELEGRAM_BOT_TOKEN__", _js_str(telegram_bot_token))
+    .replace("__TELEGRAM_CHAT_ID__",   _js_str(telegram_chat_id))
 )
 
 with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
