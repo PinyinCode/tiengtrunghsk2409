@@ -193,6 +193,13 @@ firebase_config_json = json.dumps(CONFIG["firebase_config"], ensure_ascii=False)
 synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=True, separators=(",", ":"))
 fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=True, separators=(",", ":"))
 
+# ─── 7. Onboarding config (Demo + Trial chọn chủ đề quan tâm) ───
+onboarding_config_json = json.dumps(
+    CONFIG.get("onboarding", {}),
+    ensure_ascii=True,
+    separators=(",", ":"),
+)
+
 telegram_bot_token = CONFIG.get("telegram_bot_token", "")
 telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
@@ -772,6 +779,7 @@ var TIKTOK_AVATAR = "__TIKTOK_AVATAR__";
 var TIKTOK_URL = "__TIKTOK_URL__";
 var SYNONYMS = __SYNONYMS__;
 var FILLER_WORDS = __FILLER_WORDS__;
+var ONBOARDING_CONFIG = __ONBOARDING_CONFIG__;
 
 var $ = function(id) { return document.getElementById(id); };
 
@@ -892,11 +900,12 @@ html_output = (HTML_SHELL
     .replace("__TIKTOK_URL__", CONFIG["tiktok_url"])
     .replace("__SYNONYMS__", synonyms_json)
     .replace("__FILLER_WORDS__", fillers_json)
+    .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
     .replace("__TELEGRAM_BOT_TOKEN__", telegram_bot_token)
-    .replace("__TELEGRAM_CHAT_ID__", telegram_chat_id)
+   _ .replace("__TELEGRAM_CHAT_ID__HTML", telegram_chat_id,)
 )
 
-with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
+with open(OUTPUT "w", encoding="utf-8") as f:
     f.write(html_output)
 
 size_kb = os.path.getsize(OUTPUT_HTML) / 1024
@@ -909,3 +918,16 @@ print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_
 print(f"📝 Tổng số câu hỏi: {total_questions}")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
+
+# ─── Onboarding info ───
+_onb = CONFIG.get("onboarding", {})
+if _onb.get("demo", {}).get("enabled"):
+    _d = _onb["demo"]
+    print(f"✅ Onboarding Demo: {_d.get('max_questions', 0)} câu, "
+          f"HSK {_d.get('hsk_allowed', [])}, "
+          f"tối đa {_d.get('topics_per_user', 3)} chủ đề")
+if _onb.get("trial", {}).get("enabled"):
+    _t = _onb["trial"]
+    print(f"✅ Onboarding Trial: {_t.get('max_questions', 0)} câu, "
+          f"HSK {_t.get('hsk_allowed', [])}, "
+          f"tối đa {_t.get('topics_per_user', 5)} chủ đề")
