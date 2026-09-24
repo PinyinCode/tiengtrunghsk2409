@@ -2997,7 +2997,7 @@ function pickVoice() {
 function getChineseVoice() { return pickVoice(); }
 
 /* ============================================================ */
-/* TIER HELPERS — FIX: EXPIRED DÙNG GIỐNG DEMO                   */
+/* TIER HELPERS — EXPIRED DÙNG Y HỆT DEMO                        */
 /* ============================================================ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
@@ -3005,10 +3005,7 @@ function getTierInfo() {
         var maxQ = window.APP_LIMITS.maxQuestions;
         var maxH = window.APP_LIMITS.maxHSK;
 
-        /* ══════════════════════════════════════════════════════════ */
-        /* EXPIRED: tính năng dùng Y HỆT DEMO                          */
-        /* (banner vẫn hiện "hết hạn" nhưng giới hạn = Demo)           */
-        /* ══════════════════════════════════════════════════════════ */
+        /* FIX: EXPIRED = DEMO — fallback nếu giá trị thiếu */
         if (tier === 'expired') {
             if (!maxQ || maxQ <= 0) {
                 maxQ = (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 60;
@@ -3170,7 +3167,6 @@ function updateDemoRemaining() {
     else el.style.color = '#16a34a';
 }
 
-/* FIX: Đổi text cho expired — "đang dùng chế độ Demo" */
 function showLimitMessage() {
     var info = getTierInfo();
     if (info.tier === 'expired') {
@@ -3309,7 +3305,8 @@ function showTagToast(message) {
 }
 
 /* ═══════════════════════════════════════════════════════════ */
-/* ONBOARDING - CHỌN CHỦ ĐỀ QUAN TÂM (DEMO / TRIAL / ACTIVE)     */
+/* ONBOARDING - CHỌN CHỦ ĐỀ QUAN TÂM                             */
+/* FIX: EXPIRED dùng config giống DEMO                          */
 /* ═══════════════════════════════════════════════════════════ */
 var _onboardingSelected = {};
 var _onboardingConfig = null;
@@ -3320,9 +3317,14 @@ function getOnboardingConfig() {
     var info = getTierInfo();
     var tier = info.tier;
 
-    if (tier !== 'demo' && tier !== 'trial' && tier !== 'active') return null;
+    /* FIX: expired dùng config giống Demo */
+    var configKey = tier;
+    if (tier === 'expired') configKey = 'demo';
 
-    var cfg = ONBOARDING_CONFIG[tier];
+    /* Chỉ 3 tier này mới có onboarding (expired dùng demo) */
+    if (configKey !== 'demo' && configKey !== 'trial' && configKey !== 'active') return null;
+
+    var cfg = ONBOARDING_CONFIG[configKey];
     if (!cfg) return null;
     if (cfg.enabled === false) return null;
 
@@ -3341,6 +3343,9 @@ function getOnboardingStorageKey() {
     if (info.tier === 'trial' && info.email)  return 'onboarding_trial_' + info.email;
     if (info.tier === 'active' && info.email) return 'onboarding_active_' + info.email;
     if (info.tier === 'active') return 'onboarding_active_guest';
+    /* FIX: expired lưu riêng */
+    if (info.tier === 'expired' && info.email) return 'onboarding_expired_' + info.email;
+    if (info.tier === 'expired') return 'onboarding_expired_guest';
     return null;
 }
 
@@ -3387,10 +3392,12 @@ function saveOnboardingSelection(topics, autoPicked) {
     } catch(e) {}
 }
 
+/* FIX: cho cả expired hiện modal chọn chủ đề */
 function maybeShowOnboarding() {
     var info = getTierInfo();
 
-    if (info.tier !== 'demo' && info.tier !== 'trial' && info.tier !== 'active') {
+    if (info.tier !== 'demo' && info.tier !== 'trial'
+        && info.tier !== 'active' && info.tier !== 'expired') {
         return;
     }
 
@@ -3872,7 +3879,6 @@ function initOnboarding() {
     if (startBtn) startBtn.addEventListener('click', onOnboardingStart);
     if (skipBtn)  skipBtn.addEventListener('click', onOnboardingSkip);
 
-    /* Nút X đóng = Bỏ qua (auto-pick chủ đề) */
     if (closeBtn) {
         closeBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -3881,7 +3887,6 @@ function initOnboarding() {
         });
     }
 
-    /* ESC để đóng modal = Bỏ qua */
     document.addEventListener('keydown', function(e) {
         if (e.key !== 'Escape') return;
         var modal = $('onboardingModal');
@@ -3890,7 +3895,6 @@ function initOnboarding() {
         }
     });
 
-    /* Click backdrop (ngoài box) để đóng = Bỏ qua */
     var modal = $('onboardingModal');
     if (modal) {
         modal.addEventListener('click', function(e) {
@@ -5153,7 +5157,7 @@ window.toggleInlineCheck = function(btn, evt) {
 };
 
 /* ============================================================ */
-/* PRACTICE FULL MODAL                                           */
+/* PRACTICE FULL MODAL — expired dùng được như Demo              */
 /* ============================================================ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
@@ -6117,7 +6121,7 @@ document.addEventListener('change', function(e) {
 });
 
 /* ============================================================ */
-/* WRITER (Luyện viết chữ Hán)                                   */
+/* WRITER (Luyện viết chữ Hán) — expired dùng được như Demo      */
 /* ============================================================ */
 var writerInstance = null;
 var currentWriteZh = '';
