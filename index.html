@@ -1677,7 +1677,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .onboarding-title {
     font-size: 1.3rem;
     font-weight: 900;
-    color: var(--text);
+    color: var,(--text);
     margin-bottom: .3rem;
     letter-spacing: -0.02em;
 }
@@ -1704,7 +1704,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     transition: all .2s ease;
 }
 .onboarding-counter.ok {
-    background: linear-gradient(135deg, rgba(22,163,74,.12), rgba(34,197,94,.08));
+    background: linear-gradient(135deg, rgba(22,163,74,.12), rgba(34197,94,.08));
     border-color: rgba(22,163,74,.4);
     color: #15803d;
 }
@@ -1839,7 +1839,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     color: var(--primary);
 }
 .onboarding-btn.primary {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, #4f46 backgrounde5, #7c3aed);
     color: #fff;
     border-color: transparent;
     box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
@@ -1876,7 +1876,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     gap: .6rem;
     padding: .8rem 1rem;
     margin-bottom: 1rem;
-    background: linear-gradient(135deg,
+   : linear-gradient(135deg,
         rgba(99,102,241,.08),
         rgba(139,92,246,.08));
     border: 1.5px solid rgba(139,92,246,.3);
@@ -1886,7 +1886,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     animation: obBannerIn .35s cubic-bezier(.34,1.56,.64,1);
     flex-wrap: wrap;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 @keyframes obBannerIn {
     from { opacity: 0; transform: translateY(-6px); }
@@ -1927,6 +1927,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     align-items: center;
     flex: 1 1 auto;
     min-width: 0;
+    overflow: visible;
 }
 
 .onboarding-active-banner .ob-chip {
@@ -1948,6 +1949,84 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .onboarding-active-banner .ob-chip:hover {
     transform: translateY(-1px) scale(1.03);
     box-shadow: 0 4px 12px rgba(139,92,246,.5);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* CHIP "+N CHỦ ĐỀ KHÁC" - Giới hạn hiển thị khi chọn nhiều    */
+/* ═══════════════════════════════════════════════════════════ */
+.onboarding-active-banner .ob-chip-more {
+    background: linear-gradient(135deg, #94a3b8, #64748b) !important;
+    position: relative;
+    font-style: italic;
+    letter-spacing: .2px;
+    cursor: help;
+}
+.onboarding-active-banner .ob-chip-more:hover {
+    background: linear-gradient(135deg, #64748b, #475569) !important;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, .5);
+}
+
+/* Tooltip cho chip "+N" khi hover */
+.onboarding-active-banner .ob-chip-more::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: #0f172a;
+    color: #fff;
+    padding: .5rem .75rem;
+    border-radius: 8px;
+    font-size: .72rem;
+    font-weight: 500;
+    font-style: normal;
+    white-space: normal;
+    width: max-content;
+    max-width: min(320px, 80vw);
+    line-height: 1.4;
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .2s, transform .2s, visibility .2s;
+    z-index: 100;
+    pointer-events: none;
+    letter-spacing: 0;
+}
+.onboarding-active-banner .ob-chip-more:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Mũi tên nhỏ cho tooltip */
+.onboarding-active-banner .ob-chip-more::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 6px solid transparent;
+    border-top-color: #0f172a;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .2s, transform .2s, visibility .2s;
+    z-index: 101;
+    pointer-events: none;
+}
+.onboarding-active-banner .ob-chip-more:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+[data-theme="dark"] .onboarding-active-banner .ob-chip-more::after {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-chip-more::before {
+    border-top-color: #1e293b;
 }
 
 .onboarding-active-banner .ob-count {
@@ -2134,6 +2213,15 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .onboarding-active-banner .ob-chip {
         font-size: .7rem;
         padding: .24rem .6rem;
+    }
+    .onboarding-active-banner .ob-chip-more {
+        font-size: .68rem;
+        padding: .22rem .55rem;
+    }
+    .onboarding-active-banner .ob-chip-more::after {
+        font-size: .68rem;
+        max-width: 90vw;
+        padding: .4rem .6rem;
     }
     .onboarding-active-banner .ob-count {
         font-size: .7rem;
@@ -5612,6 +5700,7 @@ function onChangeTopicsClick() {
 }
 
 /* Banner "Chủ đề gợi ý" */
+/* Banner "Chủ đề gợi ý" - Giới hạn số chips hiển thị */
 function showOnboardingActiveBanner(topics, count) {
     var old = $('onboardingActiveBanner');
     if (old) old.remove();
@@ -5632,11 +5721,9 @@ function showOnboardingActiveBanner(topics, count) {
     var isLimited = (info.tier !== 'active');
 
     var lockedIndustryCount = 0;
-    var totalIndustryCount = 0;
     if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
         Object.keys(DATASET_REGISTRY).forEach(function(id) {
             if (id === 'tonghop') return;
-            totalIndustryCount++;
             if (!canAccessChuyenNganh()) lockedIndustryCount++;
         });
     }
@@ -5659,14 +5746,35 @@ function showOnboardingActiveBanner(topics, count) {
     labelSpan.textContent = labelText;
     banner.appendChild(labelSpan);
 
+    /* ═══════════════════════════════════════════════════════════ */
+    /* FIX: Giới hạn số chips hiển thị — tránh tràn banner          */
+    /* ═══════════════════════════════════════════════════════════ */
+    var MAX_VISIBLE_CHIPS = 5;              /* Số chip tối đa hiển thị */
+    var visibleTopics = topics.slice(0, MAX_VISIBLE_CHIPS);
+    var hiddenCount = Math.max(0, topics.length - MAX_VISIBLE_CHIPS);
+
     var chipsWrap = document.createElement('span');
     chipsWrap.className = 'ob-chips';
-    topics.forEach(function(t) {
+
+    visibleTopics.forEach(function(t) {
         var chip = document.createElement('span');
         chip.className = 'ob-chip';
         chip.textContent = t.normalize ? t.normalize('NFC') : t;
         chipsWrap.appendChild(chip);
     });
+
+    /* Badge "+N chủ đề khác" — hover/focus để xem tooltip đầy đủ */
+    if (hiddenCount > 0) {
+        var moreChip = document.createElement('span');
+        moreChip.className = 'ob-chip ob-chip-more';
+        moreChip.textContent = '+' + hiddenCount + ' chủ đề khác';
+        moreChip.title = topics.join(' · ');
+        moreChip.setAttribute('data-tooltip', topics.join(' · '));
+        moreChip.style.cursor = 'help';
+        moreChip.style.background = 'linear-gradient(135deg, #94a3b8, #64748b)';
+        chipsWrap.appendChild(moreChip);
+    }
+
     banner.appendChild(chipsWrap);
 
     var countSpan = document.createElement('span');
