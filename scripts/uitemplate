@@ -1,21 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-UI Template - Sinh CSS + HTML + JS cho giao diện chính.
-
-Bao gồm:
-- build_ui_css(): CSS toàn bộ giao diện + onboarding modal
-- build_ui_html(): HTML body + onboarding modal
-- build_ui_js(): JS toàn bộ logic + onboarding + tag clickable
-
-LƯU Ý:
-- Không đặt emoji ngoài string/comment để tránh lỗi syntax.
-- Onboarding dùng SUBJECT (chủ đề lớn), KHÔNG dùng TOPIC (chủ điểm nhỏ).
-- Danh sách câu trong onboarding được sort cố định theo stt (deterministic).
-- Demo banner: kêu gọi đăng nhập Gmail miễn phí + bộ đếm lượt nghe/viết còn lại.
-- Bỏ qua onboarding => random 3-5 chủ đề (Demo=3, Trial=5).
-"""
-
-
 def build_ui_css():
     return r"""
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -243,7 +225,9 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-sub-label i{color:var(--amber);font-size:.8rem}
 
-/* SUB-BUTTONS CHUYEN NGANH */
+/* ═══════════════════════════════════════════════════════════ */
+/* SUB-BUTTONS CHUYÊN NGÀNH - FIX HIỂN THỊ ĐẦY ĐỦ DẤU TIẾNG VIỆT */
+/* ═══════════════════════════════════════════════════════════ */
 .ds-sub-grid{
     display:flex;
     flex-wrap:wrap;
@@ -252,36 +236,51 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .ds-sub-btn{
     display:inline-flex;
     align-items:center;
+    justify-content:flex-start;
     gap:.45rem;
-    padding:.5rem .95rem;
+    padding:.62rem 1.05rem .65rem;
     border-radius:50px;
     background:linear-gradient(135deg,
         color-mix(in srgb, var(--ds-color, #2563eb) 12%, var(--surface)),
         color-mix(in srgb, var(--ds-color, #2563eb) 4%, var(--surface)));
     border:2px solid color-mix(in srgb, var(--ds-color, #2563eb) 40%, var(--border));
     color:var(--text);
-    font-size:.76rem;
+    font-size:.78rem;
     font-weight:800;
     font-family:inherit;
     cursor:pointer;
     transition:all .2s ease;
     text-align:left;
     position:relative;
-    line-height:1;
     white-space:nowrap;
     box-shadow:0 2px 6px color-mix(in srgb, var(--ds-color, #2563eb) 18%, transparent);
-    letter-spacing:.01em;
+    letter-spacing:0;
+    line-height:1.5;
+    overflow:visible;
+    text-rendering:optimizeLegibility;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    font-feature-settings:"kern" 1,"liga" 1;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
 }
 .ds-sub-btn i:first-child{
-    font-size:.9rem;
+    font-size:.95rem;
     color:var(--ds-color, var(--primary));
     transition:.2s;
     flex-shrink:0;
+    line-height:1;
 }
 .ds-sub-btn span{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    max-width:180px;
+    flex:1 1 auto;
+    min-width:0;
+    display:inline-block;
+    line-height:1.5;
+    padding:.06em 0 .1em;
+    text-rendering:optimizeLegibility;
+    overflow-wrap:break-word;
+    word-break:normal;
+    white-space:nowrap;
 }
 .ds-sub-btn:hover{
     border-color:var(--ds-color, var(--primary));
@@ -305,11 +304,15 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 @media(max-width:500px){
     .ds-sub-btn{
-        padding:.42rem .75rem;
-        font-size:.72rem;
+        padding:.55rem .85rem .58rem;
+        font-size:.74rem;
+        line-height:1.5;
     }
-    .ds-sub-btn i:first-child{ font-size:.82rem; }
-    .ds-sub-btn span{ max-width:140px; }
+    .ds-sub-btn i:first-child{ font-size:.85rem; }
+    .ds-sub-btn span{
+        line-height:1.5;
+        padding:.05em 0 .08em;
+    }
 }
 
 /* KHOA CHUYEN NGANH - Demo/Trial chua gia han */
@@ -317,7 +320,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     opacity: 0.6;
     cursor: not-allowed;
     filter: grayscale(0.4);
-    padding-right: 1.7rem;
+    padding-right: 1.9rem;
 }
 .ds-sub-btn.locked:hover {
     transform: none;
@@ -522,7 +525,6 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     border-color:rgba(22,163,74,.4);
 }
 
-/* TAG CLICKABLE - click de search */
 .card-tag.tag-clickable {
     cursor: pointer;
     user-select: none;
@@ -1187,7 +1189,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     box-shadow:0 6px 16px rgba(6,182,212,.4);
 }
 
-/* NUT RANDOM - toggle */
 .pf-nav-icon.mini-nav.random{
     background:var(--surface);
     color:var(--text-2);
@@ -1742,6 +1743,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     transition: all .2s ease;
     position: relative;
     user-select: none;
+    line-height: 1.5;
 }
 .onboarding-topic:hover {
     border-color: var(--primary);
@@ -1852,115 +1854,302 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ══════════════════════════════════════════════════════════════ */
-/* BANNER "CÒN X CÂU CHƯA MỞ KHÓA" (sau onboarding)              */
+/* BANNER "CHỦ ĐỀ GỢI Ý" - REDESIGN                              */
 /* ══════════════════════════════════════════════════════════════ */
 .onboarding-active-banner {
     display: flex;
-    flex-direction: column;
-    gap: .5rem;
-    padding: .7rem 1rem;
+    align-items: center;
+    gap: .6rem;
+    padding: .8rem 1rem;
     margin-bottom: 1rem;
     background: linear-gradient(135deg,
         rgba(99,102,241,.08),
         rgba(139,92,246,.08));
     border: 1.5px solid rgba(139,92,246,.3);
-    border-radius: 12px;
-    font-size: .82rem;
+    border-radius: 14px;
+    font-size: .85rem;
     color: var(--text);
     animation: obBannerIn .35s cubic-bezier(.34,1.56,.64,1);
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
 }
 @keyframes obBannerIn {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.onboarding-active-banner .ob-row-1 {
-    display: flex;
-    align-items: center;
-    gap: .6rem;
-    flex-wrap: wrap;
-}
-.onboarding-active-banner .ob-row-1 i.fa-star {
+
+.onboarding-active-banner .ob-icon {
+    font-size: 1.1rem;
     color: #d946ef;
+    flex-shrink: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, rgba(217,70,239,.15), rgba(139,92,246,.15));
+    border-radius: 50%;
+    animation: obIconSpin 3s ease-in-out infinite;
 }
-.onboarding-active-banner .ob-row-1 .ob-label {
-    font-weight: 700;
+@keyframes obIconSpin {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50%      { transform: rotate(8deg) scale(1.08); }
 }
+
+.onboarding-active-banner .ob-label {
+    font-weight: 800;
+    font-size: .84rem;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.onboarding-active-banner .ob-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .onboarding-active-banner .ob-chip {
-    padding: .15rem .55rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    padding: .3rem .75rem;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
     border-radius: 50px;
     font-weight: 700;
-    font-size: .75rem;
-    color: var(--text);
+    font-size: .76rem;
+    box-shadow: 0 2px 6px rgba(139,92,246,.3);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    transition: transform .18s ease, box-shadow .18s ease;
+    cursor: default;
+    line-height: 1.4;
 }
+.onboarding-active-banner .ob-chip:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 4px 12px rgba(139,92,246,.5);
+}
+
 .onboarding-active-banner .ob-count {
     color: var(--text-3);
     font-size: .75rem;
-    margin-left: auto;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
+
 .onboarding-active-banner .ob-change-btn {
-    padding: .3rem .65rem;
+    padding: .38rem .85rem;
     border-radius: 50px;
     border: 1.5px solid var(--primary);
     background: var(--surface);
     color: var(--primary);
     font-weight: 700;
-    font-size: .72rem;
+    font-size: .76rem;
     cursor: pointer;
     font-family: inherit;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    transition: all .18s ease;
+    box-shadow: 0 1px 3px rgba(37,99,235,.15);
+}
+.onboarding-active-banner .ob-change-btn i {
+    font-size: .8rem;
+    transition: transform .35s ease;
 }
 .onboarding-active-banner .ob-change-btn:hover {
     background: var(--primary);
     color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(37,99,235,.35);
 }
-.onboarding-active-banner .ob-row-2 {
+.onboarding-active-banner .ob-change-btn:hover i {
+    transform: rotate(180deg);
+}
+.onboarding-active-banner .ob-change-btn:active {
+    transform: translateY(0) scale(.97);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* THỐNG KÊ KHOÁ - DÒNG 2 CỦA BANNER CHỦ ĐỀ                     */
+/* ═══════════════════════════════════════════════════════════ */
+.onboarding-active-banner .ob-stats-bar {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: .75rem;
     flex-wrap: wrap;
-    padding-top: .5rem;
-    border-top: 1px dashed rgba(139,92,246,.3);
-    font-size: .78rem;
+    width: 100%;
+    padding-top: .65rem;
+    margin-top: .35rem;
+    border-top: 1px dashed rgba(139,92,246,.35);
 }
-.onboarding-active-banner .ob-row-2 i.fa-lock {
-    color: #f59e0b;
-}
-.onboarding-active-banner .ob-row-2 b {
-    color: #dc2626;
-}
-.onboarding-active-banner .ob-upgrade-btn {
-    margin-left: auto;
-    padding: .35rem .8rem;
-    border-radius: 50px;
-    border: none;
-    background: linear-gradient(135deg,#f59e0b,#d97706);
-    color: #fff;
-    font-weight: 800;
-    font-size: .74rem;
-    cursor: pointer;
-    font-family: inherit;
-    box-shadow: 0 4px 12px rgba(245,158,11,.4);
+
+.onboarding-active-banner .ob-stat-item {
     display: inline-flex;
     align-items: center;
-    gap: .3rem;
+    gap: .45rem;
+    padding: .4rem .75rem;
+    background: rgba(255,255,255,.6);
+    border: 1.5px solid rgba(245,158,11,.4);
+    border-radius: 50px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.35;
+    box-shadow: 0 1px 3px rgba(245,158,11,.1);
 }
-.onboarding-active-banner .ob-upgrade-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(245,158,11,.6);
+[data-theme="dark"] .onboarding-active-banner .ob-stat-item {
+    background: rgba(30,41,59,.7);
+    border-color: rgba(245,158,11,.5);
 }
+
+.onboarding-active-banner .ob-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #b45309;
+    font-size: .75rem;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-icon {
+    background: linear-gradient(135deg, rgba(245,158,11,.25), rgba(217,119,6,.2));
+    color: #fcd34d;
+}
+
+.onboarding-active-banner .ob-stat-industry .ob-stat-icon {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1d4ed8;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-industry .ob-stat-icon {
+    background: linear-gradient(135deg, rgba(59,130,246,.25), rgba(37,99,235,.2));
+    color: #93c5fd;
+}
+.onboarding-active-banner .ob-stat-industry {
+    border-color: rgba(59,130,246,.4);
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-industry {
+    border-color: rgba(59,130,246,.5);
+}
+
+.onboarding-active-banner .ob-stat-text {
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--text-2);
+}
+.onboarding-active-banner .ob-stat-text b {
+    color: #dc2626;
+    font-weight: 900;
+    font-size: 1.1em;
+    margin: 0 .1em;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-text b {
+    color: #fca5a5;
+}
+
+.onboarding-active-banner .ob-cta-btn {
+    margin-left: auto;
+    padding: .5rem 1rem;
+    border-radius: 50px;
+    border: none;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed 50%, #a855f7);
+    color: #fff;
+    font-weight: 800;
+    font-size: .78rem;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(124,58,237,.4);
+    transition: transform .15s ease, box-shadow .2s ease;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    animation: obCtaPulse 2.5s ease-in-out infinite;
+}
+.onboarding-active-banner .ob-cta-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 22px rgba(124,58,237,.65);
+}
+.onboarding-active-banner .ob-cta-btn:active {
+    transform: translateY(0) scale(.98);
+}
+@keyframes obCtaPulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(124,58,237,.4); }
+    50%      { box-shadow: 0 4px 20px rgba(124,58,237,.7); }
+}
+
 [data-theme="dark"] .onboarding-active-banner {
     background: linear-gradient(135deg,
         rgba(99,102,241,.15),
         rgba(139,92,246,.15));
     border-color: rgba(165,180,252,.35);
 }
-[data-theme="dark"] .onboarding-active-banner .ob-chip {
+[data-theme="dark"] .onboarding-active-banner .ob-icon {
+    background: linear-gradient(135deg, rgba(217,70,239,.25), rgba(139,92,246,.2));
+}
+[data-theme="dark"] .onboarding-active-banner .ob-change-btn {
     background: var(--surface-2);
 }
+
+@media (max-width: 500px) {
+    .onboarding-active-banner {
+        padding: .7rem .8rem;
+        gap: .5rem;
+    }
+    .onboarding-active-banner .ob-icon {
+        width: 24px;
+        height: 24px;
+        font-size: .95rem;
+    }
+    .onboarding-active-banner .ob-label {
+        font-size: .76rem;
+    }
+    .onboarding-active-banner .ob-chip {
+        font-size: .7rem;
+        padding: .24rem .6rem;
+    }
+    .onboarding-active-banner .ob-count {
+        font-size: .7rem;
+    }
+    .onboarding-active-banner .ob-change-btn {
+        padding: .32rem .7rem;
+        font-size: .72rem;
+    }
+    .onboarding-active-banner .ob-stats-bar {
+        gap: .5rem;
+        padding-top: .55rem;
+    }
+    .onboarding-active-banner .ob-stat-item {
+        font-size: .72rem;
+        padding: .35rem .65rem;
+    }
+    .onboarding-active-banner .ob-stat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: .68rem;
+    }
+    .onboarding-active-banner .ob-cta-btn {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+        padding: .55rem .85rem;
+        font-size: .75rem;
+    }
+}
 """
-
-
 def build_ui_html():
     return r"""
 <div class="loading-screen" id="loadingScreen"><i class="fas fa-spinner"></i><div>Đang tải...</div></div>
@@ -2285,8 +2474,6 @@ def build_ui_html():
     </div>
 </div>
 """
-
-
 def build_ui_js():
     return r"""
 var filtered = [];
@@ -2361,27 +2548,37 @@ function initDatasetSelector() {
 
     var canAccess = canAccessChuyenNganh();
 
+    /* Build subGrid bằng DOM API để giữ nguyên dấu tiếng Việt */
     var subGrid = $('dsSubGrid');
     if (subGrid) {
-        var subHtml = '';
+        subGrid.innerHTML = '';
         chuyenNganhKeys.forEach(function(id) {
             var ds = DATASET_REGISTRY[id];
-            var lockIcon = canAccess
-                ? ''
-                : '<i class="fas fa-lock ds-sub-lock"></i>';
-            var lockCls = canAccess ? '' : ' locked';
-            subHtml += '<button class="ds-sub-btn' + lockCls + '" ' +
-                       'data-dataset="' + ds.id + '" ' +
-                       'data-locked="' + (canAccess ? '0' : '1') + '" ' +
-                       'style="--ds-color:' + (ds.color || '#64748b') + '" ' +
-                       'title="' + escapeHtml(ds.name) + ' (' + ds.count + ' câu)' +
-                       (canAccess ? '' : ' - Cần gia hạn để mở khoá') + '">' +
-                       '<i class="fas ' + (ds.icon || 'fa-folder') + '"></i>' +
-                       '<span>' + escapeHtml(ds.name) + '</span>' +
-                       lockIcon +
-                       '</button>';
+
+            var btn = document.createElement('button');
+            btn.className = 'ds-sub-btn' + (canAccess ? '' : ' locked');
+            btn.dataset.dataset = ds.id;
+            btn.dataset.locked = canAccess ? '0' : '1';
+            btn.style.setProperty('--ds-color', ds.color || '#64748b');
+            btn.title = ds.name + ' (' + ds.count + ' câu)' +
+                        (canAccess ? '' : ' - Cần gia hạn để mở khoá');
+
+            var icon = document.createElement('i');
+            icon.className = 'fas ' + (ds.icon || 'fa-folder');
+            btn.appendChild(icon);
+
+            var nameSpan = document.createElement('span');
+            nameSpan.textContent = ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
+            btn.appendChild(nameSpan);
+
+            if (!canAccess) {
+                var lock = document.createElement('i');
+                lock.className = 'fas fa-lock ds-sub-lock';
+                btn.appendChild(lock);
+            }
+
+            subGrid.appendChild(btn);
         });
-        subGrid.innerHTML = subHtml;
     }
 
     if (cnBtn) {
@@ -2850,9 +3047,6 @@ function showTagToast(message) {
 
 /* ============================================================ */
 /* ONBOARDING - CHON CHU DE (SUBJECT) QUAN TAM                   */
-/* Khong dung TOPIC (chu diem nho) - chi dung SUBJECT            */
-/* Danh sach cau duoc sort co dinh theo stt (deterministic)      */
-/* Bo qua => random 3-5 chu de (Demo=3, Trial=5)                 */
 /* ============================================================ */
 var _onboardingSelected = {};
 var _onboardingConfig = null;
@@ -2872,7 +3066,6 @@ function getOnboardingStorageKey() {
     return null;
 }
 
-/* Lay danh sach SUBJECT (khong phai topic) co san theo tier */
 function getAvailableTopicsForTier() {
     var info = getTierInfo();
     var allowedHsk = getAllowedHskList();
@@ -2940,7 +3133,15 @@ function showOnboardingModal() {
     if (!cfg) return;
 
     _onboardingConfig = cfg;
-    _onboardingSelected = {};
+
+    /* Load lại selection đã lưu nếu có */
+    var saved = loadOnboardingSelection();
+    if (saved && Array.isArray(saved.topics)) {
+        _onboardingSelected = {};
+        saved.topics.forEach(function(t) { _onboardingSelected[t] = true; });
+    } else {
+        _onboardingSelected = {};
+    }
 
     var titleEl = $('onboardingTitle');
     var subtitleEl = $('onboardingSubtitle');
@@ -2968,21 +3169,27 @@ function renderOnboardingTopics() {
         return;
     }
 
-    var html = '';
+    container.innerHTML = '';
     topics.forEach(function(t) {
-        var selCls = _onboardingSelected[t.name] ? ' selected' : '';
-        html += '<button type="button" class="onboarding-topic' + selCls + '" ' +
-                'data-topic="' + escapeHtml(t.name) + '">' +
-                '<span>' + escapeHtml(t.name) + '</span>' +
-                '<span class="count">' + t.count + '</span>' +
-                '</button>';
-    });
-    container.innerHTML = html;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'onboarding-topic' + (_onboardingSelected[t.name] ? ' selected' : '');
+        btn.dataset.topic = t.name;
 
-    container.querySelectorAll('.onboarding-topic').forEach(function(btn) {
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = t.name.normalize ? t.name.normalize('NFC') : t.name;
+        btn.appendChild(nameSpan);
+
+        var countSpan = document.createElement('span');
+        countSpan.className = 'count';
+        countSpan.textContent = t.count;
+        btn.appendChild(countSpan);
+
         btn.addEventListener('click', function() {
             onToggleOnboardingTopic(this.dataset.topic);
         });
+
+        container.appendChild(btn);
     });
 }
 
@@ -3051,11 +3258,9 @@ function onOnboardingSkip() {
     var allTopics = getAvailableTopicsForTier();
     if (allTopics.length === 0) return;
 
-    /* So chu de random = topics_per_user (Demo=3, Trial=5) */
     var wantCount = cfg.topics_per_user || 3;
     var pickCount = Math.min(wantCount, allTopics.length);
 
-    /* Shuffle lay ngau nhien */
     var shuffled = allTopics.slice();
     for (var i = shuffled.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
@@ -3071,12 +3276,6 @@ function onOnboardingSkip() {
     showTagToast('Đã gợi ý ' + pickCount + ' chủ đề phù hợp cho bạn');
 }
 
-/* ============================================================ */
-/* AP DUNG ONBOARDING - SORT CO DINH THEO STT (PHUONG AN A)      */
-/* - Loc theo SUBJECT (khong dung topic)                         */
-/* - Sort theo stt => cung subject = cung bo cau                 */
-/* - Khac subject => bo cau khac                                 */
-/* ============================================================ */
 function applyOnboardingSelection(topics, scrollTop) {
     var cfg = getOnboardingConfig();
     if (!cfg) return;
@@ -3087,21 +3286,18 @@ function applyOnboardingSelection(topics, scrollTop) {
         allowedHsk = cfg.hsk_allowed.map(function(n) { return 'HSK' + n; });
     }
 
-    /* Loc pool theo SUBJECT user chon (khong dung topic/chu diem) */
     var pool = RAW_DATA.filter(function(r) {
         if (allowedHsk.indexOf(r.hsk) === -1) return false;
         var s = (r.subject || '').trim();
         return topics.indexOf(s) !== -1;
     });
 
-    /* Sort CO DINH theo stt => cung subject = cung bo cau */
     pool.sort(function(a, b) {
         var na = parseInt(a.stt) || 0;
         var nb = parseInt(b.stt) || 0;
         return na - nb;
     });
 
-    /* Chia bucket theo HSK (giu nguyen thu tu sort cua pool) */
     var perHsk = Math.ceil(maxQ / allowedHsk.length);
     var buckets = {};
     allowedHsk.forEach(function(h) { buckets[h] = []; });
@@ -3109,7 +3305,6 @@ function applyOnboardingSelection(topics, scrollTop) {
         if (buckets[r.hsk]) buckets[r.hsk].push(r);
     });
 
-    /* Lay deu moi HSK perHsk cau (deterministic) */
     var final = [];
     for (var i = 0; i < allowedHsk.length; i++) {
         var h = allowedHsk[i];
@@ -3117,7 +3312,6 @@ function applyOnboardingSelection(topics, scrollTop) {
         final = final.concat(take);
     }
 
-    /* Neu chua du maxQ => bu tu pool da sort (deterministic) */
     if (final.length < maxQ) {
         var usedIds = {};
         final.forEach(function(r) { usedIds[r.stt] = true; });
@@ -3130,7 +3324,6 @@ function applyOnboardingSelection(topics, scrollTop) {
         }
     }
 
-    /* Sort cuoi cung theo stt => thu tu hien thi on dinh */
     final.sort(function(a, b) {
         var na = parseInt(a.stt) || 0;
         var nb = parseInt(b.stt) || 0;
@@ -3162,8 +3355,63 @@ function applyOnboardingSelection(topics, scrollTop) {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* XỬ LÝ NÚT "ĐỔI CHỦ ĐỀ" — FIX BUG TRIAL                       */
+/* ═══════════════════════════════════════════════════════════ */
+function onChangeTopicsClick() {
+    var cfg = getOnboardingConfig();
+
+    if (!cfg) {
+        var info = getTierInfo();
+        if (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) {
+            if (info.tier === 'demo')  cfg = ONBOARDING_CONFIG.demo  || null;
+            else if (info.tier === 'trial') cfg = ONBOARDING_CONFIG.trial || null;
+        }
+        if (!cfg) {
+            showTagToast('Không thể đổi chủ đề ở chế độ này');
+            return;
+        }
+    }
+
+    /* 1. Clear localStorage đã lưu */
+    var key = getOnboardingStorageKey();
+    if (key) {
+        try { localStorage.removeItem(key); } catch(e) {}
+    }
+
+    /* 2. Clear override */
+    window.__onboardingOverride = null;
+    window.__onboardingAutoPicked = false;
+
+    /* 3. Reset state của modal */
+    _onboardingConfig = cfg;
+    _onboardingSelected = {};
+
+    /* 4. Ẩn modal cũ (nếu có) rồi hiện lại */
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.remove('show');
+
+    /* 5. Set lại title/subtitle + max count */
+    var titleEl = $('onboardingTitle');
+    var subtitleEl = $('onboardingSubtitle');
+    var maxCountEl = $('onboardingMaxCount');
+    if (titleEl) titleEl.textContent = cfg.title || 'Bạn quan tâm chủ đề nào?';
+    if (subtitleEl) subtitleEl.textContent = cfg.subtitle || '';
+    if (maxCountEl) maxCountEl.textContent = cfg.topics_per_user || 3;
+
+    /* 6. Render lại danh sách chủ đề */
+    renderOnboardingTopics();
+    updateOnboardingUI();
+
+    /* 7. Hiện modal */
+    if (modal) {
+        void modal.offsetWidth;
+        modal.classList.add('show');
+    }
+}
+
 /* ============================================================ */
-/* BANNER "CON X CAU CHUA MO KHOA" - TANG CONVERSION             */
+/* BANNER "CHỦ ĐỀ GỢI Ý" - UI GỌN + THỐNG KÊ KHOÁ                */
 /* ============================================================ */
 function showOnboardingActiveBanner(topics, count) {
     var old = $('onboardingActiveBanner');
@@ -3179,74 +3427,119 @@ function showOnboardingActiveBanner(topics, count) {
     var lockedCount = Math.max(0, totalAvailable - count);
     var isLimited = (info.tier !== 'active');
 
+    /* Đếm số chuyên ngành bị khoá */
+    var lockedIndustryCount = 0;
+    var totalIndustryCount = 0;
+    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+        Object.keys(DATASET_REGISTRY).forEach(function(id) {
+            if (id === 'tonghop') return;
+            totalIndustryCount++;
+            if (!canAccessChuyenNganh()) lockedIndustryCount++;
+        });
+    }
+
     var banner = document.createElement('div');
     banner.id = 'onboardingActiveBanner';
     banner.className = 'onboarding-active-banner';
 
-    var chipsHtml = topics.map(function(t) {
-        return '<span class="ob-chip">' + escapeHtml(t) + '</span>';
-    }).join('');
+    /* Icon */
+    var isAuto = !!window.__onboardingAutoPicked;
+    var iconHtml = isAuto
+        ? '<i class="fas fa-magic"></i>'
+        : '<i class="fas fa-star"></i>';
+    var labelText = isAuto ? 'Chủ đề gợi ý cho bạn:' : 'Chủ đề của bạn:';
 
-    /* Dong 1: chu de da chon + so cau (label khac neu auto-pick) */
-    var labelText = window.__onboardingAutoPicked
-        ? 'Chủ đề gợi ý cho bạn:'
-        : 'Chủ đề của bạn:';
-    var starIcon = window.__onboardingAutoPicked
-        ? '<i class="fas fa-magic" style="color:#d946ef"></i>'
-        : '<i class="fas fa-star" style="color:#d946ef"></i>';
+    // Icon
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'ob-icon';
+    iconSpan.innerHTML = iconHtml;
+    banner.appendChild(iconSpan);
 
-    var row1 =
-        '<div class="ob-row-1">' +
-            starIcon +
-            '<span class="ob-label">' + labelText + '</span>' +
-            chipsHtml +
-            '<span class="ob-count">(' + count + ' câu)</span>' +
-            '<button type="button" id="onboardingChangeBtn" class="ob-change-btn">Đổi</button>' +
-        '</div>';
+    // Label
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'ob-label';
+    labelSpan.textContent = labelText;
+    banner.appendChild(labelSpan);
 
-    /* Dong 2: canh bao con bao nhieu cau chua mo (chi Demo/Trial/Expired) */
-    var row2 = '';
-    if (isLimited && lockedCount > 0) {
-        var upgradeLabel = info.tier === 'demo'
-            ? 'Đăng nhập ngay'
-            : 'Nâng cấp ngay';
-        row2 =
-            '<div class="ob-row-2">' +
-                '<i class="fas fa-lock"></i>' +
-                '<span>Còn <b>' + lockedCount + ' câu</b> chưa mở khóa trong kho ' +
-                    '(' + totalAvailable + ' câu)</span>' +
-                '<button type="button" id="onboardingUpgradeBtn" class="ob-upgrade-btn">' +
-                    '<i class="fas fa-gem"></i> ' + upgradeLabel +
-                '</button>' +
-            '</div>';
-    }
+    // Chips wrapper
+    var chipsWrap = document.createElement('span');
+    chipsWrap.className = 'ob-chips';
+    topics.forEach(function(t) {
+        var chip = document.createElement('span');
+        chip.className = 'ob-chip';
+        chip.textContent = t.normalize ? t.normalize('NFC') : t;
+        chipsWrap.appendChild(chip);
+    });
+    banner.appendChild(chipsWrap);
 
-    banner.innerHTML = row1 + row2;
+    // Count
+    var countSpan = document.createElement('span');
+    countSpan.className = 'ob-count';
+    countSpan.textContent = '(' + count + ' câu)';
+    banner.appendChild(countSpan);
 
-    var firstChild = container.firstChild;
-    container.insertBefore(banner, firstChild);
+    // Nút Đổi
+    var changeBtn = document.createElement('button');
+    changeBtn.type = 'button';
+    changeBtn.id = 'onboardingChangeBtn';
+    changeBtn.className = 'ob-change-btn';
+    changeBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Đổi';
+    changeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        onChangeTopicsClick();
+    });
+    banner.appendChild(changeBtn);
 
-    var changeBtn = $('onboardingChangeBtn');
-    if (changeBtn) {
-        changeBtn.addEventListener('click', function() {
-            var key = getOnboardingStorageKey();
-            if (key) try { localStorage.removeItem(key); } catch(e) {}
-            window.__onboardingOverride = null;
-            window.__onboardingAutoPicked = false;
-            showOnboardingModal();
-        });
-    }
+    /* Dòng 2: thống kê khoá */
+    if (isLimited) {
+        var statsBar = document.createElement('div');
+        statsBar.className = 'ob-stats-bar';
 
-    var upgradeBtn = $('onboardingUpgradeBtn');
-    if (upgradeBtn) {
-        upgradeBtn.addEventListener('click', function() {
+        if (lockedCount > 0) {
+            var stat1 = document.createElement('div');
+            stat1.className = 'ob-stat-item';
+            stat1.innerHTML =
+                '<span class="ob-stat-icon"><i class="fas fa-lock"></i></span>' +
+                '<span class="ob-stat-text">Còn <b>' + lockedCount + '</b> câu chưa mở khoá</span>';
+            statsBar.appendChild(stat1);
+        }
+
+        if (lockedIndustryCount > 0) {
+            var stat2 = document.createElement('div');
+            stat2.className = 'ob-stat-item ob-stat-industry';
+            stat2.innerHTML =
+                '<span class="ob-stat-icon"><i class="fas fa-industry"></i></span>' +
+                '<span class="ob-stat-text">Còn <b>' + lockedIndustryCount + '</b> chuyên ngành chưa mở</span>';
+            statsBar.appendChild(stat2);
+        }
+
+        if (lockedCount > 0 || lockedIndustryCount > 0) {
+            var ctaBtn = document.createElement('button');
+            ctaBtn.type = 'button';
+            ctaBtn.className = 'ob-cta-btn';
             if (info.tier === 'demo') {
-                if (typeof showLoginModal === 'function') showLoginModal();
+                ctaBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Đăng nhập để mở khoá';
+                ctaBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof showLoginModal === 'function') showLoginModal();
+                });
             } else {
-                if (typeof openRenewalModal === 'function') openRenewalModal();
+                ctaBtn.innerHTML = '<i class="fas fa-gem"></i> Nâng cấp ngay';
+                ctaBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof openRenewalModal === 'function') openRenewalModal();
+                });
             }
-        });
+            statsBar.appendChild(ctaBtn);
+        }
+
+        banner.appendChild(statsBar);
     }
+
+    container.insertBefore(banner, container.firstChild);
 }
 
 function initOnboarding() {
@@ -3261,6 +3554,7 @@ function initOnboarding() {
 window.maybeShowOnboarding = maybeShowOnboarding;
 window.showOnboardingModal = showOnboardingModal;
 window.applyOnboardingSelection = applyOnboardingSelection;
+window.onChangeTopicsClick = onChangeTopicsClick;
 
 function moveTikTokBarToHeader() {
     try {
@@ -3677,6 +3971,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.renewal-modal') || e.target.closest('.voice-modal') ||
         e.target.closest('.dataset-selector') ||
         e.target.closest('.onboarding-modal') ||
+        e.target.closest('.onboarding-active-banner') ||
         e.target.closest('.tag-clickable') ||
         e.target.closest('.toggle-check-btn')) return;
     clearFocus();
@@ -3728,12 +4023,19 @@ function populateVoiceSelect() {
         sel.innerHTML = '<option value="">-- Đang tải giọng đọc... --</option>';
         return;
     }
-    var html = '<option value="">-- Tự động (mặc định) --</option>';
+    sel.innerHTML = '';
+    var defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Tự động (mặc định) --';
+    sel.appendChild(defaultOpt);
+
     zhVoices.forEach(function(v) {
+        var opt = document.createElement('option');
+        opt.value = v.voiceURI;
         var label = v.name + ' (' + v.lang + ')' + (v.localService ? '' : ' - online');
-        html += '<option value="' + escapeHtml(v.voiceURI) + '">' + escapeHtml(label) + '</option>';
+        opt.textContent = label;
+        sel.appendChild(opt);
     });
-    sel.innerHTML = html;
     sel.value = voiceState.voiceURI || '';
 }
 
@@ -3872,7 +4174,6 @@ function initVoiceSettings() {
         if (e.key === 'Escape' && modal.classList.contains('show')) modal.classList.remove('show');
     });
 }
-
 function buildFilters() {
     var hskSelect = $('hskFilter');
     var subjectSelect = $('subjectFilter');
@@ -5360,44 +5661,44 @@ function initPracticeFull() {
     }
 }
 
-/* DATASET SELECTOR trong Practice Full */
+/* DATASET SELECTOR trong Practice Full — dùng DOM API để giữ ký tự đặc biệt */
 function pfBuildDatasetSelect() {
     var sel = $('pfDatasetSelect');
     var row = $('pfDatasetRow');
     if (!sel || typeof DATASET_REGISTRY === 'undefined') return;
 
     var canAccessAll = canAccessChuyenNganh();
+    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
 
-    var html = '';
-    var keys = Object.keys(DATASET_REGISTRY);
-    keys.forEach(function(id) {
+    sel.innerHTML = '';
+
+    Object.keys(DATASET_REGISTRY).forEach(function(id) {
         var ds = DATASET_REGISTRY[id];
         var isTonghop = (id === 'tonghop');
         var isLocked = !isTonghop && !canAccessAll;
 
-        var label;
-        if (isTonghop) {
-            label = (ds.count || 0) + ' câu - Tổng hợp VPCX';
-        } else {
-            label = (isLocked ? '[Khoá] ' : '') + ds.name +
-                    ' (' + (ds.count || 0) + ' câu)';
+        var opt = document.createElement('option');
+        opt.value = id;
+        if (isLocked) {
+            opt.dataset.locked = '1';
+            opt.className = 'locked-opt';
         }
 
-        html += '<option value="' + id + '"' +
-                (isLocked ? ' data-locked="1" class="locked-opt"' : '') + '>' +
-                escapeHtml(label) + '</option>';
+        var dsName = ds.name && ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
+        if (isTonghop) {
+            opt.textContent = (ds.count || 0) + ' câu - Tổng hợp VPCX';
+        } else {
+            opt.textContent = (isLocked ? '[Khoá] ' : '') +
+                              dsName + ' (' + (ds.count || 0) + ' câu)';
+        }
+
+        sel.appendChild(opt);
     });
-    sel.innerHTML = html;
 
-    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
-    sel.value = current;
-
-    if (current !== 'tonghop' && !canAccessAll) {
-        sel.value = 'tonghop';
-    }
+    sel.value = (current !== 'tonghop' && !canAccessAll) ? 'tonghop' : current;
 
     if (row) {
-        var hasLock = !canAccessAll && keys.length > 1;
+        var hasLock = !canAccessAll && Object.keys(DATASET_REGISTRY).length > 1;
         row.classList.toggle('has-locked-options', hasLock);
     }
 }
