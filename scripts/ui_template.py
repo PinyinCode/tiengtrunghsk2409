@@ -1,3 +1,16 @@
+# -*- coding: utf-8 -*-
+"""
+UI Template - Sinh CSS + HTML + JS cho giao diện chính.
+
+Bao gồm:
+- build_ui_css(): CSS toàn bộ giao diện + onboarding modal
+- build_ui_html(): HTML body + onboarding modal
+- build_ui_js(): JS toàn bộ logic + onboarding + tag clickable
+
+LƯU Ý: Không đặt emoji ngoài string/comment để tránh lỗi syntax.
+"""
+
+
 def build_ui_css():
     return r"""
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -96,7 +109,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 @media(min-width:1800px){.mobile-view{grid-template-columns:1fr 1fr 1fr;gap:1.3rem}}
 
 /* ============================================================ */
-/* DATASET SELECTOR — 2 CẤP (Bộ dữ liệu + Chuyên ngành)        */
+/* DATASET SELECTOR - 2 CAP (Bo du lieu + Chuyen nganh)          */
 /* ============================================================ */
 .dataset-selector{
     margin-bottom:.75rem;
@@ -150,7 +163,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-btn.active .ds-arrow{transform:rotate(180deg)}
 
-/* ═══ Badge NEW cho nút "Chuyên ngành" ═══ */
+/* Badge NEW cho nut Chuyen nganh */
 .ds-btn[data-dataset-group="chuyen-nganh"]{
     overflow:visible;
 }
@@ -225,9 +238,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-sub-label i{color:var(--amber);font-size:.8rem}
 
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ SUB-BUTTONS CHUYÊN NGÀNH — NỔI BẬT HƠN ⭐
-   ═══════════════════════════════════════════════════════════════ */
+/* SUB-BUTTONS CHUYEN NGANH */
 .ds-sub-grid{
     display:flex;
     flex-wrap:wrap;
@@ -296,9 +307,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     .ds-sub-btn span{ max-width:140px; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   🔒 KHOÁ CHUYÊN NGÀNH — Demo/Trial chưa gia hạn
-   ═══════════════════════════════════════════════════════════════ */
+/* KHOA CHUYEN NGANH - Demo/Trial chua gia han */
 .ds-sub-btn.locked {
     opacity: 0.6;
     cursor: not-allowed;
@@ -508,9 +517,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     border-color:rgba(22,163,74,.4);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   🖱️ TAG CLICKABLE — click để search
-   ═══════════════════════════════════════════════════════════════ */
+/* TAG CLICKABLE - click de search */
 .card-tag.tag-clickable {
     cursor: pointer;
     user-select: none;
@@ -672,9 +679,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-width:768px){.pf-brand-title{font-size:.75rem}.pf-brand-sub{font-size:.55rem;gap:.2rem}.pf-brand-icon{width:28px;height:28px;font-size:.72rem;border-radius:8px}.pf-brand{gap:.4rem}}
 @media (max-width:400px){.pf-brand-title{font-size:.7rem}.pf-brand-sub{font-size:.5rem}.pf-brand-icon{width:24px;height:24px;font-size:.65rem}}
 
-/* ============================================================ */
 /* TIKTOK FLOAT */
-/* ============================================================ */
 .pf-tiktok-float{position:fixed;left:clamp(14px,2vw,22px);bottom:calc(80px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:clamp(.4rem,.6vw,.55rem);padding:clamp(.35rem,.55vw,.5rem) clamp(.7rem,1vw,.9rem) clamp(.35rem,.55vw,.5rem) clamp(.35rem,.55vw,.5rem);border-radius:999px;background:linear-gradient(135deg,#25f4ee 0%,#000 50%,#fe2c55 100%);color:#fff;text-decoration:none;font-family:inherit;min-width:clamp(120px,15vw,180px);max-width:clamp(160px,22vw,240px);box-shadow:0 10px 28px rgba(254,44,85,.4),0 4px 14px rgba(0,0,0,.35);z-index:2400;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;overflow:hidden;cursor:pointer}
 .pf-tiktok-float:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 14px 36px rgba(254,44,85,.6),0 6px 20px rgba(0,0,0,.45),0 0 0 3px rgba(37,244,238,.5)}
 .pf-tiktok-avatar-wrap{position:relative;width:clamp(28px,3vw,36px);height:clamp(28px,3vw,36px);border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#25f4ee,#fe2c55);display:flex;align-items:center;justify-content:center;padding:2px;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
@@ -706,7 +711,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .pf-chip select{position:absolute;inset:0;opacity:0;cursor:pointer;appearance:none;width:100%;height:100%;z-index:5}
 
 /* ============================================================ */
-/* 📚 KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU                 */
+/* KHOI GOP: BO DU LIEU + TIM KIEM + CHON CAU                    */
 /* ============================================================ */
 .pf-dataset-row {
     display: flex;
@@ -1051,7 +1056,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ============================================================ */
-/* NAV — 3 NÚT TO ĐỀU NHAU + MINI GROUP                         */
+/* NAV - 3 NUT TO DEU NHAU + MINI GROUP                          */
 /* ============================================================ */
 .practice-full-nav{
     display:flex;
@@ -1177,7 +1182,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     box-shadow:0 6px 16px rgba(6,182,212,.4);
 }
 
-/* ═══ NÚT RANDOM — toggle: khi bật, nút Next sẽ nhảy ngẫu nhiên ═══ */
+/* NUT RANDOM - toggle */
 .pf-nav-icon.mini-nav.random{
     background:var(--surface);
     color:var(--text-2);
@@ -1333,8 +1338,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .practice-full-header .card-tag:not(.hsk):not(.topic){background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
 .chip.has-value{animation:chipPulse 2s ease-in-out infinite}
 .pf-chip.has-value{animation:chipPulse 2s ease-in-out infinite}
-@keyframes chipPulse{0%,100%{box-shadow:0 4px 12px rgba(37,99,235,.3)}50%{box-shadow:0 4px 18px rgba(37,99,235,.5)}}
-.practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));color:#15803d;border:1px solid rgba(22,163,74,.3);font-weight:700;display:inline-flex;align-items:center;gap:.3rem}
+@keyframes chipPulse{0%,100%,.{box-shadow:0 4px 12px rgba(337,99,235,.3)}50%);{box-shadow:0 4px 18px rgbafont(37,99,235,.5)}}
+.practice-full-weight:-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));color:#15803d;border:1px solid rgba(22,163,74700;display:inline-flex;align-items:center;gap:.3rem}
 [data-theme="dark"] .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.25),rgba(22,163,74,.15));color:#4ade80;border-color:rgba(22,163,74,.5)}
 
 @media (min-width:769px){
@@ -1348,12 +1353,13 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         position:relative;
     }
     .header-inner .logo{
-        flex:0 0 auto!important;
+important        flex:0 0 auto!;
+important;
         min-width:0!important;
-        overflow:hidden;
+               overflow:hidden;
     }
-    .header-inner .logo .logo-text{
-        max-width:100%;
+    . overflowheader-inner .logo:h .logo-text{
+        max-widthidden:100%;
     }
     .header-inner .tiktok-bar{
         flex:1 1 auto!important;
@@ -1364,8 +1370,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         padding:clamp(.3rem,.5vw,.42rem) clamp(.55rem,.8vw,.75rem)!important;
         gap:clamp(.35rem,.6vw,.5rem)!important;
         font-size:clamp(.65rem,.8vw,.78rem)!important;
-        border-radius:50px!important;
-        overflow:hidden;
+        border-radius:50px!;
         position:relative;
         z-index:3;
         align-self:center;
@@ -1566,9 +1571,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .voice-reset:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
 [data-theme="dark"] .voice-slider{background:var(--surface-2)}
 
-/* ═══════════════════════════════════════════════════════════════
-   🎯 ONBOARDING MODAL — CHỌN CHỦ ĐỀ QUAN TÂM (Demo + Trial)
-   ═══════════════════════════════════════════════════════════════ */
+/* ============================================================ */
+/* ONBOARDING MODAL - CHON CHU DE QUAN TAM (Demo + Trial)        */
+/* ============================================================ */
 .onboarding-modal {
     position: fixed;
     inset: 0;
@@ -1608,7 +1613,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     to   { transform: translateY(0) scale(1);      opacity: 1; }
 }
 
-/* ─── Header ─── */
 .onboarding-header {
     padding: 1.5rem 1.5rem 1rem;
     background: linear-gradient(135deg,
@@ -1651,7 +1655,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     margin: 0 auto;
 }
 
-/* ─── Counter ─── */
 .onboarding-counter {
     display: inline-flex;
     align-items: center;
@@ -1669,17 +1672,17 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .onboarding-counter.ok {
     background: linear-gradient(135deg, rgba(22,163,74,.12), rgba(34,197,94,.08));
     border-color: rgba(22,163,74,.4);
-    color: #15803d;
-}
+;    color: #15803d;
+ }
+    .}
 .onboarding-counter.full {
-    background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(251,191,36,.1));
+   on background: linear-gradient(135deg,boarding rgba(245,158,11,.15), rgba(251,191,36,.1));
     border-color: rgba(245,158,11,.5);
     color: #92400e;
 }
 [data-theme="dark"] .onboarding-counter.ok { color: #4ade80; }
 [data-theme="dark"] .onboarding-counter.full { color: #fcd34d; }
 
-/* ─── Body ─── */
 .onboarding-body {
     padding: 1.25rem 1.5rem;
     overflow-y: auto;
@@ -1699,7 +1702,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 .onboarding-section-label i { color: var(--primary); }
 
-/* ─── Topic grid ─── */
 .onboarding-topics {
     display: flex;
     flex-wrap: wrap;
@@ -1735,7 +1737,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 .onboarding-topic.selected::before {
-    content: '✓';
+    content: '\2713';
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1772,7 +1774,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     font-size: .85rem;
 }
 
-/* ─── Footer ─── */
 .onboarding-footer {
     padding: 1rem 1.5rem 1.25rem;
     border-top: 1px solid var(--border);
@@ -1834,8 +1835,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 
 @media (max-width: 500px) {
     .onboarding-box { border-radius: 20px; max-height: calc(100vh - 1rem); }
-    .onboarding-header { padding: 1.15rem 1rem .85rem; }
-    .onboarding-icon { width: 50px; height: 50px; font-size: 1.35rem; border-radius: 14px; }
+    .onboarding-header { padding: 1.15rem 1rem .85rem-icon { width: 50px; height: 50px; font-size: 1.35rem; border-radius: 14px; }
     .onboarding-title { font-size: 1.1rem; }
     .onboarding-subtitle { font-size: .78rem; }
     .onboarding-body { padding: 1rem; }
@@ -1847,6 +1847,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .onboarding-footer .onboarding-btn { width: 100%; justify-content: center; }
 }
 """
+
 def build_ui_html():
     return r"""
 <div class="loading-screen" id="loadingScreen"><i class="fas fa-spinner"></i><div>Đang tải...</div></div>
@@ -1879,7 +1880,7 @@ def build_ui_html():
 </div></header>
 <!-- __TIKTOK_BAR__ -->
 
-<!-- ═══ DATASET SELECTOR ═══ -->
+<!-- DATASET SELECTOR -->
 <div class="dataset-selector" id="datasetSelector">
     <div class="ds-label">
         <i class="fas fa-layer-group"></i>
@@ -1978,7 +1979,6 @@ def build_ui_html():
 </div>
 <div class="pf-filters">
 
-<!-- ═══ HSK + CHỦ ĐỀ ═══ -->
 <div class="pf-filter-row">
 <div class="pf-chip" id="pfHskChip"><span class="pf-chip-label">HSK</span><span class="pf-chip-value" id="pfHskValue">Tất cả</span><i class="fas fa-chevron-down pf-chip-arrow"></i>
 <select id="pfHskFilter"><option value="">Tất cả</option><option value="HSK1">HSK1</option><option value="HSK2">HSK2</option><option value="HSK3">HSK3</option><option value="HSK4">HSK4</option><option value="HSK5">HSK5</option><option value="HSK6">HSK6</option></select>
@@ -1988,7 +1988,6 @@ def build_ui_html():
 </div>
 </div>
 
-<!-- ═══ KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU ═══ -->
 <div class="pf-dataset-row" id="pfDatasetRow">
     <span class="pf-dataset-label"><i class="fas fa-layer-group"></i> Bộ dữ liệu</span>
     <select class="pf-dataset-select" id="pfDatasetSelect"></select>
@@ -2135,9 +2134,7 @@ def build_ui_html():
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     🎯 ONBOARDING MODAL — CHỌN CHỦ ĐỀ QUAN TÂM (Demo + Trial)
-     ═══════════════════════════════════════════════════════════════ -->
+<!-- ONBOARDING MODAL - CHON CHU DE QUAN TAM -->
 <div class="onboarding-modal" id="onboardingModal">
     <div class="onboarding-box">
         <div class="onboarding-header">
@@ -2175,6 +2172,1058 @@ def build_ui_html():
     </div>
 </div>
 """
+
+
+def build_ui_js():
+    return r"""
+var filtered = [];
+var state = { search:'', hsk:'', subject:'' };
+var PAGE_SIZE = 300;
+var renderedCount = 0;
+var focusedStt = null;
+var mobileWrapper;
+var currentBtn = null;
+
+var displayState = { vi: true, pinyin: false, practice: false };
+
+/* HELPER: TIER HIEN TAI CO DUOC MO CHUYEN NGANH KHONG? */
+function canAccessChuyenNganh() {
+    return (typeof window.APP_TIER !== 'undefined' && window.APP_TIER === 'active');
+}
+
+/* THONG BAO KHOA CHUYEN NGANH */
+function showChuyenNganhLockMessage() {
+    if (typeof currentUser === 'undefined' || !currentUser) {
+        if (confirm('Bộ dữ liệu Chuyên ngành\n\n' +
+                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
+                    'Đăng nhập ngay?')) {
+            if (typeof showLoginModal === 'function') showLoginModal();
+        }
+    } else {
+        if (confirm('Bộ dữ liệu Chuyên ngành\n\n' +
+                    'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
+                    'Gia hạn ngay?')) {
+            if (typeof openRenewalModal === 'function') openRenewalModal();
+        }
+    }
+}
+
+function showPracticeFullLockMessage() {
+    if (typeof currentUser === 'undefined' || !currentUser) {
+        if (confirm('Chế độ luyện tập Chuyên ngành\n\n' +
+                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
+                    'Đăng nhập ngay?')) {
+            if (typeof showLoginModal === 'function') showLoginModal();
+        }
+    } else {
+        if (confirm('Chế độ luyện tập Chuyên ngành\n\n' +
+                    'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
+                    'Gia hạn ngay?')) {
+            if (typeof openRenewalModal === 'function') openRenewalModal();
+        }
+    }
+}
+
+/* DATASET SWITCHING */
+function initDatasetSelector() {
+    if (typeof DATASET_REGISTRY === 'undefined' || !DATASET_REGISTRY) return;
+    if (!DATASET_REGISTRY.tonghop) return;
+
+    var labelEl = $('dsTonghopLabel');
+    if (labelEl) {
+        var count = DATASET_REGISTRY.tonghop.count
+                 || (DATASET_REGISTRY.tonghop.data || []).length;
+        labelEl.textContent = count + ' câu phản xạ tổng hợp VPCX';
+    }
+
+    var chuyenNganhKeys = Object.keys(DATASET_REGISTRY).filter(function(id) {
+        return id !== 'tonghop';
+    });
+
+    var cnBtn = $('dsChuyenNganhBtn');
+    if (chuyenNganhKeys.length === 0) {
+        if (cnBtn) cnBtn.style.display = 'none';
+        return;
+    }
+
+    var canAccess = canAccessChuyenNganh();
+
+    var subGrid = $('dsSubGrid');
+    if (subGrid) {
+        var subHtml = '';
+        chuyenNganhKeys.forEach(function(id) {
+            var ds = DATASET_REGISTRY[id];
+            var lockIcon = canAccess
+                ? ''
+                : '<i class="fas fa-lock ds-sub-lock"></i>';
+            var lockCls = canAccess ? '' : ' locked';
+            subHtml += '<button class="ds-sub-btn' + lockCls + '" ' +
+                       'data-dataset="' + ds.id + '" ' +
+                       'data-locked="' + (canAccess ? '0' : '1') + '" ' +
+                       'style="--ds-color:' + (ds.color || '#64748b') + '" ' +
+                       'title="' + escapeHtml(ds.name) + ' (' + ds.count + ' câu)' +
+                       (canAccess ? '' : ' - Cần gia hạn để mở khoá') + '">' +
+                       '<i class="fas ' + (ds.icon || 'fa-folder') + '"></i>' +
+                       '<span>' + escapeHtml(ds.name) + '</span>' +
+                       lockIcon +
+                       '</button>';
+        });
+        subGrid.innerHTML = subHtml;
+    }
+
+    if (cnBtn) {
+        var oldLock = cnBtn.querySelector('.ds-main-lock');
+        if (oldLock) oldLock.remove();
+
+        if (!canAccess) {
+            var span = cnBtn.querySelector('span');
+            if (span) {
+                span.insertAdjacentHTML('afterend',
+                    '<i class="fas fa-lock ds-main-lock"></i>');
+            }
+            cnBtn.classList.add('has-lock');
+            cnBtn.title = 'Cần đăng nhập + gia hạn để mở khoá chuyên ngành';
+        } else {
+            cnBtn.classList.remove('has-lock');
+            cnBtn.title = 'Chọn chuyên ngành';
+        }
+    }
+
+    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
+        if (btn.__boundDataset) return;
+        btn.__boundDataset = true;
+        btn.addEventListener('click', function() {
+            switchDataset('tonghop');
+            var sub = $('dsSubWrap');
+            if (sub) sub.style.display = 'none';
+            document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            if (cnBtn) cnBtn.classList.remove('active');
+        });
+    });
+
+    if (cnBtn && !cnBtn.__boundToggle) {
+        cnBtn.__boundToggle = true;
+        cnBtn.addEventListener('click', function() {
+            var sub = $('dsSubWrap');
+            if (!sub) return;
+            var isOpen = sub.style.display !== 'none';
+            if (isOpen) {
+                sub.style.display = 'none';
+                cnBtn.classList.remove('active');
+            } else {
+                sub.style.display = 'block';
+                cnBtn.classList.add('active');
+                document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+            }
+        });
+    }
+
+    document.querySelectorAll('.ds-sub-btn').forEach(function(btn) {
+        if (btn.__boundSub) return;
+        btn.__boundSub = true;
+        btn.addEventListener('click', function(e) {
+            if (this.dataset.locked === '1') {
+                e.preventDefault();
+                e.stopPropagation();
+                showChuyenNganhLockMessage();
+                return;
+            }
+            var id = this.dataset.dataset;
+            document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            switchDataset(id);
+            if (cnBtn) cnBtn.classList.add('active');
+        });
+    });
+
+    markCurrentDatasetActive();
+}
+
+function markCurrentDatasetActive() {
+    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+    document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.dataset === current);
+    });
+    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+        b.classList.toggle('active', current === 'tonghop');
+    });
+    if (current !== 'tonghop') {
+        var wrap = $('dsSubWrap');
+        if (wrap) wrap.style.display = 'block';
+        document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
+            b.classList.add('active');
+        });
+    }
+}
+
+function switchDataset(datasetId) {
+    if (!DATASET_REGISTRY[datasetId]) return;
+
+    if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
+        showChuyenNganhLockMessage();
+        return;
+    }
+
+    if (typeof window.__switchRawData === 'function') {
+        window.__switchRawData(datasetId);
+    }
+
+    window.__onboardingOverride = null;
+
+    state = { search:'', hsk:'', subject:'' };
+    if ($('searchInput')) $('searchInput').value = '';
+    if ($('hskFilter')) $('hskFilter').value = '';
+    if ($('subjectFilter')) $('subjectFilter').value = '';
+
+    buildFilters();
+    applyFilter();
+    updateResultCount();
+
+    if ($('fabGroup')) $('fabGroup').classList.remove('open');
+}
+
+/* VOICE SETTINGS */
+var voiceState = {
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
+    voiceURI: ''
+};
+
+var DEFAULT_VOICE = { rate: 1.0, pitch: 1.0, volume: 1.0, voiceURI: '' };
+
+function loadVoiceSettings() {
+    try {
+        var saved = JSON.parse(localStorage.getItem('voiceSettings') || 'null');
+        if (saved && typeof saved === 'object') {
+            if (typeof saved.rate === 'number')   voiceState.rate   = Math.max(0.5, Math.min(1.5, saved.rate));
+            if (typeof saved.pitch === 'number')  voiceState.pitch  = Math.max(0.5, Math.min(1.5, saved.pitch));
+            if (typeof saved.volume === 'number') voiceState.volume = Math.max(0,   Math.min(1,   saved.volume));
+            if (typeof saved.voiceURI === 'string') voiceState.voiceURI = saved.voiceURI;
+        }
+    } catch(e) {}
+}
+
+function saveVoiceSettings() {
+    try { localStorage.setItem('voiceSettings', JSON.stringify(voiceState)); } catch(e) {}
+}
+
+function applyVoiceSettings(utterance) {
+    if (!utterance) return;
+    utterance.rate   = voiceState.rate;
+    utterance.pitch  = voiceState.pitch;
+    utterance.volume = voiceState.volume;
+    var v = pickVoice();
+    if (v) utterance.voice = v;
+}
+
+function pickVoice() {
+    if (!('speechSynthesis' in window)) return null;
+    var voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+
+    if (voiceState && voiceState.voiceURI) {
+        var chosen = voices.find(function(v) { return v.voiceURI === voiceState.voiceURI; });
+        if (chosen) return chosen;
+    }
+
+    var priorities = [
+        function(v){ return v.lang === 'zh-CN' && /Ting-?Ting/i.test(v.name); },
+        function(v){ return v.lang === 'zh-CN' && /Siri/i.test(v.name); },
+        function(v){ return v.lang === 'zh-CN' && v.localService; },
+        function(v){ return v.lang === 'zh-CN'; },
+        function(v){ return v.lang === 'zh-TW'; },
+        function(v){ return v.lang && v.lang.indexOf('zh') === 0; }
+    ];
+    for (var i = 0; i < priorities.length; i++) {
+        var found = voices.find(priorities[i]);
+        if (found) return found;
+    }
+    return null;
+}
+
+function getChineseVoice() { return pickVoice(); }
+
+/* TIER HELPERS */
+function getTierInfo() {
+    if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
+        return {
+            tier: window.APP_TIER,
+            maxQuestions: window.APP_LIMITS.maxQuestions,
+            maxHSK: window.APP_LIMITS.maxHSK,
+            unlimitedWriting: !!window.APP_LIMITS.unlimitedWriting,
+            isTrial: !!window.APP_LIMITS.isTrial,
+            email: window.APP_LIMITS.email
+        };
+    }
+    return {
+        tier: 'demo',
+        maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
+        maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
+        unlimitedWriting: false,
+        isTrial: false,
+        email: null
+    };
+}
+
+function isDemoTier()   { return getTierInfo().tier === 'demo'; }
+function isTrialTier()  { return getTierInfo().tier === 'trial'; }
+function isActiveTier() { return getTierInfo().tier === 'active'; }
+function isExpiredTier(){ return getTierInfo().tier === 'expired'; }
+function isLimitedTier(){ var t = getTierInfo().tier; return t === 'demo' || t === 'trial' || t === 'expired'; }
+
+function getLimitedData() {
+    if (window.__onboardingOverride && Array.isArray(window.__onboardingOverride)
+        && window.__onboardingOverride.length > 0
+        && !state.search && !state.hsk && !state.subject) {
+        return window.__onboardingOverride;
+    }
+
+    var info = getTierInfo();
+    if (info.tier === 'active') return RAW_DATA;
+
+    var max = (typeof info.maxQuestions === 'number' && info.maxQuestions > 0)
+              ? info.maxQuestions
+              : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 20);
+
+    var allowedHsk = getAllowedHskList();
+    if (!allowedHsk || allowedHsk.length === 0) {
+        return RAW_DATA.slice(0, max);
+    }
+
+    var perHsk = Math.floor(max / allowedHsk.length);
+    var remainder = max % allowedHsk.length;
+
+    var buckets = {};
+    allowedHsk.forEach(function(h) { buckets[h] = []; });
+    RAW_DATA.forEach(function(r) {
+        if (r.hsk && buckets[r.hsk]) buckets[r.hsk].push(r);
+    });
+
+    var result = [];
+    for (var i = 0; i < allowedHsk.length; i++) {
+        var hsk = allowedHsk[i];
+        var take = perHsk + (i >= allowedHsk.length - remainder ? 1 : 0);
+        var bucket = buckets[hsk];
+        if (bucket && bucket.length > 0) {
+            result = result.concat(bucket.slice(0, take));
+        }
+    }
+
+    if (result.length < max) {
+        var usedIds = {};
+        result.forEach(function(r) { usedIds[r.stt] = true; });
+        for (var j = 0; j < RAW_DATA.length && result.length < max; j++) {
+            var r2 = RAW_DATA[j];
+            if (!usedIds[r2.stt]) {
+                result.push(r2);
+                usedIds[r2.stt] = true;
+            }
+        }
+    }
+
+    return result;
+}
+
+function getAllowedHskList() {
+    var info = getTierInfo();
+    var max = info.maxHSK;
+    if (max === Infinity || max >= 6 || info.tier === 'active') {
+        return ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
+    }
+    var list = [];
+    for (var i = 1; i <= max; i++) list.push('HSK' + i);
+    return list;
+}
+
+function getAllowedSubjectList() {
+    var info = getTierInfo();
+    if (info.tier === 'active') {
+        var set = {};
+        RAW_DATA.forEach(function(r) { if (r.subject) set[r.subject] = 1; });
+        return Object.keys(set).sort();
+    }
+    var set2 = {};
+    getLimitedData().forEach(function(r) { if (r.subject) set2[r.subject] = 1; });
+    return Object.keys(set2).sort();
+}
+
+function shouldCountUsage() {
+    var t = getTierInfo().tier;
+    return t === 'demo' || t === 'expired';
+}
+
+function getDemoUsage() {
+    try {
+        var today = new Date().toDateString();
+        var data = JSON.parse(localStorage.getItem('demo_usage') || '{}');
+        if (data.date !== today) {
+            data = { date: today, count: 0 };
+            localStorage.setItem('demo_usage', JSON.stringify(data));
+        }
+        return data.count;
+    } catch(e) { return 0; }
+}
+function incDemoUsage() {
+    if (!shouldCountUsage()) return;
+    try {
+        var today = new Date().toDateString();
+        var data = JSON.parse(localStorage.getItem('demo_usage') || '{}');
+        if (data.date !== today) data = { date: today, count: 0 };
+        data.count++;
+        localStorage.setItem('demo_usage', JSON.stringify(data));
+    } catch(e) {}
+}
+function getDemoRemaining() {
+    if (!shouldCountUsage()) return Infinity;
+    return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage());
+}
+
+function canUseFeature() {
+    var info = getTierInfo();
+    if (info.tier === 'expired') return getDemoUsage() < DEMO_DAILY_LIMIT;
+    if (info.tier === 'demo') return getDemoUsage() < DEMO_DAILY_LIMIT;
+    return true;
+}
+
+function updateDemoRemaining() {
+    var el = $('demoRemainingText');
+    if (!el) return;
+    if (!shouldCountUsage()) return;
+    var remaining = getDemoRemaining();
+    el.textContent = remaining;
+    if (remaining < 20) el.style.color = '#dc2626';
+    else if (remaining < 50) el.style.color = '#f59e0b';
+    else el.style.color = '#16a34a';
+}
+
+function showLimitMessage() {
+    var info = getTierInfo();
+    if (info.tier === 'expired') {
+        if (confirm('Tài khoản đã HẾT HẠN.\n\nVui lòng gia hạn để tiếp tục.\n\nNhấn OK để mở trang gia hạn.')) {
+            if (typeof openRenewalModal === 'function') openRenewalModal();
+        }
+        return;
+    }
+    if (info.tier === 'demo') {
+        if (confirm('Bạn đã dùng hết ' + DEMO_DAILY_LIMIT + ' lượt miễn phí hôm nay.\n\n(Bao gồm NGHE và LUYỆN VIẾT)\n\nĐăng nhập Google để dùng KHÔNG GIỚI HẠN!')) {
+            if (typeof showLoginModal === 'function') showLoginModal();
+        }
+        return;
+    }
+}
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function escapeJs(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n').replace(/\r/g, '');
+}
+function formatTimeDiff(ms) {
+    var s = Math.floor(ms / 1000);
+    if (s < 60) return 'Vừa xong';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + ' phút trước';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + ' giờ trước';
+    var d = Math.floor(h / 24);
+    if (d < 30) return d + ' ngày trước';
+    var mo = Math.floor(d / 30);
+    return mo + ' tháng trước';
+}
+
+/* TAG CLICKABLE - Click vao topic/subject de search */
+window.searchByTag = function(evt, type, value) {
+    if (evt) {
+        evt.stopPropagation();
+        if (evt.preventDefault) evt.preventDefault();
+    }
+    if (!value) return;
+
+    var searchInput = $('searchInput');
+    if (!searchInput) return;
+
+    var pfModal = $('practiceFullModal');
+    if (pfModal && pfModal.classList.contains('show')) {
+        if (typeof closePracticeFull === 'function') closePracticeFull();
+    }
+
+    if ($('hskFilter')) $('hskFilter').value = '';
+    if ($('subjectFilter')) $('subjectFilter').value = '';
+
+    window.__onboardingOverride = null;
+    var obBanner = $('onboardingActiveBanner');
+    if (obBanner) obBanner.remove();
+
+    searchInput.value = value;
+
+    state.search = value.toLowerCase().trim();
+    state.hsk = '';
+    state.subject = '';
+
+    renderedCount = 0;
+    applyFilter();
+
+    var mainEl = $('mainContent');
+    if (mainEl) {
+        var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: yOffset, behavior: 'smooth' });
+    }
+
+    setTimeout(function() {
+        searchInput.focus();
+        try { searchInput.setSelectionRange(0, searchInput.value.length); } catch(e) {}
+    }, 300);
+
+    var clearBtn = $('clearSearchBtn');
+    if (clearBtn) clearBtn.classList.add('show');
+
+    var label = type === 'topic' ? 'chủ điểm' : 'chủ đề';
+    showTagToast('Đang lọc theo ' + label + ': "' + value + '"');
+};
+
+function showTagToast(message) {
+    var old = document.getElementById('tagToast');
+    if (old) old.remove();
+
+    var toast = document.createElement('div');
+    toast.id = 'tagToast';
+    toast.textContent = message;
+    toast.style.cssText = [
+        'position:fixed',
+        'top:80px',
+        'left:50%',
+        'transform:translateX(-50%) translateY(-20px)',
+        'padding:.7rem 1.2rem',
+        'background:linear-gradient(135deg,#4f46e5,#7c3aed)',
+        'color:#fff',
+        'border-radius:50px',
+        'font-size:.85rem',
+        'font-weight:700',
+        'font-family:inherit',
+        'box-shadow:0 8px 24px rgba(124,58,237,.45)',
+        'z-index:9999',
+        'opacity:0',
+        'transition:opacity .25s ease, transform .3s cubic-bezier(.34,1.56,.64,1)',
+        'pointer-events:none',
+        'max-width:90vw',
+        'text-overflow:ellipsis',
+        'overflow:hidden',
+        'white-space:nowrap'
+    ].join(';');
+
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(function() {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300);
+    }, 2000);
+}
+
+/* ONBOARDING */
+var _onboardingSelected = {};
+var _onboardingConfig = null;
+
+function getOnboardingConfig() {
+    var info = getTierInfo();
+    if (typeof ONBOARDING_CONFIG === 'undefined' || !ONBOARDING_CONFIG) return null;
+    if (info.tier === 'demo')  return ONBOARDING_CONFIG.demo  || null;
+    if (info.tier === 'trial') return ONBOARDING_CONFIG.trial || null;
+    return null;
+}
+
+function getOnboardingStorageKey() {
+    var info = getTierInfo();
+    if (info.tier === 'demo') return 'onboarding_demo';
+    if (info.tier === 'trial' && info.email) return 'onboarding_trial_' + info.email;
+    return null;
+}
+
+function getAvailableTopicsForTier() {
+    var info = getTierInfo();
+    var allowedHsk = getAllowedHskList();
+
+    var topicMap = {};
+    RAW_DATA.forEach(function(r) {
+        if (info.tier !== 'active' && allowedHsk.indexOf(r.hsk) === -1) return;
+        var t = (r.topic || '').trim();
+        if (!t) return;
+        topicMap[t] = (topicMap[t] || 0) + 1;
+    });
+
+    var list = Object.keys(topicMap).map(function(name) {
+        return { name: name, count: topicMap[name] };
+    });
+    list.sort(function(a, b) { return b.count - a.count; });
+    return list;
+}
+
+function loadOnboardingSelection() {
+    var key = getOnboardingStorageKey();
+    if (!key) return null;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key) || 'null');
+        if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
+            return saved;
+        }
+    } catch(e) {}
+    return null;
+}
+
+function saveOnboardingSelection(topics) {
+    var key = getOnboardingStorageKey();
+    if (!key) return;
+    try {
+        localStorage.setItem(key, JSON.stringify({
+            topics: topics,
+            savedAt: Date.now()
+        }));
+    } catch(e) {}
+}
+
+function maybeShowOnboarding() {
+    var info = getTierInfo();
+    if (info.tier !== 'demo' && info.tier !== 'trial') return;
+
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') return;
+
+    var cfg = getOnboardingConfig();
+    if (!cfg || !cfg.enabled) return;
+
+    var saved = loadOnboardingSelection();
+    if (saved) {
+        applyOnboardingSelection(saved.topics, false);
+        return;
+    }
+
+    showOnboardingModal();
+}
+
+function showOnboardingModal() {
+    var cfg = getOnboardingConfig();
+    if (!cfg) return;
+
+    _onboardingConfig = cfg;
+    _onboardingSelected = {};
+
+    var titleEl = $('onboardingTitle');
+    var subtitleEl = $('onboardingSubtitle');
+    var maxCountEl = $('onboardingMaxCount');
+    if (titleEl) titleEl.textContent = cfg.title || 'Bạn quan tâm chủ đề nào?';
+    if (subtitleEl) subtitleEl.textContent = cfg.subtitle || '';
+    if (maxCountEl) maxCountEl.textContent = cfg.topics_per_user || 3;
+
+    renderOnboardingTopics();
+
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.add('show');
+
+    updateOnboardingUI();
+}
+
+function renderOnboardingTopics() {
+    var container = $('onboardingTopics');
+    if (!container) return;
+
+    var topics = getAvailableTopicsForTier();
+    if (topics.length === 0) {
+        container.innerHTML = '<div class="onboarding-empty">' +
+            '<i class="fas fa-inbox"></i> Chưa có chủ đề nào trong kho</div>';
+        return;
+    }
+
+    var html = '';
+    topics.forEach(function(t) {
+        var selCls = _onboardingSelected[t.name] ? ' selected' : '';
+        html += '<button type="button" class="onboarding-topic' + selCls + '" ' +
+                'data-topic="' + escapeHtml(t.name) + '">' +
+                '<span>' + escapeHtml(t.name) + '</span>' +
+                '<span class="count">' + t.count + '</span>' +
+                '</button>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.onboarding-topic').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            onToggleOnboardingTopic(this.dataset.topic);
+        });
+    });
+}
+
+function onToggleOnboardingTopic(topicName) {
+    if (!_onboardingConfig) return;
+    var max = _onboardingConfig.topics_per_user || 3;
+
+    if (_onboardingSelected[topicName]) {
+        delete _onboardingSelected[topicName];
+    } else {
+        var currentCount = Object.keys(_onboardingSelected).length;
+        if (currentCount >= max) {
+            showTagToast('Chỉ được chọn tối đa ' + max + ' chủ đề');
+            return;
+        }
+        _onboardingSelected[topicName] = true;
+    }
+
+    var btn = null;
+    document.querySelectorAll('.onboarding-topic').forEach(function(b) {
+        if (b.dataset.topic === topicName) btn = b;
+    });
+    if (btn) btn.classList.toggle('selected', !!_onboardingSelected[topicName]);
+    updateOnboardingUI();
+}
+
+function updateOnboardingUI() {
+    if (!_onboardingConfig) return;
+    var selected = Object.keys(_onboardingSelected).length;
+    var max = _onboardingConfig.topics_per_user || 3;
+
+    var countEl = $('onboardingSelectedCount');
+    if (countEl) countEl.textContent = selected;
+
+    var counter = $('onboardingCounter');
+    if (counter) {
+        counter.classList.remove('ok', 'full');
+        if (selected > 0) counter.classList.add('ok');
+        if (selected >= max) counter.classList.add('full');
+    }
+
+    var startBtn = $('onboardingStartBtn');
+    if (startBtn) startBtn.disabled = (selected === 0);
+}
+
+function onOnboardingStart() {
+    var topics = Object.keys(_onboardingSelected);
+    if (topics.length === 0) return;
+
+    saveOnboardingSelection(topics);
+
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.remove('show');
+
+    applyOnboardingSelection(topics, true);
+}
+
+function onOnboardingSkip() {
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.remove('show');
+}
+
+function shuffleArray(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+}
+
+function applyOnboardingSelection(topics, scrollTop) {
+    var cfg = getOnboardingConfig();
+    if (!cfg) return;
+
+    var maxQ = cfg.max_questions || 60;
+    var allowedHsk = getAllowedHskList();
+    if (cfg.hsk_allowed && Array.isArray(cfg.hsk_allowed) && cfg.hsk_allowed.length > 0) {
+        allowedHsk = cfg.hsk_allowed.map(function(n) { return 'HSK' + n; });
+    }
+
+    var pool = RAW_DATA.filter(function(r) {
+        if (allowedHsk.indexOf(r.hsk) === -1) return false;
+        var t = (r.topic || '').trim();
+        return topics.indexOf(t) !== -1;
+    });
+
+    var perHsk = Math.ceil(maxQ / allowedHsk.length);
+    var buckets = {};
+    allowedHsk.forEach(function(h) { buckets[h] = []; });
+    pool.forEach(function(r) {
+        if (buckets[r.hsk]) buckets[r.hsk].push(r);
+    });
+
+    Object.keys(buckets).forEach(function(h) { shuffleArray(buckets[h]); });
+
+    var final = [];
+    for (var i = 0; i < allowedHsk.length; i++) {
+        var h = allowedHsk[i];
+        var take = buckets[h].slice(0, perHsk);
+        final = final.concat(take);
+    }
+
+    if (final.length < maxQ) {
+        var usedIds = {};
+        final.forEach(function(r) { usedIds[r.stt] = true; });
+        for (var j = 0; j < allowedHsk.length && final.length < maxQ; j++) {
+            var h2 = allowedHsk[j];
+            subject for (var k = 0; k < buckets[h2].length && final.length < maxQ:; k++)'' {
+                var r2 = buckets[h2 };
+][k];
+                if (!used   Ids[r2.stt]) {
+ if                    final.push(r2);
+                    usedIds[r2.stt] = true;
+                }
+            }
+        }
+    }
+
+    window.__onboardingOverride = final;
+
+    state = { search:'', hsk:'', ($('searchInput')) $('searchInput').value = '';
+    if ($('hskFilter')) $('hskFilter').value = '';
+    if ($('subjectFilter')) $('subjectFilter').value = '';
+    if ($('clearSearchBtn')) $('clearSearchBtn').classList.remove('show');
+
+    filtered = final;
+    renderedCount = 0;
+    render(true);
+
+    showOnboardingActiveBanner(topics, final.length);
+
+    if (scrollTop) {
+        setTimeout(function() {
+            var mainEl = $('mainContent');
+            if (mainEl) {
+                var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+                window.scrollTo({ top: yOffset, behavior: 'smooth' });
+            }
+        }, 200);
+    }
+}
+
+function showOnboardingActiveBanner(topics, count) {
+    var old = $('onboardingActiveBanner');
+    if (old) old.remove();
+
+    var mainContent = $('mainContent');
+    if (!mainContent) return;
+    var container = mainContent.querySelector('.container');
+    if (!container) return;
+
+    var banner = document.createElement('div');
+    banner.id = 'onboardingActiveBanner';
+    banner.style.cssText = [
+        'display:flex', 'align-items:center', 'gap:.6rem', 'flex-wrap:wrap',
+        'padding:.7rem 1rem', 'margin-bottom:1rem',
+        'background:linear-gradient(135deg, rgba(99,102,241,.08), rgba(139,92,246,.08))',
+        'border:1.5px solid rgba(139,92,246,.3)',
+        'border-radius:12px', 'font-size:.82rem', 'color:var(--text)',
+        'animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1)'
+    ].join(';');
+
+    var chipsHtml = topics.map(function(t) {
+        return '<span style="padding:.15rem .55rem;background:var(--surface);border:1px solid var(--border);border-radius:50px;font-weight:700;font-size:.75rem">' + escapeHtml(t) + '</span>';
+    }).join('');
+
+    banner.innerHTML =
+        '<i class="fas fa-star" style="color:#d946ef"></i>' +
+        '<span style="font-weight:700">Gợi ý cho bạn:</span>' +
+        chipsHtml +
+        '<span style="color:var(--text-3);font-size:.75rem;margin-left:auto">' +
+            '(' + count + ' câu)' +
+        '</span>' +
+        '<button type="button" id="onboardingChangeBtn" ' +
+        'style="padding:.3rem .65rem;border-radius:50px;border:1.5px solid var(--primary);' +
+        'background:var(--surface);color:var(--primary);font-weight:700;font-size:.72rem;' +
+        'cursor:pointer;font-family:inherit">Đổi</button>';
+
+    var firstChild = container.firstChild;
+    container.insertBefore(banner, firstChild);
+
+    var changeBtn = $('onboardingChangeBtn');
+    if (changeBtn) {
+        changeBtn.addEventListener('click', function() {
+            var key = getOnboardingStorageKey();
+            if (key) try { localStorage.removeItem(key); } catch(e) {}
+            window.__onboardingOverride = null;
+            showOnboardingModal();
+        });
+    }
+}
+
+function initOnboarding() {
+    var startBtn = $('onboardingStartBtn');
+    var skipBtn = $('onboardingSkipBtn');
+    if (startBtn) startBtn.addEventListener('click', onOnboardingStart);
+    if (skipBtn) skipBtn.addEventListener('click', onOnboardingSkip);
+
+    setTimeout(maybeShowOnboarding, 500);
+}
+
+window.maybeShowOnboarding = maybeShowOnboarding;
+window.showOnboardingModal = showOnboardingModal;
+window.applyOnboardingSelection = applyOnboardingSelection;
+
+function moveTikTokBarToHeader() {
+    try {
+        if (window.innerWidth < 769) return;
+        var headerInner = document.querySelector('.header-inner');
+        var headerActions = document.querySelector('.header-actions');
+        var tiktokBar = document.querySelector('.sticky-top .container > .tiktok-bar');
+        if (!headerInner || !headerActions || !tiktokBar) return;
+        headerInner.insertBefore(tiktokBar, headerActions);
+        setTimeout(function() { checkHeaderOverflow(); }, 100);
+    } catch(e) {}
+}
+
+function moveTikTokBarBelowHeader() {
+    try {
+        var headerInner = document.querySelector('.header-inner');
+        var tiktokBar = headerInner ? headerInner.querySelector('.tiktok-bar') : null;
+        var container = document.querySelector('.sticky-top .container');
+        var header = container ? container.querySelector('.header') : null;
+        if (!tiktokBar || !container || !header) return;
+        if (header.nextSibling) {
+            container.insertBefore(tiktokBar, header.nextSibling);
+        } else {
+            container.appendChild(tiktokBar);
+        }
+    } catch(e) {}
+}
+
+function checkHeaderOverflow() {
+    try {
+        if (window.innerWidth < 769) return;
+        var headerInner = document.querySelector('.header-inner');
+        if (!headerInner) return;
+        var tiktok = headerInner.querySelector('.tiktok-bar');
+        if (!tiktok) return;
+        tiktok.style.display = '';
+    } catch(e) {}
+}
+
+var _lastWidthMode = null;
+function handleResponsiveTikTok() {
+    var currentMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
+    if (currentMode === _lastWidthMode) return;
+    _lastWidthMode = currentMode;
+    if (currentMode === 'desktop') moveTikTokBarToHeader();
+    else moveTikTokBarBelowHeader();
+}
+
+function populateTikTokFloat() {
+    try {
+        var pfTiktok = $('pfTiktokFloat');
+        if (!pfTiktok) return;
+        var tiktokUrl = (typeof TIKTOK_URL !== 'undefined' && TIKTOK_URL) ? TIKTOK_URL : '';
+        if (!tiktokUrl) { pfTiktok.style.display = 'none'; return; }
+        pfTiktok.href = tiktokUrl;
+        var avatarUrl = (typeof TIKTOK_AVATAR !== 'undefined' && TIKTOK_AVATAR) ? TIKTOK_AVATAR : '';
+        var avatarEl = $('pfTiktokAvatar');
+        if (avatarEl) {
+            if (avatarUrl) { avatarEl.src = avatarUrl; avatarEl.style.display = ''; }
+            else { avatarEl.style.display = 'none'; }
+        }
+        var displayName = '';
+        if (typeof TIKTOK_NICKNAME !== 'undefined' && TIKTOK_NICKNAME) displayName = TIKTOK_NICKNAME;
+        else if (typeof TIKTOK_USERNAME !== 'undefined' && TIKTOK_USERNAME) displayName = TIKTOK_USERNAME;
+        else displayName = 'TikTok';
+        var nameEl = $('pfTiktokName');
+        if (nameEl) nameEl.textContent = displayName;
+        pfTiktok.title = 'Theo dõi TikTok: ' + displayName;
+    } catch(e) {}
+}
+
+function initApp() {
+    mobileWrapper = $('mobileWrapper');
+    $('loadingScreen').classList.add('hidden');
+    $('stickyTop').style.display = 'block';
+    $('fabGroup').style.display = 'flex';
+    $('mainContent').style.display = 'block';
+
+    loadVoiceSettings();
+    initDatasetSelector();
+
+    if (typeof initSocial === 'function') initSocial();
+    if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
+    if (typeof initAuthUI === 'function') initAuthUI();
+    initScrollDetection();
+    initFabGroup();
+    initTheme();
+    initDisplayState();
+    initSpeech();
+    initWriter();
+    initPracticeFull();
+    initVoiceSettings();
+    initOnboarding();
+
+    _lastWidthMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
+    if (_lastWidthMode === 'desktop') moveTikTokBarToHeader();
+    populateTikTokFloat();
+
+    var _resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(function() {
+            handleResponsiveTikTok();
+            checkHeaderOverflow();
+        }, 200);
+    });
+
+    $('searchInput').addEventListener('input', applyFilter);
+    $('resetBtn').addEventListener('click', function() {
+        $('searchInput').value = '';
+        $('hskFilter').value = '';
+        $('subjectFilter').value = '';
+        window.__onboardingOverride = null;
+        var obBanner = $('onboardingActiveBanner');
+        if (obBanner) obBanner.remove();
+        applyFilter();
+    });
+    $('clearSearchBtn').addEventListener('click', function() {
+        $('searchInput').value = '';
+        state.search = '';
+        $('searchInput').focus();
+        applyFilter();
+        this.classList.remove('show');
+    });
+    $('hskFilter').addEventListener('change', function() {
+        var val = this.value;
+        var allowed = getAllowedHskList();
+        if (val && allowed.indexOf(val) === -1) {
+            var info = getTierInfo();
+            var msg = info.tier === 'trial'
+                ? 'Bản Trial chỉ cho phép lọc HSK1-' + info.maxHSK + '.'
+                : 'Bản Demo chỉ cho phép lọc HSK1-' + info.maxHSK + '.';
+            alert(msg);
+            this.value = '';
+            applyFilter();
+            return;
+        }
+        applyFilter();
+    });
+    $('subjectFilter').addEventListener('change', function() {
+        var val = this.value;
+        var allowed = getAllowedSubjectList();
+        if (val && allowed.indexOf(val) === -1) {
+            var info = getTierInfo();
+            var msg = info.tier === 'trial'
+                ? 'Chủ đề này chưa có trong ' + info.maxQuestions + ' câu Trial.'
+                : 'Chủ đề này chưa có trong ' + info.maxQuestions + ' câu Demo.';
+            alert(msg);
+            this.value = '';
+            applyFilter();
+            return;
+        }
+        applyFilter();
+    });
+
+    try { buildFilters(); applyFilter(); }
+    catch(e) { console.error('Init error:', e); }
+}
+
 function refreshApp() {
     buildFilters();
     applyFilter();
@@ -2183,6 +3232,10 @@ function refreshApp() {
     updateResultCount();
     updateTierBadge();
     updateDemoBanner();
+
+    if (typeof maybeShowOnboarding === 'function') {
+        setTimeout(maybeShowOnboarding, 800);
+    }
 }
 
 function updateTierBadge() {
@@ -2269,9 +3322,6 @@ function initScrollDetection() {
     update();
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FAB GROUP — Mặc định MỞ khi vào trang (F5)
-   ═══════════════════════════════════════════════════════════════ */
 function initFabGroup() {
     var fabGroup = $('fabGroup');
     var fabMainBtn = $('fabMainBtn');
@@ -2431,6 +3481,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.renewal-modal') || e.target.closest('.voice-modal') ||
         e.target.closest('.dataset-selector') ||
         e.target.closest('.onboarding-modal') ||
+        e.target.closest('.tag-clickable') ||
         e.target.closest('.toggle-check-btn')) return;
     clearFocus();
 }, true);
@@ -2469,7 +3520,6 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-/* ============ VOICE SETTINGS UI ============ */
 function populateVoiceSelect() {
     if (!('speechSynthesis' in window)) return;
     var sel = $('voiceSelect');
@@ -2484,7 +3534,7 @@ function populateVoiceSelect() {
     }
     var html = '<option value="">-- Tự động (mặc định) --</option>';
     zhVoices.forEach(function(v) {
-        var label = v.name + ' (' + v.lang + ')' + (v.localService ? '' : ' • online');
+        var label = v.name + ' (' + v.lang + ')' + (v.localService ? '' : ' - online');
         html += '<option value="' + escapeHtml(v.voiceURI) + '">' + escapeHtml(label) + '</option>';
     });
     sel.innerHTML = html;
@@ -2643,7 +3693,7 @@ function buildFilters() {
         allHskList.forEach(function(h) {
             if (allowedHsk.indexOf(h) === -1) {
                 var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-                hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + ' ' + lockLabel + '</option>';
+                hskHtml += '<option value="' + h + '" disabled>' + h + ' ' + lockLabel + '</option>';
             }
         });
         hskSelect.innerHTML = hskHtml;
@@ -2663,7 +3713,7 @@ function buildFilters() {
         });
         locked.forEach(function(s) {
             var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + ' ' + lockLabel + '</option>';
+            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>' + escapeHtml(s) + ' ' + lockLabel + '</option>';
         });
         subjectSelect.innerHTML = subjHtml;
     } else {
@@ -2799,7 +3849,6 @@ function render(reset) {
                          '</span>';
         }
 
-        // ✅ TAG CLICKABLE — topic và subject có thể click để search
         var topicTag = '';
         if (r.topic) {
             topicTag = '<span class="card-tag topic tag-clickable" ' +
@@ -3029,9 +4078,9 @@ function splitByPinyin(zh, pinyin) {
     var syllableCounts = pinyinWords.map(function(w) { return countSyllables(w); });
     var totalSyllables = syllableCounts.reduce(function(a, b) { return a + b; }, 0);
 
-    if (totalSyllables === hanziChars.length) {
+    if (totalS   yllables === hanziChars.length) if {
         var result = [];
-        var charIdx = 0;
+ (        var charIdx = evt)0;
         for (var j = 0; j < syllableCounts.length; j++) {
             var cnt = syllableCounts[j];
             if (cnt <= 0) continue;
@@ -3111,7 +4160,7 @@ function updateInlinePreview(input, answer) {
 }
 
 window.fixInlineChar = function(el, evt) {
-    if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
+ { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
     var wrap = el.closest('.card-practice');
     var input = wrap ? wrap.querySelector('.practice-input') : null;
     if (!input) return;
@@ -3160,9 +4209,9 @@ function showInlineCheckWithAnswer(input) {
     var resultHtml = '';
     if (val) {
         var result = smartCheck(val, answer);
-        if (result.status === 'correct') resultHtml = '<span class="ai-correct">✅ ĐÚNG</span>';
-        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">⚠️ GẦN ĐÚNG</span>';
-        else resultHtml = '<span class="ai-wrong">❌ SAI</span>';
+        if (result.status === 'correct') resultHtml = '<span class="ai-correct">ĐÚNG</span>';
+        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">GẦN ĐÚNG</span>';
+        else resultHtml = '<span class="ai-wrong">SAI</span>';
         if (result.reason) resultHtml += '<span class="ai-reason">' + escapeHtml(result.reason) + '</span>';
     } else {
         resultHtml = '<span class="ai-reason">Chưa gõ gì cả</span>';
@@ -3187,9 +4236,9 @@ window.checkInput = function(input) {
     var resultHtml = '';
     if (val) {
         var result = smartCheck(val, answer);
-        if (result.status === 'correct') resultHtml = '<span class="ai-correct">✅ ĐÚNG</span>';
-        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">⚠️ GẦN ĐÚNG</span>';
-        else resultHtml = '<span class="ai-wrong">❌ SAI</span>';
+        if (result.status === 'correct') resultHtml = '<span class="ai-correct">ĐÚNG</span>';
+        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">GẦN ĐÚNG</span>';
+        else resultHtml = '<span class="ai-wrong">SAI</span>';
         if (result.reason) resultHtml += '<span class="ai-reason">' + escapeHtml(result.reason) + '</span>';
     } else {
         resultHtml = '<span class="ai-reason">Chưa gõ gì cả</span>';
@@ -3279,7 +4328,6 @@ function loadPracticeFull(stt) {
     var sttLabel = sttRaw ? '#' + sttRaw + '  ·  ' : '';
     $('pfCounter').textContent = sttLabel + 'Câu ' + (idx + 1) + ' / ' + filtered.length;
 
-    // ✅ Tag trong practice full cũng clickable
     var tagsHtml = '';
     if (r.hsk) tagsHtml += '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>';
     if (r.topic) {
@@ -3428,7 +4476,7 @@ function pfBuildFilterOptions() {
         allHskList.forEach(function(h) {
             if (allowedHsk.indexOf(h) === -1) {
                 var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-                hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + ' ' + lockLabel + '</option>';
+                hskHtml += '<option value="' + h + '" disabled>' + h + ' ' + lockLabel + '</option>';
             }
         });
         hskSel.innerHTML = hskHtml;
@@ -3445,7 +4493,7 @@ function pfBuildFilterOptions() {
         unlocked.forEach(function(s) { subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
         locked.forEach(function(s) {
             var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + ' ' + lockLabel + '</option>';
+            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>' + escapeHtml(s) + ' ' + lockLabel + '</option>';
         });
         subjSel.innerHTML = subjHtml;
     } else {
@@ -3620,13 +4668,13 @@ function checkFullAnswer() {
     }
     var result = smartCheck(val, pfCurrentAnswer);
     if (result.status === 'correct') {
-        statusEl.textContent = '✅ ĐÚNG';
+        statusEl.textContent = 'ĐÚNG';
         statusEl.className = 'practice-full-status correct';
     } else if (result.status === 'partial') {
-        statusEl.textContent = '⚠️ ' + (result.reason || 'GẦN ĐÚNG');
+        statusEl.textContent = (result.reason || 'GẦN ĐÚNG');
         statusEl.className = 'practice-full-status partial';
     } else {
-        statusEl.textContent = '❌ SAI';
+        statusEl.textContent = 'SAI';
         statusEl.className = 'practice-full-status wrong';
     }
 }
@@ -3691,7 +4739,7 @@ function revealFullAnswer() {
         var btn = document.createElement('button');
         btn.className = 'answer-phrase-btn';
         btn.textContent = item.text;
-        btn.title = item.pinyin ? (item.text + ' — ' + item.pinyin) : item.text;
+        btn.title = item.pinyin ? (item.text + ' - ' + item.pinyin) : item.text;
         btn.onclick = (function(text, pinyin, el, wrapEl) {
             return function(e) {
                 e.stopPropagation();
@@ -4002,13 +5050,12 @@ function _quickSpeakNormal(token) {
     }, 30);
 }
 
-function init('PracticeFull() {
+function initPracticeFull() {
     try {
-click        var savedRandom = localStorage.getItem',('pfRandomMode') === '1';
- toggle        if (savedRandom) {
-Hint            pfRandomMode = true;
-            var);
- rBtnInit = $('pfRandomToggleBtn');
+        var savedRandom = localStorage.getItem('pfRandomMode') === '1';
+        if (savedRandom) {
+            pfRandomMode = true;
+            var rBtnInit = $('pfRandomToggleBtn');
             if (rBtnInit) {
                 rBtnInit.classList.add('active');
                 rBtnInit.title = 'ĐANG BẬT: Nút Next sẽ nhảy câu ngẫu nhiên';
@@ -4029,7 +5076,8 @@ Hint            pfRandomMode = true;
     $('pfPrevBtn').addEventListener('click', pfPrev);
     $('pfNextBtn').addEventListener('click', pfNext);
     $('pfRevealBtn').addEventListener('click', revealFullAnswer);
-    $('pfHintBtn').addEventListener    $('pfInput').addEventListener('input', function() {
+    $('pfHintBtn').addEventListener('click', toggleHint);
+    $('pfInput').addEventListener('input', function() {
         updateCharPreview();
         checkFullAnswer();
     });
@@ -4115,10 +5163,7 @@ Hint            pfRandomMode = true;
     }
 }
 
-/* ============================================================ */
-/* 📚 DATASET SELECTOR trong Practice Full                       */
-/* ============================================================ */
-
+/* DATASET SELECTOR trong Practice Full */
 function pfBuildDatasetSelect() {
     var sel = $('pfDatasetSelect');
     var row = $('pfDatasetRow');
@@ -4135,9 +5180,9 @@ function pfBuildDatasetSelect() {
 
         var label;
         if (isTonghop) {
-            label = '📚 ' + (ds.count || 0) + ' câu — Tổng hợp VPCX';
+            label = (ds.count || 0) + ' câu - Tổng hợp VPCX';
         } else {
-            label = (isLocked ? '🔒 ' : '🏭 ') + ds.name +
+            label = (isLocked ? '[Khoá] ' : '') + ds.name +
                     ' (' + (ds.count || 0) + ' câu)';
         }
 
@@ -4188,7 +5233,6 @@ document.addEventListener('change', function(e) {
         return;
     }
 
-    // Clear onboarding override khi đổi dataset
     window.__onboardingOverride = null;
     var obBanner = $('onboardingActiveBanner');
     if (obBanner) obBanner.remove();
@@ -4243,7 +5287,7 @@ function initWriter() {
             },
             onComplete: function(summary) {
                 if (summary.totalMistakes === 0) {
-                    $('writerScore').textContent = '🎉 Tuyệt vời! Viết đúng tất cả các nét!';
+                    $('writerScore').textContent = 'Tuyệt vời! Viết đúng tất cả các nét!';
                     $('writerScore').className = 'writer-score success';
                 } else {
                     $('writerScore').textContent = 'Hoàn thành! Số nét sai: ' + summary.totalMistakes;
