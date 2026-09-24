@@ -3001,10 +3001,27 @@ function getChineseVoice() { return pickVoice(); }
 /* ============================================================ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
+        var tier = window.APP_TIER;
+        var maxQ = window.APP_LIMITS.maxQuestions;
+        var maxH = window.APP_LIMITS.maxHSK;
+
+        /* ══════════════════════════════════════════════════════════ */
+        /* EXPIRED: tính năng dùng Y HỆT DEMO                          */
+        /* (banner vẫn hiện "hết hạn" nhưng giới hạn = Demo)           */
+        /* ══════════════════════════════════════════════════════════ */
+        if (tier === 'expired') {
+            if (!maxQ || maxQ <= 0) {
+                maxQ = (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 60;
+            }
+            if (!maxH || maxH <= 0) {
+                maxH = (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3;
+            }
+        }
+
         return {
-            tier: window.APP_TIER,
-            maxQuestions: window.APP_LIMITS.maxQuestions,
-            maxHSK: window.APP_LIMITS.maxHSK,
+            tier: tier,
+            maxQuestions: maxQ,
+            maxHSK: maxH,
             unlimitedWriting: !!window.APP_LIMITS.unlimitedWriting,
             isTrial: !!window.APP_LIMITS.isTrial,
             email: window.APP_LIMITS.email
@@ -3012,14 +3029,13 @@ function getTierInfo() {
     }
     return {
         tier: 'demo',
-        maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
+        maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 60,
         maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
         unlimitedWriting: false,
         isTrial: false,
         email: null
     };
 }
-
 function isDemoTier()   { return getTierInfo().tier === 'demo'; }
 function isTrialTier()  { return getTierInfo().tier === 'trial'; }
 function isActiveTier() { return getTierInfo().tier === 'active'; }
