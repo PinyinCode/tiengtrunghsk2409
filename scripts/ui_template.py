@@ -508,6 +508,48 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     border-color:rgba(22,163,74,.4);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   🖱️ TAG CLICKABLE — click để search
+   ═══════════════════════════════════════════════════════════════ */
+.card-tag.tag-clickable {
+    cursor: pointer;
+    user-select: none;
+    transition: transform .15s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .2s ease,
+                filter .2s ease;
+    position: relative;
+}
+.card-tag.tag-clickable::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity .15s ease;
+    pointer-events: none;
+}
+.card-tag.tag-clickable:hover {
+    transform: translateY(-1px) scale(1.05);
+    filter: brightness(1.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,.15);
+}
+.card-tag.tag-clickable:hover::after {
+    opacity: 0.08;
+}
+.card-tag.tag-clickable:active {
+    transform: translateY(0) scale(.98);
+}
+[data-theme="dark"] .card-tag.tag-clickable:hover {
+    filter: brightness(1.3);
+}
+@media (hover: none) {
+    .card-tag.tag-clickable:active {
+        transform: scale(.95);
+        box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+}
+
 .card-body{
     margin-bottom:.7rem;
     padding-left:.15rem;
@@ -1523,9 +1565,288 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .voice-reset{padding:.55rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:.15s}
 .voice-reset:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
 [data-theme="dark"] .voice-slider{background:var(--surface-2)}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎯 ONBOARDING MODAL — CHỌN CHỦ ĐỀ QUAN TÂM (Demo + Trial)
+   ═══════════════════════════════════════════════════════════════ */
+.onboarding-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: obFadeIn .3s ease;
+    overflow-y: auto;
+}
+.onboarding-modal.show { display: flex; }
+@keyframes obFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.onboarding-box {
+    background: var(--surface);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 680px;
+    max-height: calc(100vh - 2rem);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(139, 92, 246, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: obSlideUp .4s cubic-bezier(.34, 1.56, .64, 1);
+    position: relative;
+}
+@keyframes obSlideUp {
+    from { transform: translateY(40px) scale(.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1);      opacity: 1; }
+}
+
+/* ─── Header ─── */
+.onboarding-header {
+    padding: 1.5rem 1.5rem 1rem;
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.08),
+        rgba(217, 70, 239, 0.08));
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+}
+.onboarding-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto .75rem;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #6366f1, #a855f7, #d946ef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.6rem;
+    box-shadow: 0 10px 24px rgba(139, 92, 246, 0.45);
+    animation: obIconFloat 3s ease-in-out infinite;
+}
+@keyframes obIconFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-4px) rotate(-3deg); }
+}
+.onboarding-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: .3rem;
+    letter-spacing: -0.02em;
+}
+.onboarding-subtitle {
+    font-size: .85rem;
+    color: var(--text-2);
+    line-height: 1.5;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+/* ─── Counter ─── */
+.onboarding-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .75rem;
+    padding: .35rem .85rem;
+    border-radius: 50px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    font-size: .78rem;
+    font-weight: 800;
+    color: var(--text-2);
+    transition: all .2s ease;
+}
+.onboarding-counter.ok {
+    background: linear-gradient(135deg, rgba(22,163,74,.12), rgba(34,197,94,.08));
+    border-color: rgba(22,163,74,.4);
+    color: #15803d;
+}
+.onboarding-counter.full {
+    background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(251,191,36,.1));
+    border-color: rgba(245,158,11,.5);
+    color: #92400e;
+}
+[data-theme="dark"] .onboarding-counter.ok { color: #4ade80; }
+[data-theme="dark"] .onboarding-counter.full { color: #fcd34d; }
+
+/* ─── Body ─── */
+.onboarding-body {
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+.onboarding-section-label {
+    font-size: .7rem;
+    font-weight: 800;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: .6rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.onboarding-section-label i { color: var(--primary); }
+
+/* ─── Topic grid ─── */
+.onboarding-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1.25rem;
+}
+.onboarding-topic {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .55rem 1rem;
+    border-radius: 50px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: .82rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .2s ease;
+    position: relative;
+    user-select: none;
+}
+.onboarding-topic:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-1px);
+}
+.onboarding-topic.selected {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+.onboarding-topic.selected::before {
+    content: '✓';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    font-size: .7rem;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+.onboarding-topic .count {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .1rem .45rem;
+    border-radius: 50px;
+    background: var(--surface-2);
+    color: var(--text-3);
+    margin-left: .15rem;
+}
+.onboarding-topic.selected .count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+.onboarding-topic.disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.onboarding-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-3);
+    font-size: .85rem;
+}
+
+/* ─── Footer ─── */
+.onboarding-footer {
+    padding: 1rem 1.5rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: .6rem;
+    justify-content: flex-end;
+    align-items: center;
+    background: var(--surface);
+    flex-wrap: wrap;
+}
+.onboarding-btn {
+    padding: .75rem 1.4rem;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: .88rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    transition: all .2s ease;
+}
+.onboarding-btn:hover {
+    background: var(--surface-2);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.onboarding-btn.primary {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+}
+.onboarding-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(124, 58, 237, 0.5);
+}
+.onboarding-btn.primary:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.onboarding-btn.ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-3);
+    font-weight: 600;
+    font-size: .82rem;
+    padding: .5rem .8rem;
+}
+.onboarding-btn.ghost:hover {
+    color: var(--text-2);
+    background: var(--surface-2);
+}
+
+@media (max-width: 500px) {
+    .onboarding-box { border-radius: 20px; max-height: calc(100vh - 1rem); }
+    .onboarding-header { padding: 1.15rem 1rem .85rem; }
+    .onboarding-icon { width: 50px; height: 50px; font-size: 1.35rem; border-radius: 14px; }
+    .onboarding-title { font-size: 1.1rem; }
+    .onboarding-subtitle { font-size: .78rem; }
+    .onboarding-body { padding: 1rem; }
+    .onboarding-footer {
+        padding: .85rem 1rem 1rem;
+        flex-direction: column-reverse;
+        gap: .5rem;
+    }
+    .onboarding-footer .onboarding-btn { width: 100%; justify-content: center; }
+}
 """
-
-
 def build_ui_html():
     return r"""
 <div class="loading-screen" id="loadingScreen"><i class="fas fa-spinner"></i><div>Đang tải...</div></div>
@@ -1813,624 +2134,47 @@ def build_ui_html():
         </div>
     </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     🎯 ONBOARDING MODAL — CHỌN CHỦ ĐỀ QUAN TÂM (Demo + Trial)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="onboarding-modal" id="onboardingModal">
+    <div class="onboarding-box">
+        <div class="onboarding-header">
+            <div class="onboarding-icon">
+                <i class="fas fa-compass"></i>
+            </div>
+            <div class="onboarding-title" id="onboardingTitle">Bạn quan tâm chủ đề nào?</div>
+            <div class="onboarding-subtitle" id="onboardingSubtitle">
+                Chọn các chủ đề — chúng tôi sẽ gợi ý câu phù hợp nhất
+            </div>
+            <div class="onboarding-counter" id="onboardingCounter">
+                <i class="fas fa-hand-pointer"></i>
+                <span>Đã chọn <b id="onboardingSelectedCount">0</b> / <b id="onboardingMaxCount">3</b></span>
+            </div>
+        </div>
+        <div class="onboarding-body">
+            <div class="onboarding-section-label">
+                <i class="fas fa-tags"></i>
+                <span>Chủ đề có sẵn trong kho</span>
+            </div>
+            <div class="onboarding-topics" id="onboardingTopics">
+                <div class="onboarding-empty">
+                    <i class="fas fa-spinner fa-pulse"></i> Đang tải...
+                </div>
+            </div>
+        </div>
+        <div class="onboarding-footer">
+            <button class="onboarding-btn ghost" id="onboardingSkipBtn" type="button">
+                <i class="fas fa-forward"></i> Bỏ qua
+            </button>
+            <button class="onboarding-btn primary" id="onboardingStartBtn" type="button" disabled>
+                <i class="fas fa-rocket"></i> Bắt đầu học
+            </button>
+        </div>
+    </div>
+</div>
 """
-
-
-def build_ui_js():
-    return r"""
-var filtered = [];
-var state = { search:'', hsk:'', subject:'' };
-var PAGE_SIZE = 300;
-var renderedCount = 0;
-var focusedStt = null;
-var mobileWrapper;
-var currentBtn = null;
-
-var displayState = { vi: true, pinyin: false, practice: false };
-
-/* ============================================================ */
-/* ✅ HELPER: TIER HIỆN TẠI CÓ ĐƯỢC MỞ CHUYÊN NGÀNH KHÔNG?       */
-/* ============================================================ */
-function canAccessChuyenNganh() {
-    return (typeof window.APP_TIER !== 'undefined' && window.APP_TIER === 'active');
-}
-
-/* ============================================================ */
-/* ✅ THÔNG BÁO KHOÁ CHUYÊN NGÀNH (DEMO/TRIAL CHƯA GIA HẠN)      */
-/* ============================================================ */
-function showChuyenNganhLockMessage() {
-    if (typeof currentUser === 'undefined' || !currentUser) {
-        if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
-                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
-                    'Đăng nhập ngay?')) {
-            if (typeof showLoginModal === 'function') showLoginModal();
-        }
-    } else {
-        if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
-                    'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
-                    'Gia hạn ngay?')) {
-            if (typeof openRenewalModal === 'function') openRenewalModal();
-        }
-    }
-}
-
-function showPracticeFullLockMessage() {
-    if (typeof currentUser === 'undefined' || !currentUser) {
-        if (confirm('🔒 Chế độ luyện tập Chuyên ngành\n\n' +
-                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
-                    'Đăng nhập ngay?')) {
-            if (typeof showLoginModal === 'function') showLoginModal();
-        }
-    } else {
-        if (confirm('🔒 Chế độ luyện tập Chuyên ngành\n\n' +
-                    'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
-                    'Gia hạn ngay?')) {
-            if (typeof openRenewalModal === 'function') openRenewalModal();
-        }
-    }
-}
-
-/* ============ DATASET SWITCHING (TỰ ĐỘNG) ============ */
-function initDatasetSelector() {
-    if (typeof DATASET_REGISTRY === 'undefined' || !DATASET_REGISTRY) return;
-    if (!DATASET_REGISTRY.tonghop) return;
-
-    var labelEl = $('dsTonghopLabel');
-    if (labelEl) {
-        var count = DATASET_REGISTRY.tonghop.count
-                 || (DATASET_REGISTRY.tonghop.data || []).length;
-        labelEl.textContent = count + ' câu phản xạ tổng hợp VPCX';
-    }
-
-    var chuyenNganhKeys = Object.keys(DATASET_REGISTRY).filter(function(id) {
-        return id !== 'tonghop';
-    });
-
-    var cnBtn = $('dsChuyenNganhBtn');
-    if (chuyenNganhKeys.length === 0) {
-        if (cnBtn) cnBtn.style.display = 'none';
-        return;
-    }
-
-    var canAccess = canAccessChuyenNganh();
-
-    var subGrid = $('dsSubGrid');
-    if (subGrid) {
-        var subHtml = '';
-        chuyenNganhKeys.forEach(function(id) {
-            var ds = DATASET_REGISTRY[id];
-            var lockIcon = canAccess
-                ? ''
-                : '<i class="fas fa-lock ds-sub-lock"></i>';
-            var lockCls = canAccess ? '' : ' locked';
-            subHtml += '<button class="ds-sub-btn' + lockCls + '" ' +
-                       'data-dataset="' + ds.id + '" ' +
-                       'data-locked="' + (canAccess ? '0' : '1') + '" ' +
-                       'style="--ds-color:' + (ds.color || '#64748b') + '" ' +
-                       'title="' + escapeHtml(ds.name) + ' (' + ds.count + ' câu)' +
-                       (canAccess ? '' : ' — Cần gia hạn để mở khoá') + '">' +
-                       '<i class="fas ' + (ds.icon || 'fa-folder') + '"></i>' +
-                       '<span>' + escapeHtml(ds.name) + '</span>' +
-                       lockIcon +
-                       '</button>';
-        });
-        subGrid.innerHTML = subHtml;
-    }
-
-    if (cnBtn) {
-        var oldLock = cnBtn.querySelector('.ds-main-lock');
-        if (oldLock) oldLock.remove();
-
-        if (!canAccess) {
-            var span = cnBtn.querySelector('span');
-            if (span) {
-                span.insertAdjacentHTML('afterend',
-                    '<i class="fas fa-lock ds-main-lock"></i>');
-            }
-            cnBtn.classList.add('has-lock');
-            cnBtn.title = 'Cần đăng nhập + gia hạn để mở khoá chuyên ngành';
-        } else {
-            cnBtn.classList.remove('has-lock');
-            cnBtn.title = 'Chọn chuyên ngành';
-        }
-    }
-
-    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
-        if (btn.__boundDataset) return;
-        btn.__boundDataset = true;
-        btn.addEventListener('click', function() {
-            switchDataset('tonghop');
-            var sub = $('dsSubWrap');
-            if (sub) sub.style.display = 'none';
-            document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            if (cnBtn) cnBtn.classList.remove('active');
-        });
-    });
-
-    if (cnBtn && !cnBtn.__boundToggle) {
-        cnBtn.__boundToggle = true;
-        cnBtn.addEventListener('click', function() {
-            var sub = $('dsSubWrap');
-            if (!sub) return;
-            var isOpen = sub.style.display !== 'none';
-            if (isOpen) {
-                sub.style.display = 'none';
-                cnBtn.classList.remove('active');
-            } else {
-                sub.style.display = 'block';
-                cnBtn.classList.add('active');
-                document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
-                    b.classList.remove('active');
-                });
-            }
-        });
-    }
-
-    document.querySelectorAll('.ds-sub-btn').forEach(function(btn) {
-        if (btn.__boundSub) return;
-        btn.__boundSub = true;
-        btn.addEventListener('click', function(e) {
-            if (this.dataset.locked === '1') {
-                e.preventDefault();
-                e.stopPropagation();
-                showChuyenNganhLockMessage();
-                return;
-            }
-            var id = this.dataset.dataset;
-            document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
-            this.classList.add('active');
-            switchDataset(id);
-            if (cnBtn) cnBtn.classList.add('active');
-        });
-    });
-
-    markCurrentDatasetActive();
-}
-
-function markCurrentDatasetActive() {
-    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
-    document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
-        b.classList.toggle('active', b.dataset.dataset === current);
-    });
-    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
-        b.classList.toggle('active', current === 'tonghop');
-    });
-    if (current !== 'tonghop') {
-        var wrap = $('dsSubWrap');
-        if (wrap) wrap.style.display = 'block';
-        document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
-            b.classList.add('active');
-        });
-    }
-}
-
-function switchDataset(datasetId) {
-    if (!DATASET_REGISTRY[datasetId]) return;
-
-    if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
-        showChuyenNganhLockMessage();
-        return;
-    }
-
-    if (typeof window.__switchRawData === 'function') {
-        window.__switchRawData(datasetId);
-    }
-
-    state = { search:'', hsk:'', subject:'' };
-    if ($('searchInput')) $('searchInput').value = '';
-    if ($('hskFilter')) $('hskFilter').value = '';
-    if ($('subjectFilter')) $('subjectFilter').value = '';
-
-    buildFilters();
-    applyFilter();
-    updateResultCount();
-
-    if ($('fabGroup')) $('fabGroup').classList.remove('open');
-}
-
-/* ============ VOICE SETTINGS ============ */
-var voiceState = {
-    rate: 1.0,
-    pitch: 1.0,
-    volume: 1.0,
-    voiceURI: ''
-};
-
-var DEFAULT_VOICE = { rate: 1.0, pitch: 1.0, volume: 1.0, voiceURI: '' };
-
-function loadVoiceSettings() {
-    try {
-        var saved = JSON.parse(localStorage.getItem('voiceSettings') || 'null');
-        if (saved && typeof saved === 'object') {
-            if (typeof saved.rate === 'number')   voiceState.rate   = Math.max(0.5, Math.min(1.5, saved.rate));
-            if (typeof saved.pitch === 'number')  voiceState.pitch  = Math.max(0.5, Math.min(1.5, saved.pitch));
-            if (typeof saved.volume === 'number') voiceState.volume = Math.max(0,   Math.min(1,   saved.volume));
-            if (typeof saved.voiceURI === 'string') voiceState.voiceURI = saved.voiceURI;
-        }
-    } catch(e) {}
-}
-
-function saveVoiceSettings() {
-    try { localStorage.setItem('voiceSettings', JSON.stringify(voiceState)); } catch(e) {}
-}
-
-function applyVoiceSettings(utterance) {
-    if (!utterance) return;
-    utterance.rate   = voiceState.rate;
-    utterance.pitch  = voiceState.pitch;
-    utterance.volume = voiceState.volume;
-    var v = pickVoice();
-    if (v) utterance.voice = v;
-}
-
-function pickVoice() {
-    if (!('speechSynthesis' in window)) return null;
-    var voices = speechSynthesis.getVoices();
-    if (!voices.length) return null;
-
-    if (voiceState && voiceState.voiceURI) {
-        var chosen = voices.find(function(v) { return v.voiceURI === voiceState.voiceURI; });
-        if (chosen) return chosen;
-    }
-
-    var priorities = [
-        function(v){ return v.lang === 'zh-CN' && /Ting-?Ting/i.test(v.name); },
-        function(v){ return v.lang === 'zh-CN' && /Siri/i.test(v.name); },
-        function(v){ return v.lang === 'zh-CN' && v.localService; },
-        function(v){ return v.lang === 'zh-CN'; },
-        function(v){ return v.lang === 'zh-TW'; },
-        function(v){ return v.lang && v.lang.indexOf('zh') === 0; }
-    ];
-    for (var i = 0; i < priorities.length; i++) {
-        var found = voices.find(priorities[i]);
-        if (found) return found;
-    }
-    return null;
-}
-
-function getChineseVoice() { return pickVoice(); }
-
-/* ============ TIER HELPERS ============ */
-function getTierInfo() {
-    if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
-        return {
-            tier: window.APP_TIER,
-            maxQuestions: window.APP_LIMITS.maxQuestions,
-            maxHSK: window.APP_LIMITS.maxHSK,
-            unlimitedWriting: !!window.APP_LIMITS.unlimitedWriting,
-            isTrial: !!window.APP_LIMITS.isTrial,
-            email: window.APP_LIMITS.email
-        };
-    }
-    return {
-        tier: 'demo',
-        maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
-        maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
-        unlimitedWriting: false,
-        isTrial: false,
-        email: null
-    };
-}
-
-function isDemoTier()   { return getTierInfo().tier === 'demo'; }
-function isTrialTier()  { return getTierInfo().tier === 'trial'; }
-function isActiveTier() { return getTierInfo().tier === 'active'; }
-function isExpiredTier(){ return getTierInfo().tier === 'expired'; }
-function isLimitedTier(){ var t = getTierInfo().tier; return t === 'demo' || t === 'trial' || t === 'expired'; }
-
-function getLimitedData() {
-    var info = getTierInfo();
-    if (info.tier === 'active') return RAW_DATA;
-
-    var max = (typeof info.maxQuestions === 'number' && info.maxQuestions > 0)
-              ? info.maxQuestions
-              : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 20);
-
-    var allowedHsk = getAllowedHskList();
-    if (!allowedHsk || allowedHsk.length === 0) {
-        return RAW_DATA.slice(0, max);
-    }
-
-    var perHsk = Math.floor(max / allowedHsk.length);
-    var remainder = max % allowedHsk.length;
-
-    var buckets = {};
-    allowedHsk.forEach(function(h) { buckets[h] = []; });
-    RAW_DATA.forEach(function(r) {
-        if (r.hsk && buckets[r.hsk]) buckets[r.hsk].push(r);
-    });
-
-    var result = [];
-    for (var i = 0; i < allowedHsk.length; i++) {
-        var hsk = allowedHsk[i];
-        var take = perHsk + (i >= allowedHsk.length - remainder ? 1 : 0);
-        var bucket = buckets[hsk];
-        if (bucket && bucket.length > 0) {
-            result = result.concat(bucket.slice(0, take));
-        }
-    }
-
-    if (result.length < max) {
-        var usedIds = {};
-        result.forEach(function(r) { usedIds[r.stt] = true; });
-        for (var j = 0; j < RAW_DATA.length && result.length < max; j++) {
-            var r2 = RAW_DATA[j];
-            if (!usedIds[r2.stt]) {
-                result.push(r2);
-                usedIds[r2.stt] = true;
-            }
-        }
-    }
-
-    return result;
-}
-
-function getAllowedHskList() {
-    var info = getTierInfo();
-    var max = info.maxHSK;
-    if (max === Infinity || max >= 6 || info.tier === 'active') {
-        return ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
-    }
-    var list = [];
-    for (var i = 1; i <= max; i++) list.push('HSK' + i);
-    return list;
-}
-
-function getAllowedSubjectList() {
-    var info = getTierInfo();
-    if (info.tier === 'active') {
-        var set = {};
-        RAW_DATA.forEach(function(r) { if (r.subject) set[r.subject] = 1; });
-        return Object.keys(set).sort();
-    }
-    var set2 = {};
-    getLimitedData().forEach(function(r) { if (r.subject) set2[r.subject] = 1; });
-    return Object.keys(set2).sort();
-}
-
-function shouldCountUsage() {
-    var t = getTierInfo().tier;
-    return t === 'demo' || t === 'expired';
-}
-
-function getDemoUsage() {
-    try {
-        var today = new Date().toDateString();
-        var data = JSON.parse(localStorage.getItem('demo_usage') || '{}');
-        if (data.date !== today) {
-            data = { date: today, count: 0 };
-            localStorage.setItem('demo_usage', JSON.stringify(data));
-        }
-        return data.count;
-    } catch(e) { return 0; }
-}
-function incDemoUsage() {
-    if (!shouldCountUsage()) return;
-    try {
-        var today = new Date().toDateString();
-        var data = JSON.parse(localStorage.getItem('demo_usage') || '{}');
-        if (data.date !== today) data = { date: today, count: 0 };
-        data.count++;
-        localStorage.setItem('demo_usage', JSON.stringify(data));
-    } catch(e) {}
-}
-function getDemoRemaining() {
-    if (!shouldCountUsage()) return Infinity;
-    return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage());
-}
-
-function canUseFeature() {
-    var info = getTierInfo();
-    if (info.tier === 'expired') return getDemoUsage() < DEMO_DAILY_LIMIT;
-    if (info.tier === 'demo') return getDemoUsage() < DEMO_DAILY_LIMIT;
-    return true;
-}
-
-function updateDemoRemaining() {
-    var el = $('demoRemainingText');
-    if (!el) return;
-    if (!shouldCountUsage()) return;
-    var remaining = getDemoRemaining();
-    el.textContent = remaining;
-    if (remaining < 20) el.style.color = '#dc2626';
-    else if (remaining < 50) el.style.color = '#f59e0b';
-    else el.style.color = '#16a34a';
-}
-
-function showLimitMessage() {
-    var info = getTierInfo();
-    if (info.tier === 'expired') {
-        if (confirm('Tài khoản đã HẾT HẠN.\n\nVui lòng gia hạn để tiếp tục.\n\nNhấn OK để mở trang gia hạn.')) {
-            if (typeof openRenewalModal === 'function') openRenewalModal();
-        }
-        return;
-    }
-    if (info.tier === 'demo') {
-        if (confirm('Bạn đã dùng hết ' + DEMO_DAILY_LIMIT + ' lượt miễn phí hôm nay.\n\n(Bao gồm NGHE và LUYỆN VIẾT)\n\nĐăng nhập Google để dùng KHÔNG GIỚI HẠN!')) {
-            if (typeof showLoginModal === 'function') showLoginModal();
-        }
-        return;
-    }
-}
-
-function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-function escapeJs(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n').replace(/\r/g, '');
-}
-function formatTimeDiff(ms) {
-    var s = Math.floor(ms / 1000);
-    if (s < 60) return 'Vừa xong';
-    var m = Math.floor(s / 60);
-    if (m < 60) return m + ' phút trước';
-    var h = Math.floor(m / 60);
-    if (h < 24) return h + ' giờ trước';
-    var d = Math.floor(h / 24);
-    if (d < 30) return d + ' ngày trước';
-    var mo = Math.floor(d / 30);
-    return mo + ' tháng trước';
-}
-
-function moveTikTokBarToHeader() {
-    try {
-        if (window.innerWidth < 769) return;
-        var headerInner = document.querySelector('.header-inner');
-        var headerActions = document.querySelector('.header-actions');
-        var tiktokBar = document.querySelector('.sticky-top .container > .tiktok-bar');
-        if (!headerInner || !headerActions || !tiktokBar) return;
-        headerInner.insertBefore(tiktokBar, headerActions);
-        setTimeout(function() { checkHeaderOverflow(); }, 100);
-    } catch(e) {}
-}
-
-function moveTikTokBarBelowHeader() {
-    try {
-        var headerInner = document.querySelector('.header-inner');
-        var tiktokBar = headerInner ? headerInner.querySelector('.tiktok-bar') : null;
-        var container = document.querySelector('.sticky-top .container');
-        var header = container ? container.querySelector('.header') : null;
-        if (!tiktokBar || !container || !header) return;
-        if (header.nextSibling) {
-            container.insertBefore(tiktokBar, header.nextSibling);
-        } else {
-            container.appendChild(tiktokBar);
-        }
-    } catch(e) {}
-}
-
-function checkHeaderOverflow() {
-    try {
-        if (window.innerWidth < 769) return;
-        var headerInner = document.querySelector('.header-inner');
-        if (!headerInner) return;
-        var tiktok = headerInner.querySelector('.tiktok-bar');
-        if (!tiktok) return;
-        tiktok.style.display = '';
-    } catch(e) {}
-}
-
-var _lastWidthMode = null;
-function handleResponsiveTikTok() {
-    var currentMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
-    if (currentMode === _lastWidthMode) return;
-    _lastWidthMode = currentMode;
-    if (currentMode === 'desktop') moveTikTokBarToHeader();
-    else moveTikTokBarBelowHeader();
-}
-
-function populateTikTokFloat() {
-    try {
-        var pfTiktok = $('pfTiktokFloat');
-        if (!pfTiktok) return;
-        var tiktokUrl = (typeof TIKTOK_URL !== 'undefined' && TIKTOK_URL) ? TIKTOK_URL : '';
-        if (!tiktokUrl) { pfTiktok.style.display = 'none'; return; }
-        pfTiktok.href = tiktokUrl;
-        var avatarUrl = (typeof TIKTOK_AVATAR !== 'undefined' && TIKTOK_AVATAR) ? TIKTOK_AVATAR : '';
-        var avatarEl = $('pfTiktokAvatar');
-        if (avatarEl) {
-            if (avatarUrl) { avatarEl.src = avatarUrl; avatarEl.style.display = ''; }
-            else { avatarEl.style.display = 'none'; }
-        }
-        var displayName = '';
-        if (typeof TIKTOK_NICKNAME !== 'undefined' && TIKTOK_NICKNAME) displayName = TIKTOK_NICKNAME;
-        else if (typeof TIKTOK_USERNAME !== 'undefined' && TIKTOK_USERNAME) displayName = TIKTOK_USERNAME;
-        else displayName = 'TikTok';
-        var nameEl = $('pfTiktokName');
-        if (nameEl) nameEl.textContent = displayName;
-        pfTiktok.title = 'Theo dõi TikTok: ' + displayName;
-    } catch(e) {}
-}
-
-function initApp() {
-    mobileWrapper = $('mobileWrapper');
-    $('loadingScreen').classList.add('hidden');
-    $('stickyTop').style.display = 'block';
-    $('fabGroup').style.display = 'flex';
-    $('mainContent').style.display = 'block';
-
-    loadVoiceSettings();
-    initDatasetSelector();
-
-    if (typeof initSocial === 'function') initSocial();
-    if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
-    if (typeof initAuthUI === 'function') initAuthUI();
-    initScrollDetection();
-    initFabGroup();
-    initTheme();
-    initDisplayState();
-    initSpeech();
-    initWriter();
-    initPracticeFull();
-    initVoiceSettings();
-
-    _lastWidthMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
-    if (_lastWidthMode === 'desktop') moveTikTokBarToHeader();
-    populateTikTokFloat();
-
-    var _resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(_resizeTimer);
-        _resizeTimer = setTimeout(function() {
-            handleResponsiveTikTok();
-            checkHeaderOverflow();
-        }, 200);
-    });
-
-    $('searchInput').addEventListener('input', applyFilter);
-    $('resetBtn').addEventListener('click', function() {
-        $('searchInput').value = '';
-        $('hskFilter').value = '';
-        $('subjectFilter').value = '';
-        applyFilter();
-    });
-    $('clearSearchBtn').addEventListener('click', function() {
-        $('searchInput').value = '';
-        $('searchInput').focus();
-        applyFilter();
-    });
-    $('hskFilter').addEventListener('change', function() {
-        var val = this.value;
-        var allowed = getAllowedHskList();
-        if (val && allowed.indexOf(val) === -1) {
-            var info = getTierInfo();
-            var msg = info.tier === 'trial'
-                ? 'Bản Trial chỉ cho phép lọc HSK1-' + info.maxHSK + '.'
-                : 'Bản Demo chỉ cho phép lọc HSK1-' + info.maxHSK + '.';
-            alert(msg);
-            this.value = '';
-            applyFilter();
-            return;
-        }
-        applyFilter();
-    });
-    $('subjectFilter').addEventListener('change', function() {
-        var val = this.value;
-        var allowed = getAllowedSubjectList();
-        if (val && allowed.indexOf(val) === -1) {
-            var info = getTierInfo();
-            var msg = info.tier === 'trial'
-                ? 'Chủ đề này chưa có trong ' + info.maxQuestions + ' câu Trial.'
-                : 'Chủ đề này chưa có trong ' + info.maxQuestions + ' câu Demo.';
-            alert(msg);
-            this.value = '';
-            applyFilter();
-            return;
-        }
-        applyFilter();
-    });
-
-    try { buildFilters(); applyFilter(); }
-    catch(e) { console.error('Init error:', e); }
-}
-
 function refreshApp() {
     buildFilters();
     applyFilter();
@@ -2527,9 +2271,6 @@ function initScrollDetection() {
 
 /* ═══════════════════════════════════════════════════════════════
    FAB GROUP — Mặc định MỞ khi vào trang (F5)
-   • Lần đầu vào trang: FAB mở sẵn (HTML đã có class "open")
-   • User đóng trong session: nhớ qua sessionStorage (cùng tab)
-   • F5 / mở tab mới: reset về mặc định (mở)
    ═══════════════════════════════════════════════════════════════ */
 function initFabGroup() {
     var fabGroup = $('fabGroup');
@@ -2689,6 +2430,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.tiktok-float-wrap') || e.target.closest('.tiktok-bar') ||
         e.target.closest('.renewal-modal') || e.target.closest('.voice-modal') ||
         e.target.closest('.dataset-selector') ||
+        e.target.closest('.onboarding-modal') ||
         e.target.closest('.toggle-check-btn')) return;
     clearFocus();
 }, true);
@@ -3057,13 +2799,29 @@ function render(reset) {
                          '</span>';
         }
 
+        // ✅ TAG CLICKABLE — topic và subject có thể click để search
+        var topicTag = '';
+        if (r.topic) {
+            topicTag = '<span class="card-tag topic tag-clickable" ' +
+                       'onclick="searchByTag(event, \'topic\', \'' + escapeJs(r.topic) + '\')" ' +
+                       'title="Lọc theo chủ điểm này">' +
+                       escapeHtml(r.topic) + '</span>';
+        }
+        var subjectTag = '';
+        if (r.subject) {
+            subjectTag = '<span class="card-tag subject tag-clickable" ' +
+                         'onclick="searchByTag(event, \'subject\', \'' + escapeJs(r.subject) + '\')" ' +
+                         'title="Lọc theo chủ đề này">' +
+                         escapeHtml(r.subject) + '</span>';
+        }
+
         mobHtml += '<div class="card" data-hsk="' + (r.hsk || '') + '" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
             '<div class="card-header">' +
                 '<div class="card-stt">' + sttSafe + '</div>' +
                 '<div class="card-meta">' +
                     (r.hsk ? '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>' : '') +
-                    (r.topic ? '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>' : '') +
-                    (r.subject ? '<span class="card-tag subject">' + escapeHtml(r.subject) + '</span>' : '') +
+                    topicTag +
+                    subjectTag +
                     excelBadge +
                 '</div>' +
                 '<div onclick="event.stopPropagation()" class="action-group">' + audio + writeBtn + fullBtn + '</div>' +
@@ -3521,10 +3279,21 @@ function loadPracticeFull(stt) {
     var sttLabel = sttRaw ? '#' + sttRaw + '  ·  ' : '';
     $('pfCounter').textContent = sttLabel + 'Câu ' + (idx + 1) + ' / ' + filtered.length;
 
+    // ✅ Tag trong practice full cũng clickable
     var tagsHtml = '';
     if (r.hsk) tagsHtml += '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>';
-    if (r.topic) tagsHtml += '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>';
-    if (r.subject) tagsHtml += '<span class="card-tag">' + escapeHtml(r.subject) + '</span>';
+    if (r.topic) {
+        tagsHtml += '<span class="card-tag topic tag-clickable" ' +
+                    'onclick="searchByTag(event, \'topic\', \'' + escapeJs(r.topic) + '\')" ' +
+                    'title="Lọc theo chủ điểm này">' +
+                    escapeHtml(r.topic) + '</span>';
+    }
+    if (r.subject) {
+        tagsHtml += '<span class="card-tag tag-clickable" ' +
+                    'onclick="searchByTag(event, \'subject\', \'' + escapeJs(r.subject) + '\')" ' +
+                    'title="Lọc theo chủ đề này">' +
+                    escapeHtml(r.subject) + '</span>';
+    }
     if (r.excelRow !== undefined && r.excelRow !== null && r.excelRow !== '') {
         tagsHtml += '<span class="card-tag excel-tag" title="Dòng ' + escapeHtml(r.excelRow) + ' trong file Excel">' +
                     '<i class="fas fa-file-excel"></i> Excel: ' + escapeHtml(r.excelRow) +
@@ -4233,12 +4002,13 @@ function _quickSpeakNormal(token) {
     }, 30);
 }
 
-function initPracticeFull() {
+function init('PracticeFull() {
     try {
-        var savedRandom = localStorage.getItem('pfRandomMode') === '1';
-        if (savedRandom) {
-            pfRandomMode = true;
-            var rBtnInit = $('pfRandomToggleBtn');
+click        var savedRandom = localStorage.getItem',('pfRandomMode') === '1';
+ toggle        if (savedRandom) {
+Hint            pfRandomMode = true;
+            var);
+ rBtnInit = $('pfRandomToggleBtn');
             if (rBtnInit) {
                 rBtnInit.classList.add('active');
                 rBtnInit.title = 'ĐANG BẬT: Nút Next sẽ nhảy câu ngẫu nhiên';
@@ -4259,8 +4029,7 @@ function initPracticeFull() {
     $('pfPrevBtn').addEventListener('click', pfPrev);
     $('pfNextBtn').addEventListener('click', pfNext);
     $('pfRevealBtn').addEventListener('click', revealFullAnswer);
-    $('pfHintBtn').addEventListener('click', toggleHint);
-    $('pfInput').addEventListener('input', function() {
+    $('pfHintBtn').addEventListener    $('pfInput').addEventListener('input', function() {
         updateCharPreview();
         checkFullAnswer();
     });
@@ -4418,6 +4187,11 @@ document.addEventListener('change', function(e) {
         sel.value = currentDataset;
         return;
     }
+
+    // Clear onboarding override khi đổi dataset
+    window.__onboardingOverride = null;
+    var obBanner = $('onboardingActiveBanner');
+    if (obBanner) obBanner.remove();
 
     state = { search:'', hsk:'', subject:'' };
     if ($('pfSearchInput')) $('pfSearchInput').value = '';
