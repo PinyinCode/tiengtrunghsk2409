@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Chuyển file Excel → HTML tự chứa dữ liệu.
-Ghép 4 template: ui + social + accounts (gộp renewal) + data.
+Ghép 5 template: ui + social + accounts (gộp renewal) + intro + data.
 
 ✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
    thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
@@ -12,6 +12,8 @@ Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 
 ✅ ONBOARDING: Demo + Trial được hỏi chọn chủ đề quan tâm
    → tự động filter + chia đều theo HSK.
+
+✅ INTRO: Banner giới thiệu nhanh + Modal 6 slide hướng dẫn sử dụng.
 """
 import json
 import os
@@ -34,6 +36,11 @@ from accounts_template import (
     build_accounts_html,
     build_accounts_js,
     build_all_auth,
+)
+from intro_template import (
+    build_intro_css,
+    build_intro_html,
+    build_intro_js,
 )
 
 
@@ -711,6 +718,7 @@ full_css = (
     build_ui_css()
     + "\n/* ==== SOCIAL CSS ==== */\n" + build_social_css()
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
+    + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
@@ -720,6 +728,7 @@ full_css = (
 # ═══════════════════════════════════════════════════════════════════
 ui_html = build_ui_html()
 ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
+ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 
 social_html = build_social_html()
 ui_html = ui_html.replace(
@@ -742,6 +751,7 @@ full_js = (
     build_ui_js()
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
+    + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
 )
 
 
@@ -919,7 +929,7 @@ html_output = (HTML_SHELL
 
     # 4. String configs — dùng _js_str để escape an toàn
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
-    .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
+    .replace("__ZALO_PHONE__",         _js_str(CONFIG(f["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
     .replace("__TIKTOK_USERNAME__",    _js_str(CONFIG["tiktok_username"]))
     .replace("__TIKTOK_NICKNAME__",    _js_str(CONFIG["tiktok_nickname"]))
@@ -936,12 +946,13 @@ size_kb = os.path.getsize(OUTPUT_HTML) / 1024
 total_datasets = len(DATASET_REGISTRY)
 total_questions = sum(ds["count"] for ds in DATASET_REGISTRY.values())
 
-print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
+print"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
 print(f"📝 Tổng số câu hỏi: {total_questions}")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
+print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
