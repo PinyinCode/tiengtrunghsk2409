@@ -77,8 +77,8 @@
 
     "renewal_support_zalo": "0922331886",
 
-    "telegram_bot_token": "8778603129:AAEWgik2TVGCU7hIVKbDMNMvykEQm0GaGC8",
-    "telegram_chat_id": "8778603129",
+    "telegram_bot_token": "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU",
+    "telegram_chat_id": "-5459456615",
 
     "onboarding": {
         "demo": {
@@ -87,7 +87,7 @@
             "hsk_allowed": [1, 2, 3],
             "topics_per_user": 3,
             "title": "Bạn quan tâm chủ đề nào?",
-            "subtitle": "Chọn tối đa 3 chủ đề — chúng tôi sẽ gợi ý 80 câu phù hợp nhất"
+            "subtitle": "Chọn tối đa 5 chủ đề — chúng tôi sẽ gợi ý 80 câu phù hợp nhất"
         },
         "trial": {
             "enabled": true,
@@ -95,7 +95,7 @@
             "hsk_allowed": [1, 2, 3, 4, 5],
             "topics_per_user": 5,
             "title": "Bạn quan tâm chủ đề nào?",
-            "subtitle": "Chọn tối đa 5 chủ đề — chúng tôi sẽ gợi ý 250 câu phù hợp nhất"
+            "subtitle": "Chọn tối đa 12 chủ đề — chúng tôi sẽ gợi ý 250 câu phù hợp nhất"
         },
         "active": {
             "enabled": true,
@@ -103,7 +103,7 @@
             "hsk_allowed": [1, 2, 3, 4, 5, 6],
             "topics_per_user": -1,
             "title": "Bạn quan tâm chủ đề nào?",
-            "subtitle": "Chọn bao nhiêu chủ đề cũng được — không giới hạn"
+            "subtitle": "không giới hạn"
         }
     }
 }
