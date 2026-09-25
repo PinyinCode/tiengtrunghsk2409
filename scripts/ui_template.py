@@ -3850,15 +3850,48 @@ function onOnboardingSkip() {
     var cfg = getOnboardingConfig();
     if (!cfg) return;
 
+    var selectedCount = Object.keys(_onboardingSelected).length;
+
+    // ═══════════════════════════════════════════════════════════
+    // ĐÃ CHỌN → xóa hết, không chọn gì
+    // CHƯA CHỌN → auto chọn (random cho demo/expired/trial, tất cả cho active/admin)
+    // ═══════════════════════════════════════════════════════════
+    if (selectedCount > 0) {
+        // Đã chọn → xóa hết
+        _onboardingSelected = {};
+        window.__onboardingOverride = null;
+        window.__onboardingAutoPicked = false;
+
+        // Xóa selection đã lưu
+        var key = getOnboardingStorageKey();
+        if (key) {
+            try { localStorage.removeItem(key); } catch(e) {}
+        }
+
+        // Xóa banner đang hiện (nếu có)
+        var banner = $('onboardingActiveBanner');
+        if (banner) banner.remove();
+
+        // Reload data đầy đủ
+        state = { search:'', hsk:'', subject:'' };
+        if ($('searchInput')) $('searchInput').value = '';
+        if ($('hskFilter')) $('hskFilter').value = '';
+        if ($('subjectFilter')) $('subjectFilter').value = '';
+        if ($('clearSearchBtn')) $('clearSearchBtn').classList.remove('show');
+
+        filtered = getLimitedData();
+        renderedCount = 0;
+        render(true);
+
+        showTagToast('Đã bỏ chọn tất cả chủ đề');
+        return;
+    }
+
+    // Chưa chọn gì → auto chọn như cũ
     var allTopics = getAvailableTopicsForTier();
     if (allTopics.length === 0) return;
 
     var info = getTierInfo();
-
-    // ═══════════════════════════════════════════════════════════
-    // DEMO / EXPIRED / TRIAL → chọn GIỚI HẠN (random)
-    // ACTIVE (đã gia hạn) / ADMIN → chọn TẤT CẢ
-    // ═══════════════════════════════════════════════════════════
     var isLimitedTier = (info.tier === 'demo'
                       || info.tier === 'expired'
                       || info.tier === 'trial');
@@ -3867,11 +3900,10 @@ function onOnboardingSkip() {
     var isUnlimited;
 
     if (isLimitedTier) {
-        // Số chủ đề tối đa: ưu tiên cfg.topics_per_user, fallback 3
         var max = (cfg.topics_per_user > 0) ? cfg.topics_per_user : 3;
         var pickCount = Math.min(max, allTopics.length);
 
-        // Random chọn N chủ đề từ danh sách
+        // Random chọn N chủ đề
         var shuffled = allTopics.slice();
         for (var i = shuffled.length - 1; i > 0; i--) {
             var j = Math.floor(Math.random() * (i + 1));
@@ -3880,7 +3912,6 @@ function onOnboardingSkip() {
         pickedTopics = shuffled.slice(0, pickCount).map(function(t) { return t.name; });
         isUnlimited = false;
     } else {
-        // Active / Admin → chọn tất cả
         pickedTopics = allTopics.map(function(t) { return t.name; });
         isUnlimited = true;
     }
