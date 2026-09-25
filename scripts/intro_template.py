@@ -87,15 +87,25 @@ def build_intro_css():
     0%, 100% { transform: translateY(0) rotate(0); }
     50% { transform: translateY(-3px) rotate(-5deg); }
 }
+
 .qib-content { flex: 1 1 300px; min-width: 0; position: relative; z-index: 2; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ TITLE BANNER — BRAND LUÔN CÙNG 1 DÒNG ★
+   ═══════════════════════════════════════════════════════════════ */
 .qib-title {
     font-size: .92rem;
     font-weight: 700;
     color: var(--text);
     margin-bottom: .5rem;
     line-height: 1.35;
+    word-wrap: break-word;
 }
+
+/* Brand: KHÔNG BAO GIỜ tách dòng */
 .qib-title strong {
+    display: inline-block;
+    white-space: nowrap;
     background: linear-gradient(135deg, #4f46e5, #7c3aed 50%, #d946ef);
     -webkit-background-clip: text;
     background-clip: text;
@@ -103,6 +113,8 @@ def build_intro_css():
     color: transparent;
     font-weight: 900;
 }
+
+/* ═══ Features chips ═══ */
 .qib-features { display: flex; flex-wrap: wrap; gap: .35rem; }
 .qib-feature {
     display: inline-flex;
@@ -130,6 +142,7 @@ def build_intro_css():
 }
 [data-theme="dark"] .qib-feature i { color: #c4b5fd; }
 
+/* ═══ Action buttons ═══ */
 .qib-actions {
     display: flex;
     align-items: center;
@@ -183,11 +196,20 @@ def build_intro_css():
     transform: rotate(90deg);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ★ RESPONSIVE — FONT CO GIÃN ĐỂ BRAND VẪN VỪA 1 DÒNG ★
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Tablet 640px ─── */
 @media (max-width: 640px) {
     .quick-intro-banner { padding: .75rem .85rem; gap: .65rem; flex-wrap: wrap; }
     .qib-icon { width: 38px; height: 38px; font-size: 1.05rem; border-radius: 11px; }
     .qib-content { flex: 1 1 100%; order: 3; margin-top: .15rem; }
     .qib-title { font-size: .82rem; margin-bottom: .4rem; }
+    .qib-title strong {
+        font-size: .78rem;
+        letter-spacing: -0.01em;
+    }
     .qib-features { gap: .25rem; }
     .qib-feature { font-size: .65rem; padding: .18rem .5rem; gap: .22rem; }
     .qib-feature i { font-size: .7rem; }
@@ -197,9 +219,31 @@ def build_intro_css():
     .qib-btn-primary::after { content: 'Hướng dẫn'; margin-left: .15rem; }
     .qib-btn-ghost { width: 30px; height: 30px; }
 }
+
+/* ─── Mobile 480px ─── */
+@media (max-width: 480px) {
+    .qib-title strong {
+        font-size: .72rem;
+        letter-spacing: -0.02em;
+    }
+}
+
+/* ─── Mobile nhỏ 400px ─── */
 @media (max-width: 400px) {
-    .qib-title strong { display: block; margin-top: .15rem; }
+    .qib-title { font-size: .78rem; }
+    .qib-title strong {
+        font-size: .68rem;
+        letter-spacing: -0.025em;
+    }
     .qib-feature:nth-child(n+5) { display: none; }
+}
+
+/* ─── Cực nhỏ 360px ─── */
+@media (max-width: 360px) {
+    .qib-title strong {
+        font-size: .64rem;
+        letter-spacing: -0.03em;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
