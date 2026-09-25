@@ -2496,6 +2496,98 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     background: linear-gradient(135deg, rgba(139,92,246,.3), rgba(109,40,217,.2));
     color: #c4b5fd;
 }
+/* ═══════════════════════════════════════════════════════════ */
+/* STATS INLINE — 3 thông tin gộp trên 1 dòng ngang            */
+/* ═══════════════════════════════════════════════════════════ */
+.onboarding-active-banner .ob-stats-bar.ob-stats-inline {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    width: 100%;
+    padding-top: .6rem;
+    margin-top: .35rem;
+    border-top: 1px dashed rgba(139,92,246,.35);
+}
+
+.onboarding-active-banner .ob-stat-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .75rem;
+    border-radius: 50px;
+    background: linear-gradient(135deg, rgba(59,130,246,.1), rgba(37,99,235,.06));
+    border: 1.5px solid rgba(59,130,246,.3);
+    color: var(--text-2);
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    transition: all .2s ease;
+}
+.onboarding-active-banner .ob-stat-inline i {
+    font-size: .75rem;
+    color: #2563eb;
+    flex-shrink: 0;
+}
+.onboarding-active-banner .ob-stat-inline b {
+    color: #dc2626;
+    font-weight: 900;
+    font-size: 1.05em;
+    margin: 0 .1em;
+}
+
+/* Chip chủ đề khoá — màu TÍM */
+.onboarding-active-banner .ob-stat-inline-topics {
+    background: linear-gradient(135deg, rgba(139,92,246,.12), rgba(109,40,217,.06));
+    border-color: rgba(139,92,246,.35);
+}
+.onboarding-active-banner .ob-stat-inline-topics i {
+    color: #7c3aed;
+}
+
+/* Chip chuyên ngành khoá — màu XANH DƯƠNG */
+.onboarding-active-banner .ob-stat-inline-industry {
+    background: linear-gradient(135deg, rgba(6,182,212,.12), rgba(8,145,178,.06));
+    border-color: rgba(6,182,212,.35);
+}
+.onboarding-active-banner .ob-stat-inline-industry i {
+    color: #0891b2;
+}
+
+/* Dark mode */
+[data-theme="dark"] .onboarding-active-banner .ob-stat-inline {
+    background: linear-gradient(135deg, rgba(59,130,246,.2), rgba(37,99,235,.1));
+    border-color: rgba(96,165,250,.4);
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-inline-topics {
+    background: linear-gradient(135deg, rgba(139,92,246,.22), rgba(109,40,217,.12));
+    border-color: rgba(167,139,250,.45);
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-inline-industry {
+    background: linear-gradient(135deg, rgba(6,182,212,.22), rgba(8,145,178,.12));
+    border-color: rgba(34,211,238,.45);
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-inline b {
+    color: #fca5a5;
+}
+
+/* Mobile: cho phép xuống dòng nếu chật */
+@media (max-width: 500px) {
+    .onboarding-active-banner .ob-stats-bar.ob-stats-inline {
+        gap: .35rem;
+        padding-top: .5rem;
+    }
+    .onboarding-active-banner .ob-stat-inline {
+        padding: .25rem .6rem;
+        font-size: .7rem;
+        gap: .25rem;
+    }
+    .onboarding-active-banner .ob-stat-inline i {
+        font-size: .68rem;
+    }
+}
 
 /* ==== SOCIAL CSS ==== */
 
@@ -6115,7 +6207,6 @@ function showOnboardingActiveBanner(topics, count) {
         moreChip.title = topics.join(' · ');
         moreChip.setAttribute('data-tooltip', topics.join(' · '));
         moreChip.style.cursor = 'help';
-        moreChip.style.background = 'linear-gradient(135deg, #94a3b8, #64748b)';
         chipsWrap.appendChild(moreChip);
     }
 
@@ -6144,55 +6235,39 @@ function showOnboardingActiveBanner(topics, count) {
 
     if (isLimited) {
         var statsBar = document.createElement('div');
-        statsBar.className = 'ob-stats-bar';
+        statsBar.className = 'ob-stats-bar ob-stats-inline';
 
-        if (!isUnlimitedTier && lockStats.maxPerTopic > 0) {
-            var stat0 = document.createElement('div');
-            stat0.className = 'ob-stat-item ob-stat-pertopic';
-            stat0.innerHTML =
-                '<span class="ob-stat-icon"><i class="fas fa-balance-scale"></i></span>' +
-                '<span class="ob-stat-text">Tối đa <b>' + lockStats.maxPerTopic + '</b> câu/chủ đề</span>';
-            statsBar.appendChild(stat0);
-        }
-
-        if (!isUnlimitedTier && lockStats.lockedInSelected > 0) {
-            var statSel = document.createElement('div');
-            statSel.className = 'ob-stat-item ob-stat-selected';
-            statSel.innerHTML =
-                '<span class="ob-stat-icon"><i class="fas fa-lock"></i></span>' +
-                '<span class="ob-stat-text">Còn <b>' + lockStats.lockedInSelected +
-                '</b> câu trong <b>' + topics.length + '</b> chủ đề đang chọn</span>';
-            statsBar.appendChild(statSel);
-        }
-
-        if (lockStats.lockedTopics > 0) {
-            var statTopics = document.createElement('div');
-            statTopics.className = 'ob-stat-item ob-stat-topics';
-            statTopics.innerHTML =
-                '<span class="ob-stat-icon"><i class="fas fa-folder-minus"></i></span>' +
-                '<span class="ob-stat-text">Còn <b>' + lockStats.lockedTopics +
-                '</b> chủ đề khác chưa mở khoá</span>';
-            statsBar.appendChild(statTopics);
-        }
-
+        /* STAT 1: Số câu đang có / tổng */
         if (lockedCount > 0) {
-            var stat1 = document.createElement('div');
-            stat1.className = 'ob-stat-item';
+            var stat1 = document.createElement('span');
+            stat1.className = 'ob-stat-inline';
             stat1.innerHTML =
-                '<span class="ob-stat-icon"><i class="fas fa-database"></i></span>' +
-                '<span class="ob-stat-text">Còn <b>' + lockedCount + '</b> câu chưa mở khoá</span>';
+                '<i class="fas fa-database"></i>' +
+                '<b>' + count + '</b>/' + totalAvailable + ' câu';
             statsBar.appendChild(stat1);
         }
 
-        if (lockedIndustryCount > 0) {
-            var stat2 = document.createElement('div');
-            stat2.className = 'ob-stat-item ob-stat-industry';
+        /* STAT 2: Số chủ đề chưa mở khoá */
+        if (lockStats.lockedTopics > 0) {
+            var stat2 = document.createElement('span');
+            stat2.className = 'ob-stat-inline ob-stat-inline-topics';
             stat2.innerHTML =
-                '<span class="ob-stat-icon"><i class="fas fa-industry"></i></span>' +
-                '<span class="ob-stat-text">Còn <b>' + lockedIndustryCount + '</b> chuyên ngành chưa mở</span>';
+                '<i class="fas fa-folder-minus"></i>' +
+                '<b>' + lockStats.lockedTopics + '</b> chủ đề khoá';
             statsBar.appendChild(stat2);
         }
 
+        /* STAT 3: Số chuyên ngành chưa mở */
+        if (lockedIndustryCount > 0) {
+            var stat3 = document.createElement('span');
+            stat3.className = 'ob-stat-inline ob-stat-inline-industry';
+            stat3.innerHTML =
+                '<i class="fas fa-industry"></i>' +
+                '<b>' + lockedIndustryCount + '</b> chuyên ngành khoá';
+            statsBar.appendChild(stat3);
+        }
+
+        /* CTA */
         var shouldShowCta = false;
         var ctaLabel = '';
         var ctaIcon = '';
@@ -6207,7 +6282,7 @@ function showOnboardingActiveBanner(topics, count) {
             }
             if (!expiryVisible) {
                 shouldShowCta = true;
-                ctaLabel = 'Nâng cấp ngay';
+                ctaLabel = 'Nâng cấp';
                 ctaIcon = 'fas fa-gem';
                 ctaAction = function() {
                     if (typeof openRenewalModal === 'function') openRenewalModal();
@@ -6215,8 +6290,7 @@ function showOnboardingActiveBanner(topics, count) {
             }
         }
 
-        var hasAnyLock = (lockedCount > 0) || (lockedIndustryCount > 0)
-                      || (lockStats.lockedInSelected > 0) || (lockStats.lockedTopics > 0);
+        var hasAnyLock = (lockedCount > 0) || (lockedIndustryCount > 0) || (lockStats.lockedTopics > 0);
 
         if (hasAnyLock && shouldShowCta) {
             var ctaBtn = document.createElement('button');
