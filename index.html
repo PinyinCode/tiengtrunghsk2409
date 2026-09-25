@@ -5779,7 +5779,6 @@ function loadOnboardingSelection() {
     } catch(e) {}
     return null;
 }
-
 function saveOnboardingSelection(topics, autoPicked) {
     var key = getOnboardingStorageKey();
     if (!key) return;
@@ -5803,16 +5802,24 @@ function maybeShowOnboarding() {
         return;
     }
 
-    
-
     var cfg = getOnboardingConfig();
     if (!cfg) return;
+
+    var mainContent = $('mainContent');
+    if (!mainContent || mainContent.style.display === 'none') {
+        setTimeout(maybeShowOnboarding, 300);
+        return;
+    }
+
+    if (typeof RAW_DATA === 'undefined' || !RAW_DATA || RAW_DATA.length === 0) {
+        setTimeout(maybeShowOnboarding, 300);
+        return;
+    }
 
     var saved = loadOnboardingSelection();
     if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
         window.__onboardingAutoPicked = !!saved.auto_picked;
 
-        // Nếu banner đã tồn tại và override đã có → chỉ cần refresh stats
         var existingBanner = $('onboardingActiveBanner');
         var override = window.__onboardingOverride;
 
@@ -5821,6 +5828,12 @@ function maybeShowOnboarding() {
         } else {
             showOnboardingActiveBanner(saved.topics, override.length);
         }
+        return;
+    }
+
+    // ⬇️ THÊM: Nếu đã có banner (rỗng) thì không hiện modal
+    var existingBanner2 = $('onboardingActiveBanner');
+    if (existingBanner2) {
         return;
     }
 
@@ -5991,7 +6004,7 @@ function onOnboardingSkip() {
     var selectedCount = Object.keys(_onboardingSelected).length;
 
     // ═══════════════════════════════════════════════════════════
-    // ĐÃ CHỌN → xóa hết, không chọn gì
+    // ĐÃ CHỌN → xóa hết chủ đề, banner hiện thông báo "chưa chọn"
     // CHƯA CHỌN → auto chọn (random cho demo/expired/trial, tất cả cho active/admin)
     // ═══════════════════════════════════════════════════════════
     if (selectedCount > 0) {
@@ -6000,17 +6013,19 @@ function onOnboardingSkip() {
         window.__onboardingOverride = null;
         window.__onboardingAutoPicked = false;
 
-        // Xóa selection đã lưu
+        // Xóa selection đã lưu trong localStorage
         var key = getOnboardingStorageKey();
         if (key) {
-            try { localStorage.removeItem(key); } catch(e) {}
+            try {
+                localStorage.setItem(key, JSON.stringify({
+                    topics: [],
+                    auto_picked: false,
+                    savedAt: Date.now()
+                }));
+            } catch(e) {}
         }
 
-        // Xóa banner đang hiện (nếu có)
-        var banner = $('onboardingActiveBanner');
-        if (banner) banner.remove();
-
-        // Reload data đầy đủ
+        // Reload data đầy đủ theo tier (không bị giới hạn chủ đề nữa)
         state = { search:'', hsk:'', subject:'' };
         if ($('searchInput')) $('searchInput').value = '';
         if ($('hskFilter')) $('hskFilter').value = '';
@@ -6020,6 +6035,10 @@ function onOnboardingSkip() {
         filtered = getLimitedData();
         renderedCount = 0;
         render(true);
+        updateResultCount();
+
+        // ⬇️ VẼ BANNER TRỐNG thay vì xóa banner
+        showEmptyOnboardingBanner();
 
         showTagToast('Đã bỏ chọn tất cả chủ đề');
         return;
@@ -6041,7 +6060,6 @@ function onOnboardingSkip() {
         var max = (cfg.topics_per_user > 0) ? cfg.topics_per_user : 3;
         var pickCount = Math.min(max, allTopics.length);
 
-        // Random chọn N chủ đề
         var shuffled = allTopics.slice();
         for (var i = shuffled.length - 1; i > 0; i--) {
             var j = Math.floor(Math.random() * (i + 1));
@@ -6063,6 +6081,55 @@ function onOnboardingSkip() {
     } else {
         showTagToast('Đã gợi ý ' + pickedTopics.length + ' chủ đề phù hợp cho bạn');
     }
+}
+function showEmptyOnboardingBanner() {
+    var old = $('onboardingActiveBanner');
+    if (old) old.remove();
+
+    var mainContent = $('mainContent');
+    if (!mainContent) return;
+    var container = mainContent.querySelector('.container');
+    if (!container) return;
+    if (mainContent.style.display === 'none') return;
+
+    var banner = document.createElement('div');
+    banner.id = 'onboardingActiveBanner';
+    banner.className = 'onboarding-active-banner';
+
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'ob-icon';
+    iconSpan.innerHTML = '<i class="fas fa-circle-info"></i>';
+    banner.appendChild(iconSpan);
+
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'ob-label';
+    labelSpan.textContent = 'Bạn chưa chọn chủ đề nào';
+    banner.appendChild(labelSpan);
+
+    var chipsWrap = document.createElement('span');
+    chipsWrap.className = 'ob-chips';
+    var hint = document.createElement('span');
+    hint.className = 'ob-chip';
+    hint.style.background = 'linear-gradient(135deg, #94a3b8, #64748b)';
+    hint.textContent = 'Chọn chủ đề để được gợi ý câu phù hợp';
+    chipsWrap.appendChild(hint);
+    banner.appendChild(chipsWrap);
+
+    var changeBtn = document.createElement('button');
+    changeBtn.type = 'button';
+    changeBtn.className = 'ob-change-btn';
+    changeBtn.innerHTML = '<i class="fas fa-plus"></i> Chọn chủ đề';
+    changeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Xóa key để mở modal ở trạng thái "chưa chọn"
+        var key = getOnboardingStorageKey();
+        if (key) { try { localStorage.removeItem(key); } catch(e) {} }
+        onChangeTopicsClick();
+    });
+    banner.appendChild(changeBtn);
+
+    container.insertBefore(banner, container.firstChild);
 }
 /* ═══════════════════════════════════════════════════════════ */
 /* SỬA: APPLY ONBOARDING SELECTION — GIỚI HẠN MỖI CHỦ ĐỀ       */
