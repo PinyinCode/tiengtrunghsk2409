@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ai-grader
+    runtime: python
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 1 -k gthread --threads 4 --timeout 60 -b 0.0.0.0:$PORT ai_grader:app
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
