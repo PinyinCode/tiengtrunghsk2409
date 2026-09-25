@@ -3,9 +3,10 @@ name: Convert Excel to HTML
 on:
   push:
     paths:
-      - 'scripts/data/**'                # ✅ File Excel nằm trong scripts/data/
-      - 'scripts/**/*.py'                # ✅ Mọi file Python trong scripts/
+      - 'scripts/data/**'                # File Excel trong scripts/data/
+      - 'scripts/**/*.py'                # Mọi file Python trong scripts/
       - 'scripts/config.json'
+      - 'requirements.txt'
       - '.github/workflows/convert.yml'
   workflow_dispatch:
 
@@ -25,15 +26,28 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0            # ✅ Cần cho rebase
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
-        run: pip install openpyxl
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl
+          pip install cn2an
+          pip install pypinyin
+          pip install jieba
+
+      - name: Verify dependencies
+        run: |
+          python -c "import openpyxl; print('✅ openpyxl', openpyxl.__version__)"
+          python -c "import cn2an;   print('✅ cn2an', cn2an.__version__)"
+          python -c "import pypinyin; print('✅ pypinyin', pypinyin.__version__)"
+          python -c "import jieba;   print('✅ jieba OK')"
 
       - name: List files
         run: |
@@ -46,6 +60,15 @@ jobs:
           echo "=== scripts/data/ ==="
           ls -la scripts/data/ || echo "No scripts/data folder"
 
+      - name: Test cn2an conversion
+        run: |
+          python -c "
+          import cn2an
+          tests = [500, 480, 20, 50, 30, 2024]
+          for n in tests:
+              print(f'  {n} → {cn2an.an2cn(n)}')
+          "
+
       - name: Pre-flight check
         run: python scripts/check.py
 
@@ -55,7 +78,7 @@ jobs:
       - name: Verify index.html
         run: |
           if [ ! -f index.html ]; then
-            echo "ERROR: index.html not found"
+            echo "❌ ERROR: index.html not found"
             exit 1
           fi
           SIZE=$(stat -c%s index.html)
@@ -64,11 +87,26 @@ jobs:
           echo "Checking required elements:"
           for el in renewalModal grantTrialIfNew dropdownRenewBtn tiktokBar zaloBtn initRenewalUI RAW_DATA; do
             if grep -q "$el" index.html; then
-              echo "  OK $el"
+              echo "  ✅ $el"
             else
-              echo "  MISSING $el"
+              echo "  ❌ MISSING $el"
             fi
           done
+
+      - name: Verify numbers converted
+        run: |
+          echo "=== Kiểm tra số Ả Rập trong index.html ==="
+          # Tìm câu 176 để verify
+          if grep -q "五百" index.html; then
+            echo "✅ Tìm thấy '五百' → số đã được chuyển"
+          else
+            echo "⚠️  Không tìm thấy '五百' — có thể chưa convert"
+          fi
+          if grep -q "四百八十" index.html; then
+            echo "✅ Tìm thấy '四百八十' → số đã được chuyển"
+          else
+            echo "⚠️  Không tìm thấy '四百八十'"
+          fi
 
       - name: Commit & push index.html
         run: |
@@ -78,9 +116,8 @@ jobs:
           if git diff --quiet && git diff --staged --quiet; then
             echo "✅ Không có thay đổi để commit"
           else
-            git commit -m "🤖 Auto convert Excel to HTML"
-            # ✅ FIX: pull --rebase trước khi push để tránh rejected
-            git pull --rebase origin ${{ github.ref_name }}
+            git commit -m "🤖 Auto convert Excel to HTML [skip ci]"
+            git pull --rebase origin ${{ github.ref_name }} || true
             git push origin HEAD:${{ github.ref_name }}
           fi
 
