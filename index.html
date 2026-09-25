@@ -5985,34 +5985,42 @@ function onOnboardingSkip() {
     var modal = $('onboardingModal');
     if (modal) modal.classList.remove('show');
 
-    // FIX: Nếu đã có selection cũ trong localStorage → giữ nguyên, không random lại
-    var saved = loadOnboardingSelection();
-    if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
-        window.__onboardingAutoPicked = !!saved.auto_picked;
-        applyOnboardingSelection(saved.topics, false);
-        return;
-    }
-
     var cfg = getOnboardingConfig();
     if (!cfg) return;
 
     var allTopics = getAvailableTopicsForTier();
     if (allTopics.length === 0) return;
 
-    var max = cfg.topics_per_user;
-    var isUnlimited = (max === -1 || max === Infinity);
+    var info = getTierInfo();
+
+    // ═══════════════════════════════════════════════════════════
+    // DEMO / EXPIRED / TRIAL → chọn GIỚI HẠN (random)
+    // ACTIVE (đã gia hạn) / ADMIN → chọn TẤT CẢ
+    // ═══════════════════════════════════════════════════════════
+    var isLimitedTier = (info.tier === 'demo'
+                      || info.tier === 'expired'
+                      || info.tier === 'trial');
 
     var pickedTopics;
-    if (isUnlimited) {
-        pickedTopics = allTopics.map(function(t) { return t.name; });
-    } else {
+    var isUnlimited;
+
+    if (isLimitedTier) {
+        // Số chủ đề tối đa: ưu tiên cfg.topics_per_user, fallback 3
+        var max = (cfg.topics_per_user > 0) ? cfg.topics_per_user : 3;
         var pickCount = Math.min(max, allTopics.length);
+
+        // Random chọn N chủ đề từ danh sách
         var shuffled = allTopics.slice();
         for (var i = shuffled.length - 1; i > 0; i--) {
             var j = Math.floor(Math.random() * (i + 1));
             var t = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = t;
         }
         pickedTopics = shuffled.slice(0, pickCount).map(function(t) { return t.name; });
+        isUnlimited = false;
+    } else {
+        // Active / Admin → chọn tất cả
+        pickedTopics = allTopics.map(function(t) { return t.name; });
+        isUnlimited = true;
     }
 
     window.__onboardingAutoPicked = true;
@@ -6025,7 +6033,6 @@ function onOnboardingSkip() {
         showTagToast('Đã gợi ý ' + pickedTopics.length + ' chủ đề phù hợp cho bạn');
     }
 }
-
 /* ═══════════════════════════════════════════════════════════ */
 /* SỬA: APPLY ONBOARDING SELECTION — GIỚI HẠN MỖI CHỦ ĐỀ       */
 /* ═══════════════════════════════════════════════════════════ */
