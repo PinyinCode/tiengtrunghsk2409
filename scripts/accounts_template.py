@@ -919,6 +919,50 @@ def build_accounts_css():
         z-index:1000 !important;
     }
 }
+/* ═══════════════════════════════════════════════════════════════
+   🆕 USER DATA CHANGED TOAST — Thông báo khi admin duyệt
+   ═══════════════════════════════════════════════════════════════ */
+.user-changed-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    padding: .9rem 1.5rem;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #fff;
+    border-radius: 50px;
+    font-size: .9rem;
+    font-weight: 800;
+    font-family: inherit;
+    box-shadow: 0 12px 40px rgba(22, 163, 74, .5), 0 4px 12px rgba(0, 0, 0, .15);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity .3s ease, transform .4s cubic-bezier(.34, 1.56, .64, 1);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    max-width: 90vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.user-changed-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.user-changed-toast i {
+    font-size: 1.2rem;
+    animation: successPop .5s cubic-bezier(.34, 1.56, .64, 1);
+}
+.user-changed-toast.expired {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 12px 40px rgba(220, 38, 38, .5), 0 4px 12px rgba(0, 0, 0, .15);
+}
+.user-changed-toast.info {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    box-shadow: 0 12px 40px rgba(124, 58, 237, .5), 0 4px 12px rgba(0, 0, 0, .15);
+}
 """
 
 
@@ -1349,6 +1393,8 @@ var renewalSelectedPkg = null;
 var renewalCurrentReq = null;
 var renewalListener = null;
 
+var userWatcher = null;
+
 /* Search & Filter state */
 var adminSearchQuery = '';
 var adminCurrentFilter = 'all';
@@ -1414,7 +1460,31 @@ function hasPermission(permKey) {
     }
     return perms[permKey] === true;
 }
+/* ═══════════════════════════════════════════════════════════════
+   🔔 TOAST THÔNG BÁO USER DATA CHANGED
+   ═══════════════════════════════════════════════════════════════ */
+function showUserChangedToast(message, type) {
+    var old = document.getElementById('userChangedToast');
+    if (old) old.remove();
 
+    var toast = document.createElement('div');
+    toast.id = 'userChangedToast';
+    toast.className = 'user-changed-toast' + (type ? ' ' + type : '');
+    toast.innerHTML = '<i class="fas fa-' +
+        (type === 'expired' ? 'exclamation-triangle' :
+         type === 'info' ? 'info-circle' : 'check-circle') +
+        '"></i><span>' + message + '</span>';
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(function() {
+        toast.classList.add('show');
+    });
+
+    setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 400);
+    }, 4000);
+}
 /* ============ TIER STATE ============ */
 function publishTierState() {
     if (!currentUser) {
@@ -1492,6 +1562,8 @@ try {
 /* ============ AUTH STATE ============ */
 async function handleAuthChange(user) {
     if (!user) {
+        // Logout → hủy watcher
+        if (userWatcher) { try { userWatcher(); } catch(e) {} userWatcher = null; }
         currentUser = null; isDemo = true;
         publishTierState();
         applyUserUI(); enterDemoMode();
@@ -1511,6 +1583,9 @@ async function handleAuthChange(user) {
         logLogin(currentUser);
         if (!appInitialized) { initApp(); appInitialized = true; }
         else { if (typeof refreshApp === 'function') refreshApp(); }
+        watchCurrentUser();
+        // Background verify sau 2s để phát hiện thay đổi từ admin
+        setTimeout(function() { verifyCurrentUserBackground(); }, 2000);
         return;
     }
 
@@ -1594,12 +1669,178 @@ async function handleAuthChange(user) {
         logLogin(currentUser);
         if (!appInitialized) { initApp(); appInitialized = true; }
         else { if (typeof refreshApp === 'function') refreshApp(); }
+        watchCurrentUser();
     } catch(e) {
         console.error('Auth check error:', e);
         isDemo = true; enterDemoMode();
     }
 }
+/* ═══════════════════════════════════════════════════════════════
+   🔄 REALTIME WATCHER — Tự động cập nhật khi admin duyệt gia hạn
+   ═══════════════════════════════════════════════════════════════ */
+function watchCurrentUser() {
+    if (!currentUser || !db) return;
 
+    if (userWatcher) {
+        try { userWatcher(); } catch(e) {}
+        userWatcher = null;
+    }
+
+    var email = currentUser.email;
+    if (!email) return;
+
+    console.log('👁 Watching user changes for:', email);
+
+    userWatcher = db.collection('allowed_users').doc(email).onSnapshot(function(doc) {
+        if (!doc.exists) return;
+        var data = doc.data();
+        if (!data) return;
+
+        var oldExpiryMs = null;
+        if (currentUser.expiresAt) {
+            var od = getExpiryDate(currentUser.expiresAt);
+            if (od) oldExpiryMs = od.getTime();
+        }
+
+        var newExpiryMs = null;
+        if (data.expiresAt) {
+            var nd = getExpiryDate(data.expiresAt);
+            if (nd) newExpiryMs = nd.getTime();
+        }
+
+        var oldPermanent = currentUser.isPermanent || false;
+        var newPermanent = data.isPermanent || false;
+        var oldRole = currentUser.role;
+        var newRole = data.role || 'user';
+        var oldName = currentUser.name;
+        var newName = data.name || currentUser.name;
+
+        if (oldExpiryMs === newExpiryMs
+            && oldPermanent === newPermanent
+            && oldRole === newRole
+            && oldName === newName) {
+            return;
+        }
+
+        console.log('🔄 User data changed:', {
+            oldExpiry: oldExpiryMs, newExpiry: newExpiryMs,
+            oldPermanent: oldPermanent, newPermanent: newPermanent
+        });
+
+        currentUser.expiresAt = data.expiresAt || null;
+        currentUser.isPermanent = newPermanent;
+        currentUser.name = newName;
+        currentUser.role = newRole;
+        currentUser.tier = data.tier || 'active';
+        if (data.permissions) currentUser.permissions = data.permissions;
+        if (data.isSubAdmin !== undefined) currentUser.isSubAdmin = data.isSubAdmin;
+
+        if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
+            var expDate = getExpiryDate(currentUser.expiresAt);
+            if (expDate && !isNaN(expDate.getTime())) {
+                var isExpired = expDate.getTime() < Date.now();
+                currentUser.isExpiredOnly = isExpired;
+                isDemo = isExpired;
+                if (isExpired) currentUser.tier = 'expired';
+                else if (currentUser.tier === 'expired') currentUser.tier = 'active';
+            }
+        } else {
+            currentUser.isExpiredOnly = false;
+            isDemo = false;
+        }
+
+        try { localStorage.removeItem('user_cache_' + email); } catch(e) {}
+        try {
+            localStorage.setItem('user_cache_' + email, JSON.stringify({
+                data: currentUser, expires: Date.now() + 12 * 60 * 60 * 1000
+            }));
+        } catch(e) {}
+
+        publishTierState();
+        applyUserUI();
+        if (typeof refreshApp === 'function') refreshApp();
+
+        if (newPermanent && !oldPermanent) {
+            showUserChangedToast('💎 Tài khoản đã được kích hoạt VĨNH VIỄN!', 'success');
+        } else if (newExpiryMs && oldExpiryMs && newExpiryMs > oldExpiryMs) {
+            var newDate = new Date(newExpiryMs).toLocaleDateString('vi-VN');
+            var daysAdded = Math.round((newExpiryMs - oldExpiryMs) / 86400000);
+            showUserChangedToast('🎉 Đã gia hạn thêm ' + daysAdded + ' ngày (đến ' + newDate + ')', 'success');
+        } else if (newExpiryMs && !oldExpiryMs) {
+            var d2 = new Date(newExpiryMs).toLocaleDateString('vi-VN');
+            showUserChangedToast('🎉 Tài khoản đã được gia hạn đến ' + d2, 'success');
+        } else if (newRole !== oldRole) {
+            showUserChangedToast('ℹ️ Vai trò đã đổi thành: ' + newRole, 'info');
+        }
+
+    }, function(err) {
+        console.warn('User watcher error:', err);
+    });
+}
+
+/* ═════════════════════════════════════ {}
+══════════════════════════
+   🔍 VERIFY BACKGROUND — Fetch server sau 2s
+   ═══════════════════════════════════════════════════════════════ */
+function verifyCurrentUserBackground() {
+    if (!currentUser || !db) return;
+    var email = currentUser.email;
+    if (!email) return;
+
+    db.collection('allowed_users').doc(email).get({ source: 'server' })
+        .then(function(doc) {
+            if (!doc.exists) return;
+            var data = doc.data();
+            if (!data) return;
+
+            var oldExpiry = currentUser.expiresAt ? getExpiryDate(currentUser.expiresAt) : null;
+            var newExpiry = data.expiresAt ? getExpiryDate(data.expiresAt) : null;
+
+            var oldMs = oldExpiry ? oldExpiry.getTime() : 0;
+            var newMs = newExpiry ? newExpiry.getTime() : 0;
+            var oldPerm = currentUser.isPermanent || false;
+            var newPerm = data.isPermanent || false;
+
+            if (oldMs !== newMs || oldPerm !== newPerm) {
+                console.log('🔄 Background verify found changes — refreshing');
+                currentUser.expiresAt = data.expiresAt || null;
+                currentUser.isPermanent = newPerm;
+                currentUser.role = data.role || currentUser.role;
+                currentUser.name = data.name || currentUser.name;
+                currentUser.tier = data.tier || 'active';
+                if (data.permissions) currentUser.permissions = data.permissions;
+                if (data.isSubAdmin !== undefined) currentUser.isSubAdmin = data.isSubAdmin;
+
+                if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
+                    var expDate = getExpiryDate(currentUser.expiresAt);
+                    if (expDate && !isNaN(expDate.getTime())) {
+                        var isExpired = expDate.getTime() < Date.now();
+                        currentUser.isExpiredOnly = isExpired;
+                        isDemo = isExpired;
+                        if (isExpired) currentUser.tier = 'expired';
+                        else if (currentUser.tier === 'expired') currentUser.tier = 'active';
+                    }
+                } else {
+                    currentUser.isExpiredOnly = false;
+                    isDemo = false;
+                }
+
+                try { localStorage.removeItem('user_cache_' + email); } catch(e) {}
+                try {
+                    localStorage.setItem('user_cache_' + email, JSON.stringify({
+                        data: currentUser, expires: Date.now() + 12 * 60 * 60 * 1000
+                    }));
+                } catch(e) {}
+
+                publishTierState();
+                applyUserUI();
+                if (typeof refreshApp === 'function') refreshApp();
+            }
+        })
+        .catch(function(err) {
+            console.warn('Background verify error:', err);
+        });
+}
 function getDaysRemaining(userData) {
     if (!userData || !userData.expiresAt) return null;
     if (userData.role === 'admin') return null;
@@ -3739,6 +3980,7 @@ function formatTimeDiff(ms) {
 }
 
 /* ============ INIT AUTH UI ============ */
+/* ============ INIT AUTH UI ============ */
 function initAuthUI() {
     if ($('headerLoginBtn')) $('headerLoginBtn').addEventListener('click', showLoginModal);
     if ($('loginClose')) $('loginClose').addEventListener('click', hideLoginModal);
@@ -3795,17 +4037,53 @@ function initAuthUI() {
         });
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       🔥 LOGOUT — XÓA TOÀN BỘ CACHE (FIX STALE CACHE)
+       ═══════════════════════════════════════════════════════════ */
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
-            if (confirm('Đăng xuất?')) {
-                try {
-                    if (currentUser && currentUser.email) {
-                        localStorage.removeItem('user_cache_' + currentUser.email);
+            if (!confirm('Đăng xuất?')) return;
+
+            try {
+                // 1. Hủy watcher realtime
+                if (userWatcher) {
+                    try { userWatcher(); } catch(e) {}
+                    userWatcher = null;
+                }
+
+                // 2. Xóa cache user hiện tại
+                if (currentUser && currentUser.email) {
+                    localStorage.removeItem('user_cache_' + currentUser.email);
+                }
+
+                // 3. Xóa TOÀN BỘ cache user + admin cache
+                var keysToRemove = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (k && (k.indexOf('user_cache_') === 0 || k === 'admin_users_cache')) {
+                        keysToRemove.push(k);
                     }
-                    sessionStorage.removeItem('userDropdownClosed');
-                } catch(e) {}
-                auth.signOut();
+                }
+                keysToRemove.forEach(function(k) {
+                    try { localStorage.removeItem(k); } catch(e) {}
+                });
+
+                // 4. Xóa login log flag
+                if (currentUser && currentUser.email) {
+                    try { localStorage.removeItem('login_log_' + currentUser.email); } catch(e) {}
+                }
+
+                // 5. Xóa session flags
+                sessionStorage.removeItem('userDropdownClosed');
+                sessionStorage.removeItem('fabClosed');
+                sessionStorage.removeItem('session_start');
+
+                console.log('✅ Đã xóa', keysToRemove.length, 'cache keys khi đăng xuất');
+            } catch(e) {
+                console.warn('Lỗi khi xóa cache:', e);
             }
+
+            auth.signOut();
         });
     }
 
@@ -3856,7 +4134,7 @@ function initAuthUI() {
     if ($('expiryRenewBtn')) $('expiryRenewBtn').addEventListener('click', function(e) { e.preventDefault(); openRenewalModal(); });
 
     if ($('dropdownForeverBtn')) {
-        $('dropdownForeverBtn').addEventListener('click', function(e) {
+ this        $('dropdownForeverBtn').addEventListener) $('renew('click', function(e) {
             e.preventDefault();
             $('userDropdown').classList.remove('show');
             try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
@@ -3867,7 +4145,7 @@ function initAuthUI() {
         });
     }
     if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('renewalHistoryModal').classList.remove('show'); });
-    if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target === this) $('renewalHistoryModal').classList.remove('show'); });
+    if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target ===alHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryBtn')) {
         $('renewalHistoryBtn').addEventListener('click', function() {
             $('userDropdown').classList.remove('show');
@@ -3875,9 +4153,10 @@ function initAuthUI() {
             openRenewalHistory();
         });
     }
-    initAdminPanel();
-}
 
+    initAdminPanel();
+    scheduleAutoExpire();
+}
 /* ============ TIMEOUT FALLBACK ============ */
 setTimeout(function() {
     if (!appInitialized) {
