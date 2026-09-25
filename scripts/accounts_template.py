@@ -3980,7 +3980,6 @@ function formatTimeDiff(ms) {
 }
 
 /* ============ INIT AUTH UI ============ */
-/* ============ INIT AUTH UI ============ */
 function initAuthUI() {
     if ($('headerLoginBtn')) $('headerLoginBtn').addEventListener('click', showLoginModal);
     if ($('loginClose')) $('loginClose').addEventListener('click', hideLoginModal);
@@ -4038,25 +4037,22 @@ function initAuthUI() {
     }
 
     /* ═══════════════════════════════════════════════════════════
-       🔥 LOGOUT — XÓA TOÀN BỘ CACHE (FIX STALE CACHE)
+       🔥 LOGOUT — XÓA TOÀN BỘ CACHE
        ═══════════════════════════════════════════════════════════ */
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
             if (!confirm('Đăng xuất?')) return;
 
             try {
-                // 1. Hủy watcher realtime
                 if (userWatcher) {
                     try { userWatcher(); } catch(e) {}
                     userWatcher = null;
                 }
 
-                // 2. Xóa cache user hiện tại
                 if (currentUser && currentUser.email) {
                     localStorage.removeItem('user_cache_' + currentUser.email);
                 }
 
-                // 3. Xóa TOÀN BỘ cache user + admin cache
                 var keysToRemove = [];
                 for (var i = 0; i < localStorage.length; i++) {
                     var k = localStorage.key(i);
@@ -4068,12 +4064,10 @@ function initAuthUI() {
                     try { localStorage.removeItem(k); } catch(e) {}
                 });
 
-                // 4. Xóa login log flag
                 if (currentUser && currentUser.email) {
                     try { localStorage.removeItem('login_log_' + currentUser.email); } catch(e) {}
                 }
 
-                // 5. Xóa session flags
                 sessionStorage.removeItem('userDropdownClosed');
                 sessionStorage.removeItem('fabClosed');
                 sessionStorage.removeItem('session_start');
@@ -4134,7 +4128,7 @@ function initAuthUI() {
     if ($('expiryRenewBtn')) $('expiryRenewBtn').addEventListener('click', function(e) { e.preventDefault(); openRenewalModal(); });
 
     if ($('dropdownForeverBtn')) {
- this        $('dropdownForeverBtn').addEventListener) $('renew('click', function(e) {
+        $('dropdownForeverBtn').addEventListener('click', function(e) {
             e.preventDefault();
             $('userDropdown').classList.remove('show');
             try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
@@ -4144,8 +4138,9 @@ function initAuthUI() {
             }, 150);
         });
     }
+
     if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('renewalHistoryModal').classList.remove('show'); });
-    if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target ===alHistoryModal').classList.remove('show'); });
+    if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target === this) $('renewalHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryBtn')) {
         $('renewalHistoryBtn').addEventListener('click', function() {
             $('userDropdown').classList.remove('show');
