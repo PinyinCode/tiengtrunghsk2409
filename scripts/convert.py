@@ -13,7 +13,7 @@ Ghép 5 template: ui + social + accounts (gộp renewal) + intro + data.
 ✅ ONBOARDING: Demo + Trial được hỏi chọn chủ đề quan tâm
    → tự động filter + chia đều theo HSK.
 
-✅ INTRO: Banner giới thiệu nhanh + Modal 6 slide hướng dẫn sử dụng.
+✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
 """
 import json
 import os
@@ -929,7 +929,7 @@ html_output = (HTML_SHELL
 
     # 4. String configs — dùng _js_str để escape an toàn
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
-    .replace("__ZALO_PHONE__",         _js_str(CONFIG(f["zalo_phone"]))
+    .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
     .replace("__TIKTOK_USERNAME__",    _js_str(CONFIG["tiktok_username"]))
     .replace("__TIKTOK_NICKNAME__",    _js_str(CONFIG["tiktok_nickname"]))
@@ -946,7 +946,7 @@ size_kb = os.path.getsize(OUTPUT_HTML) / 1024
 total_datasets = len(DATASET_REGISTRY)
 total_questions = sum(ds["count"] for ds in DATASET_REGISTRY.values())
 
-print"\n🎉 Đã tạo: {OUTPUT_HTML}")
+print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
 print(f"📝 Tổng số câu hỏi: {total_questions}")
