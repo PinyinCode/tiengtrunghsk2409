@@ -2586,6 +2586,7 @@ def build_ui_html():
 <div class="trial-badge" id="trialBadge"><i class="fas fa-gem"></i> <span id="trialBadgeText">Trial</span></div>
 <div class="demo-badge" id="demoBadge" style="display:none"><i class="fas fa-eye"></i> Demo</div>
 <button class="btn-login-header" id="headerLoginBtn" style="display:none"><i class="fas fa-sign-in-alt"></i> <span>Đăng nhập</span></button>
+<button class="icon-btn intro-btn" id="introBtn" title="Giới thiệu"><i class="fas fa-info-circle"></i></button>
 <button class="icon-btn reset-btn hidden" id="resetBtn" title="Đặt lại bộ lọc"><i class="fas fa-undo-alt"></i><span class="badge" id="resetBadge">0</span></button>
 <button class="icon-btn" id="themeToggle" title="Đổi giao diện"><i class="fas fa-moon"></i></button>
 <div class="user-menu" id="userMenu" style="display:none">
@@ -2660,9 +2661,12 @@ def build_ui_html():
 </div>
 <main class="main" id="mainContent" style="display:none">
 <div class="container">
-<div h class="demo-banner"ạn id="demoBanner" style="display:none ng">
-<div class="demo-banner-icon"><i class="fas fa-gheift"></i></div>
- và<div class="demo-banner-text"><div class="title" id="demoBannerTitle">Đăng nhập miễn phí để mở khóa toàn bộ</div>
+
+<!-- __QUICK_INTRO_BANNER__ -->
+
+<div class="demo-banner" id="demoBanner" style="display:none">
+<div class="demo-banner-icon"><i class="fas fa-gift"></i></div>
+<div class="demo-banner-text"><div class="title" id="demoBannerTitle">Đăng nhập miễn phí để mở khóa toàn bộ</div>
 <div class="desc" id="demoBannerDesc">Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, không giới luyện viết.<br>Nghe + Luyện viết còn lại hôm nay: <b id="demoRemainingText" style="color:#16a34a">100</b> lượt.</div></div>
 <button class="demo-banner-btn" id="demoBannerBtn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span id="demoBannerBtnText">Đăng nhập bằng Gmail</span></button>
 </div>
