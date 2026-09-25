@@ -3927,13 +3927,32 @@ body.hide-floating .tiktok-bar { display: none !important; }
     50% { transform: translateY(-3px) rotate(-5deg); }
 }
 .qib-content { flex: 1 1 300px; min-width: 0; position: relative; z-index: 2; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ QUICK INTRO TITLE — BRAND LUÔN 1 DÒNG ★
+   ═══════════════════════════════════════════════════════════════ */
 .qib-title {
     font-size: .92rem;
     font-weight: 700;
     color: var(--text);
     margin-bottom: .5rem;
     line-height: 1.35;
+    word-wrap: break-word;
 }
+
+/* Brand: KHÔNG BAO GIỜ tách dòng */
+.qib-title .qib-brand {
+    display: inline-block;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed 50%, #d946ef);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 900;
+}
+
+/* Fallback cho <strong> cũ nếu chưa update HTML */
 .qib-title strong {
     background: linear-gradient(135deg, #4f46e5, #7c3aed 50%, #d946ef);
     -webkit-background-clip: text;
@@ -3942,6 +3961,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     color: transparent;
     font-weight: 900;
 }
+
 .qib-features { display: flex; flex-wrap: wrap; gap: .35rem; }
 .qib-feature {
     display: inline-flex;
@@ -4022,11 +4042,16 @@ body.hide-floating .tiktok-bar { display: none !important; }
     transform: rotate(90deg);
 }
 
+/* ─── Tablet 640px: brand nhỏ lại ─── */
 @media (max-width: 640px) {
     .quick-intro-banner { padding: .75rem .85rem; gap: .65rem; flex-wrap: wrap; }
     .qib-icon { width: 38px; height: 38px; font-size: 1.05rem; border-radius: 11px; }
     .qib-content { flex: 1 1 100%; order: 3; margin-top: .15rem; }
     .qib-title { font-size: .82rem; margin-bottom: .4rem; }
+    .qib-title .qib-brand {
+        font-size: .85rem;
+        letter-spacing: -0.01em;
+    }
     .qib-features { gap: .25rem; }
     .qib-feature { font-size: .65rem; padding: .18rem .5rem; gap: .22rem; }
     .qib-feature i { font-size: .7rem; }
@@ -4036,9 +4061,24 @@ body.hide-floating .tiktok-bar { display: none !important; }
     .qib-btn-primary::after { content: 'Hướng dẫn'; margin-left: .15rem; }
     .qib-btn-ghost { width: 30px; height: 30px; }
 }
-@media (max-width: 400px) {
-    .qib-title strong { display: block; margin-top: .15rem; }
+
+/* ─── Mobile nhỏ 420px ─── */
+@media (max-width: 420px) {
+    .qib-title { font-size: .8rem; line-height: 1.45; }
+    .qib-title .qib-brand {
+        font-size: .75rem;
+        letter-spacing: -0.02em;
+    }
     .qib-feature:nth-child(n+5) { display: none; }
+}
+
+/* ─── Cực nhỏ 360px ─── */
+@media (max-width: 360px) {
+    .qib-title { line-height: 1.5; }
+    .qib-title .qib-brand {
+        font-size: .7rem;
+        letter-spacing: -0.025em;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -5657,7 +5697,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     </div>
     <div class="qib-content">
         <div class="qib-title">
-            🎉 Chào mừng đến với <strong>Học Tiếng Trung · Văn Phòng &amp; Công Xưởng</strong>
+            🎉 Chào mừng đến với <strong class="qib-brand">Học Tiếng Trung · Văn Phòng &amp; Công Xưởng</strong>
         </div>
         <div class="qib-features">
             <span class="qib-feature"><i class="fas fa-database"></i> 1700+ câu</span>
@@ -5904,12 +5944,12 @@ body.hide-floating .tiktok-bar { display: none !important; }
                                 </div>
                             </div>
                         </div>
-                        <div class="slide-col">
+                        <div class="="slide-col">
                             <div style="display:block">
                                 <div class="industry-grid">
                                     <div class="industry-chip" data-c="0"><i class="fas fa-users"></i> Nhân sự</div>
                                     <div class="industry-chip" data-c="1"><i class="fas fa-shopping-cart"></i> Thu mua</div>
-                                    <div class="industry-chip" data-c="2"><i class="fas fa-ship"></i> Xuất nhập khẩu</div>
+                                    <div class="industry-chip" data-c2"><i class="fas fa-ship"></i> Xuất nhập khẩu</div>
                                     <div class="industry-chip" data-c="3"><i class="fas fa-calculator"></i> Kế toán</div>
                                     <div class="industry-chip" data-c="4"><i class="fas fa-award"></i> Chất lượng</div>
                                     <div class="industry-chip" data-c="5"><i class="fas fa-calendar-alt"></i> KH Sản xuất</div>
@@ -5963,7 +6003,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
                         <div class="slide-col slide-preview">
                             <div class="qr-preview">
                                 <div class="qr-box"><i class="fas fa-qrcode"></i></div>
-                                <div class="qr-caption">Quét QR chuyển khoản<br><strong>Xác nhận 1-5 phút</strong></div>
+                                <div class="qr-caption">Quét QR chuyển khoản<br><strong>Xideác nhận 1-5 phút</strong></div>
                             </div>
                         </div>
                     </div>
@@ -5989,7 +6029,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
             </div>
 
             <!-- ═══ SLIDE 5: CTA ═══ -->
-            <div class="intro-slide" data-slide="4">
+            <div class="intro-slide" data-sl="4">
                 <div class="intro-slide-content cta-slide">
                     <div class="cta-icon"><i class="fas fa-rocket"></i></div>
                     <h2 class="cta-title">Bắt Đầu Học Ngay Hôm Nay!</h2>
@@ -13599,13 +13639,13 @@ window.handleCtaAction = function() {
 window.handleLoginFromIntro = function() {
     closeIntroModal();
     if (typeof showLoginModal === 'function') {
-        setTimeout(showLoginModal, 300);
+        e setTimeout(showLoginModal, .t300);
     }
 };
 
-function initIntroModal() {
-    var btn = $('introBtn');
-    var modal = $('introModal');
+function initIntroouModal() {
+    var btn = $ches('introBtn');
+   [0 var modal = $('introModal');
     var closeBtn = $('introClose');
     var prevBtn = $('introPrev');
     var nextBtn = $('introNext');
@@ -13638,7 +13678,7 @@ function initIntroModal() {
     var touchStartY = 0;
     if (modal) {
         modal.addEventListener('touchstart', function(e) {
-            touchStartX = e.touches[0].clientX;
+            touchStartX =].clientX;
             touchStartY = e.touches[0].clientY;
         }, { passive: true });
 
