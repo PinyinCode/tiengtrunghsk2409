@@ -7,12 +7,12 @@ Cung cấp 3 hàm:
   - build_intro_html()  → HTML cho intro modal + quick banner
   - build_intro_js()    → JS điều khiển intro modal + quick banner
 
-Cách dùng trong main.py:
-    from intro_template import build_intro_css, build_intro_html, build_intro_js
-
-    full_css = build_ui_css() + build_intro_css() + ...
-    ui_html = build_ui_html().replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
-    full_js  = build_ui_js() + build_intro_js() + ...
+5 slides:
+  1. Cover + Đăng nhập
+  2. Hướng dẫn sử dụng + Trial Popup
+  3. Tổng quan + 9 chuyên ngành
+  4. Gói gia hạn + 3 bước nhanh
+  5. CTA
 """
 
 
@@ -65,10 +65,7 @@ def build_intro_css():
     from { opacity: 0; transform: translateY(-12px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
-.quick-intro-banner.dismissed {
-    display: none !important;
-}
+.quick-intro-banner.dismissed { display: none !important; }
 
 .qib-icon {
     width: 48px;
@@ -90,14 +87,7 @@ def build_intro_css():
     0%, 100% { transform: translateY(0) rotate(0); }
     50% { transform: translateY(-3px) rotate(-5deg); }
 }
-
-.qib-content {
-    flex: 1 1 300px;
-    min-width: 0;
-    position: relative;
-    z-index: 2;
-}
-
+.qib-content { flex: 1 1 300px; min-width: 0; position: relative; z-index: 2; }
 .qib-title {
     font-size: .92rem;
     font-weight: 700;
@@ -113,12 +103,7 @@ def build_intro_css():
     color: transparent;
     font-weight: 900;
 }
-
-.qib-features {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .35rem;
-}
+.qib-features { display: flex; flex-wrap: wrap; gap: .35rem; }
 .qib-feature {
     display: inline-flex;
     align-items: center;
@@ -133,10 +118,7 @@ def build_intro_css():
     white-space: nowrap;
     transition: all .2s ease;
 }
-.qib-feature i {
-    color: #7c3aed;
-    font-size: .78rem;
-}
+.qib-feature i { color: #7c3aed; font-size: .78rem; }
 .qib-feature:hover {
     transform: translateY(-1px);
     border-color: rgba(139, 92, 246, .5);
@@ -156,7 +138,6 @@ def build_intro_css():
     position: relative;
     z-index: 2;
 }
-
 .qib-btn {
     display: inline-flex;
     align-items: center;
@@ -186,7 +167,6 @@ def build_intro_css():
     50%      { box-shadow: 0 4px 20px rgba(124, 58, 237, .65); }
 }
 .qib-btn-primary i { font-size: .9rem; }
-
 .qib-btn-ghost {
     width: 34px;
     height: 34px;
@@ -203,58 +183,22 @@ def build_intro_css():
     transform: rotate(90deg);
 }
 
-/* ═══ Mobile quick banner ═══ */
 @media (max-width: 640px) {
-    .quick-intro-banner {
-        padding: .75rem .85rem;
-        gap: .65rem;
-        flex-wrap: wrap;
-    }
-    .qib-icon {
-        width: 38px;
-        height: 38px;
-        font-size: 1.05rem;
-        border-radius: 11px;
-    }
-    .qib-content {
-        flex: 1 1 100%;
-        order: 3;
-        margin-top: .15rem;
-    }
-    .qib-title {
-        font-size: .82rem;
-        margin-bottom: .4rem;
-    }
+    .quick-intro-banner { padding: .75rem .85rem; gap: .65rem; flex-wrap: wrap; }
+    .qib-icon { width: 38px; height: 38px; font-size: 1.05rem; border-radius: 11px; }
+    .qib-content { flex: 1 1 100%; order: 3; margin-top: .15rem; }
+    .qib-title { font-size: .82rem; margin-bottom: .4rem; }
     .qib-features { gap: .25rem; }
-    .qib-feature {
-        font-size: .65rem;
-        padding: .18rem .5rem;
-        gap: .22rem;
-    }
+    .qib-feature { font-size: .65rem; padding: .18rem .5rem; gap: .22rem; }
     .qib-feature i { font-size: .7rem; }
-    .qib-actions {
-        order: 2;
-        margin-left: auto;
-    }
-    .qib-btn-primary {
-        padding: .5rem .85rem;
-        font-size: .75rem;
-    }
+    .qib-actions { order: 2; margin-left: auto; }
+    .qib-btn-primary { padding: .5rem .85rem; font-size: .75rem; }
     .qib-btn-primary span { display: none; }
-    .qib-btn-primary::after {
-        content: 'Hướng dẫn';
-        margin-left: .15rem;
-    }
-    .qib-btn-ghost {
-        width: 30px;
-        height: 30px;
-    }
+    .qib-btn-primary::after { content: 'Hướng dẫn'; margin-left: .15rem; }
+    .qib-btn-ghost { width: 30px; height: 30px; }
 }
 @media (max-width: 400px) {
-    .qib-title strong {
-        display: block;
-        margin-top: .15rem;
-    }
+    .qib-title strong { display: block; margin-top: .15rem; }
     .qib-feature:nth-child(n+5) { display: none; }
 }
 
@@ -352,16 +296,10 @@ def build_intro_css():
     pointer-events: auto;
     position: relative;
 }
-.intro-slide.prev {
-    transform: translateX(-30px);
-}
-.intro-slide-content {
-    width: 100%;
-    max-width: 780px;
-    margin: 0 auto;
-}
+.intro-slide.prev { transform: translateX(-30px); }
+.intro-slide-content { width: 100%; max-width: 780px; margin: 0 auto; }
 
-/* ═══ Slide 1: Cover ═══ */
+/* ═══ Slide 1: Cover + Login ═══ */
 .cover-slide { text-align: center; }
 .cover-icon {
     width: 96px;
@@ -398,7 +336,6 @@ def build_intro_css():
     0% { transform: translateX(-100%) rotate(25deg); }
     60%, 100% { transform: translateX(100%) rotate(25deg); }
 }
-
 .cover-title {
     font-size: clamp(1.75rem, 3.5vw, 2.5rem);
     font-weight: 900;
@@ -425,20 +362,13 @@ def build_intro_css():
     letter-spacing: .02em;
 }
 [data-theme="dark"] .cover-subtitle { color: #c4b5fd; }
-
 .cover-desc {
     font-size: clamp(.85rem, 1.1vw, .95rem);
     color: var(--text-2);
     line-height: 1.7;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
 }
-
-.cover-tags {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: .5rem;
-}
+.cover-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
 .cover-tag {
     display: inline-flex;
     align-items: center;
@@ -458,7 +388,73 @@ def build_intro_css():
     border-color: rgba(167,139,250,.4);
 }
 
-/* ═══ Slide 2-4: Badge + Title ═══ */
+/* Cover Login CTA */
+.cover-login-cta {
+    margin-top: 1.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, .1), rgba(139, 92, 246, .06));
+    border: 1.5px solid rgba(139, 92, 246, .3);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: left;
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.cover-login-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6 40%, #d946ef);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(139, 92, 246, .4);
+}
+.cover-login-text { flex: 1 1 200px; min-width: 0; }
+.cover-login-title {
+    font-weight: 900;
+    font-size: .9rem;
+    color: var(--text);
+    margin-bottom: .15rem;
+}
+.cover-login-desc {
+    font-size: .72rem;
+    color: var(--text-2);
+    line-height: 1.4;
+}
+.cover-login-btn {
+    padding: .65rem 1.25rem;
+    border-radius: 50px;
+    border: none;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    box-shadow: 0 6px 18px rgba(124, 58, 237, .35);
+    transition: all .2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.cover-login-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 10px 24px rgba(124, 58, 237, .55);
+}
+.cover-login-btn i { font-size: .95rem; }
+
+/* ═══ Slide badge + title ═══ */
 .slide-badge {
     display: inline-flex;
     align-items: center;
@@ -475,7 +471,6 @@ def build_intro_css():
     box-shadow: 0 4px 12px rgba(124,58,237,.35);
 }
 .slide-badge i { font-size: .8rem; }
-
 .slide-title {
     font-size: clamp(1.35rem, 2.5vw, 1.85rem);
     font-weight: 900;
@@ -485,7 +480,7 @@ def build_intro_css():
     letter-spacing: -.02em;
 }
 
-/* ═══ Feature items (Slide 2) ═══ */
+/* ═══ Feature items (Slide 3) ═══ */
 .slide-body.two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -493,12 +488,8 @@ def build_intro_css():
     align-items: start;
 }
 @media (max-width: 640px) {
-    .slide-body.two-col {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
+    .slide-body.two-col { grid-template-columns: 1fr; gap: 1rem; }
 }
-
 .feature-item {
     display: flex;
     gap: .75rem;
@@ -541,52 +532,58 @@ def build_intro_css():
     line-height: 1.5;
 }
 
-.slide-preview { display: flex; align-items: center; justify-content: center; }
-.preview-mockup {
-    width: 100%;
-    max-width: 280px;
-    padding: 1rem;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(139,92,246,.05));
-    border: 1px solid rgba(139,92,246,.25);
+/* ═══ Industry grid ═══ */
+.industry-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .5rem;
+    margin-top: .5rem;
+}
+@media (max-width: 640px) {
+    .industry-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.industry-chip {
     display: flex;
-    flex-direction: column;
-    gap: .6rem;
-}
-.preview-bar {
-    height: 10px;
-    border-radius: 50px;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    opacity: .8;
-}
-.preview-bar.short { width: 60%; opacity: .5; }
-.preview-card {
-    padding: .75rem;
+    align-items: center;
+    gap: .4rem;
+    padding: .5rem .65rem;
     border-radius: 10px;
     background: var(--surface);
     border: 1px solid var(--border);
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--text-2);
+    transition: all .2s ease;
+}
+.industry-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, .15);
+}
+.industry-chip i {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
     display: flex;
-    flex-direction: column;
-    gap: .4rem;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+    color: #fff;
+    flex-shrink: 0;
 }
-.preview-line {
-    height: 8px;
-    border-radius: 50px;
-    background: var(--border-strong);
-    opacity: .5;
-}
-.preview-line.short { width: 70%; }
-.preview-line.tiny { width: 40%; }
+.industry-chip[data-c="0"] i { background: linear-gradient(135deg, #0891b2, #0e7490); }
+.industry-chip[data-c="1"] i { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.industry-chip[data-c="2"] i { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+.industry-chip[data-c="3"] i { background: linear-gradient(135deg, #16a34a, #15803d); }
+.industry-chip[data-c="4"] i { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.industry-chip[data-c="5"] i { background: linear-gradient(135deg, #d97706, #b45309); }
+.industry-chip[data-c="6"] i { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.industry-chip[data-c="7"] i { background: linear-gradient(135deg, #65a30d, #4d7c0f); }
+.industry-chip[data-c="8"] i { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
 
 /* ═══════════════════════════════════════════════════════════════ */
 /* GUIDE STEPS — Slide hướng dẫn                                    */
 /* ═══════════════════════════════════════════════════════════════ */
-.guide-steps {
-    display: flex;
-    flex-direction: column;
-    gap: .75rem;
-}
-
+.guide-steps { display: flex; flex-direction: column; gap: .75rem; }
 .guide-step {
     display: flex;
     gap: .75rem;
@@ -604,17 +601,16 @@ def build_intro_css():
 .guide-step:nth-child(5) { animation-delay: .25s; }
 .guide-step:nth-child(6) { animation-delay: .3s; }
 .guide-step:nth-child(7) { animation-delay: .35s; }
+.guide-step:nth-child(8) { animation-delay: .4s; }
 @keyframes guideStepFadeIn {
     from { opacity: 0; transform: translateX(-8px); }
     to   { opacity: 1; transform: translateX(0); }
 }
-
 .guide-step:hover {
     border-color: rgba(139, 92, 246, .4);
     transform: translateX(4px);
     box-shadow: 0 4px 14px rgba(139, 92, 246, .12);
 }
-
 .guide-step-num {
     width: 32px;
     height: 32px;
@@ -629,9 +625,7 @@ def build_intro_css():
     flex-shrink: 0;
     box-shadow: 0 4px 10px rgba(124, 58, 237, .35);
 }
-
 .guide-step-content { flex: 1; min-width: 0; }
-
 .guide-step-title {
     font-weight: 800;
     font-size: .88rem;
@@ -641,22 +635,14 @@ def build_intro_css():
     align-items: center;
     gap: .4rem;
 }
-.guide-step-title i {
-    color: #7c3aed;
-    font-size: .95rem;
-}
-
+.guide-step-title i { color: #7c3aed; font-size: .95rem; }
 .guide-step-desc {
     font-size: .76rem;
     color: var(--text-2);
     line-height: 1.55;
     margin-bottom: .5rem;
 }
-.guide-step-desc b {
-    color: var(--text);
-    font-weight: 800;
-}
-
+.guide-step-desc b { color: var(--text); font-weight: 800; }
 .guide-step-visual {
     display: flex;
     flex-wrap: wrap;
@@ -664,7 +650,6 @@ def build_intro_css():
     align-items: center;
     margin-top: .4rem;
 }
-
 .guide-mock-chip {
     display: inline-flex;
     align-items: center;
@@ -682,7 +667,6 @@ def build_intro_css():
     color: #fff;
     border-color: transparent;
 }
-
 .guide-mock-btn {
     width: 30px;
     height: 30px;
@@ -700,13 +684,7 @@ def build_intro_css():
     color: #fff;
     border-color: transparent;
 }
-
-.guide-mock-arrow {
-    color: #7c3aed;
-    font-weight: 900;
-    font-size: .85rem;
-}
-
+.guide-mock-arrow { color: #7c3aed; font-weight: 900; font-size: .85rem; }
 .guide-mock-input {
     flex: 1;
     min-width: 100px;
@@ -718,7 +696,6 @@ def build_intro_css():
     color: var(--text-3);
     font-style: italic;
 }
-
 .guide-mock-result {
     padding: .3rem .6rem;
     border-radius: 6px;
@@ -726,15 +703,8 @@ def build_intro_css():
     font-weight: 800;
     font-family: var(--font-zh);
 }
-.guide-mock-result.correct {
-    background: rgba(22, 163, 74, .15);
-    color: #15803d;
-}
-.guide-mock-result.wrong {
-    background: rgba(220, 38, 38, .15);
-    color: #dc2626;
-}
-
+.guide-mock-result.correct { background: rgba(22, 163, 74, .15); color: #15803d; }
+.guide-mock-result.wrong   { background: rgba(220, 38, 38, .15); color: #dc2626; }
 .guide-mock-nav {
     display: inline-flex;
     gap: .25rem;
@@ -754,7 +724,6 @@ def build_intro_css():
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     color: #fff;
 }
-
 .guide-mock-canvas {
     width: 40px;
     height: 40px;
@@ -772,7 +741,6 @@ def build_intro_css():
         linear-gradient(to right, transparent calc(50% - .5px), #e2e8f0 calc(50% - .5px), #e2e8f0 calc(50% + .5px), transparent calc(50% + .5px)),
         linear-gradient(to bottom, transparent calc(50% - .5px), #e2e8f0 calc(50% - .5px), #e2e8f0 calc(50% + .5px), transparent calc(50% + .5px));
 }
-
 .guide-mock-toggle {
     width: 26px;
     height: 26px;
@@ -792,6 +760,101 @@ def build_intro_css():
     border-color: transparent;
     opacity: 1;
     box-shadow: 0 2px 6px rgba(124, 58, 237, .35);
+}
+
+/* Browser support */
+.guide-step-browsers {
+    background: linear-gradient(135deg, rgba(59, 130, 246, .08), rgba(16, 185, 129, .06));
+    border-color: rgba(59, 130, 246, .3);
+}
+.guide-step-browsers:hover {
+    border-color: rgba(59, 130, 246, .6);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, .15);
+}
+.guide-step-browsers .guide-step-num {
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+}
+.guide-step-browsers .guide-step-title { color: #1d4ed8; }
+[data-theme="dark"] .guide-step-browsers .guide-step-title { color: #93c5fd; }
+
+.browser-logos {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-top: .5rem;
+}
+.browser-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .4rem .75rem;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--text-2);
+    transition: all .2s ease;
+}
+.browser-logo i { font-size: 1.1rem; }
+.browser-logo.chrome i { color: #4285F4; }
+.browser-logo.safari i { color: #006CFF; }
+.browser-logo.edge   i { color: #0078D7; }
+.browser-logo.best {
+    border-color: rgba(22, 163, 74, .5);
+    background: linear-gradient(135deg, rgba(22, 163, 74, .1), rgba(34, 197, 94, .06));
+}
+.browser-logo.best::after {
+    content: '✓ Tốt nhất';
+    font-size: .6rem;
+    color: #16a34a;
+    font-weight: 900;
+    margin-left: .2rem;
+}
+
+/* Popup warning */
+.guide-step-popup {
+    background: linear-gradient(135deg, rgba(245, 158, 11, .1), rgba(251, 191, 36, .06));
+    border-color: rgba(245, 158, 11, .35);
+}
+.guide-step-popup:hover {
+    border-color: rgba(245, 158, 11, .6);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, .15);
+}
+.guide-step-popup .guide-step-num {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.guide-step-popup .guide-step-title { color: #92400e; }
+[data-theme="dark"] .guide-step-popup .guide-step-title { color: #fcd34d; }
+
+.popup-demo {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-top: .5rem;
+}
+.popup-demo-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .65rem;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--text-2);
+}
+.popup-demo-item.blocked {
+    background: linear-gradient(135deg, rgba(220, 38, 38, .12), rgba(220, 38, 38, .06));
+    border-color: rgba(220, 38, 38, .4);
+    color: #dc2626;
+    text-decoration: line-through;
+}
+.popup-demo-item.allowed {
+    background: linear-gradient(135deg, rgba(22, 163, 74, .12), rgba(22, 163, 74, .06));
+    border-color: rgba(22, 163, 74, .4);
+    color: #16a34a;
 }
 
 .guide-step-tip {
@@ -824,71 +887,7 @@ def build_intro_css():
 .guide-step-tip .guide-step-title { color: #92400e; }
 [data-theme="dark"] .guide-step-tip .guide-step-title { color: #fcd34d; }
 
-/* ═══ Trial cards (Slide Trial) ═══ */
-.trial-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-}
-@media (max-width: 700px) {
-    .trial-cards { grid-template-columns: 1fr; }
-}
-.trial-card {
-    padding: 1.1rem 1rem;
-    border-radius: 14px;
-    background: var(--surface-2);
-    border: 1.5px solid var(--border);
-    position: relative;
-    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-}
-.trial-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(139,92,246,.5);
-    box-shadow: 0 12px 28px rgba(139,92,246,.18);
-}
-.trial-card-badge {
-    position: absolute;
-    top: -10px;
-    left: 14px;
-    padding: .15rem .55rem;
-    border-radius: 50px;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    color: #fff;
-    font-size: .6rem;
-    font-weight: 900;
-    letter-spacing: .5px;
-    text-transform: uppercase;
-    box-shadow: 0 4px 10px rgba(124,58,237,.4);
-}
-.trial-card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(139,92,246,.1));
-    color: #7c3aed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    margin-bottom: .75rem;
-}
-[data-theme="dark"] .trial-card-icon {
-    background: linear-gradient(135deg, rgba(139,92,246,.3), rgba(139,92,246,.15));
-    color: #c4b5fd;
-}
-.trial-card-title {
-    font-weight: 800;
-    font-size: .88rem;
-    color: var(--text);
-    margin-bottom: .35rem;
-}
-.trial-card-desc {
-    font-size: .75rem;
-    color: var(--text-2);
-    line-height: 1.5;
-}
-
-/* ═══ Package items (Slide Gói) ═══ */
+/* ═══ Package items ═══ */
 .package-item {
     display: flex;
     gap: .7rem;
@@ -933,11 +932,7 @@ def build_intro_css():
     gap: .4rem;
     flex-wrap: wrap;
 }
-.package-price {
-    color: #dc2626;
-    font-weight: 900;
-    font-size: .95rem;
-}
+.package-price { color: #dc2626; font-weight: 900; font-size: .95rem; }
 .package-badge {
     padding: .1rem .4rem;
     border-radius: 50px;
@@ -953,18 +948,55 @@ def build_intro_css():
     background: linear-gradient(135deg, #dc2626, #b91c1c);
     color: #fde68a;
 }
-.package-desc {
-    font-size: .72rem;
-    color: var(--text-2);
-    line-height: 1.4;
-}
+.package-desc { font-size: .72rem; color: var(--text-2); line-height: 1.4; }
 
-.qr-preview {
+/* Renewal flow */
+.renewal-flow {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: .5rem;
+    gap: .55rem;
+    margin-top: 1rem;
+    padding: .85rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, .06), rgba(139, 92, 246, .04));
+    border: 1px dashed rgba(139, 92, 246, .35);
 }
+.renewal-flow-title {
+    font-size: .72rem;
+    font-weight: 900;
+    color: #7c3aed;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    margin-bottom: .15rem;
+}
+[data-theme="dark"] .renewal-flow-title { color: #c4b5fd; }
+.renewal-flow-item {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-size: .78rem;
+    color: var(--text-2);
+}
+.renewal-flow-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .68rem;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+.renewal-flow-item b { color: var(--text); }
+
+/* QR */
+.qr-preview { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
 .qr-box {
     width: 140px;
     height: 140px;
@@ -978,15 +1010,10 @@ def build_intro_css():
     color: #4f46e5;
     box-shadow: 0 8px 24px rgba(0,0,0,.1);
 }
-.qr-caption {
-    font-size: .75rem;
-    color: var(--text-2);
-    text-align: center;
-    line-height: 1.5;
-}
+.qr-caption { font-size: .75rem; color: var(--text-2); text-align: center; line-height: 1.5; }
 .qr-caption strong { color: #16a34a; }
 
-/* ═══ Slide CTA ═══ */
+/* ═══ CTA slide ═══ */
 .cta-slide { text-align: center; }
 .cta-icon {
     width: 88px;
@@ -1044,13 +1071,7 @@ def build_intro_css():
     border-color: rgba(167,139,250,.4);
 }
 .cta-message i { color: #d946ef; font-size: 1rem; }
-
-.cta-actions {
-    display: flex;
-    gap: .75rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
+.cta-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
 .cta-btn {
     padding: .9rem 1.75rem;
     border-radius: 50px;
@@ -1087,7 +1108,7 @@ def build_intro_css():
     box-shadow: 0 12px 32px rgba(124,58,237,.65);
 }
 
-/* ═══ Navigation buttons ═══ */
+/* ═══ Navigation ═══ */
 .intro-nav {
     position: absolute;
     top: 50%;
@@ -1116,16 +1137,10 @@ def build_intro_css():
 }
 .intro-nav.prev { left: 12px; }
 .intro-nav.next { right: 12px; }
-.intro-nav:disabled {
-    opacity: .3;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-@media (max-width: 640px) {
-    .intro-nav { display: none; }
-}
+.intro-nav:disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+@media (max-width: 640px) { .intro-nav { display: none; } }
 
-/* ═══ Footer: counter + dots ═══ */
+/* ═══ Footer ═══ */
 .intro-footer {
     flex: 0 0 auto;
     padding: .85rem 1.5rem;
@@ -1142,15 +1157,8 @@ def build_intro_css():
     color: var(--text-2);
     letter-spacing: .5px;
 }
-.intro-counter #introCurrent {
-    color: #7c3aed;
-    font-size: 1rem;
-}
-.intro-dots {
-    display: flex;
-    gap: .4rem;
-    align-items: center;
-}
+.intro-counter #introCurrent { color: #7c3aed; font-size: 1rem; }
+.intro-dots { display: flex; gap: .4rem; align-items: center; }
 .intro-dot {
     width: 8px;
     height: 8px;
@@ -1162,10 +1170,7 @@ def build_intro_css():
     transition: all .25s ease;
     font-family: inherit;
 }
-.intro-dot:hover {
-    background: #7c3aed;
-    transform: scale(1.2);
-}
+.intro-dot:hover { background: #7c3aed; transform: scale(1.2); }
 .intro-dot.active {
     width: 26px;
     border-radius: 50px;
@@ -1176,24 +1181,35 @@ def build_intro_css():
 /* ═══ Mobile modal ═══ */
 @media (max-width: 640px) {
     .intro-modal { padding: .5rem; align-items: flex-end; }
-    .intro-box {
-        max-width: 100%;
-        max-height: 94vh;
-        border-radius: 20px 20px 0 0;
-    }
+    .intro-box { max-width: 100%; max-height: 94vh; border-radius: 20px 20px 0 0; }
     .intro-slide { padding: 2rem 1.25rem 1.5rem; }
     .intro-close { top: 10px; right: 10px; width: 32px; height: 32px; }
     .cover-icon { width: 72px; height: 72px; font-size: 1.9rem; border-radius: 20px; }
     .cover-title { font-size: 1.5rem; }
     .cover-subtitle { font-size: 1rem; }
-    .cover-desc { font-size: .8rem; margin-bottom: 1.25rem; }
+    .cover-desc { font-size: .8rem; margin-bottom: 1rem; }
     .cover-tags { gap: .35rem; }
     .cover-tag { font-size: .7rem; padding: .3rem .65rem; }
+
+    .cover-login-cta {
+        padding: .85rem .9rem;
+        gap: .65rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    .cover-login-icon { width: 42px; height: 42px; font-size: 1.15rem; }
+    .cover-login-title { font-size: .82rem; }
+    .cover-login-desc { font-size: .68rem; }
+    .cover-login-btn {
+        width: 100%;
+        justify-content: center;
+        padding: .6rem 1rem;
+        font-size: .78rem;
+    }
+
     .slide-title { font-size: 1.2rem; margin-bottom: 1rem; }
     .feature-item, .package-item { padding: .65rem .75rem; }
     .feature-icon, .package-icon { width: 36px; height: 36px; font-size: .9rem; }
-    .trial-cards { gap: .75rem; }
-    .trial-card { padding: .85rem .75rem; }
     .cta-icon { width: 72px; height: 72px; font-size: 1.8rem; }
     .cta-title { font-size: 1.35rem; }
     .cta-desc { font-size: .82rem; }
@@ -1212,11 +1228,10 @@ def build_intro_css():
     .guide-mock-chip { font-size: .64rem; padding: .18rem .45rem; }
     .guide-mock-input { font-size: .66rem; }
     .guide-mock-canvas { width: 34px; height: 34px; font-size: 1.2rem; }
+    .industry-grid { grid-template-columns: repeat(2, 1fr); }
+    .industry-chip { font-size: .68rem; padding: .4rem .55rem; }
 }
-
-[data-theme="dark"] .intro-footer {
-    background: rgba(15,23,42,.6);
-}
+[data-theme="dark"] .intro-footer { background: rgba(15,23,42,.6); }
 """
 
 
@@ -1237,12 +1252,11 @@ def build_intro_html():
             🎉 Chào mừng đến với <strong>Học Tiếng Trung · Văn Phòng &amp; Công Xưởng</strong>
         </div>
         <div class="qib-features">
-            <span class="qib-feature"><i class="fas fa-database"></i> 1750+ câu</span>
+            <span class="qib-feature"><i class="fas fa-database"></i> 1700+ câu</span>
             <span class="qib-feature"><i class="fas fa-graduation-cap"></i> HSK1-6</span>
-            <span class="qib-feature"><i class="fas fa-industry"></i> 8 chuyên ngành</span>
+            <span class="qib-feature"><i class="fas fa-industry"></i> 9 chuyên ngành</span>
             <span class="qib-feature"><i class="fas fa-volume-up"></i> Audio chuẩn</span>
             <span class="qib-feature"><i class="fas fa-pen-fancy"></i> Luyện viết</span>
-            <span class="qib-feature"><i class="fas fa-robot"></i> AI chấm điểm</span>
             <span class="qib-feature"><i class="fas fa-book-open"></i> Hướng dẫn chi tiết</span>
         </div>
     </div>
@@ -1257,7 +1271,7 @@ def build_intro_html():
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- INTRO MODAL — 6 SLIDES                                      -->
+<!-- INTRO MODAL — 5 SLIDES                                      -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div class="intro-modal" id="introModal">
     <div class="intro-box">
@@ -1267,7 +1281,7 @@ def build_intro_html():
 
         <div class="intro-slides" id="introSlides">
 
-            <!-- ═══ SLIDE 1: Cover ═══ -->
+            <!-- ═══ SLIDE 1: Cover + Đăng nhập ═══ -->
             <div class="intro-slide active" data-slide="0">
                 <div class="intro-slide-content cover-slide">
                     <div class="cover-icon">
@@ -1276,70 +1290,35 @@ def build_intro_html():
                     <h1 class="cover-title">Học Tiếng Trung</h1>
                     <h2 class="cover-subtitle">Văn Phòng · Công Xưởng</h2>
                     <p class="cover-desc">
-                        Giải pháp luyện phản xạ giao tiếp chuyên sâu,<br>
-                        hỗ trợ đắc lực cho công việc văn phòng,<br>
-                        xưởng sản xuất và quản lý nhân sự.
+                        1700+ câu phản xạ giao tiếp chuyên sâu,<br>
+                        phục vụ công việc văn phòng, xưởng sản xuất<br>
+                        và quản lý nhân sự cho doanh nghiệp VN-TQ.
                     </p>
                     <div class="cover-tags">
-                        <span class="cover-tag"><i class="fas fa-fire"></i> 1750+ câu</span>
+                        <span class="cover-tag"><i class="fas fa-fire"></i> 1700+ câu</span>
                         <span class="cover-tag"><i class="fas fa-graduation-cap"></i> HSK1-6</span>
+                        <span class="cover-tag"><i class="fas fa-industry"></i> 9 chuyên ngành</span>
                         <span class="cover-tag"><i class="fas fa-volume-up"></i> Audio</span>
                         <span class="cover-tag"><i class="fas fa-pen-fancy"></i> Luyện viết</span>
                     </div>
-                </div>
-            </div>
 
-            <!-- ═══ SLIDE 2: Tổng quan ═══ -->
-            <div class="intro-slide" data-slide="1">
-                <div class="intro-slide-content">
-                    <div class="slide-badge"><i class="fas fa-star"></i> Tổng quan</div>
-                    <h2 class="slide-title">Tổng Quan Giao Diện &amp; Dữ Liệu</h2>
-
-                    <div class="slide-body two-col">
-                        <div class="slide-col">
-                            <div class="feature-item">
-                                <div class="feature-icon blue"><i class="fas fa-database"></i></div>
-                                <div class="feature-text">
-                                    <div class="feature-title">Kho dữ liệu lớn</div>
-                                    <div class="feature-desc">1750+ câu phản xạ tổng hợp VPCX cùng bộ lọc chủ đề chuyên ngành.</div>
-                                </div>
-                            </div>
-                            <div class="feature-item">
-                                <div class="feature-icon purple"><i class="fas fa-list-check"></i></div>
-                                <div class="feature-text">
-                                    <div class="feature-title">Chủ đề thực chiến</div>
-                                    <div class="feature-desc">Tiến độ, mua hàng, sản xuất, IQC/IPQC/FQC và nhân sự HR.</div>
-                                </div>
-                            </div>
-                            <div class="feature-item">
-                                <div class="feature-icon green"><i class="fas fa-user-check"></i></div>
-                                <div class="feature-text">
-                                    <div class="feature-title">Đăng nhập nhanh</div>
-                                    <div class="feature-desc">Tài khoản Google giúp đồng bộ tiến trình học tập dễ dàng.</div>
-                                </div>
-                            </div>
+                    <div class="cover-login-cta">
+                        <div class="cover-login-icon">
+                            <i class="fas fa-gem"></i>
                         </div>
-                        <div class="slide-col slide-preview">
-                            <div class="preview-mockup">
-                                <div class="preview-bar"></div>
-                                <div class="preview-bar short"></div>
-                                <div class="preview-card">
-                                    <div class="preview-line"></div>
-                                    <div class="preview-line short"></div>
-                                    <div class="preview-line tiny"></div>
-                                </div>
-                                <div class="preview-card">
-                                    <div class="preview-line"></div>
-                                    <div class="preview-line short"></div>
-                                </div>
-                            </div>
+                        <div class="cover-login-text">
+                            <div class="cover-login-title">Đăng nhập để mở khóa toàn bộ</div>
+                            <div class="cover-login-desc">Tặng 3 ngày dùng thử · Không cần tạo tài khoản mới</div>
                         </div>
+                        <button class="cover-login-btn" onclick="handleLoginFromIntro()">
+                            <i class="fab fa-google"></i> Đăng nhập bằng Google
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- ═══ SLIDE 3: Hướng dẫn ═══ -->
-            <div class="intro-slide" data-slide="2">
+            <!-- ═══ SLIDE 2: Hướng dẫn + Trial Popup ═══ -->
+            <div class="intro-slide" data-slide="1">
                 <div class="intro-slide-content">
                     <div class="slide-badge"><i class="fas fa-book-open"></i> Hướng dẫn</div>
                     <h2 class="slide-title">Cách Sử Dụng Hiệu Quả</h2>
@@ -1349,7 +1328,7 @@ def build_intro_html():
                             <div class="guide-step-num">1</div>
                             <div class="guide-step-content">
                                 <div class="guide-step-title"><i class="fas fa-search"></i> Tìm câu theo chủ đề</div>
-                                <div class="guide-step-desc">Dùng <b>thanh tìm kiếm</b> hoặc bộ lọc <b>HSK</b> / <b>Chủ đề</b>. Bấm trực tiếp vào <b>tag chủ đề</b> trên mỗi câu để lọc nhanh.</div>
+                                <div class="guide-step-desc">Dùng <b>thanh tìm kiếm</b> hoặc bộ lọc <b>HSK</b> / <b>Chủ đề</b>. Chọn chuyên ngành ở <b>Bộ dữ liệu</b> để lọc câu chuyên sâu.</div>
                                 <div class="guide-step-visual">
                                     <span class="guide-mock-chip"><i class="fas fa-filter"></i> HSK3</span>
                                     <span class="guide-mock-chip active"><i class="fas fa-industry"></i> Máy tính &amp; IT</span>
@@ -1362,7 +1341,7 @@ def build_intro_html():
                             <div class="guide-step-num">2</div>
                             <div class="guide-step-content">
                                 <div class="guide-step-title"><i class="fas fa-volume-up"></i> Nghe phát âm chuẩn</div>
-                                <div class="guide-step-desc">Bấm biểu tượng <b>🔊 loa</b> để nghe câu. Chỉnh <b>tốc độ, giọng đọc, cao độ, âm lượng</b> trong cài đặt giọng (nút tai nghe 🎧).</div>
+                                <div class="guide-step-desc">Bấm biểu tượng <b>🔊 loa</b> để nghe. Chỉnh <b>tốc độ, giọng đọc, cao độ, âm lượng</b> trong cài đặt giọng (nút tai nghe 🎧).</div>
                                 <div class="guide-step-visual">
                                     <span class="guide-mock-btn primary"><i class="fas fa-volume-up"></i></span>
                                     <span class="guide-mock-arrow">→</span>
@@ -1389,7 +1368,7 @@ def build_intro_html():
                             <div class="guide-step-num">4</div>
                             <div class="guide-step-content">
                                 <div class="guide-step-title"><i class="fas fa-expand"></i> Luyện tập full màn hình</div>
-                                <div class="guide-step-desc">Bấm nút <b>⛶ mở rộng</b> trên mỗi câu. Có thể <b>nhảy câu ngẫu nhiên</b> 🎲, <b>gợi ý 💡</b>, <b>xem đáp án</b>, chấm điểm tự động.</div>
+                                <div class="guide-step-desc">Bấm nút <b>⛶ mở rộng</b> trên mỗi câu. Có thể <b>nhảy câu ngẫu nhiên</b> 🎲, <b>gợi ý 💡</b>, <b>xem đáp án</b>.</div>
                                 <div class="guide-step-visual">
                                     <span class="guide-mock-btn"><i class="fas fa-expand"></i></span>
                                     <span class="guide-mock-arrow">→</span>
@@ -1432,6 +1411,45 @@ def build_intro_html():
                             </div>
                         </div>
 
+                        <div class="guide-step guide-step-browsers">
+                            <div class="guide-step-num">
+                                <i class="fas fa-globe" style="font-size:.85rem"></i>
+                            </div>
+                            <div class="guide-step-content">
+                                <div class="guide-step-title">
+                                    <i class="fas fa-circle-check"></i> Hoạt động tốt nhất trên Chrome &amp; Safari
+                                </div>
+                                <div class="guide-step-desc">
+                                    Web được tối ưu cho <b>Chrome</b> (Android, máy tính) và <b>Safari</b> (iPhone, iPad).
+                                    Trên iPhone, hãy mở bằng <b>Safari</b> để phát âm và "Thêm vào màn hình chính" hoạt động ổn định nhất.
+                                </div>
+                                <div class="browser-logos">
+                                    <span class="browser-logo chrome best"><i class="fab fa-chrome"></i> Chrome</span>
+                                    <span class="browser-logo safari best"><i class="fab fa-safari"></i> Safari</span>
+                                    <span class="browser-logo edge"><i class="fab fa-edge"></i> Edge</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guide-step guide-step-popup">
+                            <div class="guide-step-num" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+                                <i class="fas fa-gift" style="font-size:.8rem"></i>
+                            </div>
+                            <div class="guide-step-content">
+                                <div class="guide-step-title">
+                                    <i class="fas fa-window-restore"></i> Dùng thử 3 ngày + Tắt chặn popup
+                                </div>
+                                <div class="guide-step-desc">
+                                    Tài khoản mới được tặng <b>3 ngày dùng thử miễn phí</b> (200 câu đầu, HSK1-5, không giới hạn nghe + viết).
+                                    Khi đăng nhập Google, nếu bị chặn popup, hãy <b>bấm biểu tượng 🚫 / 🛡️ cạnh thanh địa chỉ</b> và chọn <b>"Luôn cho phép popup"</b>.
+                                </div>
+                                <div class="popup-demo">
+                                    <span class="popup-demo-item blocked"><i class="fas fa-ban"></i> Popup bị chặn</span>
+                                    <span class="popup-demo-item allowed"><i class="fas fa-circle-check"></i> Popup được cho phép</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="guide-step guide-step-tip">
                             <div class="guide-tip-icon"><i class="fas fa-lightbulb"></i></div>
                             <div class="guide-step-content">
@@ -1448,37 +1466,57 @@ def build_intro_html():
                 </div>
             </div>
 
-            <!-- ═══ SLIDE 4: Trial ═══ -->
-            <div class="intro-slide" data-slide="3">
+            <!-- ═══ SLIDE 3: Tổng quan + 9 chuyên ngành ═══ -->
+            <div class="intro-slide" data-slide="2">
                 <div class="intro-slide-content">
-                    <div class="slide-badge"><i class="fas fa-gift"></i> Dùng thử</div>
-                    <h2 class="slide-title">Chương Trình Trải Nghiệm (Trial)</h2>
+                    <div class="slide-badge"><i class="fas fa-star"></i> Tổng quan</div>
+                    <h2 class="slide-title">Kho Dữ Liệu &amp; 9 Chuyên Ngành</h2>
 
-                    <div class="trial-cards">
-                        <div class="trial-card">
-                            <div class="trial-card-badge">Ưu đãi</div>
-                            <div class="trial-card-icon"><i class="fas fa-calendar-check"></i></div>
-                            <div class="trial-card-title">Tặng 3 Ngày Dùng Thử</div>
-                            <div class="trial-card-desc">Tài khoản mới được tặng ngay 3 ngày trải nghiệm toàn bộ hệ thống (200 câu đầu tiên, HSK1-5).</div>
+                    <div class="slide-body two-col">
+                        <div class="slide-col">
+                            <div class="feature-item">
+                                <div class="feature-icon blue"><i class="fas fa-database"></i></div>
+                                <div class="feature-text">
+                                    <div class="feature-title">1700 câu phản xạ tổng hợp VPCX</div>
+                                    <div class="feature-desc">Câu phản xạ thực tế cho văn phòng &amp; công xưởng, chia theo HSK1-6.</div>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon purple"><i class="fas fa-industry"></i></div>
+                                <div class="feature-text">
+                                    <div class="feature-title">9 chuyên ngành riêng biệt</div>
+                                    <div class="feature-desc">Mỗi chuyên ngành có bộ câu hỏi chuyên sâu, sát với công việc thực tế.</div>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon green"><i class="fas fa-user-check"></i></div>
+                                <div class="feature-text">
+                                    <div class="feature-title">Đăng nhập Google</div>
+                                    <div class="feature-desc">Đồng bộ tiến trình, mở khóa toàn bộ kho câu, không giới hạn.</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="trial-card">
-                            <div class="trial-card-badge">Tính năng</div>
-                            <div class="trial-card-icon"><i class="fas fa-infinity"></i></div>
-                            <div class="trial-card-title">Không Giới Hạn</div>
-                            <div class="trial-card-desc">Tự do luyện nghe và luyện viết không giới hạn số lần trong suốt thời gian dùng thử.</div>
-                        </div>
-                        <div class="trial-card">
-                            <div class="trial-card-badge">Lưu ý</div>
-                            <div class="trial-card-icon"><i class="fas fa-shield-halved"></i></div>
-                            <div class="trial-card-title">Cảnh Báo Trình Duyệt</div>
-                            <div class="trial-card-desc">Đảm bảo trình duyệt cho phép popup đăng nhập để quá trình xác thực Google diễn ra mượt mà.</div>
+                        <div class="slide-col">
+                            <div style="display:block">
+                                <div class="industry-grid">
+                                    <div class="industry-chip" data-c="0"><i class="fas fa-users"></i> Nhân sự</div>
+                                    <div class="industry-chip" data-c="1"><i class="fas fa-shopping-cart"></i> Thu mua</div>
+                                    <div class="industry-chip" data-c="2"><i class="fas fa-ship"></i> Xuất nhập khẩu</div>
+                                    <div class="industry-chip" data-c="3"><i class="fas fa-calculator"></i> Kế toán</div>
+                                    <div class="industry-chip" data-c="4"><i class="fas fa-award"></i> Chất lượng</div>
+                                    <div class="industry-chip" data-c="5"><i class="fas fa-calendar-alt"></i> KH Sản xuất</div>
+                                    <div class="industry-chip" data-c="6"><i class="fas fa-industry"></i> Sản xuất</div>
+                                    <div class="industry-chip" data-c="7"><i class="fas fa-warehouse"></i> Kho</div>
+                                    <div class="industry-chip" data-c="8"><i class="fas fa-laptop-code"></i> IT</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ═══ SLIDE 5: Gói gia hạn ═══ -->
-            <div class="intro-slide" data-slide="4">
+            <!-- ═══ SLIDE 4: Gói gia hạn + 3 bước ═══ -->
+            <div class="intro-slide" data-slide="3">
                 <div class="intro-slide-content">
                     <div class="slide-badge"><i class="fas fa-crown"></i> Nâng cấp</div>
                     <h2 class="slide-title">Gói Gia Hạn &amp; Mở Khóa Toàn Bộ</h2>
@@ -1496,7 +1534,7 @@ def build_intro_html():
                                 <div class="package-icon hot"><i class="fas fa-fire"></i></div>
                                 <div class="package-info">
                                     <div class="package-title">Gói 3 tháng <span class="package-price">120.000đ</span><span class="package-badge">Phổ biến</span></div>
-                                    <div class="package-desc">Tiết kiệm 33%, lựa chọn phổ biến cho người học đều đặn.</div>
+                                    <div class="package-desc">Tiết kiệm 33%, phổ biến cho người học đều đặn.</div>
                                 </div>
                             </div>
                             <div class="package-item">
@@ -1517,19 +1555,37 @@ def build_intro_html():
                         <div class="slide-col slide-preview">
                             <div class="qr-preview">
                                 <div class="qr-box"><i class="fas fa-qrcode"></i></div>
-                                <div class="qr-caption">Thanh toán qua QR ngân hàng<br><strong>Xác nhận tự động</strong></div>
+                                <div class="qr-caption">Quét QR chuyển khoản<br><strong>Xác nhận 1-5 phút</strong></div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="renewal-flow">
+                        <div class="renewal-flow-title">
+                            <i class="fas fa-bolt"></i> Gia hạn nhanh chóng — 3 bước
+                        </div>
+                        <div class="renewal-flow-item">
+                            <span class="renewal-flow-num">1</span>
+                            <div><b>Chọn gói</b> phù hợp và quét QR chuyển khoản</div>
+                        </div>
+                        <div class="renewal-flow-item">
+                            <span class="renewal-flow-num">2</span>
+                            <div>Ghi đúng <b>nội dung chuyển khoản</b> (mã HN...) để hệ thống tự khớp</div>
+                        </div>
+                        <div class="renewal-flow-item">
+                            <span class="renewal-flow-num">3</span>
+                            <div>Bấm <b>"Tôi đã thanh toán"</b> → Admin xác nhận trong <b>1-5 phút</b></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ═══ SLIDE 6: CTA ═══ -->
-            <div class="intro-slide" data-slide="5">
+            <!-- ═══ SLIDE 5: CTA ═══ -->
+            <div class="intro-slide" data-slide="4">
                 <div class="intro-slide-content cta-slide">
                     <div class="cta-icon"><i class="fas fa-rocket"></i></div>
                     <h2 class="cta-title">Bắt Đầu Học Ngay Hôm Nay!</h2>
-                    <p class="cta-desc">Nâng cấp tài khoản để mở khóa toàn bộ nội dung và chinh phục tiếng Trung văn phòng - công xưởng.</p>
+                    <p class="cta-desc">Đăng nhập Google để mở khóa toàn bộ 1700+ câu và 9 chuyên ngành — miễn phí 3 ngày đầu tiên.</p>
                     <div class="cta-message">
                         <i class="fas fa-graduation-cap"></i>
                         Chúc bạn học tốt &amp; thành công trong công việc!
@@ -1556,7 +1612,7 @@ def build_intro_html():
 
         <div class="intro-footer">
             <div class="intro-counter">
-                <span id="introCurrent">1</span> / <span id="introTotal">6</span>
+                <span id="introCurrent">1</span> / <span id="introTotal">5</span>
             </div>
             <div class="intro-dots" id="introDots">
                 <button class="intro-dot active" data-index="0"></button>
@@ -1564,7 +1620,6 @@ def build_intro_html():
                 <button class="intro-dot" data-index="2"></button>
                 <button class="intro-dot" data-index="3"></button>
                 <button class="intro-dot" data-index="4"></button>
-                <button class="intro-dot" data-index="5"></button>
             </div>
         </div>
     </div>
@@ -1604,10 +1659,10 @@ function resetQuickIntroBanner() {
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
-/* INTRO SLIDES — Điều khiển modal giới thiệu                       */
+/* INTRO SLIDES                                                    */
 /* ═══════════════════════════════════════════════════════════════ */
 var introCurrentSlide = 0;
-var introTotalSlides = 6;
+var introTotalSlides = 5;
 
 window.openIntroModal = function() {
     var modal = $('introModal');
@@ -1669,8 +1724,7 @@ window.introPrev = function() {
 
 function updateIntroCta() {
     var btn = $('ctaMainBtn');
-    var btnText = $('ctaBtnText');
-    if (!btn || !btnText) return;
+    if (!btn) return;
 
     var isLoggedIn = (typeof currentUser !== 'undefined' && currentUser);
 
@@ -1692,6 +1746,13 @@ window.handleCtaAction = function() {
     var isLoggedIn = (typeof currentUser !== 'undefined' && currentUser);
     closeIntroModal();
     if (!isLoggedIn && typeof showLoginModal === 'function') {
+        setTimeout(showLoginModal, 300);
+    }
+};
+
+window.handleLoginFromIntro = function() {
+    closeIntroModal();
+    if (typeof showLoginModal === 'function') {
         setTimeout(showLoginModal, 300);
     }
 };
@@ -1761,7 +1822,7 @@ function maybeAutoOpenIntro() {
     } catch(e) {}
 }
 
-/* Init khi DOM ready */
+/* Hook vào initApp */
 if (typeof window.initApp === 'function') {
     var _origInitApp = window.initApp;
     window.initApp = function() {
