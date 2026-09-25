@@ -5803,9 +5803,7 @@ function maybeShowOnboarding() {
         return;
     }
 
-    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
-        return;
-    }
+    
 
     var cfg = getOnboardingConfig();
     if (!cfg) return;
