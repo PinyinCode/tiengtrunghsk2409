@@ -927,8 +927,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .practice-full-input-wrap{display:flex;flex-direction:column;gap:clamp(.4rem,.8vh,.65rem)}
 .practice-input-row{position:relative;display:flex;align-items:stretch;gap:.5rem}
 .practice-input-row .practice-full-input{flex:1;min-width:0}
-.practice-full-input{width:100%;padding:clamp(.7rem,1.5vh,.9rem) clamp(.85rem,1.5vw,1.1rem);font-size:clamp(1.15rem,2.2vw,1.35rem);font-family:var(--font-zh);border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text);outline:none;transition:.15s;text-align:center;letter-spacing:.05em;box-shadow:0 2px 8px rgba(15,23,42,.04)}
-.practice-full-input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.15),0 8px 24px rgba(37,99,235,.15);transform:scale(1.01)}
+.practice-full-input{width:100%;padding:clamp(.7rem,1.5vh,.9rem) clamp(.85rem,1.5vw,1.1rem);font-size:clamp(1.15rem,2.2vw,1.35rem);font-family:var(--font-zh);border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;text-align:center;letter-spacing:.05em;box-shadow:0 2px 8px rgba(15,23,42,.04);resize:none;overflow-y:hidden;min-height:calc(1em * 1.5 + 1.4rem);max-height:40vh;line-height:1.5;word-break:break-word;white-space:pre-wrap;display:block}
+.practice-full-input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.15),0 8px 24px rgba(37,99,235,.15)}
+.practice-full-input.multiline{text-align:left}
 @media(min-width:769px){.practice-full-input{font-size:clamp(1.35rem,2.6vw,1.6rem);padding:clamp(.85rem,1.8vh,1rem) clamp(1rem,2vw,1.3rem)}}
 @media(min-width:1400px){.practice-full-input{font-size:1.7rem;padding:1.05rem 1.4rem}}
 
@@ -7061,7 +7062,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 <div class="practice-full-vi" id="pfVi">-</div>
 <div class="practice-full-input-wrap">
 <div class="practice-input-row">
-<input type="text" class="practice-full-input" id="pfInput" placeholder="Gõ tiếng Trung..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+<textarea class="practice-full-input" id="pfInput" placeholder="Gõ tiếng Trung..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
 <button class="practice-speak-btn" id="pfSpeakBtn" type="button" title="Nghe câu này" aria-label="Nghe câu này"><i class="fas fa-volume-up"></i></button>
 </div>
 <div class="char-preview" id="pfPreview"></div>
@@ -7113,9 +7114,9 @@ body.hide-floating .tiktok-bar { display: none !important; }
 <div class="voice-modal" id="voiceModal">
     <div class="voice-box">
         <div class="voice-header">
-            <h2><i class="fas fa-sliders-h"></i> Cài đặt giọng đ="ọc</h2>
-            <voicebutton class="voice-close" id="voice-slClose" aria-label="Đóng"><i class="fas fa-times"></iider"></button>
-        </ iddiv>
+            <h2><i class="fas fa-sliders-h"></i> Cài đặt giọng đọc</h2>
+            <button class="voice-close" id="voiceClose" aria-label="Đóng"><i class="fas fa-times"></i></button>
+        </div>
         <div class="voice-body">
 
             <div class="voice-group">
@@ -7165,7 +7166,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
                 </div>
                 <div class="voice-slider-row">
                     <button type="button" id="voiceVolumeMinus" title="Nhỏ hơn">−</button>
-                    <input type="range" class="voiceVolumeSlider" min="0" max="1" step="0.05" value="1.0">
+                    <input type="range" class="voice-slider" id="voiceVolumeSlider" min="0" max="1" step="0.05" value="1.0">
                     <button type="button" id="voiceVolumePlus" title="To hơn">+</button>
                 </div>
             </div>
@@ -11132,6 +11133,55 @@ function _quickSpeakNormal(token) {
 }
 
 function initPracticeFull() {
+    /* ═══════════════════════════════════════════════════════════
+       ⬇️ AUTO-GROW TEXTAREA — Ô nhập tự giãn khi gõ câu dài
+       ═══════════════════════════════════════════════════════════ */
+    (function setupAutoGrow() {
+        var inp = $('pfInput');
+        if (!inp) return;
+
+        function autoGrow() {
+            if (!inp || inp.tagName !== 'TEXTAREA') return;
+            inp.style.height = 'auto';
+            var newH = inp.scrollHeight;
+            var maxH = Math.floor(window.innerHeight * 0.4);
+            if (newH > maxH) {
+                inp.style.height = maxH + 'px';
+                inp.style.overflowY = 'auto';
+            } else {
+                inp.style.height = newH + 'px';
+                inp.style.overflowY = 'hidden';
+            }
+            var lineH = parseFloat(getComputedStyle(inp).lineHeight) || 20;
+            var hasMultiline = newH > (lineH * 1.5 + 20);
+            inp.classList.toggle('multiline', hasMultiline);
+        }
+
+        inp.addEventListener('input', autoGrow);
+        inp.addEventListener('paste', function() { setTimeout(autoGrow, 0); });
+        window.addEventListener('resize', autoGrow);
+
+        var orig = window.loadPracticeFull;
+        if (typeof orig === 'function' && !orig.__autoGrowPatched) {
+            window.loadPracticeFull = function(stt) {
+                var r = orig.apply(this, arguments);
+                var i2 = $('pfInput');
+                if (i2 && i2.tagName === 'TEXTAREA') {
+                    i2.style.height = 'auto';
+                    i2.style.overflowY = 'hidden';
+                    i2.classList.remove('multiline');
+                }
+                return r;
+            };
+            window.loadPracticeFull.__autoGrowPatched = true;
+        }
+
+        autoGrow();
+    })();
+
+    /* ═══════════════════════════════════════════════════════════
+       Random mode init
+       ═══════════════════════════════════════════════════════════ */
     try {
         var savedRandom = localStorage.getItem('pfRandomMode') === '1';
         if (savedRandom) {
@@ -11144,6 +11194,7 @@ function initPracticeFull() {
         }
     } catch(e) {}
 
+    /* Random toggle button */
     var randomToggleBtn = $('pfRandomToggleBtn');
     if (randomToggleBtn) {
         randomToggleBtn.addEventListener('click', function(e) {
@@ -11153,22 +11204,35 @@ function initPracticeFull() {
         });
     }
 
+    /* Nút đóng modal */
     $('pfClose').addEventListener('click', closePracticeFull);
+
+    /* Nút prev / next */
     $('pfPrevBtn').addEventListener('click', pfPrev);
     $('pfNextBtn').addEventListener('click', pfNext);
+
+    /* Nút reveal / hint */
     $('pfRevealBtn').addEventListener('click', revealFullAnswer);
     $('pfHintBtn').addEventListener('click', toggleHint);
+
+    /* Input — update preview + check */
     $('pfInput').addEventListener('input', function() {
         updateCharPreview();
         checkFullAnswer();
     });
+
+    /* Quick nav */
     $('pfQuickNav').addEventListener('change', pfQuickNavChange);
+
+    /* Search trong modal */
     $('pfSearchInput').addEventListener('input', function() { pfApplyFilter(); });
     $('pfClearSearchBtn').addEventListener('click', function() {
         $('pfSearchInput').value = '';
         $('pfSearchInput').focus();
         pfApplyFilter();
     });
+
+    /* HSK filter trong modal */
     $('pfHskFilter').addEventListener('change', function() {
         var val = this.value;
         var allowed = getAllowedHskList();
@@ -11183,6 +11247,8 @@ function initPracticeFull() {
         }
         pfApplyFilter();
     });
+
+    /* Subject filter trong modal */
     $('pfSubjectFilter').addEventListener('change', function() {
         var val = this.value;
         var allowed = getAllowedSubjectList();
@@ -11198,17 +11264,36 @@ function initPracticeFull() {
         pfApplyFilter();
     });
 
+    /* ═══════════════════════════════════════════════════════════
+       KEYBOARD SHORTCUTS
+       - Enter (không shift/ctrl): xuống dòng trong textarea
+       - Ctrl + Arrow: prev / next
+       - R: toggle random
+       - Escape: đóng modal
+       ═══════════════════════════════════════════════════════════ */
     document.addEventListener('keydown', function(e) {
         if (!$('practiceFullModal').classList.contains('show')) return;
         var active = document.activeElement;
-        var isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+        var isTyping = active && (
+            active.tagName === 'INPUT' ||
+            active.tagName === 'TEXTAREA' ||
+            active.tagName === 'SELECT'
+        );
+
         if (e.key === 'Escape') { closePracticeFull(); return; }
+
+        /* Cho phép Enter xuống dòng bình thường trong textarea */
+        if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) return;
+
         if (isTyping) return;
         if (e.key === 'ArrowRight' && e.ctrlKey) pfNext();
         if (e.key === 'ArrowLeft' && e.ctrlKey) pfPrev();
         if (e.key === 'r' || e.key === 'R') pfToggleRandom();
     });
 
+    /* ═══════════════════════════════════════════════════════════
+       SWIPE GESTURE (mobile)
+       ═══════════════════════════════════════════════════════════ */
     var modal = $('practiceFullModal');
     var touchStartX = 0;
     modal.addEventListener('touchstart', function(e) {
@@ -11222,6 +11307,9 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
+    /* ═══════════════════════════════════════════════════════════
+       Nút loa trong ô nhập — toggle speak full
+       ═══════════════════════════════════════════════════════════ */
     if (!window._pfSpeakBound) {
         window._pfSpeakBound = true;
         var speakBtn = $('pfSpeakBtn');
@@ -11233,6 +11321,10 @@ function initPracticeFull() {
             });
         }
     }
+
+    /* ═══════════════════════════════════════════════════════════
+       Nút loa dưới nav — toggle quick speak
+       ═══════════════════════════════════════════════════════════ */
     if (!window._pfQuickSpeakBound) {
         window._pfQuickSpeakBound = true;
         var quickBtn = $('pfQuickSpeakBtn');
@@ -11245,7 +11337,6 @@ function initPracticeFull() {
         }
     }
 }
-
 function pfBuildDatasetSelect() {
     var sel = $('pfDatasetSelect');
     var row = $('pfDatasetRow');
