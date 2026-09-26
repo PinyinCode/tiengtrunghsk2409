@@ -16422,6 +16422,92 @@ function favSyncFloatVisibility() {
     }
 })();
 /* ═══════════════════════════════════════════════════════════════
+   ★ PATCH: ĐỔI BỘ DỮ LIỆU — RESET TOGGLE + CHECK CÂU MỚI
+   
+   Khi user đổi #pfDatasetSelect (dropdown "Bộ dữ liệu"):
+   1. LUÔN reset toggle "Chỉ câu yêu thích" về TẮT
+   2. Đợi câu mới load xong → check câu mới có like không
+   3. Cập nhật nút toggle (sáng/mờ) + nút tim (đỏ/xám)
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+
+    /* ═══ Hàm xử lý khi đổi dataset ═══ */
+    function handleDatasetChange() {
+        console.log('[Favorites] Đổi bộ dữ liệu → bắt đầu đồng bộ');
+
+        /* ═══ 1. RESET toggle về TẮT ═══ */
+        if (typeof favState !== 'undefined') {
+            favState.pfOnlyFav = false;
+            favState.filteringOnly = false;
+            favState.currentView = false;
+        }
+
+        /* ═══ 2. Đợi câu mới load → check + update UI ═══ */
+        setTimeout(function() {
+            /* A. Cập nhật nút tim FLOAT theo câu mới */
+            if (typeof favUpdatePfFloatBtn === 'function') {
+                favUpdatePfFloatBtn();
+            }
+
+            /* B. Cập nhật nút toggle theo câu mới */
+            if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                favUpdatePfOnlyFavBtn();
+            }
+
+            /* C. Refresh dropdown "CÂU:" */
+            if (typeof favRefreshQuestionDropdown === 'function') {
+                favRefreshQuestionDropdown();
+            }
+
+            /* D. Log để debug */
+            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                         ? String(pfCurrentStt)
+                         : null;
+            var isFav = curStt && typeof favHas === 'function' ? favHas(curStt) : false;
+            console.log('[Favorites] Câu mới #' + curStt + ' | liked: ' + isFav);
+
+        }, 250); /* Delay 250ms để ui_template load câu xong */
+
+        /* ═══ 3. Backup: chạy lại sau 500ms phòng khi chậm ═══ */
+        setTimeout(function() {
+            if (typeof favUpdatePfFloatBtn === 'function') {
+                favUpdatePfFloatBtn();
+            }
+            if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                favUpdatePfOnlyFavBtn();
+            }
+        }, 500);
+    }
+
+    /* ═══ Gắn listener cho #pfDatasetSelect ═══ */
+    function attachListener() {
+        var sel = document.getElementById('pfDatasetSelect');
+        if (!sel) return false;
+        if (sel.__favDatasetBound) return true;
+
+        sel.__favDatasetBound = true;
+
+        sel.addEventListener('change', function() {
+            console.log('[Favorites] #pfDatasetSelect change event fired');
+            /* Delay để ui_template switch RAW_DATA + loadPracticeFull */
+            setTimeout(handleDatasetChange, 200);
+        });
+
+        console.log('✅ [Favorites] Đã gắn listener cho #pfDatasetSelect');
+        return true;
+    }
+
+    /* ═══ Cố gắng attach ngay, nếu chưa có DOM thì poll ═══ */
+    if (!attachListener()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (attachListener() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
+})();
+/* ═══════════════════════════════════════════════════════════════
    ★ PATCH RIÊNG: ĐỔI BỘ DỮ LIỆU → RESET TOGGLE + CHECK NÚT TIM
    
    Bắt sự kiện "change" của #pfDatasetSelect (dropdown Bộ dữ liệu
