@@ -14947,48 +14947,49 @@ async function favAdd(stt, record) {
                    && currentUser.role === 'admin');
 
     /* ═══════════════════════════════════════════════════════════
-       LỚP 1: GIỚI HẠN TỔNG SỐ TIM (500)
+       GIỚI HẠN 500 TIM/NGÀY — RESET LÚC 00:00
        ═══════════════════════════════════════════════════════════ */
-    var MAX_TOTAL = 500;
-    if (!isAdmin && favCount() >= MAX_TOTAL) {
-        favShowToast('Đã đạt giới hạn ' + MAX_TOTAL + ' câu yêu thích', 'warn');
-        return false;
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       LỚP 2: RATE LIMIT (20 TIM/PHÚT)
-       ═══════════════════════════════════════════════════════════ */
-    var MAX_PER_MIN = 20;
-    var WINDOW_MS = 60000;
+    var MAX_PER_DAY = 500;
+    var today = new Date().toDateString(); // "Wed Sep 26 2026"
 
     if (!isAdmin) {
-        var rateKey = 'fav_rate_' + email;
-        var timestamps = [];
+        var dayKey = 'fav_daily_' + email;
+        var daily = { date: today, count: 0 };
+
+        /* Đọc counter từ localStorage */
         try {
-            timestamps = JSON.parse(localStorage.getItem(rateKey) || '[]');
-        } catch(e) { timestamps = []; }
+            var saved = JSON.parse(localStorage.getItem(dayKey) || 'null');
+            if (saved && saved.date === today) {
+                /* Cùng ngày → giữ counter cũ */
+                daily = saved;
+            } else {
+                /* Khác ngày → RESET counter về 0 */
+                daily = { date: today, count: 0 };
+            }
+        } catch(e) {
+            daily = { date: today, count: 0 };
+        }
 
-        var now = Date.now();
-        /* Lọc timestamp còn trong 1 phút */
-        timestamps = timestamps.filter(function(t) {
-            return (now - t) < WINDOW_MS;
-        });
-
-        if (timestamps.length >= MAX_PER_MIN) {
-            var waitSec = Math.ceil((WINDOW_MS - (now - timestamps[0])) / 1000);
-            favShowToast('Thao tác quá nhanh! Chờ ' + waitSec + 's', 'warn');
+        /* Check giới hạn */
+        if (daily.count >= MAX_PER_DAY) {
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            var hoursLeft = Math.ceil((tomorrow - Date.now()) / 3600000);
+            favShowToast('Đã đạt giới hạn ' + MAX_PER_DAY + ' tim hôm nay. Còn ' + hoursLeft + 'h nữa!', 'warn');
             return false;
         }
 
-        /* Thêm timestamp mới */
-        timestamps.push(now);
+        /* Tăng counter */
+        daily.count++;
+        daily.date = today;
         try {
-            localStorage.setItem(rateKey, JSON.stringify(timestamps));
+            localStorage.setItem(dayKey, JSON.stringify(daily));
         } catch(e) {}
     }
 
     /* ═══════════════════════════════════════════════════════════
-       LỚP 3: LƯU LOCAL — OPTIMISTIC UPDATE (UI phản hồi ngay)
+       LƯU LOCAL — OPTIMISTIC UPDATE
        ═══════════════════════════════════════════════════════════ */
     favState.items[stt] = {
         stt: stt,
@@ -15000,7 +15001,7 @@ async function favAdd(stt, record) {
     favNotifyChanged();
 
     /* ═══════════════════════════════════════════════════════════
-       LỚP 4: ĐỒNG BỘ FIRESTORE
+       ĐỒNG BỘ FIRESTORE
        ═══════════════════════════════════════════════════════════ */
     if (typeof db !== 'undefined' && db) {
         try {
@@ -15012,11 +15013,23 @@ async function favAdd(stt, record) {
                     addedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
         } catch(e) {
-            /* Rollback nếu lỗi */
+            /* Rollback local + counter */
             console.warn('[Favorites] Add cloud error:', e);
             delete favState.items[stt];
             favSaveToLocal();
             favNotifyChanged();
+
+            if (!isAdmin) {
+                try {
+                    var dayKey2 = 'fav_daily_' + email;
+                    var d2 = JSON.parse(localStorage.getItem(dayKey2) || 'null');
+                    if (d2 && d2.date === today && d2.count > 0) {
+                        d2.count--;
+                        localStorage.setItem(dayKey2, JSON.stringify(d2));
+                    }
+                } catch(e2) {}
+            }
+
             favShowToast('Lỗi lưu! Thử lại sau', 'warn');
             return false;
         }
