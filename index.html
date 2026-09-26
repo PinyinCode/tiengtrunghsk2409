@@ -5630,8 +5630,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     0%{opacity:1;transform:scale(.8);}
     100%{opacity:0;transform:scale(1.4);}
 }
-
-/* Trạng thái KHOÁ */
 .fav-btn.locked{
     color:#dc2626;
     background:rgba(220,38,38,.1);
@@ -5652,7 +5650,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Nút tim FLOAT góc dưới phải (Practice Full)
+   ❤️ FAVORITES — Nút tim FLOAT (Practice Full) — góc phải
    ═══════════════════════════════════════════════════════════════ */
 .pf-fav-float{
     position:fixed;
@@ -5672,9 +5670,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     cursor:pointer;
     z-index:2450;
     transition:all .25s cubic-bezier(.34,1.56,.64,1);
-    box-shadow:
-        0 8px 24px rgba(239,68,68,.35),
-        0 2px 8px rgba(0,0,0,.1);
+    box-shadow:0 8px 24px rgba(239,68,68,.35),0 2px 8px rgba(0,0,0,.1);
     text-transform:uppercase;
     letter-spacing:.3px;
 }
@@ -5686,32 +5682,21 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .pf-fav-float:hover{
     transform:translateY(-3px) scale(1.05);
     border-color:#ef4444;
-    box-shadow:
-        0 12px 32px rgba(239,68,68,.5),
-        0 4px 12px rgba(0,0,0,.15);
+    box-shadow:0 12px 32px rgba(239,68,68,.5),0 4px 12px rgba(0,0,0,.15);
 }
-.pf-fav-float:hover i{
-    transform:scale(1.15);
-}
-.pf-fav-float:active{
-    transform:translateY(-1px) scale(1.02);
-}
+.pf-fav-float:hover i{transform:scale(1.15);}
+.pf-fav-float:active{transform:translateY(-1px) scale(1.02);}
 
-/* ── Trạng thái CHƯA yêu thích (mặc định) ── */
 .pf-fav-float:not(.active):not(.locked){
     background:linear-gradient(135deg,#fef2f2,#fee2e2);
     color:#dc2626;
     border-color:rgba(239,68,68,.4);
 }
-
-/* ── Trạng thái ĐÃ yêu thích ── */
 .pf-fav-float.active{
     background:linear-gradient(135deg,#ef4444,#dc2626);
     color:#fff;
     border-color:#dc2626;
-    box-shadow:
-        0 8px 28px rgba(239,68,68,.6),
-        0 2px 8px rgba(220,38,38,.3);
+    box-shadow:0 8px 28px rgba(239,68,68,.6),0 2px 8px rgba(220,38,38,.3);
     animation:pfFavPulse 2s ease-in-out infinite;
 }
 .pf-fav-float.active i{
@@ -5730,8 +5715,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     0%,100%{box-shadow:0 8px 28px rgba(239,68,68,.6),0 2px 8px rgba(220,38,38,.3);}
     50%{box-shadow:0 8px 36px rgba(239,68,68,.85),0 4px 12px rgba(220,38,38,.4);}
 }
-
-/* ── Trạng thái KHOÁ (tier không đủ) ── */
 .pf-fav-float.locked{
     background:linear-gradient(135deg,#fef3c7,#fde68a);
     color:#b45309;
@@ -5745,6 +5728,10 @@ body.hide-floating .tiktok-bar { display: none !important; }
     transform:translateY(-3px) scale(1.05);
 }
 .pf-fav-float.locked::after{display:none;}
+.pf-fav-float .pf-fav-float-label{
+    display:inline-block;
+    white-space:nowrap;
+}
 [data-theme="dark"] .pf-fav-float{
     background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(220,38,38,.15));
     border-color:rgba(239,68,68,.5);
@@ -5760,27 +5747,132 @@ body.hide-floating .tiktok-bar { display: none !important; }
     border-color:rgba(217,119,6,.5);
 }
 
-.pf-fav-float .pf-fav-float-label{
-    display:inline-block;
-    white-space:nowrap;
+/* ═══════════════════════════════════════════════════════════════
+   ❤️ FAVORITES — Nút toggle "Chỉ câu yêu thích" (Practice Full) — góc trái
+   ═══════════════════════════════════════════════════════════════ */
+.pf-fav-only-float{
+    position:fixed;
+    left:clamp(14px,2vw,22px);
+    bottom:calc(80px + env(safe-area-inset-bottom));
+    display:none;
+    align-items:center;
+    gap:.5rem;
+    padding:.65rem 1.1rem .65rem .9rem;
+    border-radius:999px;
+    border:2px solid var(--border);
+    background:var(--surface);
+    color:var(--text-2);
+    font-size:clamp(.82rem,.95vw,.92rem);
+    font-weight:800;
+    font-family:inherit;
+    cursor:pointer;
+    z-index:2450;
+    transition:all .25s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 4px 14px rgba(0,0,0,.12);
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    user-select:none;
+}
+.pf-fav-only-float.show{display:inline-flex;}
+.pf-fav-only-float i{
+    font-size:clamp(1rem,1.2vw,1.15rem);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.pf-fav-only-float:hover{
+    transform:translateY(-3px) scale(1.04);
+    border-color:#ef4444;
+    color:#dc2626;
+    box-shadow:0 8px 22px rgba(239,68,68,.3);
+}
+.pf-fav-only-float:active{transform:translateY(-1px) scale(1.01);}
+.pf-fav-only-float .pf-fav-only-count{
+    min-width:20px;
+    height:20px;
+    padding:0 .4rem;
+    border-radius:50px;
+    background:rgba(239,68,68,.15);
+    color:#dc2626;
+    font-size:.68rem;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+    transition:.2s;
+}
+.pf-fav-only-float.active{
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+    color:#fff;
+    border-color:#dc2626;
+    box-shadow:0 8px 24px rgba(239,68,68,.5);
+}
+.pf-fav-only-float.active i{
+    animation:favHeartPop .4s cubic-bezier(.34,1.56,.64,1);
+}
+.pf-fav-only-float.active .pf-fav-only-count{
+    background:rgba(255,255,255,.3);
+    color:#fff;
+}
+.pf-fav-only-float.locked{
+    background:linear-gradient(135deg,#fef3c7,#fde68a);
+    color:#b45309;
+    border-color:rgba(217,119,6,.5);
+}
+.pf-fav-only-float.locked:hover{
+    background:linear-gradient(135deg,#fde68a,#fcd34d);
+    color:#92400e;
+    border-color:#d97706;
+    transform:translateY(-3px) scale(1.04);
+}
+.pf-fav-only-float.locked .pf-fav-only-count{
+    background:rgba(217,119,6,.2);
+    color:#92400e;
+}
+.pf-fav-only-float.empty{opacity:.55;}
+.pf-fav-only-float.empty .pf-fav-only-count{display:none;}
+[data-theme="dark"] .pf-fav-only-float{
+    background:var(--surface-2);
+    border-color:var(--border);
+    color:var(--text-2);
+}
+[data-theme="dark"] .pf-fav-only-float.active{
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+    color:#fff;
+    border-color:#dc2626;
+}
+[data-theme="dark"] .pf-fav-only-float.locked{
+    background:linear-gradient(135deg,rgba(217,119,6,.25),rgba(180,83,9,.2));
+    color:#fcd34d;
+    border-color:rgba(217,119,6,.5);
 }
 
-/* Responsive nút float */
+/* ═══════════════════════════════════════════════════════════════
+   ❤️ FAVORITES — Responsive cho nút float
+   ═══════════════════════════════════════════════════════════════ */
 @media (max-width:500px){
     .pf-fav-float{
         padding:.55rem .9rem .55rem .75rem;
         font-size:.78rem;
         bottom:calc(78px + env(safe-area-inset-bottom));
     }
-    .pf-fav-float i{
-        font-size:1.05rem;
+    .pf-fav-float i{font-size:1.05rem;}
+    .pf-fav-float .pf-fav-float-label{display:none;}
+
+    .pf-fav-only-float{
+        padding:.55rem .9rem .55rem .75rem;
+        font-size:.78rem;
+        bottom:calc(78px + env(safe-area-inset-bottom));
     }
-    .pf-fav-float .pf-fav-float-label{
-        display:none;
-    }
+    .pf-fav-only-float i{font-size:1rem;}
+    .pf-fav-only-float .pf-fav-only-label{display:none;}
 }
 @media (max-width:400px){
     .pf-fav-float{
+        padding:.5rem;
+        min-width:46px;
+        justify-content:center;
+    }
+    .pf-fav-only-float{
         padding:.5rem;
         min-width:46px;
         justify-content:center;
@@ -5792,124 +5884,75 @@ body.hide-floating .tiktok-bar { display: none !important; }
         transform:scale(.9);
         transform-origin:right bottom;
     }
+    .pf-fav-only-float{
+        bottom:calc(64px + env(safe-area-inset-bottom));
+        transform:scale(.9);
+        transform-origin:left bottom;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════
    ❤️ FAVORITES — Tab trong dataset selector
    ═══════════════════════════════════════════════════════════════ */
-.ds-btn[data-dataset-group="favorites"]{
-    position:relative;
-    overflow:visible;
-}
+.ds-btn[data-dataset-group="favorites"]{position:relative;overflow:visible;}
 .ds-btn[data-dataset-group="favorites"] .ds-fav-badge{
-    position:absolute;
-    top:-8px;
-    right:-6px;
-    min-width:22px;
-    height:22px;
-    padding:0 .4rem;
+    position:absolute;top:-8px;right:-6px;
+    min-width:22px;height:22px;padding:0 .4rem;
     border-radius:50px;
     background:linear-gradient(135deg,#ef4444,#dc2626);
-    color:#fff;
-    font-size:.65rem;
-    font-weight:900;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    color:#fff;font-size:.65rem;font-weight:900;
+    display:flex;align-items:center;justify-content:center;
     box-shadow:0 2px 8px rgba(239,68,68,.5),0 0 0 2px var(--surface);
     animation:favBadgePulse 2s ease-in-out infinite;
-    z-index:10;
-    line-height:1;
+    z-index:10;line-height:1;
 }
-.ds-btn[data-dataset-group="favorites"] .ds-fav-badge[data-count="0"]{
-    display:none;
-}
+.ds-btn[data-dataset-group="favorites"] .ds-fav-badge[data-count="0"]{display:none;}
 @keyframes favBadgePulse{
     0%,100%{transform:scale(1);}
     50%{transform:scale(1.1);}
 }
 .ds-btn[data-dataset-group="favorites"] .ds-fav-lock{
-    position:absolute;
-    top:-8px;
-    right:-6px;
-    width:22px;
-    height:22px;
-    border-radius:50%;
+    position:absolute;top:-8px;right:-6px;
+    width:22px;height:22px;border-radius:50%;
     background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    color:#fff;display:flex;align-items:center;justify-content:center;
     font-size:.62rem;
     box-shadow:0 2px 8px rgba(220,38,38,.55),0 0 0 2px var(--surface);
     z-index:10;
 }
-.ds-btn[data-dataset-group="favorites"] i:first-child{
-    color:#ef4444;
-}
-.ds-btn[data-dataset-group="favorites"].active i:first-child{
-    color:#fff;
-}
-.ds-btn[data-dataset-group="favorites"].fav-locked{
-    opacity:.65;
-    cursor:pointer;
-}
+.ds-btn[data-dataset-group="favorites"] i:first-child{color:#ef4444;}
+.ds-btn[data-dataset-group="favorites"].active i:first-child{color:#fff;}
+.ds-btn[data-dataset-group="favorites"].fav-locked{opacity:.65;cursor:pointer;}
 .ds-btn[data-dataset-group="favorites"].fav-locked:hover{
-    opacity:.85;
-    border-color:#dc2626;
-    background:rgba(220,38,38,.06);
+    opacity:.85;border-color:#dc2626;background:rgba(220,38,38,.06);
 }
-.ds-btn[data-dataset-group="favorites"].fav-locked i:first-child{
-    color:#dc2626;
-}
+.ds-btn[data-dataset-group="favorites"].fav-locked i:first-child{color:#dc2626;}
 [data-theme="dark"] .ds-btn[data-dataset-group="favorites"].fav-locked i:first-child{
     color:#fca5a5;
 }
 
 /* ═══════════════════════════════════════════════════════════════
    ❤️ FAVORITES — Dropdown item (bộ dữ liệu)
-   (class .ds-dropdown-item — nếu dropdown của bạn dùng class khác,
-    hãy đổi .ds-dropdown-item cho khớp markup thực tế)
    ═══════════════════════════════════════════════════════════════ */
-.ds-dropdown-item[data-dataset-group="favorites"]{
-    position:relative;
-}
-.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-icon{
-    color:#ef4444;
-}
-.ds-dropdown-item[data-dataset-group="favorites"].active .ds-dd-fav-icon{
-    color:#fff;
-}
+.ds-dropdown-item[data-dataset-group="favorites"]{position:relative;}
+.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-icon{color:#ef4444;}
+.ds-dropdown-item[data-dataset-group="favorites"].active .ds-dd-fav-icon{color:#fff;}
 .ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-badge{
     margin-left:auto;
-    min-width:20px;
-    height:20px;
-    padding:0 .42rem;
+    min-width:20px;height:20px;padding:0 .42rem;
     border-radius:50px;
     background:linear-gradient(135deg,#ef4444,#dc2626);
-    color:#fff;
-    font-size:.62rem;
-    font-weight:900;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
+    color:#fff;font-size:.62rem;font-weight:900;
+    display:inline-flex;align-items:center;justify-content:center;
     box-shadow:0 2px 6px rgba(239,68,68,.45);
     line-height:1;
 }
-.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-badge[data-count="0"]{
-    display:none;
-}
+.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-badge[data-count="0"]{display:none;}
 .ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-lock{
-    margin-left:auto;
-    color:#dc2626;
-    font-size:.7rem;
+    margin-left:auto;color:#dc2626;font-size:.7rem;
 }
-.ds-dropdown-item[data-dataset-group="favorites"].fav-locked{
-    opacity:.7;
-}
-.ds-dropdown-item[data-dataset-group="favorites"].fav-locked .ds-dd-fav-icon{
-    color:#dc2626;
-}
+.ds-dropdown-item[data-dataset-group="favorites"].fav-locked{opacity:.7;}
+.ds-dropdown-item[data-dataset-group="favorites"].fav-locked .ds-dd-fav-icon{color:#dc2626;}
 [data-theme="dark"] .ds-dropdown-item[data-dataset-group="favorites"].fav-locked .ds-dd-fav-icon{
     color:#fca5a5;
 }
@@ -5918,209 +5961,119 @@ body.hide-floating .tiktok-bar { display: none !important; }
    ❤️ FAVORITES — Header của tab (sort + clear all)
    ═══════════════════════════════════════════════════════════════ */
 .fav-header{
-    display:flex;
-    align-items:center;
-    gap:.5rem;
+    display:flex;align-items:center;gap:.5rem;
     padding:.65rem .85rem;
     background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(220,38,38,.04));
     border:1.5px solid rgba(239,68,68,.25);
-    border-radius:12px;
-    margin-bottom:.75rem;
-    flex-wrap:wrap;
+    border-radius:12px;margin-bottom:.75rem;flex-wrap:wrap;
 }
 [data-theme="dark"] .fav-header{
     background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(220,38,38,.08));
     border-color:rgba(239,68,68,.4);
 }
 .fav-header .fav-title{
-    display:flex;
-    align-items:center;
-    gap:.45rem;
-    font-size:.88rem;
-    font-weight:800;
-    color:var(--text);
-    flex:1 1 auto;
-    min-width:0;
+    display:flex;align-items:center;gap:.45rem;
+    font-size:.88rem;font-weight:800;color:var(--text);
+    flex:1 1 auto;min-width:0;
 }
-.fav-header .fav-title i{
-    color:#ef4444;
-    font-size:1rem;
-}
+.fav-header .fav-title i{color:#ef4444;font-size:1rem;}
 .fav-header .fav-count-text{
-    font-size:.72rem;
-    font-weight:700;
-    color:#dc2626;
-    background:rgba(239,68,68,.15);
-    padding:.15rem .55rem;
-    border-radius:50px;
-    letter-spacing:.2px;
+    font-size:.72rem;font-weight:700;color:#dc2626;
+    background:rgba(239,68,68,.15);padding:.15rem .55rem;
+    border-radius:50px;letter-spacing:.2px;
 }
 [data-theme="dark"] .fav-header .fav-count-text{
-    color:#fca5a5;
-    background:rgba(239,68,68,.25);
+    color:#fca5a5;background:rgba(239,68,68,.25);
 }
 .fav-header .fav-sort{
     padding:.35rem 1.8rem .35rem .7rem;
-    border-radius:50px;
-    border:1.5px solid var(--border);
-    background:var(--surface);
-    color:var(--text);
-    font-size:.72rem;
-    font-weight:700;
-    font-family:inherit;
-    outline:none;
-    cursor:pointer;
-    appearance:none;
+    border-radius:50px;border:1.5px solid var(--border);
+    background:var(--surface);color:var(--text);
+    font-size:.72rem;font-weight:700;font-family:inherit;
+    outline:none;cursor:pointer;appearance:none;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%2394a3b8' d='M6 9L1 4h10z'/></svg>");
-    background-repeat:no-repeat;
-    background-position:right 8px center;
-    background-size:9px;
-    transition:.15s;
+    background-repeat:no-repeat;background-position:right 8px center;
+    background-size:9px;transition:.15s;
 }
-.fav-header .fav-sort:hover{
-    border-color:#ef4444;
-    color:#dc2626;
-}
+.fav-header .fav-sort:hover{border-color:#ef4444;color:#dc2626;}
 .fav-header .fav-sort:focus{
-    border-color:#ef4444;
-    box-shadow:0 0 0 3px rgba(239,68,68,.15);
+    border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.15);
 }
 .fav-header .fav-clear-all{
-    padding:.35rem .75rem;
-    border-radius:50px;
+    padding:.35rem .75rem;border-radius:50px;
     border:1.5px solid rgba(220,38,38,.35);
-    background:var(--surface);
-    color:#dc2626;
-    font-size:.72rem;
-    font-weight:700;
-    font-family:inherit;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    gap:.3rem;
+    background:var(--surface);color:#dc2626;
+    font-size:.72rem;font-weight:700;font-family:inherit;
+    cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;
     transition:.15s;
 }
 .fav-header .fav-clear-all:hover{
     background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;
-    border-color:#dc2626;
+    color:#fff;border-color:#dc2626;
     transform:translateY(-1px);
     box-shadow:0 4px 10px rgba(220,38,38,.35);
 }
-.fav-header .fav-clear-all:active{
-    transform:translateY(0) scale(.97);
-}
+.fav-header .fav-clear-all:active{transform:translateY(0) scale(.97);}
 [data-theme="dark"] .fav-header .fav-clear-all{
-    color:#fca5a5;
-    border-color:rgba(248,113,113,.5);
-}
-.fav-header .fav-clear-all:disabled{
-    opacity:.4;
-    cursor:not-allowed;
-    transform:none;
-    box-shadow:none;
+    color:#fca5a5;border-color:rgba(248,113,113,.5);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Empty state
+   ❤️ FAVORITES — Empty states
    ═══════════════════════════════════════════════════════════════ */
 .fav-empty{
-    grid-column:1 / -1;
-    padding:3rem 1.5rem;
-    text-align:center;
+    grid-column:1 / -1;padding:3rem 1.5rem;text-align:center;
     background:linear-gradient(135deg,rgba(239,68,68,.04),rgba(220,38,38,.02));
-    border:2px dashed rgba(239,68,68,.25);
-    border-radius:16px;
+    border:2px dashed rgba(239,68,68,.25);border-radius:16px;
 }
 [data-theme="dark"] .fav-empty{
     background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(220,38,38,.05));
     border-color:rgba(239,68,68,.35);
 }
 .fav-empty .fav-empty-icon{
-    width:70px;
-    height:70px;
-    margin:0 auto 1rem;
-    border-radius:50%;
+    width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;
     background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(220,38,38,.1));
-    color:#ef4444;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:1.8rem;
-    animation:favEmptyFloat 3s ease-in-out infinite;
+    color:#ef4444;display:flex;align-items:center;justify-content:center;
+    font-size:1.8rem;animation:favEmptyFloat 3s ease-in-out infinite;
 }
 @keyframes favEmptyFloat{
     0%,100%{transform:translateY(0) scale(1);}
     50%{transform:translateY(-6px) scale(1.05);}
 }
 .fav-empty .fav-empty-title{
-    font-size:1.05rem;
-    font-weight:800;
-    color:var(--text);
+    font-size:1.05rem;font-weight:800;color:var(--text);
     margin-bottom:.4rem;
 }
 .fav-empty .fav-empty-desc{
-    font-size:.85rem;
-    color:var(--text-2);
-    line-height:1.5;
-    max-width:420px;
-    margin:0 auto;
+    font-size:.85rem;color:var(--text-2);line-height:1.5;
+    max-width:420px;margin:0 auto;
 }
-.fav-empty .fav-empty-desc b{
-    color:#dc2626;
-    font-weight:800;
-}
+.fav-empty .fav-empty-desc b{color:#dc2626;font-weight:800;}
 .fav-empty .fav-empty-tip{
-    display:inline-flex;
-    align-items:center;
-    gap:.4rem;
-    margin-top:1rem;
-    padding:.5rem .9rem;
-    border-radius:50px;
-    background:var(--surface);
-    border:1.5px solid var(--border);
-    font-size:.78rem;
-    font-weight:600;
-    color:var(--text-2);
+    display:inline-flex;align-items:center;gap:.4rem;margin-top:1rem;
+    padding:.5rem .9rem;border-radius:50px;
+    background:var(--surface);border:1.5px solid var(--border);
+    font-size:.78rem;font-weight:600;color:var(--text-2);
 }
-.fav-empty .fav-empty-tip i{
-    color:#ef4444;
-    font-size:.85rem;
-}
+.fav-empty .fav-empty-tip i{color:#ef4444;font-size:.85rem;}
 
-/* Empty state cho tier bị khoá */
 .fav-locked-empty{
-    grid-column:1 / -1;
-    padding:3rem 1.5rem;
-    text-align:center;
+    grid-column:1 / -1;padding:3rem 1.5rem;text-align:center;
     background:linear-gradient(135deg,rgba(220,38,38,.06),rgba(185,28,28,.03));
-    border:2px dashed rgba(220,38,38,.35);
-    border-radius:16px;
+    border:2px dashed rgba(220,38,38,.35);border-radius:16px;
 }
 .fav-locked-empty .fav-empty-icon{
     background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;
-    animation:favEmptyFloat 3s ease-in-out infinite;
+    color:#fff;animation:favEmptyFloat 3s ease-in-out infinite;
 }
 .fav-locked-empty .fav-empty-cta{
-    display:inline-flex;
-    align-items:center;
-    gap:.4rem;
-    margin-top:1rem;
-    padding:.6rem 1.2rem;
-    border-radius:50px;
-    border:none;
+    display:inline-flex;align-items:center;gap:.4rem;margin-top:1rem;
+    padding:.6rem 1.2rem;border-radius:50px;border:none;
     background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;
-    font-size:.85rem;
-    font-weight:800;
-    font-family:inherit;
-    cursor:pointer;
-    box-shadow:0 6px 18px rgba(220,38,38,.4);
-    transition:all .2s;
-    animation:favCtaPulse 2.5s ease-in-out infinite;
-    text-transform:uppercase;
-    letter-spacing:.3px;
+    color:#fff;font-size:.85rem;font-weight:800;font-family:inherit;
+    cursor:pointer;box-shadow:0 6px 18px rgba(220,38,38,.4);
+    transition:all .2s;animation:favCtaPulse 2.5s ease-in-out infinite;
+    text-transform:uppercase;letter-spacing:.3px;
 }
 .fav-locked-empty .fav-empty-cta:hover{
     transform:translateY(-2px) scale(1.03);
@@ -6135,33 +6088,17 @@ body.hide-floating .tiktok-bar { display: none !important; }
    ❤️ FAVORITES — Toast
    ═══════════════════════════════════════════════════════════════ */
 .fav-toast{
-    position:fixed;
-    top:80px;
-    left:50%;
+    position:fixed;top:80px;left:50%;
     transform:translateX(-50%) translateY(-20px);
-    padding:.7rem 1.2rem;
-    border-radius:50px;
-    font-size:.85rem;
-    font-weight:800;
-    font-family:inherit;
-    color:#fff;
-    z-index:9999;
-    opacity:0;
+    padding:.7rem 1.2rem;border-radius:50px;
+    font-size:.85rem;font-weight:800;font-family:inherit;color:#fff;
+    z-index:9999;opacity:0;
     transition:opacity .25s ease, transform .3s cubic-bezier(.34,1.56,.64,1);
-    pointer-events:none;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
-    max-width:90vw;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+    pointer-events:none;display:flex;align-items:center;gap:.5rem;
+    max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     box-shadow:0 8px 24px rgba(0,0,0,.25);
 }
-.fav-toast.show{
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-}
+.fav-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .fav-toast.add{
     background:linear-gradient(135deg,#ef4444,#dc2626);
     box-shadow:0 8px 24px rgba(239,68,68,.5);
@@ -6177,7 +6114,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .fav-toast i{font-size:1rem;}
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Responsive
+   ❤️ FAVORITES — Responsive (chung)
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width:500px){
     .fav-btn{width:30px;height:30px;font-size:.75rem;}
@@ -14891,7 +14828,10 @@ var favState = {
     loading: false,
     sortMode: 'recent',
     listener: null,
-    currentView: false
+    currentView: false,
+    filteringOnly: false,
+    pfOnlyFav: false,
+    __renderTimer: null
 };
 
 /* ============ TIER CHECK ============ */
@@ -14989,7 +14929,6 @@ async function favLoadFromCloud() {
     }
 }
 
-/* Real-time sync giữa các thiết bị */
 function favListenCloud() {
     if (!favCanUse()) return;
     var email = favGetCurrentEmail();
@@ -15135,6 +15074,26 @@ function favCount() {
     return Object.keys(favState.items).length;
 }
 
+/* ============ LẤY RECORD GỐC ============ */
+function favGetRecords() {
+    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < RAW_DATA.length; i++) {
+        var r = RAW_DATA[i];
+        if (r && favHas(r.stt) && !seen[String(r.stt)]) {
+            seen[String(r.stt)] = true;
+            out.push(r);
+        }
+    }
+    return out;
+}
+
+function favIsFavoriteRecord(r) {
+    if (!r) return false;
+    return favHas(r.stt);
+}
+
 /* ============ SORT ============ */
 function favGetSortedList() {
     var items = Object.keys(favState.items).map(function(k) { return favState.items[k]; });
@@ -15154,8 +15113,9 @@ function favGetSortedList() {
     return items;
 }
 
-/* ============ CẬP NHẬT NÚT TIM FLOAT (Practice Full) ============ */
-/* Đổi màu + icon + label theo trạng thái câu hiện tại (pfCurrentStt) */
+/* ═══════════════════════════════════════════════════════════════
+   NÚT TIM FLOAT (Practice Full) — góc phải
+   ═══════════════════════════════════════════════════════════════ */
 function favUpdatePfFloatBtn() {
     var pfBtn = document.getElementById('pfFavBtn');
     if (!pfBtn) return;
@@ -15165,7 +15125,6 @@ function favUpdatePfFloatBtn() {
     var can = favCanUse();
     var stt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : null;
 
-    /* ── Tier không đủ → khoá ── */
     if (!can) {
         pfBtn.classList.add('locked');
         pfBtn.classList.remove('active');
@@ -15175,7 +15134,6 @@ function favUpdatePfFloatBtn() {
         return;
     }
 
-    /* ── Tier OK ── */
     pfBtn.classList.remove('locked');
     var active = stt ? favHas(stt) : false;
     pfBtn.classList.toggle('active', active);
@@ -15184,9 +15142,93 @@ function favUpdatePfFloatBtn() {
     pfBtn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
 }
 
-/* ============ NOTIFY CHANGES ============ */
+/* ═══════════════════════════════════════════════════════════════
+   NÚT TOGGLE "CHỈ CÂU YÊU THÍCH" (Practice Full) — góc trái
+   ═══════════════════════════════════════════════════════════════ */
+function favUpdatePfOnlyFavBtn() {
+    var btn = document.getElementById('pfFavOnlyBtn');
+    if (!btn) return;
+
+    var icon = btn.querySelector('i');
+    var countEl = document.getElementById('pfFavOnlyCount');
+    var can = favCanUse();
+    var count = favCount();
+
+    if (!can) {
+        btn.classList.add('locked');
+        btn.classList.remove('active', 'empty');
+        if (icon) icon.className = 'fas fa-lock';
+        btn.title = 'Cần gia hạn để dùng Yêu thích';
+        if (countEl) countEl.textContent = '0';
+        return;
+    }
+
+    btn.classList.remove('locked');
+    if (countEl) countEl.textContent = count;
+
+    if (count === 0) {
+        btn.classList.add('empty');
+        btn.classList.remove('active');
+        if (icon) icon.className = 'far fa-heart';
+        btn.title = 'Chưa có câu yêu thích nào';
+        if (favState.pfOnlyFav) {
+            favState.pfOnlyFav = false;
+        }
+        return;
+    }
+
+    btn.classList.remove('empty');
+
+    if (favState.pfOnlyFav) {
+        btn.classList.add('active');
+        if (icon) icon.className = 'fas fa-heart';
+        btn.title = 'Đang chỉ luyện câu yêu thích — bấm để tắt';
+    } else {
+        btn.classList.remove('active');
+        if (icon) icon.className = 'far fa-heart';
+        btn.title = 'Chỉ luyện câu yêu thích';
+    }
+}
+
+function favTogglePfOnlyFav() {
+    if (!favCanUse()) { favShowLockDialog(); return; }
+
+    var count = favCount();
+    if (count === 0) {
+        favShowToast('Chưa có câu yêu thích nào để luyện', 'warn');
+        return;
+    }
+
+    favState.pfOnlyFav = !favState.pfOnlyFav;
+    favUpdatePfOnlyFavBtn();
+
+    /* Thông báo */
+    favShowToast(
+        favState.pfOnlyFav
+            ? ('Chỉ luyện ' + count + ' câu yêu thích')
+            : 'Luyện tất cả câu',
+        favState.pfOnlyFav ? 'add' : 'remove'
+    );
+
+    /* Nếu Practice Full đang mở → reload list câu trong modal */
+    var pfModal = document.getElementById('practiceFullModal');
+    if (pfModal && pfModal.classList.contains('show')) {
+        if (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
+            /* Reopen modal với câu hiện tại (nếu không thuộc yêu thích sẽ nhảy sang câu yêu thích đầu) */
+            if (typeof window.openPracticeFull === 'function') {
+                setTimeout(function() {
+                    window.openPracticeFull(pfCurrentStt);
+                }, 60);
+            }
+        }
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NOTIFY CHANGES
+   ═══════════════════════════════════════════════════════════════ */
 function favNotifyChanged() {
-    /* Cập nhật nút tim trên card */
+    /* Nút tim trên card */
     document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
         var stt = btn.dataset.stt;
         var active = favHas(stt);
@@ -15198,7 +15240,7 @@ function favNotifyChanged() {
         btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
     });
 
-    /* Cập nhật badge trên tab + dropdown */
+    /* Badge tab + dropdown */
     var count = favCount();
     ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
         var badge = document.getElementById(id);
@@ -15208,20 +15250,32 @@ function favNotifyChanged() {
         }
     });
 
-    /* Cập nhật nút tim FLOAT trong Practice Full */
+    /* Nút tim FLOAT */
     favUpdatePfFloatBtn();
 
+    /* Nút toggle "chỉ câu yêu thích" */
+    favUpdatePfOnlyFavBtn();
+
     /* Nếu đang ở tab Yêu thích → render lại */
-    if (favState.currentView) {
-        favRenderCurrentTab();
+    if (favState.currentView && favState.filteringOnly) {
+        if (typeof window.render === 'function') {
+            clearTimeout(favState.__renderTimer);
+            favState.__renderTimer = setTimeout(function() {
+                window.render();
+            }, 80);
+        } else {
+            favRenderCurrentTab();
+        }
     }
 }
 
-/* Cập nhật trạng thái khoá (tab + dropdown + card + float) */
+/* ═══════════════════════════════════════════════════════════════
+   UPDATE LOCK STATE
+   ═══════════════════════════════════════════════════════════════ */
 function favUpdateLockState() {
     var can = favCanUse();
 
-    /* ── Tab Yêu thích ── */
+    /* Tab Yêu thích */
     var favTab = document.getElementById('dsFavBtn');
     if (favTab) {
         favTab.classList.toggle('fav-locked', !can);
@@ -15236,7 +15290,7 @@ function favUpdateLockState() {
         }
     }
 
-    /* ── Dropdown item Yêu thích ── */
+    /* Dropdown item Yêu thích */
     var favDd = document.getElementById('dsFavDropdownItem');
     if (favDd) {
         favDd.classList.toggle('fav-locked', !can);
@@ -15251,7 +15305,7 @@ function favUpdateLockState() {
         }
     }
 
-    /* ── Nút tim trên card ── */
+    /* Nút tim trên card */
     document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
         var icon = btn.querySelector('i');
         if (can) {
@@ -15270,18 +15324,23 @@ function favUpdateLockState() {
         }
     });
 
-    /* ── Nút tim FLOAT trong Practice Full ── */
+    /* Nút FLOAT */
     favUpdatePfFloatBtn();
 
-    /* Nếu đang ở tab Yêu thích mà mất quyền → thoát về tổng hợp */
+    /* Nút toggle chỉ câu yêu thích */
+    favUpdatePfOnlyFavBtn();
+
+    /* Thoát lọc nếu mất quyền */
     if (!can && favState.currentView) {
-        favState.currentView = false;
+        favExitFilterMode();
         if (typeof switchDataset === 'function') switchDataset('tonghop');
         if (typeof markCurrentDatasetActive === 'function') markCurrentDatasetActive();
     }
 }
 
-/* ============ TOAST ============ */
+/* ═══════════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════════ */
 function favShowToast(message, type) {
     var old = document.getElementById('favToast');
     if (old) old.remove();
@@ -15304,7 +15363,9 @@ function favShowToast(message, type) {
     }, 1800);
 }
 
-/* ============ RENDER TAB YÊU THÍCH ============ */
+/* ═══════════════════════════════════════════════════════════════
+   RENDER TAB YÊU THÍCH (fallback khi render() gốc không patch được)
+   ═══════════════════════════════════════════════════════════════ */
 function favRenderCurrentTab() {
     if (!favState.currentView) return;
     if (typeof mobileWrapper === 'undefined' || !mobileWrapper) return;
@@ -15312,7 +15373,6 @@ function favRenderCurrentTab() {
 
     var can = favCanUse();
 
-    /* Nếu bị khoá → hiển thị empty state với CTA */
     if (!can) {
         mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
             '<div class="fav-empty-icon" style="margin:0 auto 1rem;">' +
@@ -15336,7 +15396,6 @@ function favRenderCurrentTab() {
 
     var items = favGetSortedList();
 
-    /* Empty state */
     if (items.length === 0) {
         mobileWrapper.innerHTML = '<div class="fav-empty">' +
             '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
@@ -15353,7 +15412,6 @@ function favRenderCurrentTab() {
         return;
     }
 
-    /* Header */
     var headerHtml = '<div class="fav-header" style="grid-column:1 / -1;">' +
         '<div class="fav-title">' +
             '<i class="fas fa-heart"></i>' +
@@ -15370,7 +15428,6 @@ function favRenderCurrentTab() {
         '</button>' +
     '</div>';
 
-    /* Filter theo state hiện tại */
     var filtered2 = items.filter(function(favItem) {
         var r = null;
         for (var i = 0; i < RAW_DATA.length; i++) {
@@ -15404,7 +15461,6 @@ function favRenderCurrentTab() {
         return;
     }
 
-    /* Render card */
     var cardsHtml = headerHtml;
     filtered2.forEach(function(favItem) {
         var r = null;
@@ -15419,7 +15475,6 @@ function favRenderCurrentTab() {
     setTimeout(function() { favUpdateLockState(); }, 50);
 }
 
-/* Build card HTML — giống layout render() gốc */
 function favBuildCardHtml(r) {
     var zhJs = escapeJs(r.zh);
     var viJs = escapeJs(r.vi);
@@ -15495,7 +15550,9 @@ function favBuildCardHtml(r) {
     '</div>';
 }
 
-/* ============ EVENT HANDLERS ============ */
+/* ═══════════════════════════════════════════════════════════════
+   EVENT HANDLERS
+   ═══════════════════════════════════════════════════════════════ */
 window.favOnCardBtnClick = function(evt, stt) {
     evt.stopPropagation();
     if (evt.preventDefault) evt.preventDefault();
@@ -15523,36 +15580,32 @@ window.favOnPfBtnClick = function(evt) {
         }
     }
     favToggle(pfCurrentStt, record).then(function() {
-        /* Đảm bảo nút float cập nhật ngay */
         favUpdatePfFloatBtn();
     });
 };
 
+window.favTogglePfOnlyFav = favTogglePfOnlyFav;
+
 window.favOnSortChange = function(mode) {
     favState.sortMode = mode || 'recent';
     try { localStorage.setItem('favSortMode', favState.sortMode); } catch(e) {}
-    favRenderCurrentTab();
+    if (typeof window.render === 'function') window.render();
+    else favRenderCurrentTab();
 };
 
-/* Click tab Yêu thích (cũng dùng cho dropdown item) */
+/* ═══════════════════════════════════════════════════════════════
+   CLICK TAB YÊU THÍCH (từ tab hoặc dropdown)
+   ═══════════════════════════════════════════════════════════════ */
 function favOnTabClick(evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
-    if (!favCanUse()) {
-        favShowLockDialog();
-        return;
-    }
+    if (!favCanUse()) { favShowLockDialog(); return; }
 
-    /* Đánh dấu active tab */
-    document.querySelectorAll('.ds-btn').forEach(function(b) {
-        b.classList.remove('active');
-    });
-    document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
-        b.classList.remove('active');
-    });
-    document.querySelectorAll('.ds-dropdown-item').forEach(function(b) {
-        b.classList.remove('active');
-    });
+    /* Đánh dấu active */
+    document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.ds-dropdown-item').forEach(function(b) { b.classList.remove('active'); });
+
     var tabBtn = document.getElementById('dsFavBtn');
     if (tabBtn) tabBtn.classList.add('active');
     var ddBtn = document.getElementById('dsFavDropdownItem');
@@ -15562,14 +15615,17 @@ function favOnTabClick(evt) {
     var subWrap = document.getElementById('dsSubWrap');
     if (subWrap) subWrap.style.display = 'none';
 
-    /* Đánh dấu đang xem tab Yêu thích */
+    /* Bật chế độ lọc */
     favState.currentView = true;
+    favState.filteringOnly = true;
 
-    /* Reset filter về mặc định khi vào tab */
+    /* Reset filter */
     if (typeof state !== 'undefined') {
-        state = { search: '', hsk: '', subject: '' };
+        state.search = '';
+        state.hsk = '';
+        state.subject = '';
     }
-    if (typeof $ === 'function') {
+    try {
         var si = document.getElementById('searchInput');
         var hf = document.getElementById('hskFilter');
         var sf = document.getElementById('subjectFilter');
@@ -15578,16 +15634,20 @@ function favOnTabClick(evt) {
         if (sf) sf.value = '';
         var cb = document.getElementById('clearSearchBtn');
         if (cb) cb.classList.remove('show');
-    }
+    } catch(e) {}
     if (typeof updateFilterUI === 'function') updateFilterUI();
 
-    /* Xoá override onboarding để không ảnh hưởng */
+    /* Xoá onboarding override */
     window.__onboardingOverride = null;
     var obBanner = document.getElementById('onboardingActiveBanner');
     if (obBanner) obBanner.style.display = 'none';
 
-    /* Render tab */
-    favRenderCurrentTab();
+    /* Render */
+    if (typeof window.render === 'function') {
+        window.render();
+    } else {
+        favRenderCurrentTab();
+    }
 
     /* Scroll lên đầu */
     setTimeout(function() {
@@ -15604,98 +15664,139 @@ function favOnTabClick(evt) {
     }
 }
 
-/* ============ INIT ============ */
+function favExitFilterMode() {
+    if (!favState.filteringOnly) return;
+    favState.filteringOnly = false;
+    favState.currentView = false;
+    var tabBtn = document.getElementById('dsFavBtn');
+    if (tabBtn) tabBtn.classList.remove('active');
+    var ddBtn = document.getElementById('dsFavDropdownItem');
+    if (ddBtn) ddBtn.classList.remove('active');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════ */
 function initFavorites() {
-    /* Load sort mode */
     try {
         var savedSort = localStorage.getItem('favSortMode');
         if (savedSort) favState.sortMode = savedSort;
     } catch(e) {}
 
-    /* Load local cache trước */
     favLoadFromLocal();
 
-    /* Bind nút tim FLOAT trong Practice Full */
+    /* Nút tim FLOAT */
     var pfBtn = document.getElementById('pfFavBtn');
     if (pfBtn && !pfBtn.__favBound) {
         pfBtn.__favBound = true;
         pfBtn.addEventListener('click', window.favOnPfBtnClick);
     }
 
-    /* Bind tab Yêu thích */
+    /* Nút toggle "chỉ câu yêu thích" */
+    var pfOnlyBtn = document.getElementById('pfFavOnlyBtn');
+    if (pfOnlyBtn && !pfOnlyBtn.__favBound) {
+        pfOnlyBtn.__favBound = true;
+        pfOnlyBtn.addEventListener('click', function(evt) {
+            evt.stopPropagation();
+            if (evt.preventDefault) evt.preventDefault();
+            favTogglePfOnlyFav();
+        });
+    }
+
+    /* Tab Yêu thích */
     var favTab = document.getElementById('dsFavBtn');
     if (favTab && !favTab.__favBound) {
         favTab.__favBound = true;
         favTab.addEventListener('click', favOnTabClick);
     }
 
-    /* Bind dropdown item Yêu thích */
+    /* Dropdown item Yêu thích */
     var favDd = document.getElementById('dsFavDropdownItem');
     if (favDd && !favDd.__favBound) {
         favDd.__favBound = true;
         favDd.addEventListener('click', function(evt) {
             if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
-            /* Đóng dropdown nếu đang mở */
             var dd = favDd.closest('.ds-dropdown, .dataset-dropdown, [class*="dropdown"]');
             if (dd) dd.classList.remove('show', 'open');
-            /* Gọi cùng handler với tab */
             favOnTabClick(evt);
         });
     }
 
-    /* Update lock state ban đầu */
     favUpdateLockState();
-
-    /* Load cloud nếu tier active */
-    if (favCanUse()) {
-        favLoadFromCloud();
-    }
-
-    /* Notify ban đầu */
+    if (favCanUse()) favLoadFromCloud();
     favNotifyChanged();
-
-    /* Sync nút float theo trạng thái Practice Full */
     favSyncFloatVisibility();
 }
 
-/* ============ SHOW/HIDE NÚT FLOAT THEO PRACTICE FULL ============ */
+/* ═══════════════════════════════════════════════════════════════
+   HIỆN/ẨN NÚT FLOAT THEO PRACTICE FULL MODAL
+   ═══════════════════════════════════════════════════════════════ */
 function favSyncFloatVisibility() {
     var pfModal = document.getElementById('practiceFullModal');
     var pfFavFloat = document.getElementById('pfFavBtn');
-    if (!pfFavFloat) return;
+    var pfOnlyFloat = document.getElementById('pfFavOnlyBtn');
+    if (!pfFavFloat && !pfOnlyFloat) return;
+
     var isOpen = pfModal && pfModal.classList.contains('show');
+
     if (isOpen) {
-        pfFavFloat.classList.add('show');
-        pfFavFloat.style.display = 'inline-flex';
-        /* Cập nhật màu theo câu hiện tại ngay khi mở modal */
+        if (pfFavFloat) {
+            pfFavFloat.classList.add('show');
+            pfFavFloat.style.display = 'inline-flex';
+        }
+        if (pfOnlyFloat) {
+            pfOnlyFloat.classList.add('show');
+            pfOnlyFloat.style.display = 'inline-flex';
+        }
         favUpdatePfFloatBtn();
+        favUpdatePfOnlyFavBtn();
     } else {
-        pfFavFloat.classList.remove('show');
-        pfFavFloat.style.display = 'none';
+        if (pfFavFloat) {
+            pfFavFloat.classList.remove('show');
+            pfFavFloat.style.display = 'none';
+        }
+        if (pfOnlyFloat) {
+            pfOnlyFloat.classList.remove('show');
+            pfOnlyFloat.style.display = 'none';
+        }
     }
 }
 
-/* Watch Practice Full modal open/close */
+/* Watch Practice Full modal */
 (function() {
     var pfModal = document.getElementById('practiceFullModal');
-    if (!pfModal) return;
+    if (!pfModal) {
+        /* Retry khi modal được thêm vào DOM muộn */
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            pfModal = document.getElementById('practiceFullModal');
+            if (pfModal) {
+                clearInterval(_iv);
+                var obs = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(m) {
+                        if (m.attributeName === 'class') favSyncFloatVisibility();
+                    });
+                });
+                obs.observe(pfModal, { attributes: true });
+            }
+            if (_tries > 60) clearInterval(_iv);
+        }, 200);
+        return;
+    }
     var observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(m) {
-            if (m.attributeName === 'class') {
-                favSyncFloatVisibility();
-            }
+            if (m.attributeName === 'class') favSyncFloatVisibility();
         });
     });
     observer.observe(pfModal, { attributes: true });
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ THEO DÕI pfCurrentStt → cập nhật màu nút float khi chuyển câu
+   ★ THEO DÕI pfCurrentStt → cập nhật màu nút float
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _lastPfStt = null;
-
-    /* Poll mỗi 250ms — bắt được cả khi pfCurrentStt gán bằng let/var */
     setInterval(function() {
         var cur = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : null;
         if (cur !== _lastPfStt) {
@@ -15703,32 +15804,223 @@ function favSyncFloatVisibility() {
             favUpdatePfFloatBtn();
         }
     }, 250);
+})();
 
-    /* Nếu openPracticeFull là hàm global, bọc để cập nhật ngay sau khi mở */
-    if (typeof window.openPracticeFull === 'function' && !window.openPracticeFull.__favWrapped) {
-        var _origOpenPF = window.openPracticeFull;
-        window.openPracticeFull = function() {
-            var r = _origOpenPF.apply(this, arguments);
-            setTimeout(favUpdatePfFloatBtn, 30);
-            setTimeout(favUpdatePfFloatBtn, 200);
-            return r;
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH render() — khi filteringOnly → chỉ render câu yêu thích
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.render !== 'function') return false;
+        if (window.render.__favPatched) return true;
+
+        var _origRender = window.render;
+        window.render = function() {
+            if (favState.filteringOnly && favState.currentView) {
+                var _origRaw = (typeof RAW_DATA !== 'undefined') ? RAW_DATA : null;
+                if (_origRaw) {
+                    try {
+                        var favRecords = favGetRecords();
+                        window.__favOrigRawData = _origRaw;
+                        try { RAW_DATA = favRecords; } catch(e) {}
+
+                        var result = _origRender.apply(this, arguments);
+
+                        try { RAW_DATA = window.__favOrigRawData; } catch(e) {}
+                        delete window.__favOrigRawData;
+                        return result;
+                    } catch(e) {
+                        console.warn('[Favorites] render patch error:', e);
+                        try {
+                            if (window.__favOrigRawData) RAW_DATA = window.__favOrigRawData;
+                        } catch(err) {}
+                    }
+                }
+                return favRenderCurrentTab();
+            }
+            return _origRender.apply(this, arguments);
         };
-        window.openPracticeFull.__favWrapped = true;
+        window.render.__favPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
     }
 })();
 
-/* ============ HOOK (gọi từ accounts_module / ui_module) ============ */
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH switchDataset() — tự tắt lọc khi đổi dataset khác
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.switchDataset !== 'function') return false;
+        if (window.switchDataset.__favPatched) return true;
+
+        var _origSwitch = window.switchDataset;
+        window.switchDataset = function(group, sub) {
+            if (group !== 'favorites') {
+                favExitFilterMode();
+            }
+            return _origSwitch.apply(this, arguments);
+        };
+        window.switchDataset.__favPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH openPracticeFull — áp dụng filter "chỉ câu yêu thích"
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.openPracticeFull !== 'function') return false;
+        if (window.openPracticeFull.__favFilterPatched) return true;
+
+        var _origOpenPF = window.openPracticeFull;
+        window.openPracticeFull = function(stt, evt) {
+            /* Nếu bật "chỉ câu yêu thích" → ép mở câu yêu thích */
+            if (favState.pfOnlyFav && favCanUse()) {
+                var favList = favGetRecords();
+                if (favList.length === 0) {
+                    favShowToast('Chưa có câu yêu thích nào', 'warn');
+                    return;
+                }
+                var targetStt = String(stt);
+                var isFav = favList.some(function(r) {
+                    return String(r.stt) === targetStt;
+                });
+                if (!isFav) {
+                    stt = String(favList[0].stt);
+                }
+            }
+
+            var result = _origOpenPF.apply(this, arguments);
+
+            setTimeout(function() {
+                favUpdatePfFloatBtn();
+                favUpdatePfOnlyFavBtn();
+            }, 30);
+            setTimeout(function() {
+                favUpdatePfFloatBtn();
+                favUpdatePfOnlyFavBtn();
+            }, 200);
+
+            return result;
+        };
+        window.openPracticeFull.__favFilterPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH điều hướng next/prev trong Practice Full
+   Tự động phát hiện hàm điều hướng phổ biến: pfNavigate, pfNext, pfPrev
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function patchNavigateFn(fnName) {
+        if (typeof window[fnName] !== 'function') return false;
+        if (window[fnName].__favFilterPatched) return true;
+
+        var _orig = window[fnName];
+        window[fnName] = function() {
+            /* Nếu KHÔNG bật filter → chạy nguyên gốc */
+            if (!favState.pfOnlyFav || !favCanUse()) {
+                var res = _orig.apply(this, arguments);
+                setTimeout(favUpdatePfFloatBtn, 30);
+                return res;
+            }
+
+            var favList = favGetRecords();
+            if (favList.length === 0) {
+                return _orig.apply(this, arguments);
+            }
+
+            /* Xác định hướng (next/prev) từ tên hàm */
+            var direction = (fnName.toLowerCase().indexOf('prev') !== -1) ? -1 : 1;
+
+            /* Tìm vị trí hiện tại trong danh sách yêu thích */
+            var curStt = (typeof pfCurrentStt !== 'undefined') ? String(pfCurrentStt) : null;
+            var curIdx = -1;
+            for (var i = 0; i < favList.length; i++) {
+                if (String(favList[i].stt) === curStt) { curIdx = i; break; }
+            }
+
+            var nextIdx;
+            if (curIdx === -1) {
+                nextIdx = 0;
+            } else {
+                nextIdx = curIdx + direction;
+                if (nextIdx < 0) nextIdx = favList.length - 1;
+                if (nextIdx >= favList.length) nextIdx = 0;
+            }
+
+            var nextStt = String(favList[nextIdx].stt);
+            /* Gọi lại openPracticeFull với câu kế tiếp trong danh sách yêu thích */
+            if (typeof window.openPracticeFull === 'function') {
+                window.openPracticeFull(nextStt);
+                return;
+            }
+            /* Fallback: gọi nguyên gốc */
+            return _orig.apply(this, arguments);
+        };
+        window[fnName].__favFilterPatched = true;
+        return true;
+    }
+
+    var fns = ['pfNavigate', 'pfNext', 'pfPrev', 'practiceNext', 'practicePrev', 'nextPractice', 'prevPractice'];
+    var _tries = 0;
+    var _iv = setInterval(function() {
+        _tries++;
+        var done = true;
+        fns.forEach(function(fn) {
+            if (typeof window[fn] === 'function' && !window[fn].__favFilterPatched) {
+                if (!patchNavigateFn(fn)) done = false;
+            }
+        });
+        if (_tries > 40) clearInterval(_iv);
+    }, 200);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   HOOK public API
+   ═══════════════════════════════════════════════════════════════ */
 window.favUpdateLockState = favUpdateLockState;
 window.favNotifyChanged = favNotifyChanged;
 window.favSyncFloatVisibility = favSyncFloatVisibility;
 window.favUpdatePfFloatBtn = favUpdatePfFloatBtn;
+window.favUpdatePfOnlyFavBtn = favUpdatePfOnlyFavBtn;
+window.favGetRecords = favGetRecords;
+window.favHas = favHas;
+window.favCount = favCount;
+window.favExitFilterMode = favExitFilterMode;
+window.favState = favState;
 window.favRefreshUI = function() {
     favUpdateLockState();
     favNotifyChanged();
     if (favCanUse() && !favState.loaded) {
         favLoadFromCloud();
     }
-    /* Khi user logout → xoá state */
     if (!favIsLoggedIn()) {
         favState.items = {};
         favState.loaded = false;
@@ -15740,7 +16032,9 @@ window.favRefreshUI = function() {
     }
 };
 
-/* Auto-init khi DOM ready */
+/* ═══════════════════════════════════════════════════════════════
+   AUTO-INIT
+   ═══════════════════════════════════════════════════════════════ */
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         initFavorites();
@@ -15753,7 +16047,7 @@ if (document.readyState === 'loading') {
     }, 0);
 }
 
-/* Auto-init lại khi tier thay đổi */
+/* Auto-refresh khi tier thay đổi */
 (function() {
     var _lastTier = null;
     setInterval(function() {
