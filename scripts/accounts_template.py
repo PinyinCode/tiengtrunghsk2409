@@ -1760,6 +1760,9 @@ function watchCurrentUser() {
         applyUserUI();
         if (typeof refreshApp === 'function') refreshApp();
 
+        /* ❤️ Cập nhật Yêu thích khi tier đổi (VD: trial → active sau khi admin duyệt) */
+        if (typeof window.favRefreshUI === 'function') window.favRefreshUI();
+
         if (newPermanent && !oldPermanent) {
             showUserChangedToast('💎 Tài khoản đã được kích hoạt VĨNH VIỄN!', 'success');
         } else if (newExpiryMs && oldExpiryMs && newExpiryMs > oldExpiryMs) {
@@ -2120,8 +2123,10 @@ function applyUserUI() {
     var toggleFocusBtn = $('toggleFocusBtn');
     if (toggleFocusBtn) toggleFocusBtn.style.display = isDemo ? 'none' : 'flex';
     if (isDemo) document.body.classList.remove('hide-floating');
-}
 
+    /* ❤️ Cập nhật trạng thái Yêu thích khi tier thay đổi */
+    if (typeof window.favUpdateLockState === 'function') window.favUpdateLockState();
+}
 function updateUserDetails() {
     var detailsEl = $('userDetails');
     if (!detailsEl) return;
