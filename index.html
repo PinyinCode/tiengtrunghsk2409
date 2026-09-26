@@ -15647,9 +15647,23 @@ function favOnTabClick(evt) {
     var obBanner = document.getElementById('onboardingActiveBanner');
     if (obBanner) obBanner.style.display = 'none';
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ FIX: GÁN filtered = DANH SÁCH CÂU YÊU THÍCH
+       ═══════════════════════════════════════════════════════════ */
+    var favRecords = favGetRecords();
+
+    /* Cập nhật biến `filtered` toàn cục của ui_template */
+    if (typeof window.filtered !== 'undefined') {
+        window.filtered = favRecords;
+    }
+    /* Cập nhật biến local nếu có thể (do scope nội bộ) */
+    try { filtered = favRecords; } catch(e) {}
+    try { renderedCount = 0; } catch(e) {}
+
+    /* ═══ RENDER ═══ */
     if (typeof window.render === 'function') {
-        window.render();
-    } else {
+        window.render(true);
+    } else if (typeof favRenderCurrentTab === 'function') {
         favRenderCurrentTab();
     }
 
