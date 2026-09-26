@@ -425,6 +425,45 @@ def build_favorites_css():
         transform-origin: right bottom;
     }
 }
+/* ═══════════════════════════════════════════════════════════════
+   ★ NÚT TOGGLE "CHỈ CÂU YÊU THÍCH" — TRẠNG THÁI CÂU KHÔNG PHẢI YÊU THÍCH
+   Khi câu hiện tại CHƯA like → nút mờ, không kích hoạt được
+   ═══════════════════════════════════════════════════════════════ */
+.pf-fav-only-float.current-not-fav {
+    opacity: 0.5 !important;
+    filter: grayscale(0.6);
+    cursor: not-allowed;
+    pointer-events: auto; /* Vẫn cho phép bấm để hiện cảnh báo */
+}
+
+.pf-fav-only-float.current-not-fav:hover {
+    transform: none !important;
+    border-color: var(--border) !important;
+    color: var(--text-2) !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,.12) !important;
+    opacity: 0.6 !important;
+}
+
+.pf-fav-only-float.current-not-fav i {
+    animation: none !important;
+}
+
+.pf-fav-only-float.current-not-fav .pf-fav-only-count {
+    background: rgba(148, 163, 184, 0.2);
+    color: var(--text-3);
+}
+
+/* Dark mode */
+[data-theme="dark"] .pf-fav-only-float.current-not-fav {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text-3);
+}
+
+[data-theme="dark"] .pf-fav-only-float.current-not-fav:hover {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+}
 """
 
 
@@ -1046,9 +1085,10 @@ function favUpdatePfOnlyFavBtn() {
     var can = favCanUse();
     var count = favCount();
 
+    /* ═══ 1. CHƯA ĐỦ QUYỀN ═══ */
     if (!can) {
         btn.classList.add('locked');
-        btn.classList.remove('active', 'empty');
+        btn.classList.remove('active', 'empty', 'current-not-fav');
         if (icon) icon.className = 'fas fa-lock';
         btn.title = 'Cần gia hạn để dùng Yêu thích';
         if (countEl) countEl.textContent = '0';
@@ -1058,9 +1098,10 @@ function favUpdatePfOnlyFavBtn() {
     btn.classList.remove('locked');
     if (countEl) countEl.textContent = count;
 
+    /* ═══ 2. CHƯA CÓ CÂU YÊU THÍCH NÀO ═══ */
     if (count === 0) {
         btn.classList.add('empty');
-        btn.classList.remove('active');
+        btn.classList.remove('active', 'current-not-fav');
         if (icon) icon.className = 'far fa-heart';
         btn.title = 'Chưa có câu yêu thích nào';
         if (favState.pfOnlyFav) {
@@ -1071,6 +1112,28 @@ function favUpdatePfOnlyFavBtn() {
 
     btn.classList.remove('empty');
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 3. CHECK CÂU HIỆN TẠI CÓ PHẢI YÊU THÍCH KHÔNG
+       - Nếu KHÔNG phải → nút mờ + tooltip cảnh báo
+       - Nếu phải → nút sáng
+       ═══════════════════════════════════════════════════════════ */
+    var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                     ? String(pfCurrentStt)
+                     : null;
+    var currentIsFav = currentStt ? favHas(currentStt) : false;
+
+    /* Nếu toggle đang TẮT + câu hiện tại KHÔNG phải yêu thích → nút mờ */
+    if (!favState.pfOnlyFav && !currentIsFav) {
+        btn.classList.add('current-not-fav');
+        btn.classList.remove('active');
+        if (icon) icon.className = 'far fa-heart';
+        btn.title = 'Câu hiện tại chưa được yêu thích. Bấm ❤️ để thêm vào yêu thích trước.';
+        return;
+    }
+
+    btn.classList.remove('current-not-fav');
+
+    /* ═══ 4. CẬP NHẬT THEO TRẠNG THÁI TOGGLE ═══ */
     if (favState.pfOnlyFav) {
         btn.classList.add('active');
         if (icon) icon.className = 'fas fa-heart';
@@ -1086,134 +1149,56 @@ function favTogglePfOnlyFav() {
     /* ═══ 1. CHECK QUYỀN ═══ */
     if (!favCanUse()) { favShowLockDialog(); return; }
 
+    /* ═══ 2. CHECK TỔNG SỐ CÂU YÊU THÍCH ═══ */
     var count = favCount();
     if (count === 0) {
         favShowToast('Chưa có câu yêu thích nào để luyện', 'warn');
         return;
     }
 
-    /* ═══ 2. ĐẢO TRẠNG THÁI ═══ */
-    favState.pfOnlyFav = !favState.pfOnlyFav;
-
     /* ═══════════════════════════════════════════════════════════
-       ⭐ 3. NẾU ĐANG BẬT TOGGLE → KIỂM TRA CÂU HIỆN TẠI NGAY
+       ⭐ 3. CHECK CÂU HIỆN TẠI CÓ PHẢI CÂU YÊU THÍCH KHÔNG
+       - Nếu câu hiện tại KHÔNG phải yêu thích → KHÔNG cho bật toggle
+       - Nếu câu hiện tại LÀ yêu thích → cho phép toggle
        ═══════════════════════════════════════════════════════════ */
-    if (favState.pfOnlyFav) {
+    var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                     ? String(pfCurrentStt)
+                     : null;
+    var currentIsFav = currentStt ? favHas(currentStt) : false;
 
-        /* Bước 1: Lấy danh sách TẤT CẢ câu yêu thích */
-        var allFavRecords = favGetRecords();
+    /* Nếu đang TẮT toggle và bấm để BẬT → phải check câu hiện tại */
+    if (!favState.pfOnlyFav) {
 
-        if (allFavRecords.length === 0) {
-            favShowToast('Chưa có câu yêu thích nào để luyện', 'warn');
-            favState.pfOnlyFav = false;
-            favUpdatePfOnlyFavBtn();
+        /* ─── Kiểm tra câu hiện tại ─── */
+        if (!currentStt) {
+            favShowToast('Không xác định được câu hiện tại', 'warn');
             return;
         }
 
-        /* Bước 2: Kiểm tra câu hiện tại có thuộc yêu thích không */
-        var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : null;
-        var currentIsFav = currentStt ? favHas(currentStt) : false;
-
-        /* Bước 3: Xử lý theo kết quả */
-        if (currentIsFav) {
-            /* ⭐ CÂU HIỆN TẠI LÀ CÂU YÊU THÍCH → giữ nguyên */
-            favShowToast('Đang luyện câu yêu thích #' + currentStt, 'add');
-            favRefreshQuestionDropdown();
-            favUpdatePfOnlyFavBtn();
+        if (!currentIsFav) {
+            /* ❌ Câu hiện tại CHƯA được yêu thích → KHÔNG cho bật toggle */
+            favShowToast(
+                'Câu #' + currentStt + ' chưa được yêu thích. Bấm ❤️ để thêm vào yêu thích trước.',
+                'warn'
+            );
             return;
         }
 
-        /* ⭐ CÂU HIỆN TẠI KHÔNG PHẢI YÊU THÍCH → nhảy sang câu yêu thích đầu tiên */
+        /* ✅ Câu hiện tại LÀ yêu thích → BẬT toggle */
+        favState.pfOnlyFav = true;
 
-        /* Bước 4: Kiểm tra dataset hiện tại có câu yêu thích không */
-        var currentDatasetId = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
-        var hasFavInCurrent = false;
-        if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY[currentDatasetId]) {
-            var currentData = DATASET_REGISTRY[currentDatasetId].data || [];
-            for (var i = 0; i < currentData.length; i++) {
-                if (favHas(currentData[i].stt)) {
-                    hasFavInCurrent = true;
-                    break;
-                }
-            }
-        }
-
-        /* Bước 5: Nếu dataset hiện tại KHÔNG có câu yêu thích → tìm dataset khác */
-        if (!hasFavInCurrent) {
-            var foundDatasetId = null;
-            if (typeof DATASET_REGISTRY !== 'undefined') {
-                var dsIds = Object.keys(DATASET_REGISTRY);
-                for (var k = 0; k < dsIds.length; k++) {
-                    var dsId = dsIds[k];
-                    var ds = DATASET_REGISTRY[dsId];
-                    if (!ds || !Array.isArray(ds.data)) continue;
-                    for (var m = 0; m < ds.data.length; m++) {
-                        if (favHas(ds.data[m].stt)) {
-                            foundDatasetId = dsId;
-                            break;
-                        }
-                    }
-                    if (foundDatasetId) break;
-                }
-            }
-
-            if (foundDatasetId) {
-                /* ⭐ Chuyển dataset */
-                if (typeof window.__switchRawData === 'function') {
-                    window.__switchRawData(foundDatasetId);
-                }
-                var pfSel = document.getElementById('pfDatasetSelect');
-                if (pfSel) pfSel.value = foundDatasetId;
-
-                if (typeof markCurrentDatasetActive === 'function') {
-                    markCurrentDatasetActive();
-                }
-                if (typeof pfBuildFilterOptions === 'function') {
-                    pfBuildFilterOptions();
-                }
-                if (typeof state !== 'undefined') {
-                    state.search = '';
-                    state.hsk = '';
-                    state.subject = '';
-                }
-
-                var dsName = DATASET_REGISTRY[foundDatasetId]
-                    ? (DATASET_REGISTRY[foundDatasetId].name || foundDatasetId)
-                    : foundDatasetId;
-                favShowToast('Đã chuyển sang bộ: ' + dsName, 'add');
-            }
-        }
-
-        /* Bước 6: Nhảy sang câu yêu thích đầu tiên (trong dataset hiện tại) */
-        var firstFavStt = String(allFavRecords[0].stt);
-
-        /* Cập nhật biến `filtered` = danh sách câu yêu thích */
-        if (typeof window.filtered !== 'undefined') {
-            window.filtered = allFavRecords;
-        }
-        try { filtered = allFavRecords; } catch(e) {}
-
-        /* Mở Practice Full câu yêu thích đầu tiên */
-        if (typeof window.openPracticeFull === 'function') {
-            setTimeout(function() {
-                window.openPracticeFull(firstFavStt);
-                setTimeout(function() {
-                    favRefreshQuestionDropdown();
-                    favUpdatePfOnlyFavBtn();
-                    favUpdatePfFloatBtn();
-                }, 100);
-            }, 100);
-        }
+        /* Cập nhật UI */
+        favUpdatePfOnlyFavBtn();
+        favRefreshQuestionDropdown();
 
         favShowToast('Chỉ luyện ' + count + ' câu yêu thích', 'add');
         return;
     }
 
     /* ═══════════════════════════════════════════════════════════
-       4. NẾU TẮT TOGGLE → quay lại luyện tất cả câu
+       4. ĐANG BẬT TOGGLE → BẤM ĐỂ TẮT (luôn cho phép tắt)
        ═══════════════════════════════════════════════════════════ */
+    favState.pfOnlyFav = false;
     favUpdatePfOnlyFavBtn();
     favRefreshQuestionDropdown();
     favShowToast('Luyện tất cả câu', 'remove');
