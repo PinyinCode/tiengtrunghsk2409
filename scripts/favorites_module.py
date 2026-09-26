@@ -2093,6 +2093,9 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    WATCH PRACTICE FULL MODAL
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   WATCH PRACTICE FULL MODAL
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     function attach() {
         var pfModal = document.getElementById('practiceFullModal');
@@ -2280,8 +2283,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ LISTENER pfQuickNav CHANGE
-   - Khi BẬT toggle: chọn câu → tự chuyển dataset + load câu
+   ⭐ LISTENER pfQuickNav CHANGE — Tự chuyển dataset khi chọn câu
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _navChanging = false;
@@ -2294,10 +2296,7 @@ function favSyncFloatVisibility() {
         sel.__favNavBound = true;
 
         sel.addEventListener('change', function(evt) {
-            /* ═══ CHỈ XỬ LÝ KHI TOGGLE BẬT ═══ */
             if (!favState.pfOnlyFav || !favCanUse()) return;
-
-            /* Chống chạy trùng */
             if (_navChanging) return;
             _navChanging = true;
 
@@ -2311,15 +2310,13 @@ function favSyncFloatVisibility() {
 
             var curDs = favGetCurrentDsId();
 
-            /* ═══════════════════════════════════════════════════════
-               Nếu câu thuộc dataset KHÁC → đổi dataset trước
-               ═══════════════════════════════════════════════════════ */
+            /* ═══ Đổi dataset nếu cần ═══ */
             if (targetDs && targetDs !== curDs) {
                 console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + targetDs);
 
                 evt.stopPropagation();
+                window.__favRedirecting = true;
 
-                /* Ngăn listener #pfDatasetSelect xử lý */
                 if (typeof window.__switchRawData === 'function') {
                     try {
                         window.__switchRawData(targetDs);
@@ -2328,11 +2325,9 @@ function favSyncFloatVisibility() {
                     }
                 }
 
-                /* Đồng bộ select dataset */
                 var dsSel = document.getElementById('pfDatasetSelect');
                 if (dsSel) dsSel.value = targetDs;
 
-                /* Rebuild filter + dropdown dataset */
                 if (typeof pfBuildFilterOptions === 'function') {
                     pfBuildFilterOptions();
                 }
@@ -2340,31 +2335,32 @@ function favSyncFloatVisibility() {
                     pfBuildDatasetSelect();
                 }
 
-                /* Đợi 1 nhịp rồi load câu */
                 setTimeout(function() {
                     if (typeof loadPracticeFull === 'function') {
                         loadPracticeFull(String(stt));
                     }
                     setTimeout(function() {
+                        window.__favRedirecting = false;
                         favRefreshQuestionDropdown();
                         _navChanging = false;
-                    }, 80);
+                    }, 150);
                 }, 60);
 
                 return;
             }
 
-            /* ═══════════════════════════════════════════════════════
-               Cùng dataset → load câu luôn
-               ═══════════════════════════════════════════════════════ */
+            /* ═══ Cùng dataset → load luôn ═══ */
+            window.__favRedirecting = true;
+
             if (typeof loadPracticeFull === 'function') {
                 loadPracticeFull(String(stt));
             }
 
             setTimeout(function() {
+                window.__favRedirecting = false;
                 favRefreshQuestionDropdown();
                 _navChanging = false;
-            }, 80);
+            }, 120);
         });
 
         console.log('✅ [Favorites] Đã gắn listener cho #pfQuickNav');
@@ -2394,7 +2390,6 @@ function favSyncFloatVisibility() {
 
             var result = _origSwitch.apply(this, arguments);
 
-            /* Khôi phục toggle nếu đang bật */
             if (wasPfOnlyFav && favCanUse()) {
                 favState.pfOnlyFav = true;
             }
@@ -2476,7 +2471,10 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH openPracticeFull — Auto-bật toggle khi mở từ tab Yêu thích
+   ⭐ PATCH openPracticeFull
+   - Auto-bật toggle khi mở từ tab Yêu thích
+   - Bỏ filter khi đang __favRedirecting
+   - Đổi dataset nếu fav đầu thuộc dataset khác
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2490,19 +2488,39 @@ function favSyncFloatVisibility() {
                 favState.pfOnlyFav = true;
             }
 
-            /* ⭐ Nếu toggle đang bật, filter stt */
-            if (favState.pfOnlyFav && favCanUse()) {
+            /* ⭐ Nếu toggle bật + KHÔNG đang redirect → filter stt */
+            if (favState.pfOnlyFav && favCanUse() && !window.__favRedirecting) {
                 var favList = favGetRecords();
                 if (favList.length === 0) {
                     favShowToast('Chưa có câu yêu thích nào', 'warn');
                     return;
                 }
+
                 var targetStt = String(stt);
+                var curDs = favGetCurrentDsId();
+
                 var isFav = favList.some(function(r) {
-                    return String(r.stt) === targetStt;
+                    return String(r.stt) === targetStt &&
+                           r.__favDatasetId === curDs;
                 });
+
                 if (!isFav) {
                     stt = String(favList[0].stt);
+
+                    var firstDs = favList[0].__favDatasetId;
+                    if (firstDs && firstDs !== curDs) {
+                        window.__favRedirecting = true;
+                        if (typeof window.__switchRawData === 'function') {
+                            try { window.__switchRawData(firstDs); } catch(e) {}
+                        }
+                        var dsSel = document.getElementById('pfDatasetSelect');
+                        if (dsSel) dsSel.value = firstDs;
+                        if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+                        if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
+                        setTimeout(function() {
+                            window.__favRedirecting = false;
+                        }, 150);
+                    }
                 }
             }
 
@@ -2541,8 +2559,9 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH loadPracticeFull — KHÔNG tự tắt toggle
-   - Nếu toggle BẬT + câu mới KHÔNG phải fav → tự nhảy fav đầu
+   ⭐ PATCH loadPracticeFull
+   - KHÔNG tự tắt toggle
+   - Bỏ auto-nhảy khi __favRedirecting
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2566,7 +2585,15 @@ function favSyncFloatVisibility() {
                     favUpdatePfOnlyFavBtn();
                 }
 
-                /* ⭐ Nếu toggle BẬT + câu mới KHÔNG phải fav → tự nhảy fav đầu */
+                /* ⭐ Đang redirect → bỏ qua auto-nhảy */
+                if (window.__favRedirecting) {
+                    if (typeof favRefreshQuestionDropdown === 'function') {
+                        favRefreshQuestionDropdown();
+                    }
+                    return;
+                }
+
+                /* ⭐ Toggle bật + câu mới không phải fav → nhảy fav đầu */
                 if (favState.pfOnlyFav && favCanUse()) {
                     var curDs = favGetCurrentDsId();
                     var isNewFav = favHas(newStt, curDs);
@@ -2576,13 +2603,15 @@ function favSyncFloatVisibility() {
                         if (favList.length > 0) {
                             var firstFavStt = String(favList[0].stt);
 
-                            if (firstFavStt !== newStt && !window.__favRedirecting) {
+                            if (firstFavStt !== newStt) {
                                 window.__favRedirecting = true;
                                 setTimeout(function() {
                                     if (typeof loadPracticeFull === 'function') {
                                         loadPracticeFull(firstFavStt);
                                     }
-                                    window.__favRedirecting = false;
+                                    setTimeout(function() {
+                                        window.__favRedirecting = false;
+                                    }, 150);
                                 }, 30);
                             }
                         }
@@ -2619,6 +2648,12 @@ function favSyncFloatVisibility() {
 
     function handleDatasetChange() {
         console.log('[Favorites] Đổi bộ dữ liệu → đồng bộ');
+
+        /* ⭐ Nếu đang redirect thì bỏ qua */
+        if (window.__favRedirecting) {
+            console.log('[Favorites] Đang redirect — bỏ qua handleDatasetChange');
+            return;
+        }
 
         if (typeof favState !== 'undefined') {
             favState.pfOnlyFav = false;
@@ -2682,7 +2717,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   PATCH điều hướng next/prev
+   ⭐ PATCH next/prev — Dùng loadPracticeFull + tự đổi dataset
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function patchNavigateFn(fnName) {
@@ -2690,7 +2725,9 @@ function favSyncFloatVisibility() {
         if (window[fnName].__favFilterPatched) return true;
 
         var _orig = window[fnName];
+
         window[fnName] = function() {
+            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
             if (!favState.pfOnlyFav || !favCanUse()) {
                 var res = _orig.apply(this, arguments);
                 setTimeout(function() {
@@ -2701,6 +2738,7 @@ function favSyncFloatVisibility() {
                 return res;
             }
 
+            /* ═══ BẬT TOGGLE → điều hướng trong danh sách yêu thích ═══ */
             var favList = favGetRecords();
             if (favList.length === 0) {
                 return _orig.apply(this, arguments);
@@ -2708,10 +2746,18 @@ function favSyncFloatVisibility() {
 
             var direction = (fnName.toLowerCase().indexOf('prev') !== -1) ? -1 : 1;
 
-            var curStt = (typeof pfCurrentStt !== 'undefined') ? String(pfCurrentStt) : null;
+            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                         ? String(pfCurrentStt)
+                         : null;
+            var curDs = favGetCurrentDsId();
             var curIdx = -1;
+
             for (var i = 0; i < favList.length; i++) {
-                if (String(favList[i].stt) === curStt) { curIdx = i; break; }
+                if (String(favList[i].stt) === curStt &&
+                    favList[i].__favDatasetId === curDs) {
+                    curIdx = i;
+                    break;
+                }
             }
 
             var nextIdx;
@@ -2723,26 +2769,64 @@ function favSyncFloatVisibility() {
                 if (nextIdx >= favList.length) nextIdx = 0;
             }
 
-            var nextStt = String(favList[nextIdx].stt);
-            var nextDs = favList[nextIdx].__favDatasetId;
+            var nextItem = favList[nextIdx];
+            var nextStt = String(nextItem.stt);
+            var nextDs = nextItem.__favDatasetId || curDs;
 
-            /* ⭐ Nếu câu kế tiếp thuộc dataset khác → chuyển dataset */
-            if (nextDs && nextDs !== favGetCurrentDsId()) {
+            /* ═══ Nếu câu kế thuộc dataset khác → chuyển dataset ═══ */
+            if (nextDs !== curDs) {
+                console.log('[Favorites] Next/prev đổi dataset: ' + curDs + ' → ' + nextDs);
+
+                window.__favRedirecting = true;
+
                 if (typeof window.__switchRawData === 'function') {
-                    try { window.__switchRawData(nextDs); } catch(e) {}
+                    try {
+                        window.__switchRawData(nextDs);
+                    } catch(e) {
+                        console.warn('[Favorites] __switchRawData error:', e);
+                    }
                 }
+
                 var dsSel = document.getElementById('pfDatasetSelect');
                 if (dsSel) dsSel.value = nextDs;
-                if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
-                if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
-            }
 
-            if (typeof window.openPracticeFull === 'function') {
-                window.openPracticeFull(nextStt);
+                if (typeof pfBuildFilterOptions === 'function') {
+                    pfBuildFilterOptions();
+                }
+                if (typeof pfBuildDatasetSelect === 'function') {
+                    pfBuildDatasetSelect();
+                }
+
+                setTimeout(function() {
+                    if (typeof loadPracticeFull === 'function') {
+                        loadPracticeFull(nextStt);
+                    }
+                    setTimeout(function() {
+                        window.__favRedirecting = false;
+                        if (typeof favRefreshQuestionDropdown === 'function') {
+                            favRefreshQuestionDropdown();
+                        }
+                    }, 150);
+                }, 60);
+
                 return;
             }
-            return _orig.apply(this, arguments);
+
+            /* ═══ Cùng dataset → load trực tiếp ═══ */
+            window.__favRedirecting = true;
+
+            if (typeof loadPracticeFull === 'function') {
+                loadPracticeFull(nextStt);
+            }
+
+            setTimeout(function() {
+                window.__favRedirecting = false;
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
+            }, 120);
         };
+
         window[fnName].__favFilterPatched = true;
         return true;
     }
