@@ -3086,12 +3086,6 @@ def build_ui_html():
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
-        <button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">
-            <i class="far fa-heart"></i>
-            <span>Yêu thích</span>
-            <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>
-            <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>
-        </button>
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
         <div class="ds-sub-label">
@@ -3173,7 +3167,6 @@ def build_ui_html():
 </div>
 <div class="pf-counter" id="pfCounter">Câu 1 / 1</div>
 <div class="pf-tags" id="pfTags"></div>
-<button class="pf-fav-btn" id="pfFavBtn" type="button" title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích"><i class="far fa-heart"></i></button>
 <button class="pf-close" id="pfClose" aria-label="Đóng"><i class="fas fa-times"></i></button>
 </div>
 <div class="pf-filters">
@@ -3259,9 +3252,9 @@ def build_ui_html():
 <div class="voice-modal" id="voiceModal">
     <div class="voice-box">
         <div class="voice-header">
-            <h2><i class="fas fa-sliders-h"></i> Cài đặt giọng đọc</h2>
-            <button class="voice-close" id="voiceClose" aria-label="Đóng"><i class="fas fa-times"></i></button>
-        </div>
+            <h2><i class="fas fa-sliders-h"></i> Cài đặt giọng đ="ọc</h2>
+            <voicebutton class="voice-close" id="voice-slClose" aria-label="Đóng"><i class="fas fa-times"></iider"></button>
+        </ iddiv>
         <div class="voice-body">
 
             <div class="voice-group">
@@ -3311,7 +3304,7 @@ def build_ui_html():
                 </div>
                 <div class="voice-slider-row">
                     <button type="button" id="voiceVolumeMinus" title="Nhỏ hơn">−</button>
-                    <input type="range" class="voice-slider" id="voiceVolumeSlider" min="0" max="1" step="0.05" value="1.0">
+                    <input type="range" class="voiceVolumeSlider" min="0" max="1" step="0.05" value="1.0">
                     <button type="button" id="voiceVolumePlus" title="To hơn">+</button>
                 </div>
             </div>
