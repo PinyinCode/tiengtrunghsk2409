@@ -2076,6 +2076,80 @@ function favSyncFloatVisibility() {
     }
 })();
 /* ═══════════════════════════════════════════════════════════════
+   ★ PATCH loadPracticeFull() — ĐỒNG BỘ NÚT TOGGLE + NÚT TIM
+   Mỗi khi câu thay đổi (đổi dataset, next/prev, chọn dropdown):
+   1. Cập nhật nút tim FLOAT theo câu mới
+   2. Nếu nút toggle "Chỉ câu yêu thích" đang BẬT:
+      - Câu mới LÀ yêu thích → giữ nguyên
+      - Câu mới KHÔNG PHẢI yêu thích → tự động TẮT toggle
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.loadPracticeFull !== 'function') return false;
+        if (window.loadPracticeFull.__favSyncPatched) return true;
+
+        var _origLoadPF = window.loadPracticeFull;
+        window.loadPracticeFull = function(stt) {
+            /* ═══ 1. GỌI HÀM GỐC TRƯỚC ═══ */
+            var result = _origLoadPF.apply(this, arguments);
+
+            /* ═══ 2. SAU KHI CÂU MỚI ĐƯỢC LOAD → ĐỒNG BỘ TRẠNG THÁI ═══ */
+            setTimeout(function() {
+
+                /* ─── A. Cập nhật nút tim FLOAT (like/unlike câu mới) ─── */
+                if (typeof favUpdatePfFloatBtn === 'function') {
+                    favUpdatePfFloatBtn();
+                }
+
+                /* ─── B. Kiểm tra + cập nhật nút TOGGLE "Chỉ câu yêu thích" ─── */
+                if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
+                    /* Đang BẬT toggle → check câu mới có phải yêu thích không */
+                    var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                                 ? String(pfCurrentStt)
+                                 : null;
+
+                    if (newStt) {
+                        var isNewFav = (typeof favHas === 'function') ? favHas(newStt) : false;
+
+                        if (!isNewFav) {
+                            /* ⭐ Câu mới KHÔNG PHẢI yêu thích → TỰ ĐỘNG TẮT toggle */
+                            favState.pfOnlyFav = false;
+                            if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                                favUpdatePfOnlyFavBtn();
+                            }
+                            if (typeof favRefreshQuestionDropdown === 'function') {
+                                favRefreshQuestionDropdown();
+                            }
+                            if (typeof favShowToast === 'function') {
+                                favShowToast('Đã tắt chế độ "Chỉ câu yêu thích"', 'warn');
+                            }
+                        }
+                        /* Nếu câu mới LÀ yêu thích → giữ nguyên trạng thái bật */
+                    }
+                }
+
+                /* ─── C. Cập nhật UI nút toggle (đảm bảo hiển thị đúng) ─── */
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
+                }
+
+            }, 30); /* Delay 30ms đủ để pfCurrentStt cập nhật */
+
+            return result;
+        };
+        window.loadPracticeFull.__favSyncPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
+/* ═══════════════════════════════════════════════════════════════
    ★ FIX: PATCH loadPracticeFull() — tự cập nhật nút tim
    Khi đổi dataset trong Practice Full, nút tim phải đổi
    theo trạng thái câu mới ngay lập tức.
