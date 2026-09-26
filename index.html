@@ -15148,7 +15148,41 @@ function favHas(stt) {
 function favCount() {
     return Object.keys(favState.items).length;
 }
+function favGetDailyRemaining() {
+    var email = favGetCurrentEmail();
+    if (!email) return 0;
 
+    var isAdmin = (typeof currentUser !== 'undefined'
+                   && currentUser
+                   && currentUser.role === 'admin');
+    if (isAdmin) return Infinity;
+
+    var MAX_PER_DAY = 500;
+    var today = new Date().toDateString();
+
+    try {
+        var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
+        if (saved && saved.date === today) {
+            return Math.max(0, MAX_PER_DAY - saved.count);
+        }
+    } catch(e) {}
+
+    return MAX_PER_DAY;
+}
+
+function favGetDailyUsed() {
+    var email = favGetCurrentEmail();
+    if (!email) return 0;
+
+    var today = new Date().toDateString();
+    try {
+        var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
+        if (saved && saved.date === today) {
+            return saved.count;
+        }
+    } catch(e) {}
+    return 0;
+}
 /* ============ LẤY RECORD GỐC ============ */
 /* ============ LẤY RECORD GỐC — TẤT CẢ DATASET ============ */
 function favGetRecordsFromArray(sourceArray) {
