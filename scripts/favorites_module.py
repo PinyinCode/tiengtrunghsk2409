@@ -1495,10 +1495,12 @@ function favScanAllHeartButtons() {
    NOTIFY CHANGES
    ═══════════════════════════════════════════════════════════════ */
 function favNotifyChanged() {
+    /* ⭐ Quét lại tất cả nút tim */
     if (typeof favScanAllHeartButtons === 'function') {
         favScanAllHeartButtons();
     }
 
+    /* ⭐ Cập nhật badge trên tab + dropdown */
     var count = favCount();
     ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
         var badge = document.getElementById(id);
@@ -1508,18 +1510,33 @@ function favNotifyChanged() {
         }
     });
 
+    /* ⭐⭐ CẬP NHẬT HEADER COUNT ngay (không cần chờ render) */
+    var headerCountEl = document.querySelector('.fav-header .fav-count-text');
+    if (headerCountEl) {
+        headerCountEl.textContent = count + ' câu';
+    }
+
+    /* ⭐⭐⭐ Nếu đang ở tab Yêu thích → render lại NGAY */
     if (favState.currentView && favState.filteringOnly) {
         if (typeof window.render === 'function') {
             clearTimeout(favState.__renderTimer);
             favState.__renderTimer = setTimeout(function() {
                 window.render();
+                /* Backup: cập nhật lại header sau khi render */
+                setTimeout(function() {
+                    var el = document.querySelector('.fav-header .fav-count-text');
+                    if (el) el.textContent = favCount() + ' câu';
+                }, 20);
             }, 80);
         } else {
             favRenderCurrentTab();
+            setTimeout(function() {
+                var el = document.querySelector('.fav-header .fav-count-text');
+                if (el) el.textContent = favCount() + ' câu';
+            }, 20);
         }
     }
 }
-
 /* ═══════════════════════════════════════════════════════════════
    UPDATE LOCK STATE
    ═══════════════════════════════════════════════════════════════ */
@@ -1612,6 +1629,12 @@ function favShowToast(message, type) {
 /* ═══════════════════════════════════════════════════════════════
    RENDER TAB YÊU THÍCH
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   RENDER TAB YÊU THÍCH
+   - Đếm đúng số câu (allFavRecords.length)
+   - Header có class "fav-count-text" để update trực tiếp
+   - Empty state khi hết câu
+   ═══════════════════════════════════════════════════════════════ */
 function favRenderCurrentTab() {
     if (!favState.currentView) return;
     if (typeof mobileWrapper === 'undefined' || !mobileWrapper) return;
@@ -1619,6 +1642,7 @@ function favRenderCurrentTab() {
 
     var can = favCanUse();
 
+    /* ═══ 1. KHÔNG CÓ QUYỀN → LOCK STATE ═══ */
     if (!can) {
         mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
             '<div style="width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;' +
@@ -1645,10 +1669,13 @@ function favRenderCurrentTab() {
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 2. LẤY TẤT CẢ CÂU YÊU THÍCH — KHÔNG FILTER DATASET
+       ═══════════════════════════════════════════════════════════ */
     var allFavRecords = favGetRecords();
-    var items = favGetSortedList();
 
-    if (items.length === 0) {
+    /* ═══ 3. EMPTY STATE — Không còn câu nào ═══ */
+    if (allFavRecords.length === 0) {
         mobileWrapper.innerHTML = '<div class="fav-empty">' +
             '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
             '<div class="fav-empty-title">Chưa có câu yêu thích nào</div>' +
@@ -1657,9 +1684,17 @@ function favRenderCurrentTab() {
                 'Các câu yêu thích sẽ được đồng bộ trên mọi thiết bị khi bạn đăng nhập.' +
             '</div>' +
         '</div>';
+
+        /* ⭐ Cập nhật badge = 0 ngay */
+        ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
+            var b = document.getElementById(id);
+            if (b) { b.textContent = '0'; b.dataset.count = '0'; }
+        });
+
         return;
     }
 
+    /* ═══ 4. COUNTER + HEADER ═══ */
     var isAdminUser = (typeof currentUser !== 'undefined'
                        && currentUser
                        && currentUser.role === 'admin');
@@ -1682,6 +1717,7 @@ function favRenderCurrentTab() {
                       '<i class="fas fa-calendar-day"></i> ' + used + '/' + MAX_PER_DAY + ' hôm nay</span>';
     }
 
+    /* ⭐ Header — dùng class "fav-count-text" để có thể update trực tiếp */
     var headerHtml = '<div class="fav-header" style="grid-column:1 / -1;' +
         'display:flex;align-items:center;gap:.5rem;padding:.65rem .85rem;' +
         'background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(220,38,38,.04));' +
@@ -1689,9 +1725,9 @@ function favRenderCurrentTab() {
         '<div style="display:flex;align-items:center;gap:.45rem;font-size:.88rem;font-weight:800;flex:1 1 auto;flex-wrap:wrap;">' +
             '<i class="fas fa-heart" style="color:#ef4444;"></i>' +
             '<span>Yêu thích</span>' +
-            '<span style="font-size:.72rem;font-weight:700;color:#dc2626;' +
+            '<span class="fav-count-text" style="font-size:.72rem;font-weight:700;color:#dc2626;' +
             'background:rgba(239,68,68,.15);padding:.15rem .55rem;border-radius:50px;">' +
-                items.length + ' câu</span>' +
+                allFavRecords.length + ' câu</span>' +
             counterHtml +
         '</div>' +
         '<select onchange="favOnSortChange(this.value)" ' +
@@ -1710,6 +1746,7 @@ function favRenderCurrentTab() {
         '</button>' +
     '</div>';
 
+    /* ═══ 5. FILTER theo search / hsk / subject ═══ */
     var filteredFav = allFavRecords.filter(function(r) {
         if (typeof state !== 'undefined') {
             if (state.search) {
@@ -1727,6 +1764,7 @@ function favRenderCurrentTab() {
         return true;
     });
 
+    /* ═══ 6. SORT ═══ */
     var sortMode = favState.sortMode || 'recent';
     if (sortMode === 'oldest') {
         filteredFav.sort(function(a, b) {
@@ -1739,11 +1777,13 @@ function favRenderCurrentTab() {
             return na - nb;
         });
     } else {
+        /* recent */
         filteredFav.sort(function(a, b) {
             return (b.__favAddedAt || 0) - (a.__favAddedAt || 0);
         });
     }
 
+    /* ═══ 7. RENDER ═══ */
     var cardsHtml = headerHtml;
 
     if (filteredFav.length === 0) {
@@ -1758,11 +1798,27 @@ function favRenderCurrentTab() {
 
     mobileWrapper.innerHTML = cardsHtml;
 
+    /* ═══ 8. UPDATE LOCK STATE + SYNC HEADER + BADGE ═══ */
     setTimeout(function() {
         if (typeof favUpdateLockState === 'function') favUpdateLockState();
+
+        /* ⭐ Sync lại header count sau render (chống race condition) */
+        var headerCountEl = document.querySelector('.fav-header .fav-count-text');
+        if (headerCountEl) {
+            headerCountEl.textContent = favCount() + ' câu';
+        }
+
+        /* ⭐ Sync badge */
+        var total = favCount();
+        ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
+            var b = document.getElementById(id);
+            if (b) {
+                b.textContent = total;
+                b.dataset.count = total;
+            }
+        });
     }, 50);
 }
-
 function favBuildCardHtml(r) {
     var zhJs = escapeJs(r.zh);
     var viJs = escapeJs(r.vi);
@@ -2189,17 +2245,34 @@ function favSyncFloatVisibility() {
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
-        if (typeof window.switchDataset !== 'function') return false;
-        if (window.switchDataset.__favPatched) return true;
+        if (typeof window.render !== 'function') return false;
+        if (window.render.__favScanPatched) return true;
 
-        var _origSwitch = window.switchDataset;
-        window.switchDataset = function(group, sub) {
-            if (group !== 'favorites') {
-                favExitFilterMode();
-            }
-            return _origSwitch.apply(this, arguments);
+        var _origRender = window.render;
+        window.render = function() {
+            var result = _origRender.apply(this, arguments);
+            setTimeout(function() {
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
+                }
+
+                /* ⭐ Sync header count sau khi render xong */
+                var el = document.querySelector('.fav-header .fav-count-text');
+                if (el && typeof favCount === 'function') {
+                    el.textContent = favCount() + ' câu';
+                }
+
+                /* ⭐ Sync badge = 0 nếu hết */
+                if (typeof favCount === 'function' && favCount() === 0) {
+                    ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
+                        var b = document.getElementById(id);
+                        if (b) { b.textContent = '0'; b.dataset.count = '0'; }
+                    });
+                }
+            }, 20);
+            return result;
         };
-        window.switchDataset.__favPatched = true;
+        window.render.__favScanPatched = true;
         return true;
     }
 
