@@ -7343,10 +7343,18 @@ function showWriterChar(char) {
    ═══════════════════════════════════════════════════════════════ */
 function favBuildFavButton(stt) {
     if (typeof favCanUse !== 'function') return '';
+
     var can = favCanUse();
-    var active = typeof favHas === 'function' ? favHas(stt) : false;
+    var currentDsId = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                      ? CURRENT_DATASET
+                      : 'tonghop';
+
+    var active = typeof favHas === 'function' ? favHas(stt, currentDsId) : false;
+
     var sttJs = escapeJs(stt);
     var sttSafe = escapeHtml(stt);
+    var dsSafe = escapeHtml(currentDsId);
+
     var iconClass = !can ? 'fas fa-lock' : (active ? 'fas fa-heart' : 'far fa-heart');
     var title = !can
         ? 'Cần gia hạn để dùng Yêu thích'
@@ -7356,6 +7364,7 @@ function favBuildFavButton(stt) {
         (active ? ' active' : '') +
         (!can ? ' locked' : '') +
         '" data-stt="' + sttSafe + '" ' +
+        'data-dataset-id="' + dsSafe + '" ' +
         'onclick="favOnCardBtnClick(event, \'' + sttJs + '\')" ' +
         'title="' + title + '">' +
         '<i class="' + iconClass + '"></i>' +
