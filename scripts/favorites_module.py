@@ -464,7 +464,7 @@ def build_favorites_html():
             '<button class="pf-fav-only-float" id="pfFavOnlyBtn" type="button" '
             'title="Chỉ luyện câu yêu thích" aria-label="Chỉ luyện câu yêu thích">'
             '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-only-label">Favorites</span>'
+            '<span class="pf-fav-only-label">Favorites Only</span>'
             '<span class="pf-fav-only-count" id="pfFavOnlyCount">0</span>'
             '</button>',
     }
