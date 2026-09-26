@@ -5616,7 +5616,7 @@ function updateResultCount() {
 }
 
 function applyFilter() {
-    /* ═══ 1. ĐỌC GIÁ TRỊ FILTER TỪ UI ═══ */
+    /* ═══ 1. ĐỌC FILTER TỪ UI ═══ */
     state.search = $('searchInput').value.trim().toLowerCase();
     state.hsk = $('hskFilter').value;
     state.subject = $('subjectFilter').value;
@@ -5627,47 +5627,18 @@ function applyFilter() {
     else clearBtn.classList.remove('show');
 
     /* ═══════════════════════════════════════════════════════════
-       ❤️ 2. NẾU ĐANG Ở TAB YÊU THÍCH → LỌC TỪ DANH SÁCH YÊU THÍCH
+       ❤️ 2. NẾU ĐANG Ở TAB YÊU THÍCH → GỌI favRenderCurrentTab()
+       (để giữ HEADER + COUNTER khi user search/filter)
        ═══════════════════════════════════════════════════════════ */
-    if (typeof favState !== 'undefined' && favState.currentView
-        && typeof favGetRecords === 'function') {
-
-        /* Lấy danh sách câu yêu thích từ TẤT CẢ dataset */
-        var favRecords = favGetRecords();
-
-        /* Áp dụng filter search/hsk/subject lên danh sách yêu thích */
-        filtered = favRecords.filter(function(r) {
-            if (state.search) {
-                var s = state.search;
-                var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
-                var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
-                var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
-                var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
-                var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
-                if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
-            }
-            if (state.hsk && r.hsk !== state.hsk) return false;
-            if (state.subject && r.subject !== state.subject) return false;
-            return true;
-        });
-
-        updateResultCount();
-        render(true);
-
-        if (state.hsk || state.subject) {
-            setTimeout(function() {
-                var mainEl = $('mainContent');
-                if (mainEl) {
-                    var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
-                    window.scrollTo({ top: yOffset, behavior: 'smooth' });
-                }
-            }, 150);
-        }
+    if (typeof favState !== 'undefined'
+        && favState.currentView
+        && typeof favRenderCurrentTab === 'function') {
+        favRenderCurrentTab();
         return;
     }
 
     /* ═══════════════════════════════════════════════════════════
-       3. CHẾ ĐỘ BÌNH THƯỜNG — LỌC TỪ getLimitedData() HOẶC RAW_DATA
+       3. CHẾ ĐỘ BÌNH THƯỜNG — LỌC TỪ getLimitedData()
        ═══════════════════════════════════════════════════════════ */
     var baseData = getLimitedData();
     filtered = baseData.filter(function(r) {
