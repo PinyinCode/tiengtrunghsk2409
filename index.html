@@ -14864,6 +14864,21 @@ function favLoadFromLocal() {
         var cached = JSON.parse(localStorage.getItem(key) || 'null');
         if (cached && cached.items && typeof cached.items === 'object') {
             favState.items = cached.items;
+
+            /* ⭐ MIGRATION: gán datasetId mặc định 'tonghop' cho item cũ */
+            var currentDsId = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                              ? CURRENT_DATASET
+                              : 'tonghop';
+            var needResave = false;
+            Object.keys(favState.items).forEach(function(k) {
+                var item = favState.items[k];
+                if (item && !item.datasetId) {
+                    item.datasetId = 'tonghop';  /* Mặc định dataset gốc */
+                    needResave = true;
+                }
+            });
+            if (needResave) favSaveToLocal();
+
             return true;
         }
     } catch(e) {}
@@ -14888,22 +14903,31 @@ async function favLoadFromCloud() {
     favState.loading = true;
 
     try {
-        var snap = await db.collection('favorites').doc(email).collection('items').get();
+        var snap = await db.collection('favorites').doc(email)
+            .collection('items').get();
+
         var items = {};
         snap.forEach(function(doc) {
             var d = doc.data() || {};
-            items[doc.id] = {
-                stt: d.stt || doc.id,
-                addedAt: d.addedAt ? (d.addedAt.toMillis ? d.addedAt.toMillis() : d.addedAt) : Date.now(),
+            var sttKey = String(doc.id);
+
+            items[sttKey] = {
+                stt: d.stt || sttKey,
+                addedAt: d.addedAt
+                    ? (d.addedAt.toMillis ? d.addedAt.toMillis() : d.addedAt)
+                    : Date.now(),
                 hsk: d.hsk || '',
-                subject: d.subject || ''
+                subject: d.subject || '',
+                datasetId: d.datasetId || 'tonghop'   /* ⭐ Fallback nếu cloud cũ */
             };
         });
+
         favState.items = items;
         favState.loaded = true;
         favSaveToLocal();
         favNotifyChanged();
         favListenCloud();
+
     } catch(e) {
         console.warn('[Favorites] Load cloud error:', e);
     } finally {
@@ -14916,30 +14940,122 @@ function favListenCloud() {
     var email = favGetCurrentEmail();
     if (!email || typeof db === 'undefined' || !db) return;
 
+    /* ─── Ngắt listener cũ nếu có ─── */
     if (favState.listener) {
         try { favState.listener(); } catch(e) {}
         favState.listener = null;
     }
 
-    favState.listener = db.collection('favorites').doc(email).collection('items')
+    favState.listener = db.collection('favorites').doc(email)
+        .collection('items')
         .onSnapshot(function(snap) {
+
             var items = {};
+            var needMigrate = false;
+
             snap.forEach(function(doc) {
                 var d = doc.data() || {};
-                items[doc.id] = {
-                    stt: d.stt || doc.id,
-                    addedAt: d.addedAt ? (d.addedAt.toMillis ? d.addedAt.toMillis() : d.addedAt) : Date.now(),
+                var sttKey = String(doc.id);
+                var dsId = d.datasetId || null;
+
+                if (!dsId) {
+                    /* Item cloud cũ thiếu datasetId → đánh dấu cần migrate */
+                    dsId = 'tonghop';
+                    needMigrate = true;
+                }
+
+                items[sttKey] = {
+                    stt: d.stt || sttKey,
+                    addedAt: d.addedAt
+                        ? (d.addedAt.toMillis ? d.addedAt.toMillis() : d.addedAt)
+                        : Date.now(),
                     hsk: d.hsk || '',
-                    subject: d.subject || ''
+                    subject: d.subject || '',
+                    datasetId: dsId
                 };
             });
+
             favState.items = items;
             favState.loaded = true;
             favSaveToLocal();
             favNotifyChanged();
+
+            /* ⭐ Nếu có item cũ thiếu datasetId → migrate lên cloud */
+            if (needMigrate) {
+                favMigrateLocalToCloud();
+            }
+
         }, function(err) {
             console.warn('[Favorites] Listener error:', err);
         });
+}
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ MIGRATION: Đẩy datasetId mặc định lên Firestore cho item cũ
+   Chạy nền, không block UI, có guard chống chạy trùng
+   ═══════════════════════════════════════════════════════════════ */
+var _favMigrating = false;
+
+async function favMigrateLocalToCloud() {
+    if (_favMigrating) return;
+    if (!favCanUse()) return;
+
+    var email = favGetCurrentEmail();
+    if (!email || typeof db === 'undefined' || !db) return;
+
+    /* Thu thập các item cần migrate (thiếu datasetId trên cloud) */
+    var candidates = [];
+    Object.keys(favState.items).forEach(function(k) {
+        var item = favState.items[k];
+        if (!item) return;
+        /* Chỉ migrate những item còn trong state (không bị xoá) */
+        candidates.push({ stt: String(k), datasetId: item.datasetId || 'tonghop' });
+    });
+
+    if (candidates.length === 0) return;
+
+    _favMigrating = true;
+
+    try {
+        /* Lấy snapshot cloud để so sánh */
+        var snap = await db.collection('favorites').doc(email)
+            .collection('items').get();
+
+        var toFix = [];
+        snap.forEach(function(doc) {
+            var d = doc.data() || {};
+            if (!d.datasetId) {
+                /* Cloud thiếu → cần update */
+                var localItem = favState.items[String(doc.id)];
+                toFix.push({
+                    ref: doc.ref,
+                    datasetId: (localItem && localItem.datasetId) ? localItem.datasetId : 'tonghop'
+                });
+            }
+        });
+
+        if (toFix.length === 0) {
+            _favMigrating = false;
+            return;
+        }
+
+        /* Firestore batch tối đa 500 ops */
+        var BATCH_SIZE = 450;
+        for (var i = 0; i < toFix.length; i += BATCH_SIZE) {
+            var batch = db.batch();
+            var chunk = toFix.slice(i, i + BATCH_SIZE);
+            chunk.forEach(function(entry) {
+                batch.update(entry.ref, { datasetId: entry.datasetId });
+            });
+            await batch.commit();
+        }
+
+        console.log('[Favorites] Migrated ' + toFix.length + ' items to cloud');
+
+    } catch(e) {
+        console.warn('[Favorites] Migration cloud error:', e);
+    } finally {
+        _favMigrating = false;
+    }
 }
 
 /* ============ ADD / REMOVE ============ */
@@ -14960,27 +15076,23 @@ async function favAdd(stt, record) {
        GIỚI HẠN 500 TIM/NGÀY — RESET LÚC 00:00
        ═══════════════════════════════════════════════════════════ */
     var MAX_PER_DAY = 500;
-    var today = new Date().toDateString(); // "Wed Sep 26 2026"
+    var today = new Date().toDateString();
 
     if (!isAdmin) {
         var dayKey = 'fav_daily_' + email;
         var daily = { date: today, count: 0 };
 
-        /* Đọc counter từ localStorage */
         try {
             var saved = JSON.parse(localStorage.getItem(dayKey) || 'null');
             if (saved && saved.date === today) {
-                /* Cùng ngày → giữ counter cũ */
                 daily = saved;
             } else {
-                /* Khác ngày → RESET counter về 0 */
                 daily = { date: today, count: 0 };
             }
         } catch(e) {
             daily = { date: today, count: 0 };
         }
 
-        /* Check giới hạn */
         if (daily.count >= MAX_PER_DAY) {
             var tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -14990,7 +15102,6 @@ async function favAdd(stt, record) {
             return false;
         }
 
-        /* Tăng counter */
         daily.count++;
         daily.date = today;
         try {
@@ -14999,13 +15110,21 @@ async function favAdd(stt, record) {
     }
 
     /* ═══════════════════════════════════════════════════════════
+       ⭐ LẤY datasetId HIỆN TẠI — ĐỂ LOOKUP ĐÚNG DATASET SAU NÀY
+       ═══════════════════════════════════════════════════════════ */
+    var currentDsId = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                      ? CURRENT_DATASET
+                      : 'tonghop';
+
+    /* ═══════════════════════════════════════════════════════════
        LƯU LOCAL — OPTIMISTIC UPDATE
        ═══════════════════════════════════════════════════════════ */
     favState.items[stt] = {
         stt: stt,
         addedAt: Date.now(),
         hsk: record && record.hsk ? record.hsk : '',
-        subject: record && record.subject ? record.subject : ''
+        subject: record && record.subject ? record.subject : '',
+        datasetId: currentDsId   /* ⭐ QUAN TRỌNG */
     };
     favSaveToLocal();
     favNotifyChanged();
@@ -15020,6 +15139,7 @@ async function favAdd(stt, record) {
                     stt: stt,
                     hsk: favState.items[stt].hsk,
                     subject: favState.items[stt].subject,
+                    datasetId: currentDsId,   /* ⭐ QUAN TRỌNG */
                     addedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
         } catch(e) {
@@ -15209,6 +15329,64 @@ function favGetRecordsFromArray(sourceArray) {
     return out;
 }
 /* ═══════════════════════════════════════════════════════════════
+   ⭐ TÌM RECORD THEO stt TRONG 1 DATASET CỤ THỂ
+   Dùng datasetId đã lưu để lookup chính xác — tránh nhầm câu
+   ═══════════════════════════════════════════════════════════════ */
+function favFindRecordInDataset(dsId, stt) {
+    if (!dsId || stt === null || stt === undefined) return null;
+    stt = String(stt);
+
+    /* ─── 1. Tìm trong DATASET_REGISTRY ─── */
+    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+        var ds = DATASET_REGISTRY[dsId];
+        if (ds && Array.isArray(ds.data)) {
+            for (var i = 0; i < ds.data.length; i++) {
+                if (String(ds.data[i].stt) === stt) return ds.data[i];
+            }
+        }
+    }
+
+    /* ─── 2. Fallback cho dataset 'tonghop' qua RAW_DATA ─── */
+    if (dsId === 'tonghop' && typeof RAW_DATA !== 'undefined' && RAW_DATA) {
+        for (var j = 0; j < RAW_DATA.length; j++) {
+            if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
+        }
+    }
+
+    return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ TÌM RECORD Ở BẤT KỲ DATASET NÀO (fallback cuối cùng)
+   Chỉ dùng khi không xác định được datasetId
+   ═══════════════════════════════════════════════════════════════ */
+function favFindRecordAnywhere(stt) {
+    if (stt === null || stt === undefined) return null;
+    stt = String(stt);
+
+    /* ─── 1. Quét tất cả dataset trong REGISTRY ─── */
+    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+        var keys = Object.keys(DATASET_REGISTRY);
+        for (var k = 0; k < keys.length; k++) {
+            var ds = DATASET_REGISTRY[keys[k]];
+            if (ds && Array.isArray(ds.data)) {
+                for (var i = 0; i < ds.data.length; i++) {
+                    if (String(ds.data[i].stt) === stt) return ds.data[i];
+                }
+            }
+        }
+    }
+
+    /* ─── 2. Fallback RAW_DATA ─── */
+    if (typeof RAW_DATA !== 'undefined' && RAW_DATA) {
+        for (var j = 0; j < RAW_DATA.length; j++) {
+            if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
+        }
+    }
+
+    return null;
+}
+/* ═══════════════════════════════════════════════════════════════
    ★ QUÉT LẠI TẤT CẢ NÚT TIM — sau khi render xong
    - Cập nhật class active theo favHas(stt)
    - Áp dụng cho màn hình chính VÀ Practice Full
@@ -15288,22 +15466,90 @@ function favScanAllHeartButtons() {
         }, 100);
     }
 })();
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ FIX: LẤY RECORDS CHÍNH XÁC THEO datasetId ĐÃ LƯU
+   Mỗi favorite được lưu kèm datasetId → lookup đúng dataset đó
+   ═══════════════════════════════════════════════════════════════ */
 function favGetRecords() {
-    /* Nếu có DATASET_REGISTRY → quét TẤT CẢ dataset */
+    var out = [];
+    var seen = {};
+
+    /* Duyệt tất cả favorite items */
+    Object.keys(favState.items).forEach(function(sttKey) {
+        var item = favState.items[sttKey];
+        if (!item) return;
+
+        var targetDs = item.datasetId || 'tonghop';
+
+        /* Tìm record trong đúng dataset đó */
+        var record = favFindRecordInDataset(targetDs, item.stt);
+        if (!record) {
+            /* Fallback: thử tìm trong dataset hiện tại */
+            var currentDs = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+            record = favFindRecordInDataset(currentDs, item.stt);
+        }
+        if (!record) {
+            /* Fallback 2: quét tất cả dataset, lấy cái đầu tiên khớp */
+            record = favFindRecordAnywhere(item.stt);
+        }
+
+        if (record && !seen[String(record.stt) + '::' + targetDs]) {
+            seen[String(record.stt) + '::' + targetDs] = true;
+            out.push(record);
+        }
+    });
+
+    return out;
+}
+
+/* Tìm record theo stt trong 1 dataset cụ thể */
+function favFindRecordInDataset(dsId, stt) {
+    if (!dsId || stt === null || stt === undefined) return null;
+    stt = String(stt);
+
     if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
-        var allRecords = [];
-        Object.keys(DATASET_REGISTRY).forEach(function(dsId) {
-            var ds = DATASET_REGISTRY[dsId];
-            if (ds && Array.isArray(ds.data)) {
-                allRecords = allRecords.concat(ds.data);
+        var ds = DATASET_REGISTRY[dsId];
+        if (ds && Array.isArray(ds.data)) {
+            for (var i = 0; i < ds.data.length; i++) {
+                if (String(ds.data[i].stt) === stt) return ds.data[i];
             }
-        });
-        return favGetRecordsFromArray(allRecords);
+        }
     }
 
-    /* Fallback: chỉ dùng RAW_DATA hiện tại */
-    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
-    return favGetRecordsFromArray(RAW_DATA);
+    /* Fallback cho dataset tonghop khi không có DATASET_REGISTRY */
+    if (dsId === 'tonghop' && typeof RAW_DATA !== 'undefined' && RAW_DATA) {
+        for (var j = 0; j < RAW_DATA.length; j++) {
+            if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
+        }
+    }
+
+    return null;
+}
+
+/* Quét tất cả dataset — chỉ dùng làm fallback cuối */
+function favFindRecordAnywhere(stt) {
+    if (stt === null || stt === undefined) return null;
+    stt = String(stt);
+
+    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+        var keys = Object.keys(DATASET_REGISTRY);
+        for (var k = 0; k < keys.length; k++) {
+            var ds = DATASET_REGISTRY[keys[k]];
+            if (ds && Array.isArray(ds.data)) {
+                for (var i = 0; i < ds.data.length; i++) {
+                    if (String(ds.data[i].stt) === stt) return ds.data[i];
+                }
+            }
+        }
+    }
+
+    if (typeof RAW_DATA !== 'undefined' && RAW_DATA) {
+        for (var j = 0; j < RAW_DATA.length; j++) {
+            if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
+        }
+    }
+
+    return null;
 }
 
 function favIsFavoriteRecord(r) {
@@ -15951,12 +16197,35 @@ window.favOnCardBtnClick = function(evt, stt) {
 
     if (!favCanUse()) { favShowLockDialog(); return; }
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ TÌM RECORD TRONG DATASET HIỆN TẠI (không quét RAW_DATA)
+       ═══════════════════════════════════════════════════════════ */
+    var currentDsId = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                      ? CURRENT_DATASET
+                      : 'tonghop';
+
     var record = null;
-    if (typeof RAW_DATA !== 'undefined') {
+
+    /* Cách 1: Tìm trong dataset hiện tại */
+    if (typeof favFindRecordInDataset === 'function') {
+        record = favFindRecordInDataset(currentDsId, stt);
+    }
+
+    /* Cách 2: Fallback — tìm ở bất kỳ dataset */
+    if (!record && typeof favFindRecordAnywhere === 'function') {
+        record = favFindRecordAnywhere(stt);
+    }
+
+    /* Cách 3: Fallback cuối — quét RAW_DATA */
+    if (!record && typeof RAW_DATA !== 'undefined') {
         for (var i = 0; i < RAW_DATA.length; i++) {
-            if (String(RAW_DATA[i].stt) === String(stt)) { record = RAW_DATA[i]; break; }
+            if (String(RAW_DATA[i].stt) === String(stt)) {
+                record = RAW_DATA[i];
+                break;
+            }
         }
     }
+
     favToggle(stt, record);
 };
 
@@ -15965,13 +16234,28 @@ window.favOnPfBtnClick = function(evt) {
     if (typeof pfCurrentStt === 'undefined' || !pfCurrentStt) return;
     if (!favCanUse()) { favShowLockDialog(); return; }
 
+    var stt = String(pfCurrentStt);
+
+    /* ⭐ Tìm record trong dataset hiện tại */
+    var currentDsId = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                      ? CURRENT_DATASET
+                      : 'tonghop';
+
     var record = null;
-    if (typeof RAW_DATA !== 'undefined') {
+
+    if (typeof favFindRecordInDataset === 'function') {
+        record = favFindRecordInDataset(currentDsId, stt);
+    }
+    if (!record && typeof favFindRecordAnywhere === 'function') {
+        record = favFindRecordAnywhere(stt);
+    }
+    if (!record && typeof RAW_DATA !== 'undefined') {
         for (var i = 0; i < RAW_DATA.length; i++) {
-            if (String(RAW_DATA[i].stt) === String(pfCurrentStt)) { record = RAW_DATA[i]; break; }
+            if (String(RAW_DATA[i].stt) === stt) { record = RAW_DATA[i]; break; }
         }
     }
-    favToggle(pfCurrentStt, record).then(function() {
+
+    favToggle(stt, record).then(function() {
         favUpdatePfFloatBtn();
     });
 };
