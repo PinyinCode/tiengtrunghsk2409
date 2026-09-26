@@ -1266,6 +1266,9 @@ function favShowToast(message, type) {
 /* ═══════════════════════════════════════════════════════════════
    RENDER TAB YÊU THÍCH (fallback)
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   RENDER TAB YÊU THÍCH (có counter theo ngày)
+   ═══════════════════════════════════════════════════════════════ */
 function favRenderCurrentTab() {
     if (!favState.currentView) return;
     if (typeof mobileWrapper === 'undefined' || !mobileWrapper) return;
@@ -1273,6 +1276,9 @@ function favRenderCurrentTab() {
 
     var can = favCanUse();
 
+    /* ═══════════════════════════════════════════════════════════
+       1. NẾU KHÔNG CÓ QUYỀN → HIỆN LOCK STATE
+       ═══════════════════════════════════════════════════════════ */
     if (!can) {
         mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
             '<div style="width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;' +
@@ -1288,9 +1294,9 @@ function favRenderCurrentTab() {
                     ? 'Chỉ tài khoản <b>đã gia hạn</b> mới lưu được câu yêu thích và đồng bộ trên mọi thiết bị.'
                     : 'Vui lòng <b>đăng nhập</b> và <b>gia hạn</b> để dùng tính năng này.') +
             '</div>' +
-            '<button class="fav-locked-empty .fav-empty-cta" ' +
-            'style="margin-top:1rem;padding:.6rem 1.2rem;border-radius:50px;border:none;' +
-            'background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;cursor:pointer;" ' +
+            '<button style="margin-top:1rem;padding:.6rem 1.2rem;border-radius:50px;border:none;' +
+            'background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;cursor:pointer;' +
+            'font-family:inherit;text-transform:uppercase;letter-spacing:.3px;" ' +
             'onclick="favShowLockDialog()">' +
                 '<i class="fas ' + (favIsLoggedIn() ? 'fa-gem' : 'fa-sign-in-alt') + '"></i>' +
                 (favIsLoggedIn() ? ' Gia hạn ngay' : ' Đăng nhập ngay') +
@@ -1299,8 +1305,17 @@ function favRenderCurrentTab() {
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       2. LẤY DANH SÁCH CÂU YÊU THÍCH TỪ TẤT CẢ DATASET
+       ═══════════════════════════════════════════════════════════ */
+    var allFavRecords = favGetRecords(); /* Từ TẤT CẢ dataset */
+
+    /* Sắp xếp theo sortMode */
     var items = favGetSortedList();
 
+    /* ═══════════════════════════════════════════════════════════
+       3. EMPTY STATE — CHƯA CÓ CÂU YÊU THÍCH NÀO
+       ═══════════════════════════════════════════════════════════ */
     if (items.length === 0) {
         mobileWrapper.innerHTML = '<div class="fav-empty">' +
             '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
@@ -1313,46 +1328,81 @@ function favRenderCurrentTab() {
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       4. TẠO COUNTER HIỂN THỊ SỐ TIM CÒN LẠI HÔM NAY
+       ═══════════════════════════════════════════════════════════ */
+    var isAdminUser = (typeof currentUser !== 'undefined'
+                       && currentUser
+                       && currentUser.role === 'admin');
+    var counterHtml = '';
+
+    if (isAdminUser) {
+        counterHtml = '<span style="font-size:.7rem;font-weight:700;color:#7c3aed;' +
+                      'padding:.15rem .55rem;background:rgba(124,58,237,.12);border-radius:50px;' +
+                      'display:inline-flex;align-items:center;gap:.25rem;">' +
+                      '<i class="fas fa-infinity"></i> Admin không giới hạn</span>';
+    } else {
+        var used = (typeof favGetDailyUsed === 'function') ? favGetDailyUsed() : 0;
+        var MAX_PER_DAY = 500;
+        var color = used >= 450 ? '#dc2626' : (used >= 350 ? '#f59e0b' : '#16a34a');
+        var bgColor = used >= 450 ? 'rgba(220,38,38,.15)' :
+                      used >= 350 ? 'rgba(245,158,11,.15)' : 'rgba(22,163,74,.12)';
+        counterHtml = '<span style="font-size:.7rem;font-weight:700;color:' + color + ';' +
+                      'padding:.15rem .55rem;background:' + bgColor + ';border-radius:50px;' +
+                      'display:inline-flex;align-items:center;gap:.25rem;">' +
+                      '<i class="fas fa-calendar-day"></i> ' + used + '/' + MAX_PER_DAY + ' hôm nay</span>';
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       5. HEADER (Tiêu đề + counter + sort + clear)
+       ═══════════════════════════════════════════════════════════ */
     var headerHtml = '<div class="fav-header" style="grid-column:1 / -1;' +
         'display:flex;align-items:center;gap:.5rem;padding:.65rem .85rem;' +
         'background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(220,38,38,.04));' +
         'border:1.5px solid rgba(239,68,68,.25);border-radius:12px;margin-bottom:.75rem;flex-wrap:wrap;">' +
-        '<div style="display:flex;align-items:center;gap:.45rem;font-size:.88rem;font-weight:800;flex:1 1 auto;">' +
+
+        /* Tiêu đề + số câu + counter */
+        '<div style="display:flex;align-items:center;gap:.45rem;font-size:.88rem;font-weight:800;flex:1 1 auto;flex-wrap:wrap;">' +
             '<i class="fas fa-heart" style="color:#ef4444;"></i>' +
             '<span>Yêu thích</span>' +
             '<span style="font-size:.72rem;font-weight:700;color:#dc2626;' +
             'background:rgba(239,68,68,.15);padding:.15rem .55rem;border-radius:50px;">' +
                 items.length + ' câu</span>' +
+            counterHtml +
         '</div>' +
+
+        /* Sort dropdown */
         '<select onchange="favOnSortChange(this.value)" ' +
         'style="padding:.35rem 1.8rem .35rem .7rem;border-radius:50px;border:1.5px solid var(--border);' +
-        'background:var(--surface);color:var(--text);font-size:.72rem;font-weight:700;cursor:pointer;">' +
+        'background:var(--surface);color:var(--text);font-size:.72rem;font-weight:700;cursor:pointer;' +
+        'font-family:inherit;outline:none;">' +
             '<option value="recent"' + (favState.sortMode === 'recent' ? ' selected' : '') + '>Mới nhất</option>' +
             '<option value="oldest"' + (favState.sortMode === 'oldest' ? ' selected' : '') + '>Cũ nhất</option>' +
             '<option value="stt"' + (favState.sortMode === 'stt' ? ' selected' : '') + '>Theo STT</option>' +
         '</select>' +
+
+        /* Clear all button */
         '<button onclick="favClearAll()" ' +
         'style="padding:.35rem .75rem;border-radius:50px;border:1.5px solid rgba(220,38,38,.35);' +
-        'background:var(--surface);color:#dc2626;font-size:.72rem;font-weight:700;cursor:pointer;">' +
+        'background:var(--surface);color:#dc2626;font-size:.72rem;font-weight:700;cursor:pointer;' +
+        'font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;">' +
             '<i class="fas fa-trash-alt"></i> Xoá hết' +
         '</button>' +
     '</div>';
 
-    /* Filter theo state hiện tại */
-    var filtered2 = items.filter(function(favItem) {
-        var r = null;
-        for (var i = 0; i < RAW_DATA.length; i++) {
-            if (String(RAW_DATA[i].stt) === String(favItem.stt)) { r = RAW_DATA[i]; break; }
-        }
-        if (!r) return false;
-
+    /* ═══════════════════════════════════════════════════════════
+       6. FILTER CÂU YÊU THÍCH THEO SEARCH/HSK/SUBJECT
+       ═══════════════════════════════════════════════════════════ */
+    var filteredFav = allFavRecords.filter(function(r) {
         if (typeof state !== 'undefined') {
             if (state.search) {
                 var s = state.search;
                 var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
                 var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
                 var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
-                if (!inVi && !inZh && !inPinyin) return false;
+                var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
+                var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
+                if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
             }
             if (state.hsk && r.hsk !== state.hsk) return false;
             if (state.subject && r.subject !== state.subject) return false;
@@ -1360,18 +1410,55 @@ function favRenderCurrentTab() {
         return true;
     });
 
+    /* ═══════════════════════════════════════════════════════════
+       7. SẮP XẾP LẠI THEO SORT MODE
+       ═══════════════════════════════════════════════════════════ */
+    var sortMode = favState.sortMode || 'recent';
+    if (sortMode === 'oldest') {
+        filteredFav.sort(function(a, b) {
+            var ta = favState.items[String(a.stt)] ? favState.items[String(a.stt)].addedAt : 0;
+            var tb = favState.items[String(b.stt)] ? favState.items[String(b.stt)].addedAt : 0;
+            return ta - tb;
+        });
+    } else if (sortMode === 'stt') {
+        filteredFav.sort(function(a, b) {
+            var na = parseInt(a.stt) || 0;
+            var nb = parseInt(b.stt) || 0;
+            return na - nb;
+        });
+    } else {
+        /* recent */
+        filteredFav.sort(function(a, b) {
+            var ta = favState.items[String(a.stt)] ? favState.items[String(a.stt)].addedAt : 0;
+            var tb = favState.items[String(b.stt)] ? favState.items[String(b.stt)].addedAt : 0;
+            return tb - ta;
+        });
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       8. RENDER DANH SÁCH CARD
+       ═══════════════════════════════════════════════════════════ */
     var cardsHtml = headerHtml;
-    filtered2.forEach(function(favItem) {
-        var r = null;
-        for (var i = 0; i < RAW_DATA.length; i++) {
-            if (String(RAW_DATA[i].stt) === String(favItem.stt)) { r = RAW_DATA[i]; break; }
-        }
-        if (!r) return;
-        cardsHtml += favBuildCardHtml(r);
-    });
+
+    if (filteredFav.length === 0) {
+        /* Có câu yêu thích nhưng filter không match */
+        cardsHtml += '<div class="no-data" style="grid-column:1 / -1;">' +
+            '<i class="fas fa-search"></i>Không tìm thấy câu yêu thích nào khớp bộ lọc' +
+            '</div>';
+    } else {
+        filteredFav.forEach(function(r) {
+            cardsHtml += favBuildCardHtml(r);
+        });
+    }
+
     mobileWrapper.innerHTML = cardsHtml;
 
-    setTimeout(function() { favUpdateLockState(); }, 50);
+    /* ═══════════════════════════════════════════════════════════
+       9. CẬP NHẬT LOCK STATE SAU KHI RENDER
+       ═══════════════════════════════════════════════════════════ */
+    setTimeout(function() {
+        if (typeof favUpdateLockState === 'function') favUpdateLockState();
+    }, 50);
 }
 
 function favBuildCardHtml(r) {
