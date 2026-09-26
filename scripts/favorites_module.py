@@ -1214,9 +1214,11 @@ function favGetRecordsFromArray(sourceArray) {
 /* ═══════════════════════════════════════════════════════════════
    ⭐ GET RECORDS — CHỈ lấy favorite thuộc dataset hiện tại
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ LẤY TẤT CẢ RECORD YÊU THÍCH (không phân biệt dataset)
+   Mỗi record được đính kèm __favDatasetId để xử lý đúng
+   ═══════════════════════════════════════════════════════════════ */
 function favGetRecords() {
-    var currentDsId = favGetCurrentDsId();
-
     var out = [];
     var seen = {};
 
@@ -1230,9 +1232,7 @@ function favGetRecords() {
         var itemDs = item.datasetId || parsed.datasetId || 'tonghop';
         var itemStt = item.stt || parsed.stt;
 
-        /* ⭐ CHỈ LẤY favorite thuộc dataset hiện tại */
-        if (itemDs !== currentDsId) return;
-
+        /* ⭐ KHÔNG filter theo dataset — lấy TẤT CẢ */
         var record = null;
         if (typeof favFindRecordInDataset === 'function') {
             record = favFindRecordInDataset(itemDs, itemStt);
@@ -1244,7 +1244,19 @@ function favGetRecords() {
         var seenKey = itemDs + '_' + itemStt;
         if (record && !seen[seenKey]) {
             seen[seenKey] = true;
-            out.push(record);
+
+            /* ⭐ Clone record để không làm hỏng object gốc trong DATASET_REGISTRY */
+            var cloned = {};
+            Object.keys(record).forEach(function(k) {
+                cloned[k] = record[k];
+            });
+
+            /* ⭐ Đính kèm metadata */
+            cloned.__favDatasetId = itemDs;
+            cloned.__favKey = key;
+            cloned.__favAddedAt = item.addedAt || 0;
+
+            out.push(cloned);
         }
     });
 
@@ -1653,6 +1665,7 @@ function favRenderCurrentTab() {
 
     var can = favCanUse();
 
+    /* ═══ 1. KHÔNG CÓ QUYỀN → LOCK STATE ═══ */
     if (!can) {
         mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
             '<div style="width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;' +
@@ -1679,16 +1692,13 @@ function favRenderCurrentTab() {
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 2. LẤY TẤT CẢ CÂU YÊU THÍCH — KHÔNG FILTER DATASET
+       ═══════════════════════════════════════════════════════════ */
     var allFavRecords = favGetRecords();
-    var items = favGetSortedList();
+    var items = favGetSortedList();   /* ⭐ KHÔNG filter dataset nữa */
 
-    /* Filter items theo dataset hiện tại */
-    var currentDs = favGetCurrentDsId();
-    items = items.filter(function(it) {
-        var itDs = it.datasetId || 'tonghop';
-        return itDs === currentDs;
-    });
-
+    /* ═══ 3. EMPTY STATE ═══ */
     if (items.length === 0) {
         mobileWrapper.innerHTML = '<div class="fav-empty">' +
             '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
@@ -1701,6 +1711,7 @@ function favRenderCurrentTab() {
         return;
     }
 
+    /* ═══ 4. COUNTER + HEADER ═══ */
     var isAdminUser = (typeof currentUser !== 'undefined'
                        && currentUser
                        && currentUser.role === 'admin');
@@ -1751,7 +1762,7 @@ function favRenderCurrentTab() {
         '</button>' +
     '</div>';
 
-    /* Filter theo search/hsk/subject */
+    /* ═══ 5. FILTER theo search / hsk / subject ═══ */
     var filteredFav = allFavRecords.filter(function(r) {
         if (typeof state !== 'undefined') {
             if (state.search) {
@@ -1769,15 +1780,13 @@ function favRenderCurrentTab() {
         return true;
     });
 
-    /* Sort */
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 6. SORT — dùng __favAddedAt (không cần currentDs nữa)
+       ═══════════════════════════════════════════════════════════ */
     var sortMode = favState.sortMode || 'recent';
     if (sortMode === 'oldest') {
         filteredFav.sort(function(a, b) {
-            var ka = favBuildKey(a.stt, currentDs);
-            var kb = favBuildKey(b.stt, currentDs);
-            var ta = favState.items[ka] ? favState.items[ka].addedAt : 0;
-            var tb = favState.items[kb] ? favState.items[kb].addedAt : 0;
-            return ta - tb;
+            return (a.__favAddedAt || 0) - (b.__favAddedAt || 0);
         });
     } else if (sortMode === 'stt') {
         filteredFav.sort(function(a, b) {
@@ -1786,15 +1795,13 @@ function favRenderCurrentTab() {
             return na - nb;
         });
     } else {
+        /* recent */
         filteredFav.sort(function(a, b) {
-            var ka = favBuildKey(a.stt, currentDs);
-            var kb = favBuildKey(b.stt, currentDs);
-            var ta = favState.items[ka] ? favState.items[ka].addedAt : 0;
-            var tb = favState.items[kb] ? favState.items[kb].addedAt : 0;
-            return tb - ta;
+            return (b.__favAddedAt || 0) - (a.__favAddedAt || 0);
         });
     }
 
+    /* ═══ 7. RENDER ═══ */
     var cardsHtml = headerHtml;
 
     if (filteredFav.length === 0) {
@@ -1809,6 +1816,7 @@ function favRenderCurrentTab() {
 
     mobileWrapper.innerHTML = cardsHtml;
 
+    /* ═══ 8. UPDATE LOCK STATE ═══ */
     setTimeout(function() {
         if (typeof favUpdateLockState === 'function') favUpdateLockState();
     }, 50);
@@ -1823,8 +1831,14 @@ function favBuildCardHtml(r) {
     var sttSafe = escapeHtml(r.stt);
     var sttJs = escapeJs(r.stt);
 
-    /* Lấy datasetId của record */
-    var itemDsId = favGetCurrentDsId();
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ LẤY datasetId THỰC CỦA RECORD (không phải dataset hiện tại)
+       - Nếu record từ favGetRecords() → có __favDatasetId
+       - Nếu không có → fallback CURRENT_DATASET
+       ═══════════════════════════════════════════════════════════ */
+    var itemDsId = r.__favDatasetId
+                   || (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                   || 'tonghop';
     var dsSafe = escapeHtml(itemDsId);
 
     var audio = r.zh ? '<button class="audio-btn" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe"><i class="fas fa-volume-up"></i></button>' : '';
@@ -1838,7 +1852,7 @@ function favBuildCardHtml(r) {
     }
 
     var can = favCanUse();
-    var active = favHas(r.stt, itemDsId);
+    var active = favHas(r.stt, itemDsId);   /* ⭐ Truyền dsId THỰC */
 
     var favBtn = '<button class="fav-btn' +
         (active ? ' active' : '') +
