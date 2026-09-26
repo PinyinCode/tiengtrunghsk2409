@@ -733,18 +733,37 @@ function favCount() {
 }
 
 /* ============ LẤY RECORD GỐC ============ */
-function favGetRecords() {
-    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
+/* ============ LẤY RECORD GỐC — TẤT CẢ DATASET ============ */
+function favGetRecordsFromArray(sourceArray) {
+    if (!sourceArray || !sourceArray.length) return [];
     var out = [];
     var seen = {};
-    for (var i = 0; i < RAW_DATA.length; i++) {
-        var r = RAW_DATA[i];
+    for (var i = 0; i < sourceArray.length; i++) {
+        var r = sourceArray[i];
         if (r && favHas(r.stt) && !seen[String(r.stt)]) {
             seen[String(r.stt)] = true;
             out.push(r);
         }
     }
     return out;
+}
+
+function favGetRecords() {
+    /* Nếu có DATASET_REGISTRY → quét TẤT CẢ dataset */
+    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+        var allRecords = [];
+        Object.keys(DATASET_REGISTRY).forEach(function(dsId) {
+            var ds = DATASET_REGISTRY[dsId];
+            if (ds && Array.isArray(ds.data)) {
+                allRecords = allRecords.concat(ds.data);
+            }
+        });
+        return favGetRecordsFromArray(allRecords);
+    }
+
+    /* Fallback: chỉ dùng RAW_DATA hiện tại */
+    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
+    return favGetRecordsFromArray(RAW_DATA);
 }
 
 function favIsFavoriteRecord(r) {
@@ -1317,12 +1336,15 @@ window.favOnSortChange = function(mode) {
 /* ═══════════════════════════════════════════════════════════════
    CLICK TAB YÊU THÍCH
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   CLICK TAB YÊU THÍCH
+   ═══════════════════════════════════════════════════════════════ */
 function favOnTabClick(evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
     if (!favCanUse()) { favShowLockDialog(); return; }
 
-    /* Đánh dấu active */
+    /* ═══ 1. ĐÁNH DẤU TAB ACTIVE ═══ */
     document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
     document.querySelectorAll('.ds-dropdown-item').forEach(function(b) { b.classList.remove('active'); });
@@ -1336,10 +1358,11 @@ function favOnTabClick(evt) {
     var subWrap = document.getElementById('dsSubWrap');
     if (subWrap) subWrap.style.display = 'none';
 
+    /* ═══ 2. BẬT CỜ "ĐANG XEM TAB YÊU THÍCH" ═══ */
     favState.currentView = true;
     favState.filteringOnly = true;
 
-    /* Reset filter */
+    /* ═══ 3. RESET FILTER (search + HSK + subject) ═══ */
     if (typeof state !== 'undefined') {
         state.search = '';
         state.hsk = '';
@@ -1357,30 +1380,48 @@ function favOnTabClick(evt) {
     } catch(e) {}
     if (typeof updateFilterUI === 'function') updateFilterUI();
 
+    /* ═══ 4. ẨN BANNER ONBOARDING ═══ */
     window.__onboardingOverride = null;
     var obBanner = document.getElementById('onboardingActiveBanner');
     if (obBanner) obBanner.style.display = 'none';
 
     /* ═══════════════════════════════════════════════════════════
-       ⭐ FIX: GÁN filtered = DANH SÁCH CÂU YÊU THÍCH
+       ⭐ 5. FIX CHÍNH: GÁN `filtered` = DANH SÁCH CÂU YÊU THÍCH
        ═══════════════════════════════════════════════════════════ */
     var favRecords = favGetRecords();
 
-    /* Cập nhật biến `filtered` toàn cục của ui_template */
-    if (typeof window.filtered !== 'undefined') {
-        window.filtered = favRecords;
+    /* Cập nhật biến `filtered` — thử nhiều cách để chắc chắn */
+    try {
+        /* Cách 1: Gán trực tiếp biến local (nếu cùng scope) */
+        filtered = favRecords;
+    } catch(e1) {
+        /* Cách 2: Gán qua window (nếu biến được khai báo var toàn cục) */
+        try { window.filtered = favRecords; } catch(e2) {}
     }
-    /* Cập nhật biến local nếu có thể (do scope nội bộ) */
-    try { filtered = favRecords; } catch(e) {}
-    try { renderedCount = 0; } catch(e) {}
+    /* Đảm bảo cả 2 đều có giá trị */
+    try { window.filtered = favRecords; } catch(e) {}
 
-    /* ═══ RENDER ═══ */
+    /* Reset số đã render để render từ đầu */
+    try { renderedCount = 0; } catch(e) { try { window.renderedCount = 0; } catch(e2) {} }
+
+    /* ═══ 6. RENDER LẠI DANH SÁCH ═══ */
     if (typeof window.render === 'function') {
         window.render(true);
     } else if (typeof favRenderCurrentTab === 'function') {
         favRenderCurrentTab();
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 7. GỌI applyFilter SAU 50ms — để filtered được set lại
+       đúng theo logic trong ui_template.py (có hỗ trợ favState)
+       ═══════════════════════════════════════════════════════════ */
+    setTimeout(function() {
+        if (typeof window.applyFilter === 'function') {
+            window.applyFilter();
+        }
+    }, 50);
+
+    /* ═══ 8. SCROLL LÊN ĐẦU DANH SÁCH ═══ */
     setTimeout(function() {
         var mainEl = document.getElementById('mainContent');
         if (mainEl) {
@@ -1389,6 +1430,7 @@ function favOnTabClick(evt) {
         }
     }, 150);
 
+    /* ═══ 9. LOAD TỪ CLOUD NẾU CHƯA LOAD ═══ */
     if (favCanUse() && !favState.loaded) {
         favLoadFromCloud();
     }
