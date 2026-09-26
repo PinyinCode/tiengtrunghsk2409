@@ -5653,10 +5653,10 @@ body.hide-floating .tiktok-bar { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════
    ❤️ FAVORITES — Nút tim FLOAT góc dưới phải (Practice Full)
-   2 trạng thái: NHẠT (chưa thích) vs ĐẬM (đã thích)
+   Trạng thái: NHẠT (mặc định) — ĐẬM (đã thích) — KHOÁ (chưa tier)
    ═══════════════════════════════════════════════════════════════ */
 
-/* Trạng thái MẶC ĐỊNH — câu CHƯA được yêu thích (nhạt) */
+/* Trạng thái MẶC ĐỊNH — câu CHƯA thích → nhạt */
 .pf-fav-float{
     position:fixed;
     right:clamp(14px,2vw,22px);
@@ -5666,7 +5666,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     gap:.5rem;
     padding:.65rem 1.1rem .65rem .9rem;
     border-radius:999px;
-    border:2px solid rgba(220,38,38,.25);
+    border:2px solid rgba(220,38,38,.28);
     background:var(--surface);
     color:var(--text-2);
     font-size:clamp(.85rem,1vw,.95rem);
@@ -5685,6 +5685,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .pf-fav-float i{
     font-size:clamp(1.15rem,1.4vw,1.35rem);
     transition:transform .3s cubic-bezier(.34,1.56,.64,1), color .2s;
+    color:#94a3b8;
 }
 .pf-fav-float:hover{
     transform:translateY(-3px) scale(1.05);
@@ -5702,7 +5703,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     transform:translateY(-1px) scale(1.02);
 }
 
-/* Trạng thái ĐÃ THÍCH — câu đang được yêu thích (đậm) */
+/* Trạng thái ĐÃ THÍCH — câu đang yêu thích → đậm */
 .pf-fav-float.active{
     background:linear-gradient(135deg,#ef4444,#dc2626);
     color:#fff;
@@ -5742,6 +5743,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     color:#dc2626;
     border-color:rgba(220,38,38,.4);
 }
+.pf-fav-float.locked i{color:#dc2626;}
 .pf-fav-float.locked:hover{
     background:linear-gradient(135deg,#fee2e2,#fecaca);
     color:#b91c1c;
@@ -5756,18 +5758,22 @@ body.hide-floating .tiktok-bar { display: none !important; }
     border-color:rgba(239,68,68,.3);
     color:#cbd5e1;
 }
+[data-theme="dark"] .pf-fav-float i{color:#94a3b8;}
 [data-theme="dark"] .pf-fav-float:hover{
     background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(220,38,38,.1));
     color:#fca5a5;
     border-color:#ef4444;
 }
+[data-theme="dark"] .pf-fav-float:hover i{color:#fca5a5;}
 [data-theme="dark"] .pf-fav-float.active{
     background:linear-gradient(135deg,#ef4444,#dc2626);
     color:#fff;
 }
+[data-theme="dark"] .pf-fav-float.active i{color:#fff;}
 [data-theme="dark"] .pf-fav-float.locked{
     color:#fca5a5;
 }
+[data-theme="dark"] .pf-fav-float.locked i{color:#fca5a5;}
 
 /* Responsive nút float */
 @media (max-width:500px){
@@ -14863,14 +14869,18 @@ function favGetStorageKey() {
 /* ============ LOCK DIALOG ============ */
 function favShowLockDialog() {
     if (!favIsLoggedIn()) {
-        if (confirm('❤️ Yêu thích câu\n\nBạn cần ĐĂNG NHẬP và GIA HẠN để dùng tính năng này.\n\nĐăng nhập ngay?')) {
+        if (confirm('❤️ Yêu thích câu\n\n' +
+                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để dùng tính năng này.\n\n' +
+                    'Đăng nhập ngay?')) {
             if (typeof showLoginModal === 'function') showLoginModal();
         }
         return;
     }
     var tier = (typeof window.APP_TIER !== 'undefined') ? window.APP_TIER : 'demo';
     if (tier === 'demo' || tier === 'trial' || tier === 'expired') {
-        if (confirm('❤️ Yêu thích câu\n\nChỉ tài khoản ĐÃ GIA HẠN mới dùng được tính năng này.\n\nGia hạn ngay để lưu câu yêu thích?')) {
+        if (confirm('❤️ Yêu thích câu\n\n' +
+                    'Chỉ tài khoản ĐÃ GIA HẠN mới dùng được tính năng này.\n\n' +
+                    'Gia hạn ngay để lưu câu yêu thích?')) {
             if (typeof openRenewalModal === 'function') openRenewalModal();
         }
         return;
@@ -14931,6 +14941,7 @@ async function favLoadFromCloud() {
     }
 }
 
+/* Real-time sync giữa các thiết bị */
 function favListenCloud() {
     if (!favCanUse()) return;
     var email = favGetCurrentEmail();
@@ -15130,7 +15141,7 @@ function favNotifyChanged() {
     }
 
     /* Cập nhật dropdown PF option Yêu thích */
-    favUpdatePFDropdownState();
+    if (typeof favUpdatePFDropdownState === 'function') favUpdatePFDropdownState();
 
     /* Nếu đang ở tab Yêu thích → render lại */
     if (favState.currentView) {
@@ -15197,7 +15208,7 @@ function favUpdateLockState() {
     }
 
     /* Cập nhật dropdown PF */
-    favUpdatePFDropdownState();
+    if (typeof favUpdatePFDropdownState === 'function') favUpdatePFDropdownState();
 
     /* Nếu đang ở tab Yêu thích mà mất quyền → thoát về tổng hợp */
     if (!can && favState.currentView) {
@@ -15214,19 +15225,17 @@ function favShowToast(message, type) {
 
     var toast = document.createElement('div');
     toast.id = 'favToast';
-    toast.className = 'fav-toast ' + (typeị || 'add');
+    toast.className = 'fav-toast ' + (type || 'add');
 
-    var kho iconClass = 'fa-heart';
-á    if (type === 'remove'') iconClass = 'fa-heart-broken';
+    var iconClass = 'fa-heart';
+    if (type === 'remove') iconClass = 'fa-heart-broken';
     if (type === 'warn') iconClass = 'fa-info-circle';
 
-    toast.innerHTML = '<i class="fas ' + +
-            '</ icondivClass + '"></i><>'span>' + message + '</ +
-span>';
-    document.body.appendChild           (toast);
+    toast.innerHTML = '<i class="fas ' + iconClass + '"></i><span>' + message + '</span>';
+    document.body.appendChild(toast);
 
-    requestAnimation '<Frame(function() { toast.classListdiv class="fav-empty.add('show'); });
--d    setTimeout(function() {
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() {
         toast.classList.remove('show');
         setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300);
     }, 1800);
@@ -15246,7 +15255,9 @@ function favRenderCurrentTab() {
                 '<i class="fas fa-lock" style="font-size:1.8rem;"></i>' +
             '</div>' +
             '<div class="fav-empty-title" style="font-size:1.05rem;font-weight:800;margin-bottom:.4rem;color:#dc2626;">' +
-                'Tính năng Yêu thích đang besc" style="font-size:.85rem;color:var(--text-2);line-height:1.5;max-width:420px;margin:0 auto;">' +
+                'Tính năng Yêu thích đang bị khoá' +
+            '</div>' +
+            '<div class="fav-empty-desc" style="font-size:.85rem;color:var(--text-2);line-height:1.5;max-width:420px;margin:0 auto;">' +
                 (favIsLoggedIn()
                     ? 'Chỉ tài khoản <b>đã gia hạn</b> mới lưu được câu yêu thích và đồng bộ trên mọi thiết bị.'
                     : 'Vui lòng <b>đăng nhập</b> và <b>gia hạn</b> để dùng tính năng này.') +
@@ -15279,14 +15290,14 @@ function favRenderCurrentTab() {
 
     var headerHtml = '<div class="fav-header" style="grid-column:1 / -1;">' +
         '<div class="fav-title">' +
-            '<i class="fas fa-heart"></i>' +
+            '<i class="fas fa-heart"></i>' ( +
             '<span>Yêu thích</span>' +
             '<span class="fav-count-text">' + items.length + ' câu</span>' +
         '</div>' +
         '<select class="fav-sort" onchange="favOnSortChange(this.value)">' +
             '<option value="recent"' + (favState.sortMode === 'recent' ? ' selected' : '') + '>Mới nhất</option>' +
             '<option value="oldest"' + (favState.sortMode === 'oldest' ? ' selected' : '') + '>Cũ nhất</option>' +
-            '<option value="stt"' + (favState.sortMode === 'stt' ? ' selected' : '') + '>Theo STT</option>' +
+            '<option value="stt"' +favState.sortMode === 'stt' ? ' selected' : '') + '>Theo STT</option>' +
         '</select>' +
         '<button class="fav-clear-all" onclick="favClearAll()" title="Xoá tất cả">' +
             '<i class="fas fa-trash-alt"></i> Xoá hết' +
@@ -15363,12 +15374,12 @@ function favBuildCardHtml(r) {
     var can = favCanUse();
     var active = favHas(r.stt);
     var favBtn = '<button class="fav-btn' +
-        (active ? ' active' : '') +
+        (active ? ' active' : ' fa') +
         (!can ? ' locked' : '') +
-        '" data-stt="' + sttSafe + '" ' +
-        'onclick="favOnCardBtnClick(event, \'' + sttJs + '\')" ' +
-        'title="' + (active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích') + '">' +
-        '<i class="' + (!can ? 'fas fa-lock' : (active ? 'fas fa-heart' : 'far fa-heart')) + '"></i>' +
+-he        '" data-stt="' + sttartSafe + '" ' +
+        'onclick="'))favOnCardBtnClick(event, \'' + st +tJs + '\')" ' +
+        ' 'title="' + (active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích') + '">' +
+        '<i class="' + (!can ? 'fas fa-lock' : (active ? 'fas fa-heart' : 'far"></i>' +
     '</button>';
 
     var practiceInput = '<input type="text" class="practice-input" placeholder="Gõ tiếng Trung..." data-answer="' + zhHtml + '" data-vi-hint="' + viHtml + '" data-stt="' + sttSafe + '" oninput="checkInput(this)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
@@ -15452,6 +15463,7 @@ window.favOnSortChange = function(mode) {
     favRenderCurrentTab();
 };
 
+/* Click tab Yêu thích */
 function favOnTabClick(evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
@@ -15460,8 +15472,12 @@ function favOnTabClick(evt) {
         return;
     }
 
-    document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
-    document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.ds-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
+    document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
     var tabBtn = document.getElementById('dsFavBtn');
     if (tabBtn) tabBtn.classList.add('active');
 
@@ -15470,7 +15486,9 @@ function favOnTabClick(evt) {
 
     favState.currentView = true;
 
-    if (typeof state !== 'undefined') state = { search: '', hsk: '', subject: '' };
+    if (typeof state !== 'undefined') {
+        state = { search: '', hsk: '', subject: '' };
+    }
     if (typeof $ === 'function') {
         var si = document.getElementById('searchInput');
         var hf = document.getElementById('hskFilter');
@@ -15503,20 +15521,18 @@ function favOnTabClick(evt) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — INJECT OPTION "YÊU THÍCH" VÀO DROPDOWN PF
+   ❤️ INJECT OPTION "YÊU THÍCH" VÀO DROPDOWN PF
    ═══════════════════════════════════════════════════════════════ */
 function favInjectPFDropdownOption() {
     var sel = document.getElementById('pfDatasetSelect');
     if (!sel) return;
 
-    /* Đã có option chưa? */
     var existing = sel.querySelector('option[value="__favorites__"]');
     if (existing) {
         favUpdatePFDropdownState();
         return;
     }
 
-    /* Tạo option Favorites */
     var opt = document.createElement('option');
     opt.value = '__favorites__';
     opt.dataset.isFavorites = '1';
@@ -15600,6 +15616,21 @@ function favApplyFavoritesToPF() {
     }
 }
 
+/* ============ SHOW/HIDE NÚT FLOAT THEO PRACTICE FULL ============ */
+function favSyncFloatVisibility() {
+    var pfModal = document.getElementById('practiceFullModal');
+    var pfFavFloat = document.getElementById('pfFavBtn');
+    if (!pfFavFloat) return;
+    var isOpen = pfModal && pfModal.classList.contains('show');
+    if (isOpen) {
+        pfFavFloat.classList.add('show');
+        pfFavFloat.style.display = 'inline-flex';
+    } else {
+        pfFavFloat.classList.remove('show');
+        pfFavFloat.style.display = 'none';
+    }
+}
+
 /* ============ INIT ============ */
 function initFavorites() {
     try {
@@ -15629,18 +15660,25 @@ function initFavorites() {
         document.addEventListener('change', favHandlePFDropdownChange, true);
     }
 
-    /* Watch PF modal mở → inject option */
+    /* Watch PF modal mở → inject option + sync nút float */
     if (!window._favPFModalWatchBound) {
         window._favPFModalWatchBound = true;
         var pfModal = document.getElementById('practiceFullModal');
         if (pfModal) {
             var observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(m) {
-                    if (m.attributeName === 'class' && pfModal.classList.contains('show')) {
-                        setTimeout(function() {
-                            favInjectPFDropdownOption();
+                    if (m.attributeName === 'class') {
+                        var isOpen = pfModal.classList.contains('show');
+                        if (isOpen) {
+                            /* Đợi pfBuildDatasetSelect() chạy xong */
+                            setTimeout(function() {
+                                favInjectPFDropdownOption();
+                                favSyncFloatVisibility();
+                                favUpdateLockState();
+                            }, 250);
+                        } else {
                             favSyncFloatVisibility();
-                        }, 200);
+                        }
                     }
                 });
             });
@@ -15659,31 +15697,17 @@ function initFavorites() {
     favSyncFloatVisibility();
 }
 
-/* ============ SHOW/HIDE NÚT FLOAT THEO PRACTICE FULL ============ */
-function favSyncFloatVisibility() {
-    var pfModal = document.getElementById('practiceFullModal');
-    var pfFavFloat = document.getElementById('pfFavBtn');
-    if (!pfFavFloat) return;
-    var isOpen = pfModal && pfModal.classList.contains('show');
-    if (isOpen) {
-        pfFavFloat.classList.add('show');
-        pfFavFloat.style.display = 'inline-flex';
-    } else {
-        pfFavFloat.classList.remove('show');
-        pfFavFloat.style.display = 'none';
-    }
-}
-
 /* ============ HOOK ============ */
 window.favUpdateLockState = favUpdateLockState;
 window.favNotifyChanged = favNotifyChanged;
 window.favSyncFloatVisibility = favSyncFloatVisibility;
 window.favInjectPFDropdownOption = favInjectPFDropdownOption;
 window.favUpdatePFDropdownState = favUpdatePFDropdownState;
+
 window.favRefreshUI = function() {
     favUpdateLockState();
     favNotifyChanged();
-    favUpdatePFDropdownState();
+    if (typeof favUpdatePFDropdownState === 'function') favUpdatePFDropdownState();
     if (favCanUse() && !favState.loaded) {
         favLoadFromCloud();
     }
