@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Chuyển file Excel → HTML tự chứa dữ liệu.
-Ghép 5 template: ui + social + accounts (gộp renewal) + intro + data.
+Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + data.
 
 ✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
    thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
@@ -14,6 +14,9 @@ Ghép 5 template: ui + social + accounts (gộp renewal) + intro + data.
    → tự động filter + chia đều theo HSK.
 
 ✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
+
+✅ FAVORITES: Tab Yêu thích — chỉ tier ACTIVE/ADMIN lưu được,
+   tier khác hiển thị 🔒 mời nâng cấp. Lưu Firebase + offline queue.
 """
 import json
 import os
@@ -41,6 +44,13 @@ from intro_template import (
     build_intro_css,
     build_intro_html,
     build_intro_js,
+)
+
+# ⬇️⬇️⬇️ MỚI: Import module Favorites
+from favorites_module import (
+    build_favorites_css,
+    build_favorites_html,
+    build_favorites_js,
 )
 
 
@@ -719,6 +729,7 @@ full_css = (
     + "\n/* ==== SOCIAL CSS ==== */\n" + build_social_css()
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
     + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
+    + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
@@ -729,6 +740,21 @@ full_css = (
 ui_html = build_ui_html()
 ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
 ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
+
+# ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
+_fav_html = build_favorites_html()
+
+# 1. Tab Yêu thích — chèn sau nút Chuyên ngành trong dataset-selector
+ui_html = ui_html.replace(
+    '<button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">',
+    _fav_html["dataset_tab"] + '\n        <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">'
+)
+
+# 2. Nút tim — chèn vào Practice Full header, trước nút X
+ui_html = ui_html.replace(
+    '<button class="pf-close" id="pfClose"',
+    _fav_html["pf_header_btn"] + '\n<button class="pf-close" id="pfClose"'
+)
 
 social_html = build_social_html()
 ui_html = ui_html.replace(
@@ -752,6 +778,7 @@ full_js = (
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
+    + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
 )
 
 
@@ -950,6 +977,7 @@ print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
 print(f"📝 Tổng số câu hỏi: {total_questions}")
+print(f"❤️  Đã tích hợp: Yêu thích (chỉ tier active/admin)")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
