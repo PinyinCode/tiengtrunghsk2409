@@ -2076,12 +2076,13 @@ function favSyncFloatVisibility() {
     }
 })();
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH loadPracticeFull() — ĐỒNG BỘ NÚT TOGGLE + NÚT TIM
-   Mỗi khi câu thay đổi (đổi dataset, next/prev, chọn dropdown):
-   1. Cập nhật nút tim FLOAT theo câu mới
-   2. Nếu nút toggle "Chỉ câu yêu thích" đang BẬT:
-      - Câu mới LÀ yêu thích → giữ nguyên
-      - Câu mới KHÔNG PHẢI yêu thích → tự động TẮT toggle
+   ★ PATCH loadPracticeFull() — ĐỒNG BỘ NÚT TIM + TOGGLE
+   
+   Chạy mỗi khi câu thay đổi (đổi dataset, next/prev, chọn dropdown):
+   1. Cập nhật nút tim FLOAT theo câu mới (like/unlike)
+   2. Nếu toggle "Chỉ câu yêu thích" đang BẬT:
+      - Câu mới LÀ yêu thích → giữ nguyên toggle BẬT
+      - Câu mới KHÔNG PHẢI yêu thích → TỰ ĐỘNG TẮT toggle
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2093,17 +2094,16 @@ function favSyncFloatVisibility() {
             /* ═══ 1. GỌI HÀM GỐC TRƯỚC ═══ */
             var result = _origLoadPF.apply(this, arguments);
 
-            /* ═══ 2. SAU KHI CÂU MỚI ĐƯỢC LOAD → ĐỒNG BỘ TRẠNG THÁI ═══ */
+            /* ═══ 2. SAU KHI CÂU MỚI ĐƯỢC LOAD → ĐỒNG BỘ ═══ */
             setTimeout(function() {
 
-                /* ─── A. Cập nhật nút tim FLOAT (like/unlike câu mới) ─── */
+                /* ─── A. Cập nhật nút tim FLOAT (like/unlike) ─── */
                 if (typeof favUpdatePfFloatBtn === 'function') {
                     favUpdatePfFloatBtn();
                 }
 
-                /* ─── B. Kiểm tra + cập nhật nút TOGGLE "Chỉ câu yêu thích" ─── */
+                /* ─── B. Check + cập nhật nút TOGGLE ─── */
                 if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
-                    /* Đang BẬT toggle → check câu mới có phải yêu thích không */
                     var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                                  ? String(pfCurrentStt)
                                  : null;
@@ -2112,7 +2112,7 @@ function favSyncFloatVisibility() {
                         var isNewFav = (typeof favHas === 'function') ? favHas(newStt) : false;
 
                         if (!isNewFav) {
-                            /* ⭐ Câu mới KHÔNG PHẢI yêu thích → TỰ ĐỘNG TẮT toggle */
+                            /* ⭐ Câu mới KHÔNG yêu thích → TỰ TẮT toggle */
                             favState.pfOnlyFav = false;
                             if (typeof favUpdatePfOnlyFavBtn === 'function') {
                                 favUpdatePfOnlyFavBtn();
@@ -2124,16 +2124,15 @@ function favSyncFloatVisibility() {
                                 favShowToast('Đã tắt chế độ "Chỉ câu yêu thích"', 'warn');
                             }
                         }
-                        /* Nếu câu mới LÀ yêu thích → giữ nguyên trạng thái bật */
                     }
                 }
 
-                /* ─── C. Cập nhật UI nút toggle (đảm bảo hiển thị đúng) ─── */
+                /* ─── C. Đảm bảo UI nút toggle đúng ─── */
                 if (typeof favUpdatePfOnlyFavBtn === 'function') {
                     favUpdatePfOnlyFavBtn();
                 }
 
-            }, 30); /* Delay 30ms đủ để pfCurrentStt cập nhật */
+            }, 50); /* Delay 50ms đủ để pfCurrentStt cập nhật + UI ổn định */
 
             return result;
         };
@@ -2150,51 +2149,96 @@ function favSyncFloatVisibility() {
     }
 })();
 /* ═══════════════════════════════════════════════════════════════
-   ★ FIX: PATCH loadPracticeFull() — tự cập nhật nút tim
-   Khi đổi dataset trong Practice Full, nút tim phải đổi
-   theo trạng thái câu mới ngay lập tức.
+   ★ PATCH MỚI (2026-09-26): ĐỒNG BỘ NÚT TIM + TOGGLE KHI ĐỔI CÂU
+   
+   Chạy ĐỘC LẬP, không conflict với các patch loadPracticeFull cũ.
+   Sử dụng:
+   1. Event listener #pfDatasetSelect.change → đồng bộ khi đổi dataset
+   2. Poll pfCurrentStt (250ms) → đồng bộ khi câu thay đổi
+   
+   Logic:
+   - Câu mới thay đổi → nút tim cập nhật theo câu mới
+   - Nếu toggle "Chỉ câu yêu thích" đang BẬT:
+     - Câu mới LÀ yêu thích → giữ nguyên toggle BẬT
+     - Câu mới KHÔNG PHẢI yêu thích → TỰ ĐỘNG TẮT toggle
    ═══════════════════════════════════════════════════════════════ */
 (function() {
-    function tryPatch() {
-        if (typeof window.loadPracticeFull !== 'function') return false;
-        if (window.loadPracticeFull.__favPatched) return true;
-
-        var _origLoadPF = window.loadPracticeFull;
-        window.loadPracticeFull = function(stt) {
-            /* Gọi hàm gốc trước */
-            var result = _origLoadPF.apply(this, arguments);
-
-            /* ⭐ Ngay sau khi load câu mới → cập nhật nút tim */
-            setTimeout(function() {
-                if (typeof favUpdatePfFloatBtn === 'function') {
-                    favUpdatePfFloatBtn();
-                }
-                /* Cập nhật luôn nút toggle "chỉ câu yêu thích" */
+    'use strict';
+    
+    /* ═══ Biến theo dõi câu hiện tại ═══ */
+    var _lastCheckedStt = null;
+    
+    /* ═══ Hàm đồng bộ chính ═══ */
+    function syncFavStateWhenSttChanges() {
+        if (typeof pfCurrentStt === 'undefined' || !pfCurrentStt) return;
+        
+        var curStt = String(pfCurrentStt);
+        if (curStt === _lastCheckedStt) return;
+        
+        _lastCheckedStt = curStt;
+        
+        /* ─── A. Cập nhật nút tim FLOAT ─── */
+        if (typeof favUpdatePfFloatBtn === 'function') {
+            favUpdatePfFloatBtn();
+        }
+        
+        /* ─── B. Check + cập nhật nút TOGGLE ─── */
+        if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
+            var isNewFav = (typeof favHas === 'function') ? favHas(curStt) : false;
+            
+            if (!isNewFav) {
+                /* ⭐ Câu mới KHÔNG yêu thích → TỰ TẮT toggle */
+                favState.pfOnlyFav = false;
+                
                 if (typeof favUpdatePfOnlyFavBtn === 'function') {
                     favUpdatePfOnlyFavBtn();
                 }
-            }, 30);
-
-            /* Backup: cập nhật lại lần 2 sau 200ms (phòng trường hợp câu load chậm) */
-            setTimeout(function() {
-                if (typeof favUpdatePfFloatBtn === 'function') {
-                    favUpdatePfFloatBtn();
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
                 }
-            }, 200);
-
-            return result;
-        };
-        window.loadPracticeFull.__favPatched = true;
+                if (typeof favShowToast === 'function') {
+                    favShowToast('Đã tắt "Chỉ câu yêu thích" (câu mới không phải yêu thích)', 'warn');
+                }
+            }
+        }
+        
+        /* ─── C. Cập nhật UI nút toggle ─── */
+        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+            favUpdatePfOnlyFavBtn();
+        }
+    }
+    
+    /* ═══ 1. POLL pfCurrentStt MỖI 250ms ═══ */
+    setInterval(syncFavStateWhenSttChanges, 250);
+    
+    /* ═══ 2. LISTEN #pfDatasetSelect CHANGE ═══ */
+    function attachDatasetListener() {
+        var pfSel = document.getElementById('pfDatasetSelect');
+        if (!pfSel) return false;
+        if (pfSel.__favSyncNewBound) return true;
+        pfSel.__favSyncNewBound = true;
+        
+        pfSel.addEventListener('change', function() {
+            /* Reset flag để poll check lại câu mới */
+            _lastCheckedStt = null;
+            
+            /* Đợi ui_template xử lý xong → đồng bộ */
+            setTimeout(syncFavStateWhenSttChanges, 200);
+            setTimeout(syncFavStateWhenSttChanges, 500);
+        });
+        
         return true;
     }
-
-    if (!tryPatch()) {
+    
+    if (!attachDatasetListener()) {
         var _tries = 0;
         var _iv = setInterval(function() {
             _tries++;
-            if (tryPatch() || _tries > 40) clearInterval(_iv);
-        }, 100);
+            if (attachDatasetListener() || _tries > 60) clearInterval(_iv);
+        }, 200);
     }
+    
+    console.log('✅ [Favorites] Patch đồng bộ nút tim + toggle đã cài đặt');
 })();
 /* ═══════════════════════════════════════════════════════════════
    ★ PATCH điều hướng next/prev
