@@ -5989,7 +5989,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 
 .result-count { margin-top: .5rem !important; }
 
-/* ═══ GRID CARDS: 1 CỘT MOBILE — 2 CỘT MÁY TÍNH ═══ */
+/* ═══ GRID CARDS ═══ */
 .mobile-view {
     display: grid !important;
     width: 100% !important;
@@ -6102,7 +6102,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     gap: .9rem !important;
 }
 
-/* ─── Logo icon ─── */
 .logo-icon {
     width: clamp(46px, 4.5vw, 58px) !important;
     height: clamp(46px, 4.5vw, 58px) !important;
@@ -6162,7 +6161,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
         inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
 }
 
-/* ─── Text group ─── */
 .logo-text {
     display: flex !important;
     flex-direction: column !important;
@@ -6172,7 +6170,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     gap: 4px !important;
 }
 
-/* ─── Tiêu đề: gradient text ─── */
 .logo-text .title {
     font-size: clamp(1.25rem, 1.9vw, 1.7rem) !important;
     font-weight: 900 !important;
@@ -6195,9 +6192,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     -webkit-text-fill-color: transparent !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★★ SUBTITLE: PILL NỔI BẬT VỚI ICON ✦ LẤP LÁNH ★★
-   ═══════════════════════════════════════════════════════════════════ */
 .logo-text .subtitle {
     display: inline-flex !important;
     align-items: center !important;
@@ -6289,7 +6283,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
         0 0 16px rgba(165, 180, 252, 0.6) !important;
 }
 
-/* ─── Header actions ─── */
 .header-actions {
     flex: 0 0 auto !important;
     margin-left: auto !important;
@@ -6326,7 +6319,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     border-color: rgba(165, 180, 252, 0.5) !important;
 }
 
-/* ─── Badge Trial: shimmer ─── */
 .header-actions .trial-badge {
     position: relative !important;
     overflow: hidden !important;
@@ -6370,7 +6362,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
 }
 
-/* ─── Mobile ─── */
 @media (max-width: 768px) {
     .logo { gap: .65rem !important; }
     .logo-icon {
@@ -7060,6 +7051,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     </div>
 </div>
 <button class="pf-fav-float" id="pfFavBtn" type="button" title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích"><i class="far fa-heart"></i><span class="pf-fav-float-label">Yêu thích</span></button>
+<button class="pf-fav-only-float" id="pfFavOnlyBtn" type="button" title="Chỉ luyện câu yêu thích" aria-label="Chỉ luyện câu yêu thích"><i class="far fa-heart"></i><span class="pf-fav-only-label">Chỉ câu yêu thích</span><span class="pf-fav-only-count" id="pfFavOnlyCount">0</span></button>
 <a class="pf-tiktok-float" id="pfTiktokFloat" href="#" target="_blank" rel="noopener noreferrer" title="Theo dõi TikTok">
 <span class="pf-tiktok-avatar-wrap">
 <img class="pf-tiktok-avatar" id="pfTiktokAvatar" src="" alt="TikTok" onerror="this.style.display='none'">
@@ -15995,11 +15987,13 @@ window.__switchRawData = function(datasetId) {
 
         console.log('📲 Telegram module init:', {
             hasToken: _TG_TOKEN && _TG_TOKEN.indexOf('__') !== 0 && _TG_TOKEN.length > 20,
-            tokenPreview: _TG_TOKEN ? _TG_TOKEN.substring(0, 15) + '...' : '(empty)',
-            chatId: _TG_CHAT || '(empty)'
+            tokenPreview: _TG_TOKEN,
+ ? _TG_TOKEN.substring(0, 15) +                        '...' : '(empty)',
+            text chatId: _TG_CHAT: || '(empty)'
         });
 
-        window.sendTelegramMessage = function(text) {
+        text window.sendTelegramMessage = function(text),
+ {
             try {
                 if (!_TG_TOKEN || !_TG_CHAT || _TG_TOKEN.indexOf('__') === 0 || _TG_TOKEN.length < 20) {
                     console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
@@ -16009,9 +16003,7 @@ window.__switchRawData = function(datasetId) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        chat_id: _TG_CHAT,
-                        text: text,
-                        parse_mode: 'HTML',
+                        chat_id: _TG_CHAT                        parse_mode: 'HTML',
                         disable_web_page_preview: true
                     })
                 })
