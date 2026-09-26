@@ -15748,41 +15748,57 @@ function favTogglePfOnlyFav() {
     if (!favCanUse()) { favShowLockDialog(); return; }
 
     var currentDsId = favGetCurrentDsId();
-    var count = favCountInCurrentDataset();
-    if (count === 0) {
-        favShowToast('Chưa có câu yêu thích nào trong bộ này', 'warn');
+    var totalCount = favCount();
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ TRƯỜNG HỢP 1: ĐANG BẬT → BẤM ĐỂ TẮT (luôn cho phép)
+       Chuyển về chế độ xem toàn bộ dataset
+       ═══════════════════════════════════════════════════════════ */
+    if (favState.pfOnlyFav) {
+        favState.pfOnlyFav = false;
+        favUpdatePfOnlyFavBtn();
+        favRefreshQuestionDropdown();
+
+        /* ⭐ Refresh lại dropdown CÂU: với toàn bộ dataset */
+        if (typeof pfBuildQuickNav === 'function') {
+            try { pfBuildQuickNav(); } catch(e) {}
+        }
+
+        favShowToast('Luyện tất cả câu', 'remove');
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ TRƯỜNG HỢP 2: ĐANG TẮT → BẤM ĐỂ BẬT
+       Chuyển về chế độ chỉ luyện câu yêu thích
+       ═══════════════════════════════════════════════════════════ */
+    if (totalCount === 0) {
+        favShowToast('Chưa có câu yêu thích nào', 'warn');
+        return;
+    }
+
+    /* ⭐ BẬT toggle (KHÔNG cần check câu hiện tại nữa) */
+    favState.pfOnlyFav = true;
+    favUpdatePfOnlyFavBtn();
+    favRefreshQuestionDropdown();
+
+    /* ⭐ Nếu câu hiện tại KHÔNG phải yêu thích → tự nhảy sang câu yêu thích đầu tiên */
     var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                      ? String(pfCurrentStt)
                      : null;
     var currentIsFav = currentStt ? favHas(currentStt, currentDsId) : false;
 
-    if (!favState.pfOnlyFav) {
-        if (!currentStt) {
-            favShowToast('Không xác định được câu hiện tại', 'warn');
-            return;
+    if (!currentIsFav) {
+        var favList = favGetRecords();
+        if (favList.length > 0) {
+            var firstFavStt = String(favList[0].stt);
+            if (typeof loadPracticeFull === 'function') {
+                loadPracticeFull(firstFavStt);
+            }
         }
-        if (!currentIsFav) {
-            favShowToast(
-                'Câu #' + currentStt + ' chưa được yêu thích. Bấm ❤️ để thêm vào trước.',
-                'warn'
-            );
-            return;
-        }
-
-        favState.pfOnlyFav = true;
-        favUpdatePfOnlyFavBtn();
-        favRefreshQuestionDropdown();
-        favShowToast('Chỉ luyện ' + count + ' câu yêu thích', 'add');
-        return;
     }
 
-    favState.pfOnlyFav = false;
-    favUpdatePfOnlyFavBtn();
-    favRefreshQuestionDropdown();
-    favShowToast('Luyện tất cả câu', 'remove');
+    favShowToast('Chỉ luyện ' + totalCount + ' câu yêu thích', 'add');
 }
 
 /* ═══════════════════════════════════════════════════════════════
