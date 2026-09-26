@@ -9,14 +9,17 @@ Quy tắc tier:
 
 Tính năng chính:
   1. Nút tim trên card câu — đổi màu theo trạng thái yêu thích
-  2. Nút tim FLOAT trong Practice Full (góc phải)
-  3. Nút toggle "Chỉ câu yêu thích" trong Practice Full (góc trái)
+  2. Nút tim FLOAT trong Practice Full (góc PHẢI, dưới cùng)
+  3. Nút toggle "Chỉ câu yêu thích" trong Practice Full (góc PHẢI, TRÊN nút tim)
      ★ Khi bật → dropdown "CÂU:" chỉ liệt kê câu yêu thích
   4. Tab Yêu thích + Item Yêu thích trong dropdown bộ dữ liệu
   5. Đồng bộ Firebase real-time + cache localStorage
 
-Tích hợp:
-  from favorites_module import build_favorites_css, build_favorites_html, build_favorites_js
+FIX (2026-09):
+- Dời nút "Chỉ câu yêu thích" sang góc phải (trên nút tim) để KHÔNG trùng TikTok.
+- Patch trực tiếp pfBuildQuickNav() → dropdown "CÂU:" tự filter theo favState.pfOnlyFav.
+- favRefreshQuestionDropdown() ưu tiên gọi pfBuildQuickNav() trước fallback.
+- Next/Prev chỉ nhảy trong danh sách câu yêu thích khi toggle bật.
 """
 
 
@@ -76,7 +79,7 @@ def build_favorites_css():
 [data-theme="dark"] .fav-btn.locked:hover{background:rgba(220,38,38,.4);color:#fecaca;}
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ Nút tim FLOAT (Practice Full) — góc phải
+   ❤️ Nút tim FLOAT (Practice Full) — GÓC PHẢI, DƯỚI CÙNG
    ═══════════════════════════════════════════════════════════════ */
 .pf-fav-float{
     position:fixed;
@@ -150,12 +153,14 @@ def build_favorites_css():
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ Nút toggle "Chỉ câu yêu thích" (Practice Full) — góc trái
+   ❤️ Nút toggle "Chỉ câu yêu thích" — GÓC PHẢI, TRÊN NÚT TIM
+   (để KHÔNG trùng với TikTok float ở góc trái)
    ═══════════════════════════════════════════════════════════════ */
 .pf-fav-only-float{
     position:fixed;
-    left:clamp(14px,2vw,22px);
-    bottom:calc(80px + env(safe-area-inset-bottom));
+    right:clamp(14px,2vw,22px);
+    /* Nút tim ở bottom:80px, cao ~44px → đẩy lên 80 + 44 + 14 = ~138px */
+    bottom:calc(140px + env(safe-area-inset-bottom));
     display:none;align-items:center;gap:.5rem;
     padding:.65rem 1.1rem .65rem .9rem;
     border-radius:999px;
@@ -233,7 +238,8 @@ def build_favorites_css():
 
     .pf-fav-only-float{
         padding:.55rem .9rem .55rem .75rem;font-size:.78rem;
-        bottom:calc(78px + env(safe-area-inset-bottom));
+        /* Nút tim mobile bottom:78px, cao ~40px → đẩy lên 78 + 40 + 12 = ~130px */
+        bottom:calc(130px + env(safe-area-inset-bottom));
     }
     .pf-fav-only-float i{font-size:1rem;}
     .pf-fav-only-float .pf-fav-only-label{display:none;}
@@ -248,8 +254,8 @@ def build_favorites_css():
         transform:scale(.9);transform-origin:right bottom;
     }
     .pf-fav-only-float{
-        bottom:calc(64px + env(safe-area-inset-bottom));
-        transform:scale(.9);transform-origin:left bottom;
+        bottom:calc(114px + env(safe-area-inset-bottom));
+        transform:scale(.9);transform-origin:right bottom;
     }
 }
 
@@ -405,7 +411,7 @@ def build_favorites_html():
             '            <i class="fas fa-lock ds-dd-fav-lock" id="favDropdownLock" style="display:none;"></i>\n'
             '        </button>',
 
-        # Nút tim FLOAT — góc phải
+        # Nút tim FLOAT — GÓC PHẢI, DƯỚI CÙNG
         "pf_float_btn":
             '<button class="pf-fav-float" id="pfFavBtn" type="button" '
             'title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích">'
@@ -413,7 +419,7 @@ def build_favorites_html():
             '<span class="pf-fav-float-label">Yêu thích</span>'
             '</button>',
 
-        # Nút toggle "Chỉ câu yêu thích" — góc trái
+        # Nút toggle "Chỉ câu yêu thích" — GÓC PHẢI, TRÊN nút tim
         "pf_fav_only_btn":
             '<button class="pf-fav-only-float" id="pfFavOnlyBtn" type="button" '
             'title="Chỉ luyện câu yêu thích" aria-label="Chỉ luyện câu yêu thích">'
@@ -701,9 +707,11 @@ function favGetRecords() {
     return out;
 }
 
-function favIsFavoriteRecord(r) {
-    if (!r) return false;
-    return favHas(r.stt);
+/* ★ Lấy câu yêu thích từ dataset hiện tại (giữ nguyên filtered) */
+function favGetRecordsFromFiltered() {
+    if (typeof filtered === 'undefined' || !filtered) return [];
+    if (!favState.pfOnlyFav || !favCanUse()) return filtered;
+    return filtered.filter(function(r) { return favHas(r.stt); });
 }
 
 /* ============ SORT ============ */
@@ -726,31 +734,20 @@ function favGetSortedList() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ LỌC DROPDOWN "CÂU:" — khi bật toggle chỉ hiện câu yêu thích
+   ★ REFRESH DROPDOWN "CÂU:" — ưu tiên gọi pfBuildQuickNav
    ═══════════════════════════════════════════════════════════════ */
-
-/* Trả về danh sách câu dùng để build dropdown "CÂU:" */
-function favGetQuestionsForDropdown() {
-    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
-
-    /* Nếu KHÔNG bật → trả về nguyên gốc */
-    if (!favState.pfOnlyFav || !favCanUse()) {
-        return RAW_DATA;
-    }
-
-    /* Bật → chỉ trả về câu yêu thích (giữ thứ tự gốc) */
-    var out = [];
-    for (var i = 0; i < RAW_DATA.length; i++) {
-        if (favHas(RAW_DATA[i].stt)) {
-            out.push(RAW_DATA[i]);
+function favRefreshQuestionDropdown() {
+    /* ★ ƯU TIÊN #1: gọi thẳng pfBuildQuickNav (đã patch để filter) */
+    if (typeof window.pfBuildQuickNav === 'function') {
+        try {
+            window.pfBuildQuickNav();
+            return true;
+        } catch(e) {
+            console.warn('[Favorites] pfBuildQuickNav error:', e);
         }
     }
-    return out;
-}
 
-/* Gọi hàm build dropdown thực tế trong app */
-function favRefreshQuestionDropdown() {
-    /* Danh sách tên hàm build dropdown phổ biến */
+    /* ★ ƯU TIÊN #2: các hàm build dropdown phổ biến khác */
     var fns = [
         'renderQuestionSelect',
         'buildQuestionDropdown',
@@ -775,25 +772,22 @@ function favRefreshQuestionDropdown() {
         }
     }
 
-    /* Fallback: tự build dropdown nếu tìm thấy element */
-    var sel = document.getElementById('pfQuestionSelect')
-           || document.getElementById('questionSelect')
-           || document.getElementById('pfQuestionDropdown')
-           || document.getElementById('questionPicker')
-           || document.querySelector('.pf-question-select select')
-           || document.querySelector('#pfQuestionPicker');
+    /* ★ FALLBACK: tự build dropdown #pfQuickNav */
+    var sel = document.getElementById('pfQuickNav');
     if (!sel) return false;
 
     try {
-        var list = favGetQuestionsForDropdown();
+        var list = favGetRecordsFromFiltered();
         var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : '';
-        var html = '';
+        var html = '<option value="">-- Chọn câu (' + list.length + ') --</option>';
         for (var j = 0; j < list.length; j++) {
             var r = list[j];
+            var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                         ? '#' + String(r.stt).trim() + ' · '
+                         : '';
+            var label = sttRaw + 'Câu ' + (j + 1) + ': ' + (r.vi || '').substring(0, 45);
             var sel2 = (String(r.stt) === curStt) ? ' selected' : '';
-            html += '<option value="' + r.stt + '"' + sel2 + '>'
-                  + '#' + r.stt + ' · ' + (r.vi || '')
-                  + '</option>';
+            html += '<option value="' + r.stt + '"' + sel2 + '>' + label + '</option>';
         }
         sel.innerHTML = html;
         return true;
@@ -804,7 +798,7 @@ function favRefreshQuestionDropdown() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   NÚT TIM FLOAT (Practice Full) — góc phải
+   NÚT TIM FLOAT (Practice Full) — góc phải, dưới cùng
    ═══════════════════════════════════════════════════════════════ */
 function favUpdatePfFloatBtn() {
     var pfBtn = document.getElementById('pfFavBtn');
@@ -833,7 +827,7 @@ function favUpdatePfFloatBtn() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   NÚT TOGGLE "CHỈ CÂU YÊU THÍCH" (Practice Full) — góc trái
+   NÚT TOGGLE "CHỈ CÂU YÊU THÍCH" — góc phải, trên nút tim
    ═══════════════════════════════════════════════════════════════ */
 function favUpdatePfOnlyFavBtn() {
     var btn = document.getElementById('pfFavOnlyBtn');
@@ -903,7 +897,7 @@ function favTogglePfOnlyFav() {
         favState.pfOnlyFav ? 'add' : 'remove'
     );
 
-    /* Nếu Practice Full đang mở → nếu câu hiện tại không thuộc yêu thích, nhảy sang câu yêu thích đầu */
+    /* Nếu Practice Full đang mở → nhảy sang câu yêu thích đầu nếu câu hiện tại không thuộc */
     var pfModal = document.getElementById('practiceFullModal');
     if (pfModal && pfModal.classList.contains('show')) {
         if (favState.pfOnlyFav && typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
@@ -1086,7 +1080,7 @@ function favRenderCurrentTab() {
                     ? 'Chỉ tài khoản <b>đã gia hạn</b> mới lưu được câu yêu thích và đồng bộ trên mọi thiết bị.'
                     : 'Vui lòng <b>đăng nhập</b> và <b>gia hạn</b> để dùng tính năng này.') +
             '</div>' +
-            '<button class="fav-locked-empty .fav-empty-cta" ' +
+            '<button class="fav-empty-cta" ' +
             'style="margin-top:1rem;padding:.6rem 1.2rem;border-radius:50px;border:none;' +
             'background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;cursor:pointer;" ' +
             'onclick="favShowLockDialog()">' +
@@ -1552,64 +1546,62 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH các hàm build dropdown "CÂU:" — tự filter khi bật toggle
+   ★★★ PATCH pfBuildQuickNav — LỌC DROPDOWN "CÂU:" THEO TOGGLE ★★★
+   Đây là fix chính cho bug: bật "chỉ câu yêu thích" nhưng
+   dropdown vẫn hiện tất cả câu.
    ═══════════════════════════════════════════════════════════════ */
 (function() {
-    var CANDIDATES = [
-        'renderQuestionSelect',
-        'buildQuestionDropdown',
-        'updateQuestionList',
-        'renderQuestionList',
-        'buildQuestionSelect',
-        'renderPfQuestionSelect',
-        'renderQuestionPicker',
-        'updateQuestionPicker',
-        'refreshQuestionDropdown',
-        'populateQuestionSelect',
-        'renderPfQSelect'
-    ];
+    function tryPatch() {
+        if (typeof window.pfBuildQuickNav !== 'function') return false;
+        if (window.pfBuildQuickNav.__favPatched) return true;
 
-    function patchFn(name) {
-        if (typeof window[name] !== 'function') return false;
-        if (window[name].__favDropdownPatched) return true;
-
-        var _orig = window[name];
-        window[name] = function() {
+        var _origBuildQuickNav = window.pfBuildQuickNav;
+        window.pfBuildQuickNav = function() {
+            /* Nếu KHÔNG bật toggle hoặc KHÔNG có quyền → chạy nguyên gốc */
             if (!favState.pfOnlyFav || !favCanUse()) {
-                return _orig.apply(this, arguments);
+                return _origBuildQuickNav.apply(this, arguments);
             }
 
-            var _origRaw = (typeof RAW_DATA !== 'undefined') ? RAW_DATA : null;
-            if (!_origRaw) return _orig.apply(this, arguments);
+            /* Bật toggle → tự build dropdown chỉ với câu yêu thích */
+            var sel = document.getElementById('pfQuickNav');
+            if (!sel) return;
 
-            try {
-                var favRecords = favGetQuestionsForDropdown();
-                window.__favOrigRawDataDD = _origRaw;
-                try { RAW_DATA = favRecords; } catch(e) {}
-
-                var result = _orig.apply(this, arguments);
-
-                try { RAW_DATA = window.__favOrigRawDataDD; } catch(e) {}
-                delete window.__favOrigRawDataDD;
-                return result;
-            } catch(e) {
-                console.warn('[Favorites] ' + name + ' patch error:', e);
-                try {
-                    if (window.__favOrigRawDataDD) RAW_DATA = window.__favOrigRawDataDD;
-                } catch(err) {}
-                return _orig.apply(this, arguments);
+            /* Lấy danh sách câu từ `filtered` (đã được filter theo search/HSK/subject) */
+            var sourceList = [];
+            if (typeof filtered !== 'undefined' && Array.isArray(filtered)) {
+                sourceList = filtered.filter(function(r) { return favHas(r.stt); });
+            } else if (typeof RAW_DATA !== 'undefined' && Array.isArray(RAW_DATA)) {
+                sourceList = RAW_DATA.filter(function(r) { return favHas(r.stt); });
             }
+
+            var html = '<option value="">-- Chọn câu (' + sourceList.length + ') --</option>';
+            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : i '';
+
+            for (var = 0; i < sourceList.length; i++) {
+                var r = sourceList[i];
+                var vi = (r.vi || '').substring(0, 45);
+                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                             ? '#' + String(r.stt).trim() + ' · '
+                             : '';
+                var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
+                var selected = (String(r.stt) === curStt) ? ' selected' : '';
+                html += '<option value="' + String(r.stt) + '"' + selected + '>' +
+                        escapeHtml(label) + '</option>';
+            }
+            sel.innerHTML = html;
+            if (pfCurrentStt) sel.value = pfCurrentStt;
         };
-        window[name].__favDropdownPatched = true;
+        window.pfBuildQuickNav.__favPatched = true;
         return true;
     }
 
-    var _tries = 0;
-    var _iv = setInterval(function() {
-        _tries++;
-        CANDIDATES.forEach(patchFn);
-        if (_tries > 40) clearInterval(_iv);
-    }, 150);
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
 })();
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1664,7 +1656,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH điều hướng next/prev
+   ★ PATCH điều hướng next/prev — chỉ nhảy trong câu yêu thích
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function patchNavigateFn(fnName) {
@@ -1731,10 +1723,11 @@ function favSyncFloatVisibility() {
 window.favUpdateLockState = favUpdateLockState;
 window.favNotifyChanged = favNotifyChanged;
 window.favSyncFloatVisibility = favSyncFloatVisibility;
-window.favUpdatePfFloatBtn = favUpdatePfFloatBtn;
+window.fav {
+    setTimeout(functionUpdatePf()FloatBtn = favUpdatePfFloatBtn {
+;
 window.favUpdatePfOnlyFavBtn = favUpdatePfOnlyFavBtn;
 window.favGetRecords = favGetRecords;
-window.favGetQuestionsForDropdown = favGetQuestionsForDropdown;
 window.favRefreshQuestionDropdown = favRefreshQuestionDropdown;
 window.favHas = favHas;
 window.favCount = favCount;
@@ -1765,9 +1758,7 @@ if (document.readyState === 'loading') {
         initFavorites();
         setTimeout(favSyncFloatVisibility, 100);
     });
-} else {
-    setTimeout(function() {
-        initFavorites();
+} else        initFavorites();
         favSyncFloatVisibility();
     }, 0);
 }
