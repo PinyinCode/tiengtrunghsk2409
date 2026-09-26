@@ -1097,9 +1097,6 @@ function favTogglePfOnlyFav() {
 
     /* ═══════════════════════════════════════════════════════════
        ⭐ 3. NẾU ĐANG BẬT TOGGLE → KIỂM TRA CÂU HIỆN TẠI NGAY
-       - Check câu hiện tại (pfCurrentStt) có phải câu yêu thích không
-       - Nếu phải → giữ nguyên câu đó
-       - Nếu không phải → nhảy sang câu yêu thích đầu tiên
        ═══════════════════════════════════════════════════════════ */
     if (favState.pfOnlyFav) {
 
@@ -1121,13 +1118,9 @@ function favTogglePfOnlyFav() {
 
         /* Bước 3: Xử lý theo kết quả */
         if (currentIsFav) {
-            /* ⭐ CÂU HIỆN TẠI LÀ CÂU YÊU THÍCH → giữ nguyên, chỉ filter lại */
+            /* ⭐ CÂU HIỆN TẠI LÀ CÂU YÊU THÍCH → giữ nguyên */
             favShowToast('Đang luyện câu yêu thích #' + currentStt, 'add');
-
-            /* Update dropdown "CÂU:" để chỉ hiện câu yêu thích */
             favRefreshQuestionDropdown();
-
-            /* Update nút toggle */
             favUpdatePfOnlyFavBtn();
             return;
         }
@@ -1172,7 +1165,7 @@ function favTogglePfOnlyFav() {
                     window.__switchRawData(foundDatasetId);
                 }
                 var pfSel = document.getElementById('pfDatasetSelect');
-                if (pfSel) pf].Sel.value = foundDatasetId;
+                if (pfSel) pfSel.value = foundDatasetId;
 
                 if (typeof markCurrentDatasetActive === 'function') {
                     markCurrentDatasetActive();
@@ -1194,7 +1187,7 @@ function favTogglePfOnlyFav() {
         }
 
         /* Bước 6: Nhảy sang câu yêu thích đầu tiên (trong dataset hiện tại) */
-        var firstFavStt = String(allFavRecords[0stt);
+        var firstFavStt = String(allFavRecords[0].stt);
 
         /* Cập nhật biến `filtered` = danh sách câu yêu thích */
         if (typeof window.filtered !== 'undefined') {
@@ -1206,7 +1199,6 @@ function favTogglePfOnlyFav() {
         if (typeof window.openPracticeFull === 'function') {
             setTimeout(function() {
                 window.openPracticeFull(firstFavStt);
-                /* Update dropdown + nút toggle sau khi mở */
                 setTimeout(function() {
                     favRefreshQuestionDropdown();
                     favUpdatePfOnlyFavBtn();
