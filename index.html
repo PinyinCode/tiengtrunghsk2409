@@ -15208,7 +15208,86 @@ function favGetRecordsFromArray(sourceArray) {
     }
     return out;
 }
+/* ═══════════════════════════════════════════════════════════════
+   ★ QUÉT LẠI TẤT CẢ NÚT TIM — sau khi render xong
+   - Cập nhật class active theo favHas(stt)
+   - Áp dụng cho màn hình chính VÀ Practice Full
+   ═══════════════════════════════════════════════════════════════ */
+function favScanAllHeartButtons() {
+    var can = (typeof favCanUse === 'function') ? favCanUse() : false;
 
+    /* ─── 1. Quét nút tim trên card (màn hình chính) ─── */
+    document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
+        var stt = btn.dataset.stt;
+        if (!stt) return;
+
+        var active = (typeof favHas === 'function') ? favHas(stt) : false;
+        var icon = btn.querySelector('i');
+
+        if (!can) {
+            /* Không có quyền → hiện khoá */
+            btn.classList.add('locked');
+            btn.classList.remove('active');
+            if (icon) icon.className = 'fas fa-lock';
+            btn.title = 'Cần gia hạn để dùng Yêu thích';
+            return;
+        }
+
+        /* Có quyền → cập nhật theo trạng thái */
+        btn.classList.remove('locked');
+        btn.classList.toggle('active', active);
+        if (icon) {
+            icon.className = active ? 'fas fa-heart' : 'far fa-heart';
+        }
+        btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
+    });
+
+    /* ─── 2. Cập nhật nút tim FLOAT (Practice Full) ─── */
+    if (typeof favUpdatePfFloatBtn === 'function') {
+        favUpdatePfFloatBtn();
+    }
+
+    /* ─── 3. Cập nhật nút toggle "Chỉ câu yêu thích" ─── */
+    if (typeof favUpdatePfOnlyFavBtn === 'function') {
+        favUpdatePfOnlyFavBtn();
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH render() của ui_template — tự động quét nút tim sau render
+   Chạy sau khi render() xong → đảm bảo nút tim trên card mới có
+   class active đúng theo trạng thái yêu thích
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.render !== 'function') return false;
+        if (window.render.__favScanPatched) return true;
+
+        var _origRender = window.render;
+        window.render = function() {
+            var result = _origRender.apply(this, arguments);
+
+            /* ⭐ Quét lại tất cả nút tim SAU khi render xong */
+            setTimeout(function() {
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
+                }
+            }, 10);
+
+            return result;
+        };
+        window.render.__favScanPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
 function favGetRecords() {
     /* Nếu có DATASET_REGISTRY → quét TẤT CẢ dataset */
     if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
@@ -15492,17 +15571,10 @@ function favTogglePfOnlyFav() {
    NOTIFY CHANGES
    ═══════════════════════════════════════════════════════════════ */
 function favNotifyChanged() {
-    /* Nút tim trên card */
-    document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
-        var stt = btn.dataset.stt;
-        var active = favHas(stt);
-        btn.classList.toggle('active', active);
-        var icon = btn.querySelector('i');
-        if (icon && !btn.classList.contains('locked')) {
-            icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-        }
-        btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
-    });
+    /* ⭐ Quét LẠI TẤT CẢ nút tim (thay vì chỉ quét vài cái) */
+    if (typeof favScanAllHeartButtons === 'function') {
+        favScanAllHeartButtons();
+    }
 
     /* Badge tab + dropdown */
     var count = favCount();
@@ -15513,17 +15585,6 @@ function favNotifyChanged() {
             badge.dataset.count = count;
         }
     });
-
-    /* Nút tim FLOAT */
-    favUpdatePfFloatBtn();
-
-    /* Nút toggle "chỉ câu yêu thích" */
-    favUpdatePfOnlyFavBtn();
-
-    /* ★ Nếu đang bật "chỉ câu yêu thích" → refresh dropdown CÂU: */
-    if (favState.pfOnlyFav) {
-        favRefreshQuestionDropdown();
-    }
 
     /* Nếu đang ở tab Yêu thích → render lại */
     if (favState.currentView && favState.filteringOnly) {
@@ -16120,7 +16181,9 @@ function favSyncFloatVisibility() {
     }
 }
 
-/* Watch Practice Full modal */
+/* ═══════════════════════════════════════════════════════════════
+   WATCH PRACTICE FULL MODAL — Hiện/ẩn nút float theo modal
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     function attach() {
         var pfModal = document.getElementById('practiceFullModal');
@@ -16130,7 +16193,11 @@ function favSyncFloatVisibility() {
 
         var obs = new MutationObserver(function(mutations) {
             mutations.forEach(function(m) {
-                if (m.attributeName === 'class') favSyncFloatVisibility();
+                if (m.attributeName === 'class') {
+                    if (typeof favSyncFloatVisibility === 'function') {
+                        favSyncFloatVisibility();
+                    }
+                }
             });
         });
         obs.observe(pfModal, { attributes: true });
@@ -16147,54 +16214,82 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ THEO DÕI pfCurrentStt → cập nhật nút float
+   ★ THEO DÕI pfCurrentStt → CẬP NHẬT NÚT FLOAT + SCAN HEART
+   Khi câu hiện tại đổi (đổi dataset, next/prev, chọn dropdown):
+   - Cập nhật nút tim FLOAT
+   - Cập nhật nút toggle "Chỉ câu yêu thích"
+   - Quét lại TẤT CẢ nút tim trên màn hình chính
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _lastPfStt = null;
-    setInterval(function() {
-        var cur = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : null;
-        if (cur !== _lastPfStt) {
-            _lastPfStt = cur;
+
+    function syncPfState() {
+        var cur = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                  ? String(pfCurrentStt)
+                  : null;
+        if (cur === _lastPfStt) return;
+        _lastPfStt = cur;
+        if (!cur) return;
+
+        /* ─── A. Cập nhật nút tim FLOAT ─── */
+        if (typeof favUpdatePfFloatBtn === 'function') {
             favUpdatePfFloatBtn();
         }
-    }, 250);
+
+        /* ─── B. Cập nhật nút toggle "Chỉ câu yêu thích" ─── */
+        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+            favUpdatePfOnlyFavBtn();
+        }
+
+        /* ─── C. Quét lại tất cả nút tim trên màn hình chính ─── */
+        if (typeof favScanAllHeartButtons === 'function') {
+            favScanAllHeartButtons();
+        }
+
+        /* ─── D. Nếu toggle đang BẬT mà câu mới KHÔNG yêu thích → tắt ─── */
+        if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
+            var isNewFav = (typeof favHas === 'function') ? favHas(cur) : false;
+            if (!isNewFav) {
+                favState.pfOnlyFav = false;
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
+                }
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
+                if (typeof favShowToast === 'function') {
+                    favShowToast('Đã tắt "Chỉ câu yêu thích"', 'warn');
+                }
+            }
+        }
+    }
+
+    setInterval(syncPfState, 250);
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH render() — khi filteringOnly → chỉ render câu yêu thích
+   ★ PATCH render() — Quét lại nút tim sau khi render xong
+   (Đảm bảo nút tim trên card mới hiển thị đúng màu)
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
         if (typeof window.render !== 'function') return false;
-        if (window.render.__favPatched) return true;
+        if (window.render.__favScanPatched) return true;
 
         var _origRender = window.render;
         window.render = function() {
-            if (favState.filteringOnly && favState.currentView) {
-                var _origRaw = (typeof RAW_DATA !== 'undefined') ? RAW_DATA : null;
-                if (_origRaw) {
-                    try {
-                        var favRecords = favGetRecords();
-                        window.__favOrigRawData = _origRaw;
-                        try { RAW_DATA = favRecords; } catch(e) {}
+            var result = _origRender.apply(this, arguments);
 
-                        var result = _origRender.apply(this, arguments);
-
-                        try { RAW_DATA = window.__favOrigRawData; } catch(e) {}
-                        delete window.__favOrigRawData;
-                        return result;
-                    } catch(e) {
-                        console.warn('[Favorites] render patch error:', e);
-                        try {
-                            if (window.__favOrigRawData) RAW_DATA = window.__favOrigRawData;
-                        } catch(err) {}
-                    }
+            /* ⭐ SAU khi render xong → quét lại tất cả nút tim */
+            setTimeout(function() {
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
                 }
-                return favRenderCurrentTab();
-            }
-            return _origRender.apply(this, arguments);
+            }, 10);
+
+            return result;
         };
-        window.render.__favPatched = true;
+        window.render.__favScanPatched = true;
         return true;
     }
 
@@ -16208,7 +16303,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH switchDataset() — tự tắt lọc khi đổi dataset khác
+   ★ PATCH switchDataset() — Tự tắt lọc khi đổi dataset khác
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -16297,7 +16392,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH openPracticeFull — áp dụng filter "chỉ câu yêu thích"
+   ★ PATCH openPracticeFull — Áp dụng filter "chỉ câu yêu thích"
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -16323,13 +16418,19 @@ function favSyncFloatVisibility() {
 
             var result = _origOpenPF.apply(this, arguments);
 
+            /* ⭐ Cập nhật UI sau khi mở modal */
             setTimeout(function() {
-                favUpdatePfFloatBtn();
-                favUpdatePfOnlyFavBtn();
-                favRefreshQuestionDropdown();
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
+                }
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
             }, 30);
             setTimeout(function() {
-                favRefreshQuestionDropdown();
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
             }, 200);
 
             return result;
@@ -16348,16 +16449,11 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH ĐỒNG BỘ — GỘP 3 PATCH CŨ THÀNH 1 (2026-09-26)
-   
-   Tự động:
-   1. Cập nhật nút tim FLOAT theo câu mới (like/unlike)
-   2. Nếu toggle "Chỉ câu yêu thích" đang BẬT:
-      - Câu mới LÀ yêu thích → giữ nguyên toggle BẬT
-      - Câu mới KHÔNG PHẢI yêu thích → TỰ ĐỘNG TẮT toggle
-   
-   Cơ chế: Patch loadPracticeFull() — hàm này được gọi
-   MỖI KHI câu thay đổi (đổi dataset, next/prev, chọn dropdown).
+   ★ PATCH loadPracticeFull — ĐỒNG BỘ nút tim + toggle + scan
+   Chạy MỖI KHI câu thay đổi:
+   - Đổi dataset
+   - Next/prev
+   - Chọn từ dropdown "CÂU:"
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -16376,12 +16472,12 @@ function favSyncFloatVisibility() {
                              : null;
                 if (!newStt) return;
 
-                /* ─── A. Cập nhật nút tim FLOAT ─── */
-                if (typeof favUpdatePfFloatBtn === 'function') {
-                    favUpdatePfFloatBtn();
+                /* ─── A. Quét tất cả nút tim + float + toggle ─── */
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
                 }
 
-                /* ─── B. Check toggle "Chỉ câu yêu thích" ─── */
+                /* ─── B. Check toggle ─── */
                 if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
                     var isNewFav = (typeof favHas === 'function') ? favHas(newStt) : false;
 
@@ -16421,66 +16517,49 @@ function favSyncFloatVisibility() {
         }, 100);
     }
 })();
+
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH: ĐỔI BỘ DỮ LIỆU — RESET TOGGLE + CHECK CÂU MỚI
-   
-   Khi user đổi #pfDatasetSelect (dropdown "Bộ dữ liệu"):
-   1. LUÔN reset toggle "Chỉ câu yêu thích" về TẮT
-   2. Đợi câu mới load xong → check câu mới có like không
-   3. Cập nhật nút toggle (sáng/mờ) + nút tim (đỏ/xám)
+   ★ PATCH: ĐỔI BỘ DỮ LIỆU — Bắt sự kiện #pfDatasetSelect.change
+   Reset toggle + cập nhật nút tim theo câu mới
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
 
-    /* ═══ Hàm xử lý khi đổi dataset ═══ */
-    function handleDatasetChange() {
-        console.log('[Favorites] Đổi bộ dữ liệu → bắt đầu đồng bộ');
+    var _datasetChangeTimer = null;
 
-        /* ═══ 1. RESET toggle về TẮT ═══ */
+    function handleDatasetChange() {
+        console.log('[Favorites] Đổi bộ dữ liệu → đồng bộ');
+
+        /* ─── 1. RESET toggle ─── */
         if (typeof favState !== 'undefined') {
             favState.pfOnlyFav = false;
-            favState.filteringOnly = false;
-            favState.currentView = false;
         }
 
-        /* ═══ 2. Đợi câu mới load → check + update UI ═══ */
+        /* ─── 2. Cập nhật UI nút toggle ─── */
+        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+            favUpdatePfOnlyFavBtn();
+        }
+
+        /* ─── 3. Refresh dropdown "CÂU:" ─── */
+        if (typeof favRefreshQuestionDropdown === 'function') {
+            favRefreshQuestionDropdown();
+        }
+
+        /* ─── 4. Đợi câu mới load → cập nhật nút tim ─── */
         setTimeout(function() {
-            /* A. Cập nhật nút tim FLOAT theo câu mới */
-            if (typeof favUpdatePfFloatBtn === 'function') {
-                favUpdatePfFloatBtn();
+            if (typeof favScanAllHeartButtons === 'function') {
+                favScanAllHeartButtons();
             }
 
-            /* B. Cập nhật nút toggle theo câu mới */
-            if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                favUpdatePfOnlyFavBtn();
-            }
-
-            /* C. Refresh dropdown "CÂU:" */
-            if (typeof favRefreshQuestionDropdown === 'function') {
-                favRefreshQuestionDropdown();
-            }
-
-            /* D. Log để debug */
-            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+            var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                          ? String(pfCurrentStt)
                          : null;
-            var isFav = curStt && typeof favHas === 'function' ? favHas(curStt) : false;
-            console.log('[Favorites] Câu mới #' + curStt + ' | liked: ' + isFav);
+            var isNewFav = newStt && typeof favHas === 'function' ? favHas(newStt) : false;
+            console.log('[Favorites] Câu mới #' + newStt + ' | liked: ' + isNewFav);
 
-        }, 250); /* Delay 250ms để ui_template load câu xong */
-
-        /* ═══ 3. Backup: chạy lại sau 500ms phòng khi chậm ═══ */
-        setTimeout(function() {
-            if (typeof favUpdatePfFloatBtn === 'function') {
-                favUpdatePfFloatBtn();
-            }
-            if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                favUpdatePfOnlyFavBtn();
-            }
-        }, 500);
+        }, 100);
     }
 
-    /* ═══ Gắn listener cho #pfDatasetSelect ═══ */
     function attachListener() {
         var sel = document.getElementById('pfDatasetSelect');
         if (!sel) return false;
@@ -16489,16 +16568,25 @@ function favSyncFloatVisibility() {
         sel.__favDatasetBound = true;
 
         sel.addEventListener('change', function() {
-            console.log('[Favorites] #pfDatasetSelect change event fired');
-            /* Delay để ui_template switch RAW_DATA + loadPracticeFull */
-            setTimeout(handleDatasetChange, 200);
+            console.log('[Favorites] #pfDatasetSelect change fired');
+
+            /* Debounce: nếu user đổi liên tục chỉ chạy 1 lần */
+            if (_datasetChangeTimer) clearTimeout(_datasetChangeTimer);
+            _datasetChangeTimer = setTimeout(function() {
+                handleDatasetChange();
+                /* Backup sau 500ms */
+                setTimeout(function() {
+                    if (typeof favScanAllHeartButtons === 'function') {
+                        favScanAllHeartButtons();
+                    }
+                }, 500);
+            }, 250);
         });
 
         console.log('✅ [Favorites] Đã gắn listener cho #pfDatasetSelect');
         return true;
     }
 
-    /* ═══ Cố gắng attach ngay, nếu chưa có DOM thì poll ═══ */
     if (!attachListener()) {
         var _tries = 0;
         var _iv = setInterval(function() {
@@ -16507,85 +16595,9 @@ function favSyncFloatVisibility() {
         }, 200);
     }
 })();
+
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH RIÊNG: ĐỔI BỘ DỮ LIỆU → RESET TOGGLE + CHECK NÚT TIM
-   
-   Bắt sự kiện "change" của #pfDatasetSelect (dropdown Bộ dữ liệu
-   trong Practice Full). Khi user đổi dataset:
-   1. LUÔN reset nút toggle "Chỉ câu yêu thích" về TẮT
-   2. Kiểm tra câu mới hiển thị → cập nhật nút tim (đỏ/xám)
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    'use strict';
-    
-    /* ═══ Hàm xử lý khi đổi dataset ═══ */
-    function handleDatasetChange() {
-        /* ─── 1. RESET nút toggle về TẮT ─── */
-        if (typeof favState !== 'undefined') {
-            favState.pfOnlyFav = false;
-        }
-        
-        /* ─── 2. Cập nhật UI nút toggle ─── */
-        if (typeof favUpdatePfOnlyFavBtn === 'function') {
-            favUpdatePfOnlyFavBtn();
-        }
-        
-        /* ─── 3. Refresh dropdown "CÂU:" (hiện lại tất cả câu) ─── */
-        if (typeof favRefreshQuestionDropdown === 'function') {
-            favRefreshQuestionDropdown();
-        }
-        
-        /* ─── 4. Cập nhật nút tim theo câu mới hiển thị ─── */
-        setTimeout(function() {
-            if (typeof favUpdatePfFloatBtn === 'function') {
-                favUpdatePfFloatBtn();
-            }
-            
-            /* ─── 5. Kiểm tra câu mới có phải yêu thích không (backup) ─── */
-            var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : null;
-            
-            if (newStt && typeof favHas === 'function' && typeof favShowToast === 'function') {
-                var isNewFav = favHas(newStt);
-                /* Không cần toast ở đây — chỉ log nhẹ để debug */
-                console.log('[Favorites] Đổi dataset → câu #' + newStt + ' | liked: ' + isNewFav);
-            }
-        }, 100);
-    }
-    
-    /* ═══ Gắn listener cho #pfDatasetSelect ═══ */
-    function attachListener() {
-        var sel = document.getElementById('pfDatasetSelect');
-        if (!sel) return false;
-        if (sel.__favDatasetBound) return true;
-        
-        sel.__favDatasetBound = true;
-        
-        /* Gọi SAU khi ui_template xử lý xong (đợi 250ms) */
-        sel.addEventListener('change', function() {
-            /* Delay để ui_template kịp switch RAW_DATA + loadPracticeFull */
-            setTimeout(handleDatasetChange, 250);
-            /* Backup: gọi lần 2 sau 500ms phòng trường hợp chậm */
-            setTimeout(handleDatasetChange, 500);
-        });
-        
-        return true;
-    }
-    
-    /* ═══ Cố gắng attach ngay, nếu chưa có DOM thì poll ═══ */
-    if (!attachListener()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (attachListener() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-    
-    console.log('✅ [Favorites] Patch đổi dataset đã cài đặt');
-})();
-/* ═══════════════════════════════════════════════════════════════
-   ★ PATCH điều hướng next/prev
+   ★ PATCH điều hướng next/prev — giữ nguyên (đã đúng)
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function patchNavigateFn(fnName) {
@@ -16596,7 +16608,11 @@ function favSyncFloatVisibility() {
         window[fnName] = function() {
             if (!favState.pfOnlyFav || !favCanUse()) {
                 var res = _orig.apply(this, arguments);
-                setTimeout(favUpdatePfFloatBtn, 30);
+                setTimeout(function() {
+                    if (typeof favScanAllHeartButtons === 'function') {
+                        favScanAllHeartButtons();
+                    }
+                }, 30);
                 return res;
             }
 
@@ -16661,6 +16677,7 @@ window.favHas = favHas;
 window.favCount = favCount;
 window.favExitFilterMode = favExitFilterMode;
 window.favState = favState;
+
 window.favRefreshUI = function() {
     favUpdateLockState();
     favNotifyChanged();
@@ -16683,13 +16700,15 @@ window.favRefreshUI = function() {
    ═══════════════════════════════════════════════════════════════ */
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        initFavorites();
-        setTimeout(favSyncFloatVisibility, 100);
+        if (typeof initFavorites === 'function') initFavorites();
+        setTimeout(function() {
+            if (typeof favSyncFloatVisibility === 'function') favSyncFloatVisibility();
+        }, 100);
     });
 } else {
     setTimeout(function() {
-        initFavorites();
-        favSyncFloatVisibility();
+        if (typeof initFavorites === 'function') initFavorites();
+        if (typeof favSyncFloatVisibility === 'function') favSyncFloatVisibility();
     }, 0);
 }
 
@@ -16706,7 +16725,7 @@ if (document.readyState === 'loading') {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★★★ FIX 2026-09: DROPDOWN "CÂU:" LỌC THEO TOGGLE YÊU THÍCH ★★★
+   ★ PATCH pfBuildQuickNav — Filter dropdown "CÂU:" theo toggle
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -16760,7 +16779,7 @@ if (document.readyState === 'loading') {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ FIX: Dời nút "Chỉ câu yêu thích" sang góc phải, TRÊN nút tim
+   ★ FIX: Dời nút toggle sang góc phải, TRÊN nút tim
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function injectCSS() {
@@ -16793,7 +16812,7 @@ if (document.readyState === 'loading') {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ FIX: favRefreshQuestionDropdown — ưu tiên gọi pfBuildQuickNav
+   ★ FIX: favRefreshQuestionDropdown — ưu tiên pfBuildQuickNav
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     if (typeof window.favRefreshQuestionDropdown !== 'function') return;
