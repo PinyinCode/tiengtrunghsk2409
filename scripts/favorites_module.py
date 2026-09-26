@@ -379,6 +379,52 @@ def build_favorites_css():
 .fav-toast.remove{background:linear-gradient(135deg,#64748b,#475569);}
 .fav-toast.warn{background:linear-gradient(135deg,#f59e0b,#d97706);}
 .fav-toast i{font-size:1rem;}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ FIX 2026-09: KHÔNG ZOOM TO TRÊN MÀN RỘNG
+   Khoá kích thước 2 nút float (tim + chỉ câu yêu thích) nhỏ vừa vặn
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Khoá kích thước tối đa cho cả 2 nút */
+.pf-fav-float,
+.pf-fav-only-float {
+    max-width: 180px;
+    max-height: 44px;
+    padding: .55rem .95rem .55rem .8rem;
+    font-size: .82rem;
+    box-sizing: border-box;
+}
+.pf-fav-float i,
+.pf-fav-only-float i {
+    font-size: 1.05rem;
+}
+
+/* Màn hình siêu rộng (>= 1600px): giữ nguyên kích thước nhỏ */
+@media (min-width: 1600px) {
+    .pf-fav-float,
+    .pf-fav-only-float {
+        max-width: 170px;
+        max-height: 42px;
+        font-size: .8rem;
+        padding: .5rem .85rem .5rem .75rem;
+    }
+    .pf-fav-float i,
+    .pf-fav-only-float i {
+        font-size: 1rem;
+    }
+}
+
+/* Landscape (màn thấp ngang): thu nhỏ nhẹ, KHÔNG phóng to */
+@media (max-height: 550px) and (orientation: landscape) {
+    .pf-fav-float {
+        transform: scale(.9) !important;
+        transform-origin: right bottom;
+    }
+    .pf-fav-only-float {
+        transform: scale(.9) !important;
+        transform-origin: right bottom;
+    }
+}
 """
 
 
