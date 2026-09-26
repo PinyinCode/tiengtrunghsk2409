@@ -16263,7 +16263,53 @@ function favSyncFloatVisibility() {
         }, 100);
     }
 })();
+/* ═══════════════════════════════════════════════════════════════
+   ★ FIX: PATCH loadPracticeFull() — tự cập nhật nút tim
+   Khi đổi dataset trong Practice Full, nút tim phải đổi
+   theo trạng thái câu mới ngay lập tức.
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.loadPracticeFull !== 'function') return false;
+        if (window.loadPracticeFull.__favPatched) return true;
 
+        var _origLoadPF = window.loadPracticeFull;
+        window.loadPracticeFull = function(stt) {
+            /* Gọi hàm gốc trước */
+            var result = _origLoadPF.apply(this, arguments);
+
+            /* ⭐ Ngay sau khi load câu mới → cập nhật nút tim */
+            setTimeout(function() {
+                if (typeof favUpdatePfFloatBtn === 'function') {
+                    favUpdatePfFloatBtn();
+                }
+                /* Cập nhật luôn nút toggle "chỉ câu yêu thích" */
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
+                }
+            }, 30);
+
+            /* Backup: cập nhật lại lần 2 sau 200ms (phòng trường hợp câu load chậm) */
+            setTimeout(function() {
+                if (typeof favUpdatePfFloatBtn === 'function') {
+                    favUpdatePfFloatBtn();
+                }
+            }, 200);
+
+            return result;
+        };
+        window.loadPracticeFull.__favPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
 /* ═══════════════════════════════════════════════════════════════
    ★ PATCH điều hướng next/prev
    ═══════════════════════════════════════════════════════════════ */
