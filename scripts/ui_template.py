@@ -5616,6 +5616,7 @@ function updateResultCount() {
 }
 
 function applyFilter() {
+    /* ═══ 1. ĐỌC GIÁ TRỊ FILTER TỪ UI ═══ */
     state.search = $('searchInput').value.trim().toLowerCase();
     state.hsk = $('hskFilter').value;
     state.subject = $('subjectFilter').value;
@@ -5625,11 +5626,34 @@ function applyFilter() {
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
 
-    /* ❤️ Nếu đang ở tab Yêu thích → delegate cho favorites */
+    /* ═══════════════════════════════════════════════════════════
+       ❤️ 2. NẾU ĐANG Ở TAB YÊU THÍCH → LỌC TỪ DANH SÁCH YÊU THÍCH
+       ═══════════════════════════════════════════════════════════ */
     if (typeof favState !== 'undefined' && favState.currentView
-        && typeof favRenderCurrentTab === 'function') {
+        && typeof favGetRecords === 'function') {
+
+        /* Lấy danh sách câu yêu thích từ TẤT CẢ dataset */
+        var favRecords = favGetRecords();
+
+        /* Áp dụng filter search/hsk/subject lên danh sách yêu thích */
+        filtered = favRecords.filter(function(r) {
+            if (state.search) {
+                var s = state.search;
+                var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
+                var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
+                var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
+                var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
+                var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
+                if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
+            }
+            if (state.hsk && r.hsk !== state.hsk) return false;
+            if (state.subject && r.subject !== state.subject) return false;
+            return true;
+        });
+
         updateResultCount();
-        favRenderCurrentTab();
+        render(true);
+
         if (state.hsk || state.subject) {
             setTimeout(function() {
                 var mainEl = $('mainContent');
@@ -5642,6 +5666,9 @@ function applyFilter() {
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       3. CHẾ ĐỘ BÌNH THƯỜNG — LỌC TỪ getLimitedData() HOẶC RAW_DATA
+       ═══════════════════════════════════════════════════════════ */
     var baseData = getLimitedData();
     filtered = baseData.filter(function(r) {
         if (state.search) {
@@ -5659,6 +5686,7 @@ function applyFilter() {
     });
     updateResultCount();
     render(true);
+
     if (state.hsk || state.subject) {
         setTimeout(function() {
             var mainEl = $('mainContent');
