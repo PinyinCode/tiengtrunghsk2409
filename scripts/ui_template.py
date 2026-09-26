@@ -5628,25 +5628,29 @@ function applyFilter() {
 
     /* ═══════════════════════════════════════════════════════════
        ❤️ 2. NẾU ĐANG Ở TAB YÊU THÍCH → GỌI favRenderCurrentTab()
-       (để giữ HEADER + COUNTER khi user search/filter)
+       - CHỈ khi cờ currentView === true
+       - Có header + counter + sort + clear all
+       - Khi user search/filter → header giữ nguyên
        ═══════════════════════════════════════════════════════════ */
     if (typeof favState !== 'undefined'
-        && favState.currentView
+        && favState
+        && favState.currentView === true
         && typeof favRenderCurrentTab === 'function') {
         favRenderCurrentTab();
         return;
     }
 
     /* ═══════════════════════════════════════════════════════════
-       3. CHẾ ĐỘ BÌNH THƯỜNG — LỌC TỪ getLimitedData()
+       3. CHẾ ĐỘ BÌNH THƯỜNG — LỌC TẤT CẢ CÂU
+       (Khi currentView === false hoặc favState không tồn tại)
        ═══════════════════════════════════════════════════════════ */
     var baseData = getLimitedData();
     filtered = baseData.filter(function(r) {
         if (state.search) {
             var s = state.search;
             var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
-            var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
-            var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
+            var inZh = (r.zh || '').toLowerCase().indexOf(s) !== 🚨 -1;
+            var inP Đinyin = (rI.pinyin || '').toLowerCase().indexOf(s) !== -1;
             var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
             var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
             if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
