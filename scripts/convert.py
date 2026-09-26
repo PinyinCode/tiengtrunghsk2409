@@ -17,6 +17,8 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
 
 ✅ FAVORITES: Tab Yêu thích — chỉ tier ACTIVE/ADMIN lưu được,
    tier khác hiển thị 🔒 mời nâng cấp. Lưu Firebase + offline queue.
+   Tab Yêu thích nằm CUỐI dataset selector.
+   Nút tim PF là FLOAT góc dưới phải, to rõ ràng.
 """
 import json
 import os
@@ -735,7 +737,7 @@ full_css = (
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP HTML BODY
+#  GHÉP HTML BODY  ← ⬇️⬇️⬇️ SỬA 2 ĐOẠN Ở ĐÂY
 # ═══════════════════════════════════════════════════════════════════
 ui_html = build_ui_html()
 ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
@@ -744,16 +746,20 @@ ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 # ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
-# 1. Tab Yêu thích — chèn sau nút Chuyên ngành trong dataset-selector
-ui_html = ui_html.replace(
-    '<button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">',
-    _fav_html["dataset_tab"] + '\n        <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">'
+# ═══ 1. Tab Yêu thích — chèn SAU nút Chuyên ngành (đứng cuối) ═══
+# Regex: tìm nguyên cụm nút Chuyên ngành (bao gồm nội dung con), rồi chèn Yêu thích sau nó
+ui_html = re.sub(
+    r'(<button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">.*?</button>)',
+    r'\1\n        ' + _fav_html["dataset_tab"],
+    ui_html,
+    count=1,
+    flags=re.DOTALL
 )
 
-# 2. Nút tim — chèn vào Practice Full header, trước nút X
+# ═══ 2. Nút tim FLOAT — chèn trước TikTok float trong Practice Full ═══
 ui_html = ui_html.replace(
-    '<button class="pf-close" id="pfClose"',
-    _fav_html["pf_header_btn"] + '\n<button class="pf-close" id="pfClose"'
+    '<a class="pf-tiktok-float" id="pfTiktokFloat"',
+    _fav_html["pf_float_btn"] + '\n<a class="pf-tiktok-float" id="pfTiktokFloat"'
 )
 
 social_html = build_social_html()
@@ -977,7 +983,7 @@ print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
 print(f"📝 Tổng số câu hỏi: {total_questions}")
-print(f"❤️  Đã tích hợp: Yêu thích (chỉ tier active/admin)")
+print(f"❤️  Đã tích hợp: Yêu thích (tab cuối + nút float góc dưới)")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
