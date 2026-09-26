@@ -456,7 +456,7 @@ def build_favorites_html():
             '<button class="pf-fav-float" id="pfFavBtn" type="button" '
             'title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích">'
             '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-float-label">Likes</span>'
+            '<span class="pf-fav-float-label">Like</span>'
             '</button>',
 
         # Nút toggle "Chỉ câu yêu thích" — góc trái
