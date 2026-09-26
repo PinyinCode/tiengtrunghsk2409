@@ -2625,6 +2625,12 @@ def build_ui_html():
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
+        <button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">
+            <i class="far fa-heart"></i>
+            <span>Yêu thích</span>
+            <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>
+            <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>
+        </button>
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
         <div class="ds-sub-label">
@@ -2706,6 +2712,7 @@ def build_ui_html():
 </div>
 <div class="pf-counter" id="pfCounter">Câu 1 / 1</div>
 <div class="pf-tags" id="pfTags"></div>
+<button class="pf-fav-btn" id="pfFavBtn" type="button" title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích"><i class="far fa-heart"></i></button>
 <button class="pf-close" id="pfClose" aria-label="Đóng"><i class="fas fa-times"></i></button>
 </div>
 <div class="pf-filters">
