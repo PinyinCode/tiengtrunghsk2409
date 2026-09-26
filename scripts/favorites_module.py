@@ -456,7 +456,7 @@ def build_favorites_html():
             '<button class="pf-fav-float" id="pfFavBtn" type="button" '
             'title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích">'
             '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-float-label">Yêu thích</span>'
+            '<span class="pf-fav-float-label">Likes</span>'
             '</button>',
 
         # Nút toggle "Chỉ câu yêu thích" — góc trái
@@ -464,7 +464,7 @@ def build_favorites_html():
             '<button class="pf-fav-only-float" id="pfFavOnlyBtn" type="button" '
             'title="Chỉ luyện câu yêu thích" aria-label="Chỉ luyện câu yêu thích">'
             '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-only-label">Chỉ câu yêu thích</span>'
+            '<span class="pf-fav-only-label">Favorites</span>'
             '<span class="pf-fav-only-count" id="pfFavOnlyCount">0</span>'
             '</button>',
     }
