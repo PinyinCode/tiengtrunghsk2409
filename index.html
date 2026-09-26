@@ -7398,6 +7398,11 @@ function markCurrentDatasetActive() {
 function switchDataset(datasetId) {
     if (!DATASET_REGISTRY[datasetId]) return;
 
+    /* ❤️ Nếu rời tab Yêu thích → reset cờ */
+    if (typeof favState !== 'undefined' && favState.currentView) {
+        favState.currentView = false;
+    }
+
     if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
         showChuyenNganhLockMessage();
         return;
@@ -7420,12 +7425,14 @@ function switchDataset(datasetId) {
 
     if ($('fabGroup')) $('fabGroup').classList.remove('open');
 
-    // ⬇️ FIX: Khôi phục banner chủ đề sau khi đổi dataset
+    /* ❤️ Cập nhật lock state cho tab (bao gồm tab Yêu thích) */
+    if (typeof favUpdateLockState === 'function') favUpdateLockState();
+
+    /* Khôi phục banner chủ đề sau khi đổi dataset */
     var saved = loadOnboardingSelection();
     if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
         var cfg = getOnboardingConfig();
         if (cfg) {
-            // Chỉ áp dụng lại nếu dataset là tonghop (vì chuyên ngành có kho riêng)
             if (datasetId === 'tonghop') {
                 window.__onboardingAutoPicked = !!saved.auto_picked;
                 applyOnboardingSelection(saved.topics, false);
@@ -8763,6 +8770,9 @@ function initApp() {
     initVoiceSettings();
     initOnboarding();
 
+    /* ❤️ Khởi tạo module Yêu thích */
+    if (typeof initFavorites === 'function') initFavorites();
+
     _lastWidthMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
     if (_lastWidthMode === 'desktop') moveTikTokBarToHeader();
     populateTikTokFloat();
@@ -8782,11 +8792,19 @@ function initApp() {
         $('hskFilter').value = '';
         $('subjectFilter').value = '';
         window.__onboardingOverride = null;
+
+        /* ❤️ Nếu đang ở tab Yêu thích → về tổng hợp trước */
+        if (typeof favState !== 'undefined' && favState.currentView) {
+            favState.currentView = false;
+            if (typeof switchDataset === 'function') switchDataset('tonghop');
+            if (typeof markCurrentDatasetActive === 'function') markCurrentDatasetActive();
+        }
+
         var obBanner = $('onboardingActiveBanner');
         if (obBanner) obBanner.remove();
         applyFilter();
 
-        // FIX: Khôi phục banner chủ đề sau khi reset filter
+        /* Khôi phục banner chủ đề sau khi reset filter */
         var saved = loadOnboardingSelection();
         if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
             var cfg = getOnboardingConfig();
@@ -8803,7 +8821,6 @@ function initApp() {
         applyFilter();
         this.classList.remove('show');
 
-        // FIX: Khôi phục banner chủ đề sau khi xóa search
         var saved = loadOnboardingSelection();
         if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
             var cfg = getOnboardingConfig();
@@ -8847,7 +8864,6 @@ function initApp() {
     try { buildFilters(); applyFilter(); }
     catch(e) { console.error('Init error:', e); }
 }
-
 /* ═══════════════════════════════════════════════════════════ */
 /* SỬA: REFRESH APP — VẼ LẠI BANNER SAU LOGIN/RELOAD            */
 /* ═══════════════════════════════════════════════════════════ */
@@ -8860,8 +8876,11 @@ function refreshApp() {
     updateTierBadge();
     updateDemoBanner();
 
-    // FIX: Gọi maybeShowOnboarding để vẽ banner chủ đề nếu đã có selection.
-    // Dùng setTimeout 0ms để chạy sau khi các hàm trên hoàn tất.
+    /* ❤️ Cập nhật trạng thái Yêu thích khi tier đổi */
+    if (typeof favUpdateLockState === 'function') favUpdateLockState();
+    if (typeof favRefreshUI === 'function') favRefreshUI();
+
+    /* FIX: Vẽ lại banner chủ đề nếu có selection */
     if (typeof maybeShowOnboarding === 'function') {
         setTimeout(maybeShowOnboarding, 0);
     }
@@ -9432,9 +9451,28 @@ function applyFilter() {
     state.hsk = $('hskFilter').value;
     state.subject = $('subjectFilter').value;
     updateFilterUI();
+
     var clearBtn = $('clearSearchBtn');
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
+
+    /* ❤️ Nếu đang ở tab Yêu thích → delegate cho favorites */
+    if (typeof favState !== 'undefined' && favState.currentView
+        && typeof favRenderCurrentTab === 'function') {
+        updateResultCount();
+        favRenderCurrentTab();
+        if (state.hsk || state.subject) {
+            setTimeout(function() {
+                var mainEl = $('mainContent');
+                if (mainEl) {
+                    var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top: yOffset, behavior: 'smooth' });
+                }
+            }, 150);
+        }
+        return;
+    }
+
     var baseData = getLimitedData();
     filtered = baseData.filter(function(r) {
         if (state.search) {
@@ -9462,7 +9500,6 @@ function applyFilter() {
         }, 150);
     }
 }
-
 /* ============================================================ */
 /* RENDER CARDS                                                  */
 /* ============================================================ */
@@ -9519,6 +9556,11 @@ function render(reset) {
                          escapeHtml(r.subject) + '</span>';
         }
 
+        /* ❤️ Nút Yêu thích */
+        var favBtnHtml = (typeof favBuildFavButton === 'function')
+            ? favBuildFavButton(r.stt)
+            : '';
+
         mobHtml += '<div class="card" data-hsk="' + (r.hsk || '') + '" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
             '<div class="card-header">' +
                 '<div class="card-stt">' + sttSafe + '</div>' +
@@ -9528,7 +9570,9 @@ function render(reset) {
                     subjectTag +
                     excelBadge +
                 '</div>' +
-                '<div onclick="event.stopPropagation()" class="action-group">' + audio + writeBtn + fullBtn + '</div>' +
+                '<div onclick="event.stopPropagation()" class="action-group">' +
+                    audio + writeBtn + fullBtn + favBtnHtml +
+                '</div>' +
             '</div>' +
             '<div class="card-body">' +
                 (r.vi ? '<div class="card-vi">' + viHtml + '</div>' : '') +
@@ -9591,7 +9635,6 @@ function render(reset) {
         mobileWrapper.appendChild(endNote);
     }
 }
-
 /* ============================================================ */
 /* ANSWER CHECKING                                               */
 /* ============================================================ */
@@ -11025,6 +11068,29 @@ function showWriterChar(char) {
             target.innerHTML = '<div class="writer-loading"><i class="fas fa-exclamation-triangle"></i>Lỗi tạo khung vẽ</div>';
         }
     }, 100);
+}
+/* ═══════════════════════════════════════════════════════════════
+   ❤️ FAVORITES BRIDGE — Build nút tim cho card
+   ═══════════════════════════════════════════════════════════════ */
+function favBuildFavButton(stt) {
+    if (typeof favCanUse !== 'function') return '';
+    var can = favCanUse();
+    var active = typeof favHas === 'function' ? favHas(stt) : false;
+    var sttJs = escapeJs(stt);
+    var sttSafe = escapeHtml(stt);
+    var iconClass = !can ? 'fas fa-lock' : (active ? 'fas fa-heart' : 'far fa-heart');
+    var title = !can
+        ? 'Cần gia hạn để dùng Yêu thích'
+        : (active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích');
+
+    return '<button class="fav-btn' +
+        (active ? ' active' : '') +
+        (!can ? ' locked' : '') +
+        '" data-stt="' + sttSafe + '" ' +
+        'onclick="favOnCardBtnClick(event, \'' + sttJs + '\')" ' +
+        'title="' + title + '">' +
+        '<i class="' + iconClass + '"></i>' +
+        '</button>';
 }
 
 /* ==== SOCIAL JS ==== */
