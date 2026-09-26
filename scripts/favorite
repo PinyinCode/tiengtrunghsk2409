@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Module FAVORITES — Tính năng Yêu thích câu.
 
@@ -379,6 +379,91 @@ def build_favorites_css():
 .fav-toast.remove{background:linear-gradient(135deg,#64748b,#475569);}
 .fav-toast.warn{background:linear-gradient(135deg,#f59e0b,#d97706);}
 .fav-toast i{font-size:1rem;}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ FIX 2026-09: KHÔNG ZOOM TO TRÊN MÀN RỘNG
+   Khoá kích thước 2 nút float (tim + chỉ câu yêu thích) nhỏ vừa vặn
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Khoá kích thước tối đa cho cả 2 nút */
+.pf-fav-float,
+.pf-fav-only-float {
+    max-width: 180px;
+    max-height: 44px;
+    padding: .55rem .95rem .55rem .8rem;
+    font-size: .82rem;
+    box-sizing: border-box;
+}
+.pf-fav-float i,
+.pf-fav-only-float i {
+    font-size: 1.05rem;
+}
+
+/* Màn hình siêu rộng (>= 1600px): giữ nguyên kích thước nhỏ */
+@media (min-width: 1600px) {
+    .pf-fav-float,
+    .pf-fav-only-float {
+        max-width: 170px;
+        max-height: 42px;
+        font-size: .8rem;
+        padding: .5rem .85rem .5rem .75rem;
+    }
+    .pf-fav-float i,
+    .pf-fav-only-float i {
+        font-size: 1rem;
+    }
+}
+
+/* Landscape (màn thấp ngang): thu nhỏ nhẹ, KHÔNG phóng to */
+@media (max-height: 550px) and (orientation: landscape) {
+    .pf-fav-float {
+        transform: scale(.9) !important;
+        transform-origin: right bottom;
+    }
+    .pf-fav-only-float {
+        transform: scale(.9) !important;
+        transform-origin: right bottom;
+    }
+}
+/* ═══════════════════════════════════════════════════════════════
+   ★ NÚT TOGGLE "CHỈ CÂU YÊU THÍCH" — TRẠNG THÁI CÂU KHÔNG PHẢI YÊU THÍCH
+   Khi câu hiện tại CHƯA like → nút mờ, không kích hoạt được
+   ═══════════════════════════════════════════════════════════════ */
+.pf-fav-only-float.current-not-fav {
+    opacity: 0.5 !important;
+    filter: grayscale(0.6);
+    cursor: not-allowed;
+    pointer-events: auto; /* Vẫn cho phép bấm để hiện cảnh báo */
+}
+
+.pf-fav-only-float.current-not-fav:hover {
+    transform: none !important;
+    border-color: var(--border) !important;
+    color: var(--text-2) !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,.12) !important;
+    opacity: 0.6 !important;
+}
+
+.pf-fav-only-float.current-not-fav i {
+    animation: none !important;
+}
+
+.pf-fav-only-float.current-not-fav .pf-fav-only-count {
+    background: rgba(148, 163, 184, 0.2);
+    color: var(--text-3);
+}
+
+/* Dark mode */
+[data-theme="dark"] .pf-fav-only-float.current-not-fav {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text-3);
+}
+
+[data-theme="dark"] .pf-fav-only-float.current-not-fav:hover {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+}
 """
 
 
@@ -410,7 +495,7 @@ def build_favorites_html():
             '<button class="pf-fav-float" id="pfFavBtn" type="button" '
             'title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích">'
             '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-float-label">Yêu thích</span>'
+            '<span class="pf-fav-float-label">Like</span>'
             '</button>',
 
         # Nút toggle "Chỉ câu yêu thích" — góc trái
@@ -418,7 +503,7 @@ def build_favorites_html():
             '<button class="pf-fav-only-float" id="pfFavOnlyBtn" type="button" '
             'title="Chỉ luyện câu yêu thích" aria-label="Chỉ luyện câu yêu thích">'
             '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-only-label">Chỉ câu yêu thích</span>'
+            '<span class="pf-fav-only-label">Favorites Only</span>'
             '<span class="pf-fav-only-count" id="pfFavOnlyCount">0</span>'
             '</button>',
     }
@@ -574,11 +659,63 @@ function favListenCloud() {
 
 /* ============ ADD / REMOVE ============ */
 async function favAdd(stt, record) {
+    /* ═══ 1. CHECK QUYỀN ═══ */
     if (!favCanUse()) { favShowLockDialog(); return false; }
     var email = favGetCurrentEmail();
     if (!email) { favShowLockDialog(); return false; }
 
     stt = String(stt);
+
+    /* ═══ 2. CHECK ADMIN ═══ */
+    var isAdmin = (typeof currentUser !== 'undefined'
+                   && currentUser
+                   && currentUser.role === 'admin');
+
+    /* ═══════════════════════════════════════════════════════════
+       GIỚI HẠN 500 TIM/NGÀY — RESET LÚC 00:00
+       ═══════════════════════════════════════════════════════════ */
+    var MAX_PER_DAY = 500;
+    var today = new Date().toDateString(); // "Wed Sep 26 2026"
+
+    if (!isAdmin) {
+        var dayKey = 'fav_daily_' + email;
+        var daily = { date: today, count: 0 };
+
+        /* Đọc counter từ localStorage */
+        try {
+            var saved = JSON.parse(localStorage.getItem(dayKey) || 'null');
+            if (saved && saved.date === today) {
+                /* Cùng ngày → giữ counter cũ */
+                daily = saved;
+            } else {
+                /* Khác ngày → RESET counter về 0 */
+                daily = { date: today, count: 0 };
+            }
+        } catch(e) {
+            daily = { date: today, count: 0 };
+        }
+
+        /* Check giới hạn */
+        if (daily.count >= MAX_PER_DAY) {
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            var hoursLeft = Math.ceil((tomorrow - Date.now()) / 3600000);
+            favShowToast('Đã đạt giới hạn ' + MAX_PER_DAY + ' tim hôm nay. Còn ' + hoursLeft + 'h nữa!', 'warn');
+            return false;
+        }
+
+        /* Tăng counter */
+        daily.count++;
+        daily.date = today;
+        try {
+            localStorage.setItem(dayKey, JSON.stringify(daily));
+        } catch(e) {}
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       LƯU LOCAL — OPTIMISTIC UPDATE
+       ═══════════════════════════════════════════════════════════ */
     favState.items[stt] = {
         stt: stt,
         addedAt: Date.now(),
@@ -588,42 +725,73 @@ async function favAdd(stt, record) {
     favSaveToLocal();
     favNotifyChanged();
 
+    /* ═══════════════════════════════════════════════════════════
+       ĐỒNG BỘ FIRESTORE
+       ═══════════════════════════════════════════════════════════ */
     if (typeof db !== 'undefined' && db) {
         try {
-            await db.collection('favorites').doc(email).collection('items').doc(stt).set({
-                stt: stt,
-                hsk: favState.items[stt].hsk,
-                subject: favState.items[stt].subject,
-                addedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await db.collection('favorites').doc(email)
+                .collection('items').doc(stt).set({
+                    stt: stt,
+                    hsk: favState.items[stt].hsk,
+                    subject: favState.items[stt].subject,
+                    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
         } catch(e) {
+            /* Rollback local + counter */
             console.warn('[Favorites] Add cloud error:', e);
             delete favState.items[stt];
             favSaveToLocal();
             favNotifyChanged();
+
+            if (!isAdmin) {
+                try {
+                    var dayKey2 = 'fav_daily_' + email;
+                    var d2 = JSON.parse(localStorage.getItem(dayKey2) || 'null');
+                    if (d2 && d2.date === today && d2.count > 0) {
+                        d2.count--;
+                        localStorage.setItem(dayKey2, JSON.stringify(d2));
+                    }
+                } catch(e2) {}
+            }
+
+            favShowToast('Lỗi lưu! Thử lại sau', 'warn');
             return false;
         }
     }
     return true;
 }
-
 async function favRemove(stt) {
+    /* ═══ 1. CHECK QUYỀN ═══ */
     if (!favCanUse()) { favShowLockDialog(); return false; }
     var email = favGetCurrentEmail();
     if (!email) return false;
 
     stt = String(stt);
+
+    /* ═══════════════════════════════════════════════════════════
+       KHÔNG GIỚI HẠN XÓA — user thoải mái sửa sai
+       (Delete rẻ hơn Write 9 lần, không cần chặn)
+       ═══════════════════════════════════════════════════════════ */
+
+    /* Backup để rollback nếu lỗi */
     var backup = favState.items[stt];
+    if (!backup) return true; // Đã xóa rồi, không cần làm gì
+
+    /* ═══ 2. LƯU LOCAL — OPTIMISTIC UPDATE ═══ */
     delete favState.items[stt];
     favSaveToLocal();
     favNotifyChanged();
 
+    /* ═══ 3. ĐỒNG BỘ FIRESTORE ═══ */
     if (typeof db !== 'undefined' && db) {
         try {
-            await db.collection('favorites').doc(email).collection('items').doc(stt).delete();
+            await db.collection('favorites').doc(email)
+                .collection('items').doc(stt).delete();
         } catch(e) {
+            /* Rollback nếu lỗi */
             console.warn('[Favorites] Remove cloud error:', e);
-            if (backup) favState.items[stt] = backup;
+            favState.items[stt] = backup;
             favSaveToLocal();
             favNotifyChanged();
             return false;
@@ -631,7 +799,6 @@ async function favRemove(stt) {
     }
     return true;
 }
-
 async function favToggle(stt, record) {
     if (!favCanUse()) { favShowLockDialog(); return; }
     stt = String(stt);
@@ -645,31 +812,52 @@ async function favToggle(stt, record) {
 }
 
 async function favClearAll() {
+    /* ═══ 1. CHECK QUYỀN ═══ */
     if (!favCanUse()) { favShowLockDialog(); return; }
-    var count = Object.keys(favState.items).length;
+    var email = favGetCurrentEmail();
+    if (!email) return;
+
+    var count = favCount();
     if (count === 0) {
         favShowToast('Chưa có câu yêu thích nào', 'warn');
         return;
     }
+
+    /* ═══ 2. XÁC NHẬN ═══ */
     if (!confirm('Xoá TẤT CẢ ' + count + ' câu yêu thích?\n\nKhông thể hoàn tác!')) return;
 
-    var email = favGetCurrentEmail();
+    /* ═══ 3. LƯU LOCAL — OPTIMISTIC UPDATE ═══ */
     var backup = favState.items;
     favState.items = {};
     favSaveToLocal();
     favNotifyChanged();
 
-    if (typeof db !== 'undefined' && db && email) {
+    /* ═══ 4. XÓA TRÊN FIRESTORE — DÙNG BATCH ═══ */
+    if (typeof db !== 'undefined' && db) {
         try {
-            var snap = await db.collection('favorites').doc(email).collection('items').get();
-            var batch = db.batch();
-            snap.forEach(function(doc) { batch.delete(doc.ref); });
-            await batch.commit();
+            var snap = await db.collection('favorites').doc(email)
+                .collection('items').get();
+
+            if (snap.size === 0) return;
+
+            /* Firestore batch tối đa 500 operations */
+            var BATCH_SIZE = 450;
+            var docs = [];
+            snap.forEach(function(doc) { docs.push(doc.ref); });
+
+            for (var i = 0; i < docs.length; i += BATCH_SIZE) {
+                var batch = db.batch();
+                var chunk = docs.slice(i, i + BATCH_SIZE);
+                chunk.forEach(function(ref) { batch.delete(ref); });
+                await batch.commit();
+            }
         } catch(e) {
+            /* Rollback nếu lỗi */
             console.warn('[Favorites] Clear cloud error:', e);
             favState.items = backup;
             favSaveToLocal();
             favNotifyChanged();
+            favShowToast('Lỗi! Thử lại sau', 'warn');
             return;
         }
     }
@@ -685,20 +873,152 @@ function favHas(stt) {
 function favCount() {
     return Object.keys(favState.items).length;
 }
+function favGetDailyRemaining() {
+    var email = favGetCurrentEmail();
+    if (!email) return 0;
 
+    var isAdmin = (typeof currentUser !== 'undefined'
+                   && currentUser
+                   && currentUser.role === 'admin');
+    if (isAdmin) return Infinity;
+
+    var MAX_PER_DAY = 500;
+    var today = new Date().toDateString();
+
+    try {
+        var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
+        if (saved && saved.date === today) {
+            return Math.max(0, MAX_PER_DAY - saved.count);
+        }
+    } catch(e) {}
+
+    return MAX_PER_DAY;
+}
+
+function favGetDailyUsed() {
+    var email = favGetCurrentEmail();
+    if (!email) return 0;
+
+    var today = new Date().toDateString();
+    try {
+        var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
+        if (saved && saved.date === today) {
+            return saved.count;
+        }
+    } catch(e) {}
+    return 0;
+}
 /* ============ LẤY RECORD GỐC ============ */
-function favGetRecords() {
-    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
+/* ============ LẤY RECORD GỐC — TẤT CẢ DATASET ============ */
+function favGetRecordsFromArray(sourceArray) {
+    if (!sourceArray || !sourceArray.length) return [];
     var out = [];
     var seen = {};
-    for (var i = 0; i < RAW_DATA.length; i++) {
-        var r = RAW_DATA[i];
+    for (var i = 0; i < sourceArray.length; i++) {
+        var r = sourceArray[i];
         if (r && favHas(r.stt) && !seen[String(r.stt)]) {
             seen[String(r.stt)] = true;
             out.push(r);
         }
     }
     return out;
+}
+/* ═══════════════════════════════════════════════════════════════
+   ★ QUÉT LẠI TẤT CẢ NÚT TIM — sau khi render xong
+   - Cập nhật class active theo favHas(stt)
+   - Áp dụng cho màn hình chính VÀ Practice Full
+   ═══════════════════════════════════════════════════════════════ */
+function favScanAllHeartButtons() {
+    var can = (typeof favCanUse === 'function') ? favCanUse() : false;
+
+    /* ─── 1. Quét nút tim trên card (màn hình chính) ─── */
+    document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
+        var stt = btn.dataset.stt;
+        if (!stt) return;
+
+        var active = (typeof favHas === 'function') ? favHas(stt) : false;
+        var icon = btn.querySelector('i');
+
+        if (!can) {
+            /* Không có quyền → hiện khoá */
+            btn.classList.add('locked');
+            btn.classList.remove('active');
+            if (icon) icon.className = 'fas fa-lock';
+            btn.title = 'Cần gia hạn để dùng Yêu thích';
+            return;
+        }
+
+        /* Có quyền → cập nhật theo trạng thái */
+        btn.classList.remove('locked');
+        btn.classList.toggle('active', active);
+        if (icon) {
+            icon.className = active ? 'fas fa-heart' : 'far fa-heart';
+        }
+        btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
+    });
+
+    /* ─── 2. Cập nhật nút tim FLOAT (Practice Full) ─── */
+    if (typeof favUpdatePfFloatBtn === 'function') {
+        favUpdatePfFloatBtn();
+    }
+
+    /* ─── 3. Cập nhật nút toggle "Chỉ câu yêu thích" ─── */
+    if (typeof favUpdatePfOnlyFavBtn === 'function') {
+        favUpdatePfOnlyFavBtn();
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH render() của ui_template — tự động quét nút tim sau render
+   Chạy sau khi render() xong → đảm bảo nút tim trên card mới có
+   class active đúng theo trạng thái yêu thích
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.render !== 'function') return false;
+        if (window.render.__favScanPatched) return true;
+
+        var _origRender = window.render;
+        window.render = function() {
+            var result = _origRender.apply(this, arguments);
+
+            /* ⭐ Quét lại tất cả nút tim SAU khi render xong */
+            setTimeout(function() {
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
+                }
+            }, 10);
+
+            return result;
+        };
+        window.render.__favScanPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
+function favGetRecords() {
+    /* Nếu có DATASET_REGISTRY → quét TẤT CẢ dataset */
+    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+        var allRecords = [];
+        Object.keys(DATASET_REGISTRY).forEach(function(dsId) {
+            var ds = DATASET_REGISTRY[dsId];
+            if (ds && Array.isArray(ds.data)) {
+                allRecords = allRecords.concat(ds.data);
+            }
+        });
+        return favGetRecordsFromArray(allRecords);
+    }
+
+    /* Fallback: chỉ dùng RAW_DATA hiện tại */
+    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
+    return favGetRecordsFromArray(RAW_DATA);
 }
 
 function favIsFavoriteRecord(r) {
@@ -828,7 +1148,7 @@ function favUpdatePfFloatBtn() {
     var active = stt ? favHas(stt) : false;
     pfBtn.classList.toggle('active', active);
     if (icon) icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-    if (label) label.textContent = active ? 'Đã thích' : 'Yêu thích';
+    if (label) label.textContent = active ? 'Like' : 'Like';
     pfBtn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
 }
 
@@ -844,9 +1164,10 @@ function favUpdatePfOnlyFavBtn() {
     var can = favCanUse();
     var count = favCount();
 
+    /* ═══ 1. CHƯA ĐỦ QUYỀN ═══ */
     if (!can) {
         btn.classList.add('locked');
-        btn.classList.remove('active', 'empty');
+        btn.classList.remove('active', 'empty', 'current-not-fav');
         if (icon) icon.className = 'fas fa-lock';
         btn.title = 'Cần gia hạn để dùng Yêu thích';
         if (countEl) countEl.textContent = '0';
@@ -856,9 +1177,10 @@ function favUpdatePfOnlyFavBtn() {
     btn.classList.remove('locked');
     if (countEl) countEl.textContent = count;
 
+    /* ═══ 2. CHƯA CÓ CÂU YÊU THÍCH NÀO ═══ */
     if (count === 0) {
         btn.classList.add('empty');
-        btn.classList.remove('active');
+        btn.classList.remove('active', 'current-not-fav');
         if (icon) icon.className = 'far fa-heart';
         btn.title = 'Chưa có câu yêu thích nào';
         if (favState.pfOnlyFav) {
@@ -869,6 +1191,28 @@ function favUpdatePfOnlyFavBtn() {
 
     btn.classList.remove('empty');
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 3. CHECK CÂU HIỆN TẠI CÓ PHẢI YÊU THÍCH KHÔNG
+       - Nếu KHÔNG phải → nút mờ + tooltip cảnh báo
+       - Nếu phải → nút sáng
+       ═══════════════════════════════════════════════════════════ */
+    var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                     ? String(pfCurrentStt)
+                     : null;
+    var currentIsFav = currentStt ? favHas(currentStt) : false;
+
+    /* Nếu toggle đang TẮT + câu hiện tại KHÔNG phải yêu thích → nút mờ */
+    if (!favState.pfOnlyFav && !currentIsFav) {
+        btn.classList.add('current-not-fav');
+        btn.classList.remove('active');
+        if (icon) icon.className = 'far fa-heart';
+        btn.title = 'Câu hiện tại chưa được yêu thích. Bấm ❤️ để thêm vào yêu thích trước.';
+        return;
+    }
+
+    btn.classList.remove('current-not-fav');
+
+    /* ═══ 4. CẬP NHẬT THEO TRẠNG THÁI TOGGLE ═══ */
     if (favState.pfOnlyFav) {
         btn.classList.add('active');
         if (icon) icon.className = 'fas fa-heart';
@@ -881,59 +1225,71 @@ function favUpdatePfOnlyFavBtn() {
 }
 
 function favTogglePfOnlyFav() {
+    /* ═══ 1. CHECK QUYỀN ═══ */
     if (!favCanUse()) { favShowLockDialog(); return; }
 
+    /* ═══ 2. CHECK TỔNG SỐ CÂU YÊU THÍCH ═══ */
     var count = favCount();
     if (count === 0) {
         favShowToast('Chưa có câu yêu thích nào để luyện', 'warn');
         return;
     }
 
-    favState.pfOnlyFav = !favState.pfOnlyFav;
-    favUpdatePfOnlyFavBtn();
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 3. CHECK CÂU HIỆN TẠI CÓ PHẢI CÂU YÊU THÍCH KHÔNG
+       - Nếu câu hiện tại KHÔNG phải yêu thích → KHÔNG cho bật toggle
+       - Nếu câu hiện tại LÀ yêu thích → cho phép toggle
+       ═══════════════════════════════════════════════════════════ */
+    var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                     ? String(pfCurrentStt)
+                     : null;
+    var currentIsFav = currentStt ? favHas(currentStt) : false;
 
-    /* ★ Refresh dropdown "CÂU:" */
-    favRefreshQuestionDropdown();
+    /* Nếu đang TẮT toggle và bấm để BẬT → phải check câu hiện tại */
+    if (!favState.pfOnlyFav) {
 
-    /* Thông báo */
-    favShowToast(
-        favState.pfOnlyFav
-            ? ('Chỉ luyện ' + count + ' câu yêu thích')
-            : 'Luyện tất cả câu',
-        favState.pfOnlyFav ? 'add' : 'remove'
-    );
-
-    /* Nếu Practice Full đang mở → nếu câu hiện tại không thuộc yêu thích, nhảy sang câu yêu thích đầu */
-    var pfModal = document.getElementById('practiceFullModal');
-    if (pfModal && pfModal.classList.contains('show')) {
-        if (favState.pfOnlyFav && typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
-            if (!favHas(pfCurrentStt)) {
-                var favList = favGetRecords();
-                if (favList.length > 0 && typeof window.openPracticeFull === 'function') {
-                    setTimeout(function() {
-                        window.openPracticeFull(String(favList[0].stt));
-                    }, 60);
-                }
-            }
+        /* ─── Kiểm tra câu hiện tại ─── */
+        if (!currentStt) {
+            favShowToast('Không xác định được câu hiện tại', 'warn');
+            return;
         }
-    }
-}
 
+        if (!currentIsFav) {
+            /* ❌ Câu hiện tại CHƯA được yêu thích → KHÔNG cho bật toggle */
+            favShowToast(
+                'Câu #' + currentStt + ' chưa được yêu thích. Bấm ❤️ để thêm vào yêu thích trước.',
+                'warn'
+            );
+            return;
+        }
+
+        /* ✅ Câu hiện tại LÀ yêu thích → BẬT toggle */
+        favState.pfOnlyFav = true;
+
+        /* Cập nhật UI */
+        favUpdatePfOnlyFavBtn();
+        favRefreshQuestionDropdown();
+
+        favShowToast('Chỉ luyện ' + count + ' câu yêu thích', 'add');
+        return;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       4. ĐANG BẬT TOGGLE → BẤM ĐỂ TẮT (luôn cho phép tắt)
+       ═══════════════════════════════════════════════════════════ */
+    favState.pfOnlyFav = false;
+    favUpdatePfOnlyFavBtn();
+    favRefreshQuestionDropdown();
+    favShowToast('Luyện tất cả câu', 'remove');
+}
 /* ═══════════════════════════════════════════════════════════════
    NOTIFY CHANGES
    ═══════════════════════════════════════════════════════════════ */
 function favNotifyChanged() {
-    /* Nút tim trên card */
-    document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
-        var stt = btn.dataset.stt;
-        var active = favHas(stt);
-        btn.classList.toggle('active', active);
-        var icon = btn.querySelector('i');
-        if (icon && !btn.classList.contains('locked')) {
-            icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-        }
-        btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
-    });
+    /* ⭐ Quét LẠI TẤT CẢ nút tim (thay vì chỉ quét vài cái) */
+    if (typeof favScanAllHeartButtons === 'function') {
+        favScanAllHeartButtons();
+    }
 
     /* Badge tab + dropdown */
     var count = favCount();
@@ -944,17 +1300,6 @@ function favNotifyChanged() {
             badge.dataset.count = count;
         }
     });
-
-    /* Nút tim FLOAT */
-    favUpdatePfFloatBtn();
-
-    /* Nút toggle "chỉ câu yêu thích" */
-    favUpdatePfOnlyFavBtn();
-
-    /* ★ Nếu đang bật "chỉ câu yêu thích" → refresh dropdown CÂU: */
-    if (favState.pfOnlyFav) {
-        favRefreshQuestionDropdown();
-    }
 
     /* Nếu đang ở tab Yêu thích → render lại */
     if (favState.currentView && favState.filteringOnly) {
@@ -1064,6 +1409,9 @@ function favShowToast(message, type) {
 /* ═══════════════════════════════════════════════════════════════
    RENDER TAB YÊU THÍCH (fallback)
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   RENDER TAB YÊU THÍCH (có counter theo ngày)
+   ═══════════════════════════════════════════════════════════════ */
 function favRenderCurrentTab() {
     if (!favState.currentView) return;
     if (typeof mobileWrapper === 'undefined' || !mobileWrapper) return;
@@ -1071,6 +1419,9 @@ function favRenderCurrentTab() {
 
     var can = favCanUse();
 
+    /* ═══════════════════════════════════════════════════════════
+       1. NẾU KHÔNG CÓ QUYỀN → HIỆN LOCK STATE
+       ═══════════════════════════════════════════════════════════ */
     if (!can) {
         mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
             '<div style="width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;' +
@@ -1086,9 +1437,9 @@ function favRenderCurrentTab() {
                     ? 'Chỉ tài khoản <b>đã gia hạn</b> mới lưu được câu yêu thích và đồng bộ trên mọi thiết bị.'
                     : 'Vui lòng <b>đăng nhập</b> và <b>gia hạn</b> để dùng tính năng này.') +
             '</div>' +
-            '<button class="fav-locked-empty .fav-empty-cta" ' +
-            'style="margin-top:1rem;padding:.6rem 1.2rem;border-radius:50px;border:none;' +
-            'background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;cursor:pointer;" ' +
+            '<button style="margin-top:1rem;padding:.6rem 1.2rem;border-radius:50px;border:none;' +
+            'background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;cursor:pointer;' +
+            'font-family:inherit;text-transform:uppercase;letter-spacing:.3px;" ' +
             'onclick="favShowLockDialog()">' +
                 '<i class="fas ' + (favIsLoggedIn() ? 'fa-gem' : 'fa-sign-in-alt') + '"></i>' +
                 (favIsLoggedIn() ? ' Gia hạn ngay' : ' Đăng nhập ngay') +
@@ -1097,8 +1448,17 @@ function favRenderCurrentTab() {
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       2. LẤY DANH SÁCH CÂU YÊU THÍCH TỪ TẤT CẢ DATASET
+       ═══════════════════════════════════════════════════════════ */
+    var allFavRecords = favGetRecords(); /* Từ TẤT CẢ dataset */
+
+    /* Sắp xếp theo sortMode */
     var items = favGetSortedList();
 
+    /* ═══════════════════════════════════════════════════════════
+       3. EMPTY STATE — CHƯA CÓ CÂU YÊU THÍCH NÀO
+       ═══════════════════════════════════════════════════════════ */
     if (items.length === 0) {
         mobileWrapper.innerHTML = '<div class="fav-empty">' +
             '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
@@ -1111,46 +1471,81 @@ function favRenderCurrentTab() {
         return;
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       4. TẠO COUNTER HIỂN THỊ SỐ TIM CÒN LẠI HÔM NAY
+       ═══════════════════════════════════════════════════════════ */
+    var isAdminUser = (typeof currentUser !== 'undefined'
+                       && currentUser
+                       && currentUser.role === 'admin');
+    var counterHtml = '';
+
+    if (isAdminUser) {
+        counterHtml = '<span style="font-size:.7rem;font-weight:700;color:#7c3aed;' +
+                      'padding:.15rem .55rem;background:rgba(124,58,237,.12);border-radius:50px;' +
+                      'display:inline-flex;align-items:center;gap:.25rem;">' +
+                      '<i class="fas fa-infinity"></i> Admin không giới hạn</span>';
+    } else {
+        var used = (typeof favGetDailyUsed === 'function') ? favGetDailyUsed() : 0;
+        var MAX_PER_DAY = 500;
+        var color = used >= 450 ? '#dc2626' : (used >= 350 ? '#f59e0b' : '#16a34a');
+        var bgColor = used >= 450 ? 'rgba(220,38,38,.15)' :
+                      used >= 350 ? 'rgba(245,158,11,.15)' : 'rgba(22,163,74,.12)';
+        counterHtml = '<span style="font-size:.7rem;font-weight:700;color:' + color + ';' +
+                      'padding:.15rem .55rem;background:' + bgColor + ';border-radius:50px;' +
+                      'display:inline-flex;align-items:center;gap:.25rem;">' +
+                      '<i class="fas fa-calendar-day"></i> ' + used + '/' + MAX_PER_DAY + ' hôm nay</span>';
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       5. HEADER (Tiêu đề + counter + sort + clear)
+       ═══════════════════════════════════════════════════════════ */
     var headerHtml = '<div class="fav-header" style="grid-column:1 / -1;' +
         'display:flex;align-items:center;gap:.5rem;padding:.65rem .85rem;' +
         'background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(220,38,38,.04));' +
         'border:1.5px solid rgba(239,68,68,.25);border-radius:12px;margin-bottom:.75rem;flex-wrap:wrap;">' +
-        '<div style="display:flex;align-items:center;gap:.45rem;font-size:.88rem;font-weight:800;flex:1 1 auto;">' +
+
+        /* Tiêu đề + số câu + counter */
+        '<div style="display:flex;align-items:center;gap:.45rem;font-size:.88rem;font-weight:800;flex:1 1 auto;flex-wrap:wrap;">' +
             '<i class="fas fa-heart" style="color:#ef4444;"></i>' +
             '<span>Yêu thích</span>' +
             '<span style="font-size:.72rem;font-weight:700;color:#dc2626;' +
             'background:rgba(239,68,68,.15);padding:.15rem .55rem;border-radius:50px;">' +
                 items.length + ' câu</span>' +
+            counterHtml +
         '</div>' +
+
+        /* Sort dropdown */
         '<select onchange="favOnSortChange(this.value)" ' +
         'style="padding:.35rem 1.8rem .35rem .7rem;border-radius:50px;border:1.5px solid var(--border);' +
-        'background:var(--surface);color:var(--text);font-size:.72rem;font-weight:700;cursor:pointer;">' +
+        'background:var(--surface);color:var(--text);font-size:.72rem;font-weight:700;cursor:pointer;' +
+        'font-family:inherit;outline:none;">' +
             '<option value="recent"' + (favState.sortMode === 'recent' ? ' selected' : '') + '>Mới nhất</option>' +
             '<option value="oldest"' + (favState.sortMode === 'oldest' ? ' selected' : '') + '>Cũ nhất</option>' +
             '<option value="stt"' + (favState.sortMode === 'stt' ? ' selected' : '') + '>Theo STT</option>' +
         '</select>' +
+
+        /* Clear all button */
         '<button onclick="favClearAll()" ' +
         'style="padding:.35rem .75rem;border-radius:50px;border:1.5px solid rgba(220,38,38,.35);' +
-        'background:var(--surface);color:#dc2626;font-size:.72rem;font-weight:700;cursor:pointer;">' +
+        'background:var(--surface);color:#dc2626;font-size:.72rem;font-weight:700;cursor:pointer;' +
+        'font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;">' +
             '<i class="fas fa-trash-alt"></i> Xoá hết' +
         '</button>' +
     '</div>';
 
-    /* Filter theo state hiện tại */
-    var filtered2 = items.filter(function(favItem) {
-        var r = null;
-        for (var i = 0; i < RAW_DATA.length; i++) {
-            if (String(RAW_DATA[i].stt) === String(favItem.stt)) { r = RAW_DATA[i]; break; }
-        }
-        if (!r) return false;
-
+    /* ═══════════════════════════════════════════════════════════
+       6. FILTER CÂU YÊU THÍCH THEO SEARCH/HSK/SUBJECT
+       ═══════════════════════════════════════════════════════════ */
+    var filteredFav = allFavRecords.filter(function(r) {
         if (typeof state !== 'undefined') {
             if (state.search) {
                 var s = state.search;
                 var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
                 var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
                 var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
-                if (!inVi && !inZh && !inPinyin) return false;
+                var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
+                var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
+                if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
             }
             if (state.hsk && r.hsk !== state.hsk) return false;
             if (state.subject && r.subject !== state.subject) return false;
@@ -1158,18 +1553,55 @@ function favRenderCurrentTab() {
         return true;
     });
 
+    /* ═══════════════════════════════════════════════════════════
+       7. SẮP XẾP LẠI THEO SORT MODE
+       ═══════════════════════════════════════════════════════════ */
+    var sortMode = favState.sortMode || 'recent';
+    if (sortMode === 'oldest') {
+        filteredFav.sort(function(a, b) {
+            var ta = favState.items[String(a.stt)] ? favState.items[String(a.stt)].addedAt : 0;
+            var tb = favState.items[String(b.stt)] ? favState.items[String(b.stt)].addedAt : 0;
+            return ta - tb;
+        });
+    } else if (sortMode === 'stt') {
+        filteredFav.sort(function(a, b) {
+            var na = parseInt(a.stt) || 0;
+            var nb = parseInt(b.stt) || 0;
+            return na - nb;
+        });
+    } else {
+        /* recent */
+        filteredFav.sort(function(a, b) {
+            var ta = favState.items[String(a.stt)] ? favState.items[String(a.stt)].addedAt : 0;
+            var tb = favState.items[String(b.stt)] ? favState.items[String(b.stt)].addedAt : 0;
+            return tb - ta;
+        });
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       8. RENDER DANH SÁCH CARD
+       ═══════════════════════════════════════════════════════════ */
     var cardsHtml = headerHtml;
-    filtered2.forEach(function(favItem) {
-        var r = null;
-        for (var i = 0; i < RAW_DATA.length; i++) {
-            if (String(RAW_DATA[i].stt) === String(favItem.stt)) { r = RAW_DATA[i]; break; }
-        }
-        if (!r) return;
-        cardsHtml += favBuildCardHtml(r);
-    });
+
+    if (filteredFav.length === 0) {
+        /* Có câu yêu thích nhưng filter không match */
+        cardsHtml += '<div class="no-data" style="grid-column:1 / -1;">' +
+            '<i class="fas fa-search"></i>Không tìm thấy câu yêu thích nào khớp bộ lọc' +
+            '</div>';
+    } else {
+        filteredFav.forEach(function(r) {
+            cardsHtml += favBuildCardHtml(r);
+        });
+    }
+
     mobileWrapper.innerHTML = cardsHtml;
 
-    setTimeout(function() { favUpdateLockState(); }, 50);
+    /* ═══════════════════════════════════════════════════════════
+       9. CẬP NHẬT LOCK STATE SAU KHI RENDER
+       ═══════════════════════════════════════════════════════════ */
+    setTimeout(function() {
+        if (typeof favUpdateLockState === 'function') favUpdateLockState();
+    }, 50);
 }
 
 function favBuildCardHtml(r) {
@@ -1271,12 +1703,18 @@ window.favOnSortChange = function(mode) {
 /* ═══════════════════════════════════════════════════════════════
    CLICK TAB YÊU THÍCH
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   CLICK TAB YÊU THÍCH
+   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   CLICK TAB YÊU THÍCH
+   ═══════════════════════════════════════════════════════════════ */
 function favOnTabClick(evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
     if (!favCanUse()) { favShowLockDialog(); return; }
 
-    /* Đánh dấu active */
+    /* ═══ 1. ĐÁNH DẤU TAB ACTIVE ═══ */
     document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
     document.querySelectorAll('.ds-dropdown-item').forEach(function(b) { b.classList.remove('active'); });
@@ -1290,10 +1728,11 @@ function favOnTabClick(evt) {
     var subWrap = document.getElementById('dsSubWrap');
     if (subWrap) subWrap.style.display = 'none';
 
+    /* ═══ 2. BẬT CỜ "ĐANG XEM TAB YÊU THÍCH" ═══ */
     favState.currentView = true;
     favState.filteringOnly = true;
 
-    /* Reset filter */
+    /* ═══ 3. RESET FILTER (search + HSK + subject) ═══ */
     if (typeof state !== 'undefined') {
         state.search = '';
         state.hsk = '';
@@ -1311,16 +1750,35 @@ function favOnTabClick(evt) {
     } catch(e) {}
     if (typeof updateFilterUI === 'function') updateFilterUI();
 
+    /* ═══ 4. ẨN BANNER ONBOARDING ═══ */
     window.__onboardingOverride = null;
     var obBanner = document.getElementById('onboardingActiveBanner');
     if (obBanner) obBanner.style.display = 'none';
 
-    if (typeof window.render === 'function') {
-        window.render();
-    } else {
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 5. GÁN `filtered` = DANH SÁCH CÂU YÊU THÍCH
+       ═══════════════════════════════════════════════════════════ */
+    var favRecords = favGetRecords();
+
+    try {
+        filtered = favRecords;
+    } catch(e1) {
+        try { window.filtered = favRecords; } catch(e2) {}
+    }
+    try { window.filtered = favRecords; } catch(e) {}
+
+    try { renderedCount = 0; } catch(e) { try { window.renderedCount = 0; } catch(e2) {} }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 6. RENDER — ƯU TIÊN favRenderCurrentTab() (có HEADER + COUNTER)
+       ═══════════════════════════════════════════════════════════ */
+    if (typeof favRenderCurrentTab === 'function') {
         favRenderCurrentTab();
+    } else if (typeof window.render === 'function') {
+        window.render(true);
     }
 
+    /* ═══ 7. SCROLL LÊN ĐẦU DANH SÁCH ═══ */
     setTimeout(function() {
         var mainEl = document.getElementById('mainContent');
         if (mainEl) {
@@ -1329,6 +1787,7 @@ function favOnTabClick(evt) {
         }
     }, 150);
 
+    /* ═══ 8. LOAD TỪ CLOUD NẾU CHƯA LOAD ═══ */
     if (favCanUse() && !favState.loaded) {
         favLoadFromCloud();
     }
@@ -1338,12 +1797,13 @@ function favExitFilterMode() {
     if (!favState.filteringOnly) return;
     favState.filteringOnly = false;
     favState.currentView = false;
+    favState.pfOnlyFav = false;  /* ⭐ THÊM DÒNG NÀY */
     var tabBtn = document.getElementById('dsFavBtn');
     if (tabBtn) tabBtn.classList.remove('active');
     var ddBtn = document.getElementById('dsFavDropdownItem');
     if (ddBtn) ddBtn.classList.remove('active');
+    if (typeof favUpdatePfOnlyFavBtn === 'function') favUpdatePfOnlyFavBtn();
 }
-
 /* ═══════════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════════ */
@@ -1436,7 +1896,9 @@ function favSyncFloatVisibility() {
     }
 }
 
-/* Watch Practice Full modal */
+/* ═══════════════════════════════════════════════════════════════
+   WATCH PRACTICE FULL MODAL — Hiện/ẩn nút float theo modal
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     function attach() {
         var pfModal = document.getElementById('practiceFullModal');
@@ -1446,7 +1908,11 @@ function favSyncFloatVisibility() {
 
         var obs = new MutationObserver(function(mutations) {
             mutations.forEach(function(m) {
-                if (m.attributeName === 'class') favSyncFloatVisibility();
+                if (m.attributeName === 'class') {
+                    if (typeof favSyncFloatVisibility === 'function') {
+                        favSyncFloatVisibility();
+                    }
+                }
             });
         });
         obs.observe(pfModal, { attributes: true });
@@ -1463,54 +1929,82 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ THEO DÕI pfCurrentStt → cập nhật nút float
+   ★ THEO DÕI pfCurrentStt → CẬP NHẬT NÚT FLOAT + SCAN HEART
+   Khi câu hiện tại đổi (đổi dataset, next/prev, chọn dropdown):
+   - Cập nhật nút tim FLOAT
+   - Cập nhật nút toggle "Chỉ câu yêu thích"
+   - Quét lại TẤT CẢ nút tim trên màn hình chính
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _lastPfStt = null;
-    setInterval(function() {
-        var cur = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : null;
-        if (cur !== _lastPfStt) {
-            _lastPfStt = cur;
+
+    function syncPfState() {
+        var cur = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                  ? String(pfCurrentStt)
+                  : null;
+        if (cur === _lastPfStt) return;
+        _lastPfStt = cur;
+        if (!cur) return;
+
+        /* ─── A. Cập nhật nút tim FLOAT ─── */
+        if (typeof favUpdatePfFloatBtn === 'function') {
             favUpdatePfFloatBtn();
         }
-    }, 250);
+
+        /* ─── B. Cập nhật nút toggle "Chỉ câu yêu thích" ─── */
+        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+            favUpdatePfOnlyFavBtn();
+        }
+
+        /* ─── C. Quét lại tất cả nút tim trên màn hình chính ─── */
+        if (typeof favScanAllHeartButtons === 'function') {
+            favScanAllHeartButtons();
+        }
+
+        /* ─── D. Nếu toggle đang BẬT mà câu mới KHÔNG yêu thích → tắt ─── */
+        if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
+            var isNewFav = (typeof favHas === 'function') ? favHas(cur) : false;
+            if (!isNewFav) {
+                favState.pfOnlyFav = false;
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
+                }
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
+                if (typeof favShowToast === 'function') {
+                    favShowToast('Đã tắt "Chỉ câu yêu thích"', 'warn');
+                }
+            }
+        }
+    }
+
+    setInterval(syncPfState, 250);
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH render() — khi filteringOnly → chỉ render câu yêu thích
+   ★ PATCH render() — Quét lại nút tim sau khi render xong
+   (Đảm bảo nút tim trên card mới hiển thị đúng màu)
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
         if (typeof window.render !== 'function') return false;
-        if (window.render.__favPatched) return true;
+        if (window.render.__favScanPatched) return true;
 
         var _origRender = window.render;
         window.render = function() {
-            if (favState.filteringOnly && favState.currentView) {
-                var _origRaw = (typeof RAW_DATA !== 'undefined') ? RAW_DATA : null;
-                if (_origRaw) {
-                    try {
-                        var favRecords = favGetRecords();
-                        window.__favOrigRawData = _origRaw;
-                        try { RAW_DATA = favRecords; } catch(e) {}
+            var result = _origRender.apply(this, arguments);
 
-                        var result = _origRender.apply(this, arguments);
-
-                        try { RAW_DATA = window.__favOrigRawData; } catch(e) {}
-                        delete window.__favOrigRawData;
-                        return result;
-                    } catch(e) {
-                        console.warn('[Favorites] render patch error:', e);
-                        try {
-                            if (window.__favOrigRawData) RAW_DATA = window.__favOrigRawData;
-                        } catch(err) {}
-                    }
+            /* ⭐ SAU khi render xong → quét lại tất cả nút tim */
+            setTimeout(function() {
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
                 }
-                return favRenderCurrentTab();
-            }
-            return _origRender.apply(this, arguments);
+            }, 10);
+
+            return result;
         };
-        window.render.__favPatched = true;
+        window.render.__favScanPatched = true;
         return true;
     }
 
@@ -1524,7 +2018,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH switchDataset() — tự tắt lọc khi đổi dataset khác
+   ★ PATCH switchDataset() — Tự tắt lọc khi đổi dataset khác
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -1613,7 +2107,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH openPracticeFull — áp dụng filter "chỉ câu yêu thích"
+   ★ PATCH openPracticeFull — Áp dụng filter "chỉ câu yêu thích"
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -1639,13 +2133,19 @@ function favSyncFloatVisibility() {
 
             var result = _origOpenPF.apply(this, arguments);
 
+            /* ⭐ Cập nhật UI sau khi mở modal */
             setTimeout(function() {
-                favUpdatePfFloatBtn();
-                favUpdatePfOnlyFavBtn();
-                favRefreshQuestionDropdown();
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
+                }
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
             }, 30);
             setTimeout(function() {
-                favRefreshQuestionDropdown();
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
             }, 200);
 
             return result;
@@ -1664,7 +2164,155 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH điều hướng next/prev
+   ★ PATCH loadPracticeFull — ĐỒNG BỘ nút tim + toggle + scan
+   Chạy MỖI KHI câu thay đổi:
+   - Đổi dataset
+   - Next/prev
+   - Chọn từ dropdown "CÂU:"
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.loadPracticeFull !== 'function') return false;
+        if (window.loadPracticeFull.__favUnifiedPatched) return true;
+
+        var _origLoadPF = window.loadPracticeFull;
+        window.loadPracticeFull = function(stt) {
+            /* ═══ 1. GỌI HÀM GỐC ═══ */
+            var result = _origLoadPF.apply(this, arguments);
+
+            /* ═══ 2. SAU 50ms → ĐỒNG BỘ ═══ */
+            setTimeout(function() {
+                var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                             ? String(pfCurrentStt)
+                             : null;
+                if (!newStt) return;
+
+                /* ─── A. Quét tất cả nút tim + float + toggle ─── */
+                if (typeof favScanAllHeartButtons === 'function') {
+                    favScanAllHeartButtons();
+                }
+
+                /* ─── B. Check toggle ─── */
+                if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
+                    var isNewFav = (typeof favHas === 'function') ? favHas(newStt) : false;
+
+                    if (!isNewFav) {
+                        /* ⭐ Câu mới KHÔNG yêu thích → TẮT toggle */
+                        favState.pfOnlyFav = false;
+
+                        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                            favUpdatePfOnlyFavBtn();
+                        }
+                        if (typeof favRefreshQuestionDropdown === 'function') {
+                            favRefreshQuestionDropdown();
+                        }
+                        if (typeof favShowToast === 'function') {
+                            favShowToast('Đã tắt "Chỉ câu yêu thích"', 'warn');
+                        }
+                    }
+                }
+
+                /* ─── C. Đảm bảo UI nút toggle đúng ─── */
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
+                }
+            }, 50);
+
+            return result;
+        };
+        window.loadPracticeFull.__favUnifiedPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH: ĐỔI BỘ DỮ LIỆU — Bắt sự kiện #pfDatasetSelect.change
+   Reset toggle + cập nhật nút tim theo câu mới
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+
+    var _datasetChangeTimer = null;
+
+    function handleDatasetChange() {
+        console.log('[Favorites] Đổi bộ dữ liệu → đồng bộ');
+
+        /* ─── 1. RESET toggle ─── */
+        if (typeof favState !== 'undefined') {
+            favState.pfOnlyFav = false;
+        }
+
+        /* ─── 2. Cập nhật UI nút toggle ─── */
+        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+            favUpdatePfOnlyFavBtn();
+        }
+
+        /* ─── 3. Refresh dropdown "CÂU:" ─── */
+        if (typeof favRefreshQuestionDropdown === 'function') {
+            favRefreshQuestionDropdown();
+        }
+
+        /* ─── 4. Đợi câu mới load → cập nhật nút tim ─── */
+        setTimeout(function() {
+            if (typeof favScanAllHeartButtons === 'function') {
+                favScanAllHeartButtons();
+            }
+
+            var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                         ? String(pfCurrentStt)
+                         : null;
+            var isNewFav = newStt && typeof favHas === 'function' ? favHas(newStt) : false;
+            console.log('[Favorites] Câu mới #' + newStt + ' | liked: ' + isNewFav);
+
+        }, 100);
+    }
+
+    function attachListener() {
+        var sel = document.getElementById('pfDatasetSelect');
+        if (!sel) return false;
+        if (sel.__favDatasetBound) return true;
+
+        sel.__favDatasetBound = true;
+
+        sel.addEventListener('change', function() {
+            console.log('[Favorites] #pfDatasetSelect change fired');
+
+            /* Debounce: nếu user đổi liên tục chỉ chạy 1 lần */
+            if (_datasetChangeTimer) clearTimeout(_datasetChangeTimer);
+            _datasetChangeTimer = setTimeout(function() {
+                handleDatasetChange();
+                /* Backup sau 500ms */
+                setTimeout(function() {
+                    if (typeof favScanAllHeartButtons === 'function') {
+                        favScanAllHeartButtons();
+                    }
+                }, 500);
+            }, 250);
+        });
+
+        console.log('✅ [Favorites] Đã gắn listener cho #pfDatasetSelect');
+        return true;
+    }
+
+    if (!attachListener()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (attachListener() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH điều hướng next/prev — giữ nguyên (đã đúng)
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function patchNavigateFn(fnName) {
@@ -1675,7 +2323,11 @@ function favSyncFloatVisibility() {
         window[fnName] = function() {
             if (!favState.pfOnlyFav || !favCanUse()) {
                 var res = _orig.apply(this, arguments);
-                setTimeout(favUpdatePfFloatBtn, 30);
+                setTimeout(function() {
+                    if (typeof favScanAllHeartButtons === 'function') {
+                        favScanAllHeartButtons();
+                    }
+                }, 30);
                 return res;
             }
 
@@ -1740,6 +2392,7 @@ window.favHas = favHas;
 window.favCount = favCount;
 window.favExitFilterMode = favExitFilterMode;
 window.favState = favState;
+
 window.favRefreshUI = function() {
     favUpdateLockState();
     favNotifyChanged();
@@ -1762,13 +2415,15 @@ window.favRefreshUI = function() {
    ═══════════════════════════════════════════════════════════════ */
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        initFavorites();
-        setTimeout(favSyncFloatVisibility, 100);
+        if (typeof initFavorites === 'function') initFavorites();
+        setTimeout(function() {
+            if (typeof favSyncFloatVisibility === 'function') favSyncFloatVisibility();
+        }, 100);
     });
 } else {
     setTimeout(function() {
-        initFavorites();
-        favSyncFloatVisibility();
+        if (typeof initFavorites === 'function') initFavorites();
+        if (typeof favSyncFloatVisibility === 'function') favSyncFloatVisibility();
     }, 0);
 }
 
@@ -1782,5 +2437,114 @@ if (document.readyState === 'loading') {
             if (typeof window.favRefreshUI === 'function') window.favRefreshUI();
         }
     }, 800);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH pfBuildQuickNav — Filter dropdown "CÂU:" theo toggle
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.pfBuildQuickNav !== 'function') return false;
+        if (window.pfBuildQuickNav.__favPatched) return true;
+
+        var _origBuildQuickNav = window.pfBuildQuickNav;
+        window.pfBuildQuickNav = function() {
+            if (!favState.pfOnlyFav || !favCanUse()) {
+                return _origBuildQuickNav.apply(this, arguments);
+            }
+
+            var sel = document.getElementById('pfQuickNav');
+            if (!sel) return;
+
+            var sourceList = [];
+            if (typeof filtered !== 'undefined' && Array.isArray(filtered)) {
+                for (var i = 0; i < filtered.length; i++) {
+                    if (favHas(filtered[i].stt)) sourceList.push(filtered[i]);
+                }
+            }
+
+            var html = '<option value="">-- Chọn câu (' + sourceList.length + ') --</option>';
+            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : '';
+
+            for (var j = 0; j < sourceList.length; j++) {
+                var r = sourceList[j];
+                var vi = (r.vi || '').substring(0, 45);
+                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                             ? '#' + String(r.stt).trim() + ' · '
+                             : '';
+                var label = sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
+                var selected = (String(r.stt) === curStt) ? ' selected' : '';
+                html += '<option value="' + String(r.stt) + '"' + selected + '>'
+                      + escapeHtml(label) + '</option>';
+            }
+            sel.innerHTML = html;
+            if (pfCurrentStt) sel.value = pfCurrentStt;
+        };
+        window.pfBuildQuickNav.__favPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ FIX: Dời nút toggle sang góc phải, TRÊN nút tim
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function injectCSS() {
+        if (document.getElementById('favOnlyFloatFix')) return;
+        var style = document.createElement('style');
+        style.id = 'favOnlyFloatFix';
+        style.textContent = [
+            '/* Fix: nút toggle chỉ câu yêu thích — góc PHẢI, TRÊN nút tim */',
+            '.pf-fav-only-float {',
+            '    left: auto !important;',
+            '    right: clamp(14px, 2vw, 22px) !important;',
+            '    bottom: calc(140px + env(safe-area-inset-bottom)) !important;',
+            '}',
+            '@media (max-width:500px) {',
+            '    .pf-fav-only-float {',
+            '        bottom: calc(130px + env(safe-area-inset-bottom)) !important;',
+            '    }',
+            '}',
+            '@media (max-height:550px) and (orientation:landscape) {',
+            '    .pf-fav-only-float {',
+            '        bottom: calc(114px + env(safe-area-inset-bottom)) !important;',
+            '        transform-origin: right bottom !important;',
+            '    }',
+            '}'
+        ].join('\n');
+        document.head.appendChild(style);
+    }
+    if (document.head) injectCSS();
+    else document.addEventListener('DOMContentLoaded', injectCSS);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ FIX: favRefreshQuestionDropdown — ưu tiên pfBuildQuickNav
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    if (typeof window.favRefreshQuestionDropdown !== 'function') return;
+    if (window.favRefreshQuestionDropdown.__favFixed) return;
+
+    var _origRefresh = window.favRefreshQuestionDropdown;
+    window.favRefreshQuestionDropdown = function() {
+        if (typeof window.pfBuildQuickNav === 'function') {
+            try {
+                window.pfBuildQuickNav();
+                return true;
+            } catch(e) {
+                console.warn('[Favorites] pfBuildQuickNav error:', e);
+            }
+        }
+        return _origRefresh.apply(this, arguments);
+    };
+    window.favRefreshQuestionDropdown.__favFixed = true;
 })();
 """
