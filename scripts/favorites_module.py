@@ -1751,12 +1751,13 @@ function favExitFilterMode() {
     if (!favState.filteringOnly) return;
     favState.filteringOnly = false;
     favState.currentView = false;
+    favState.pfOnlyFav = false;  /* ⭐ THÊM DÒNG NÀY */
     var tabBtn = document.getElementById('dsFavBtn');
     if (tabBtn) tabBtn.classList.remove('active');
     var ddBtn = document.getElementById('dsFavDropdownItem');
     if (ddBtn) ddBtn.classList.remove('active');
+    if (typeof favUpdatePfOnlyFavBtn === 'function') favUpdatePfOnlyFavBtn();
 }
-
 /* ═══════════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════════ */
@@ -2075,54 +2076,57 @@ function favSyncFloatVisibility() {
         }, 100);
     }
 })();
+
 /* ═══════════════════════════════════════════════════════════════
-   ★ PATCH loadPracticeFull() — ĐỒNG BỘ NÚT TIM + TOGGLE
+   ★ PATCH ĐỒNG BỘ — GỘP 3 PATCH CŨ THÀNH 1 (2026-09-26)
    
-   Chạy mỗi khi câu thay đổi (đổi dataset, next/prev, chọn dropdown):
+   Tự động:
    1. Cập nhật nút tim FLOAT theo câu mới (like/unlike)
    2. Nếu toggle "Chỉ câu yêu thích" đang BẬT:
       - Câu mới LÀ yêu thích → giữ nguyên toggle BẬT
       - Câu mới KHÔNG PHẢI yêu thích → TỰ ĐỘNG TẮT toggle
+   
+   Cơ chế: Patch loadPracticeFull() — hàm này được gọi
+   MỖI KHI câu thay đổi (đổi dataset, next/prev, chọn dropdown).
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
         if (typeof window.loadPracticeFull !== 'function') return false;
-        if (window.loadPracticeFull.__favSyncPatched) return true;
+        if (window.loadPracticeFull.__favUnifiedPatched) return true;
 
         var _origLoadPF = window.loadPracticeFull;
         window.loadPracticeFull = function(stt) {
-            /* ═══ 1. GỌI HÀM GỐC TRƯỚC ═══ */
+            /* ═══ 1. GỌI HÀM GỐC ═══ */
             var result = _origLoadPF.apply(this, arguments);
 
-            /* ═══ 2. SAU KHI CÂU MỚI ĐƯỢC LOAD → ĐỒNG BỘ ═══ */
+            /* ═══ 2. SAU 50ms → ĐỒNG BỘ ═══ */
             setTimeout(function() {
+                var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                             ? String(pfCurrentStt)
+                             : null;
+                if (!newStt) return;
 
-                /* ─── A. Cập nhật nút tim FLOAT (like/unlike) ─── */
+                /* ─── A. Cập nhật nút tim FLOAT ─── */
                 if (typeof favUpdatePfFloatBtn === 'function') {
                     favUpdatePfFloatBtn();
                 }
 
-                /* ─── B. Check + cập nhật nút TOGGLE ─── */
+                /* ─── B. Check toggle "Chỉ câu yêu thích" ─── */
                 if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
-                    var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                                 ? String(pfCurrentStt)
-                                 : null;
+                    var isNewFav = (typeof favHas === 'function') ? favHas(newStt) : false;
 
-                    if (newStt) {
-                        var isNewFav = (typeof favHas === 'function') ? favHas(newStt) : false;
+                    if (!isNewFav) {
+                        /* ⭐ Câu mới KHÔNG yêu thích → TẮT toggle */
+                        favState.pfOnlyFav = false;
 
-                        if (!isNewFav) {
-                            /* ⭐ Câu mới KHÔNG yêu thích → TỰ TẮT toggle */
-                            favState.pfOnlyFav = false;
-                            if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                                favUpdatePfOnlyFavBtn();
-                            }
-                            if (typeof favRefreshQuestionDropdown === 'function') {
-                                favRefreshQuestionDropdown();
-                            }
-                            if (typeof favShowToast === 'function') {
-                                favShowToast('Đã tắt chế độ "Chỉ câu yêu thích"', 'warn');
-                            }
+                        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                            favUpdatePfOnlyFavBtn();
+                        }
+                        if (typeof favRefreshQuestionDropdown === 'function') {
+                            favRefreshQuestionDropdown();
+                        }
+                        if (typeof favShowToast === 'function') {
+                            favShowToast('Đã tắt "Chỉ câu yêu thích"', 'warn');
                         }
                     }
                 }
@@ -2131,12 +2135,11 @@ function favSyncFloatVisibility() {
                 if (typeof favUpdatePfOnlyFavBtn === 'function') {
                     favUpdatePfOnlyFavBtn();
                 }
-
-            }, 50); /* Delay 50ms đủ để pfCurrentStt cập nhật + UI ổn định */
+            }, 50);
 
             return result;
         };
-        window.loadPracticeFull.__favSyncPatched = true;
+        window.loadPracticeFull.__favUnifiedPatched = true;
         return true;
     }
 
@@ -2148,98 +2151,7 @@ function favSyncFloatVisibility() {
         }, 100);
     }
 })();
-/* ═══════════════════════════════════════════════════════════════
-   ★ PATCH MỚI (2026-09-26): ĐỒNG BỘ NÚT TIM + TOGGLE KHI ĐỔI CÂU
-   
-   Chạy ĐỘC LẬP, không conflict với các patch loadPracticeFull cũ.
-   Sử dụng:
-   1. Event listener #pfDatasetSelect.change → đồng bộ khi đổi dataset
-   2. Poll pfCurrentStt (250ms) → đồng bộ khi câu thay đổi
-   
-   Logic:
-   - Câu mới thay đổi → nút tim cập nhật theo câu mới
-   - Nếu toggle "Chỉ câu yêu thích" đang BẬT:
-     - Câu mới LÀ yêu thích → giữ nguyên toggle BẬT
-     - Câu mới KHÔNG PHẢI yêu thích → TỰ ĐỘNG TẮT toggle
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    'use strict';
-    
-    /* ═══ Biến theo dõi câu hiện tại ═══ */
-    var _lastCheckedStt = null;
-    
-    /* ═══ Hàm đồng bộ chính ═══ */
-    function syncFavStateWhenSttChanges() {
-        if (typeof pfCurrentStt === 'undefined' || !pfCurrentStt) return;
-        
-        var curStt = String(pfCurrentStt);
-        if (curStt === _lastCheckedStt) return;
-        
-        _lastCheckedStt = curStt;
-        
-        /* ─── A. Cập nhật nút tim FLOAT ─── */
-        if (typeof favUpdatePfFloatBtn === 'function') {
-            favUpdatePfFloatBtn();
-        }
-        
-        /* ─── B. Check + cập nhật nút TOGGLE ─── */
-        if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
-            var isNewFav = (typeof favHas === 'function') ? favHas(curStt) : false;
-            
-            if (!isNewFav) {
-                /* ⭐ Câu mới KHÔNG yêu thích → TỰ TẮT toggle */
-                favState.pfOnlyFav = false;
-                
-                if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                    favUpdatePfOnlyFavBtn();
-                }
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-                if (typeof favShowToast === 'function') {
-                    favShowToast('Đã tắt "Chỉ câu yêu thích" (câu mới không phải yêu thích)', 'warn');
-                }
-            }
-        }
-        
-        /* ─── C. Cập nhật UI nút toggle ─── */
-        if (typeof favUpdatePfOnlyFavBtn === 'function') {
-            favUpdatePfOnlyFavBtn();
-        }
-    }
-    
-    /* ═══ 1. POLL pfCurrentStt MỖI 250ms ═══ */
-    setInterval(syncFavStateWhenSttChanges, 250);
-    
-    /* ═══ 2. LISTEN #pfDatasetSelect CHANGE ═══ */
-    function attachDatasetListener() {
-        var pfSel = document.getElementById('pfDatasetSelect');
-        if (!pfSel) return false;
-        if (pfSel.__favSyncNewBound) return true;
-        pfSel.__favSyncNewBound = true;
-        
-        pfSel.addEventListener('change', function() {
-            /* Reset flag để poll check lại câu mới */
-            _lastCheckedStt = null;
-            
-            /* Đợi ui_template xử lý xong → đồng bộ */
-            setTimeout(syncFavStateWhenSttChanges, 200);
-            setTimeout(syncFavStateWhenSttChanges, 500);
-        });
-        
-        return true;
-    }
-    
-    if (!attachDatasetListener()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (attachDatasetListener() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-    
-    console.log('✅ [Favorites] Patch đồng bộ nút tim + toggle đã cài đặt');
-})();
+
 /* ═══════════════════════════════════════════════════════════════
    ★ PATCH điều hướng next/prev
    ═══════════════════════════════════════════════════════════════ */
@@ -2363,8 +2275,6 @@ if (document.readyState === 'loading') {
 
 /* ═══════════════════════════════════════════════════════════════
    ★★★ FIX 2026-09: DROPDOWN "CÂU:" LỌC THEO TOGGLE YÊU THÍCH ★★★
-   Patch trực tiếp pfBuildQuickNav() để khi bật "Chỉ câu yêu thích"
-   thì dropdown "CÂU:" chỉ liệt kê câu yêu thích.
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2373,16 +2283,13 @@ if (document.readyState === 'loading') {
 
         var _origBuildQuickNav = window.pfBuildQuickNav;
         window.pfBuildQuickNav = function() {
-            /* Không bật toggle hoặc không có quyền → chạy nguyên gốc */
             if (!favState.pfOnlyFav || !favCanUse()) {
                 return _origBuildQuickNav.apply(this, arguments);
             }
 
-            /* Đang bật toggle → tự build dropdown chỉ với câu yêu thích */
             var sel = document.getElementById('pfQuickNav');
             if (!sel) return;
 
-            /* Lấy câu yêu thích từ `filtered` (đã áp search/HSK/subject) */
             var sourceList = [];
             if (typeof filtered !== 'undefined' && Array.isArray(filtered)) {
                 for (var i = 0; i < filtered.length; i++) {
@@ -2422,7 +2329,6 @@ if (document.readyState === 'loading') {
 
 /* ═══════════════════════════════════════════════════════════════
    ★ FIX: Dời nút "Chỉ câu yêu thích" sang góc phải, TRÊN nút tim
-   (để không trùng TikTok ở góc trái)
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function injectCSS() {
@@ -2463,7 +2369,6 @@ if (document.readyState === 'loading') {
 
     var _origRefresh = window.favRefreshQuestionDropdown;
     window.favRefreshQuestionDropdown = function() {
-        /* Ưu tiên #1: gọi thẳng pfBuildQuickNav (đã được patch ở trên) */
         if (typeof window.pfBuildQuickNav === 'function') {
             try {
                 window.pfBuildQuickNav();
@@ -2472,7 +2377,6 @@ if (document.readyState === 'loading') {
                 console.warn('[Favorites] pfBuildQuickNav error:', e);
             }
         }
-        /* Fallback: dùng bản gốc */
         return _origRefresh.apply(this, arguments);
     };
     window.favRefreshQuestionDropdown.__favFixed = true;
