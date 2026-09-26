@@ -13,15 +13,11 @@ Tích hợp:
   html_snippets = build_favorites_html()   # dict các snippet chèn vào chỗ khác
   js = build_favorites_js()
 
-Điểm chèn bắt buộc (xem hướng dẫn cuối file):
-  1. Thêm <button class="ds-btn" data-dataset-group="favorites" ...> vào dataset-selector
-  2. Thêm <button class="pf-fav-btn" id="pfFavBtn"> vào header Practice Full (trước nút X)
-  3. Thêm nút tim vào template card trong hàm render() của ui_module
-  4. Gọi initFavorites() trong initApp() của ui_module
-  5. Gọi favUpdateLockState() trong applyUserUI() + refreshApp() của 2 file kia
+Điểm chèn:
+  1. main.py chèn dataset_tab SAU nút Chuyên ngành (dùng regex)
+  2. main.py chèn pf_float_btn TRƯỚC TikTok float (trong Practice Full modal)
+  3. ui_template.py BỎ tab Yêu thích + nút tim PF (đã bỏ ở bản trước)
 """
-
-import json
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -102,47 +98,129 @@ def build_favorites_css():
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Nút tim trong Practice Full header
+   ❤️ FAVORITES — Nút tim FLOAT góc dưới phải (Practice Full)
    ═══════════════════════════════════════════════════════════════ */
-.pf-fav-btn{
-    width:clamp(30px,3vw,36px);
-    height:clamp(30px,3vw,36px);
-    border-radius:50%;
-    border:none;
-    background:var(--surface-2);
-    color:var(--text-2);
-    cursor:pointer;
-    display:flex;
+.pf-fav-float{
+    position:fixed;
+    right:clamp(14px,2vw,22px);
+    bottom:calc(80px + env(safe-area-inset-bottom));
+    display:none;
     align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-    font-size:clamp(.78rem,.95vw,.9rem);
-    transition:all .2s cubic-bezier(.34,1.56,.64,1);
-    position:relative;
-}
-.pf-fav-btn:hover{
-    background:rgba(239,68,68,.12);
-    color:#ef4444;
-    transform:scale(1.1);
-}
-.pf-fav-btn.active{
-    color:#ef4444;
-    background:rgba(239,68,68,.15);
-}
-.pf-fav-btn.active i{
-    animation:favHeartPop .4s cubic-bezier(.34,1.56,.64,1);
-}
-.pf-fav-btn.locked{
+    gap:.5rem;
+    padding:.65rem 1.1rem .65rem .9rem;
+    border-radius:999px;
+    border:2px solid rgba(239,68,68,.4);
+    background:linear-gradient(135deg,#fef2f2,#fee2e2);
     color:#dc2626;
-    background:rgba(220,38,38,.12);
+    font-size:clamp(.85rem,1vw,.95rem);
+    font-weight:800;
+    font-family:inherit;
+    cursor:pointer;
+    z-index:2450;
+    transition:all .25s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:
+        0 8px 24px rgba(239,68,68,.35),
+        0 2px 8px rgba(0,0,0,.1);
+    text-transform:uppercase;
+    letter-spacing:.3px;
 }
-.pf-fav-btn.locked:hover{
-    background:rgba(220,38,38,.22);
+.pf-fav-float.show{display:inline-flex}
+.pf-fav-float i{
+    font-size:clamp(1.15rem,1.4vw,1.35rem);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.pf-fav-float:hover{
+    transform:translateY(-3px) scale(1.05);
+    border-color:#ef4444;
+    box-shadow:
+        0 12px 32px rgba(239,68,68,.5),
+        0 4px 12px rgba(0,0,0,.15);
+}
+.pf-fav-float:hover i{
+    transform:scale(1.15);
+}
+.pf-fav-float:active{
+    transform:translateY(-1px) scale(1.02);
+}
+.pf-fav-float.active{
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+    color:#fff;
+    border-color:#dc2626;
+    box-shadow:
+        0 8px 28px rgba(239,68,68,.6),
+        0 2px 8px rgba(220,38,38,.3);
+    animation:pfFavPulse 2s ease-in-out infinite;
+}
+.pf-fav-float.active i{
+    animation:favHeartPop .5s cubic-bezier(.34,1.56,.64,1);
+}
+.pf-fav-float.active::after{
+    content:'';
+    position:absolute;
+    inset:-4px;
+    border-radius:999px;
+    border:2px solid rgba(239,68,68,.5);
+    animation:favRing 1s ease-out infinite;
+    pointer-events:none;
+}
+@keyframes pfFavPulse{
+    0%,100%{box-shadow:0 8px 28px rgba(239,68,68,.6),0 2px 8px rgba(220,38,38,.3);}
+    50%{box-shadow:0 8px 36px rgba(239,68,68,.85),0 4px 12px rgba(220,38,38,.4);}
+}
+.pf-fav-float.locked{
+    background:linear-gradient(135deg,#fef2f2,#fee2e2);
+    color:#dc2626;
+    border-color:rgba(220,38,38,.4);
+}
+.pf-fav-float.locked:hover{
+    background:linear-gradient(135deg,#fee2e2,#fecaca);
     color:#b91c1c;
+    border-color:#dc2626;
 }
-[data-theme="dark"] .pf-fav-btn.locked{
+.pf-fav-float .pf-fav-float-label{
+    display:inline-block;
+    white-space:nowrap;
+}
+[data-theme="dark"] .pf-fav-float{
+    background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(220,38,38,.15));
+    border-color:rgba(239,68,68,.5);
     color:#fca5a5;
-    background:rgba(220,38,38,.28);
+}
+[data-theme="dark"] .pf-fav-float.active{
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+    color:#fff;
+}
+[data-theme="dark"] .pf-fav-float.locked{
+    color:#fca5a5;
+}
+
+/* Responsive nút float */
+@media (max-width:500px){
+    .pf-fav-float{
+        padding:.55rem .9rem .55rem .75rem;
+        font-size:.78rem;
+        bottom:calc(78px + env(safe-area-inset-bottom));
+    }
+    .pf-fav-float i{
+        font-size:1.05rem;
+    }
+    .pf-fav-float .pf-fav-float-label{
+        display:none;
+    }
+}
+@media (max-width:400px){
+    .pf-fav-float{
+        padding:.5rem;
+        min-width:46px;
+        justify-content:center;
+    }
+}
+@media (max-height:550px) and (orientation:landscape){
+    .pf-fav-float{
+        bottom:calc(64px + env(safe-area-inset-bottom));
+        transform:scale(.9);
+        transform-origin:right bottom;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -494,7 +572,6 @@ def build_favorites_css():
     .fav-empty .fav-empty-icon{width:58px;height:58px;font-size:1.5rem;}
     .fav-empty .fav-empty-title{font-size:.95rem;}
     .fav-empty .fav-empty-desc{font-size:.78rem;}
-    .pf-fav-btn{width:32px;height:32px;}
 }
 """
 
@@ -504,23 +581,32 @@ def build_favorites_css():
 # ═══════════════════════════════════════════════════════════════
 def build_favorites_html():
     """
-    Trả về dict các snippet HTML để chèn vào các file khác.
-    Không tạo file HTML riêng vì phải chèn vào chỗ có sẵn.
+    Trả về dict các snippet HTML để main.py chèn vào đúng chỗ.
+    
+    LƯU Ý:
+      - "dataset_tab"    → chèn SAU nút Chuyên ngành trong dataset selector
+      - "pf_float_btn"   → chèn TRƯỚC TikTok float trong Practice Full modal
     """
     return {
-        # Nút tim trong Practice Full header — chèn NGAY TRƯỚC nút <button class="pf-close" id="pfClose">
-        "pf_header_btn":
-            '<button class="pf-fav-btn" id="pfFavBtn" type="button" '
-            'title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích">'
-            '<i class="far fa-heart"></i></button>',
-
-        # Tab Yêu thích — chèn vào .ds-main-row sau nút Chuyên ngành
+        # ═══════════════════════════════════════════════════════════
+        # Tab Yêu thích — chèn SAU nút Chuyên ngành (đứng cuối)
+        # ═══════════════════════════════════════════════════════════
         "dataset_tab":
             '<button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">\n'
-            '    <i class="far fa-heart"></i>\n'
-            '    <span>Yêu thích</span>\n'
-            '    <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>\n'
-            '    <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>\n'
+            '            <i class="far fa-heart"></i>\n'
+            '            <span>Yêu thích</span>\n'
+            '            <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>\n'
+            '            <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>\n'
+            '        </button>',
+
+        # ═══════════════════════════════════════════════════════════
+        # Nút tim FLOAT — chèn trước TikTok float trong Practice Full
+        # ═══════════════════════════════════════════════════════════
+        "pf_float_btn":
+            '<button class="pf-fav-float" id="pfFavBtn" type="button" '
+            'title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích">'
+            '<i class="far fa-heart"></i>'
+            '<span class="pf-fav-float-label">Yêu thích</span>'
             '</button>',
     }
 
@@ -536,12 +622,12 @@ def build_favorites_js():
 
 /* ============ STATE ============ */
 var favState = {
-    items: {},              /* { stt: { stt, addedAt, hsk, subject } } */
+    items: {},
     loaded: false,
     loading: false,
-    sortMode: 'recent',     /* 'recent' | 'oldest' | 'stt' */
+    sortMode: 'recent',
     listener: null,
-    currentView: false      /* đang xem tab Yêu thích? */
+    currentView: false
 };
 
 /* ============ TIER CHECK ============ */
@@ -826,7 +912,7 @@ function favNotifyChanged() {
         badge.dataset.count = count;
     }
 
-    /* Cập nhật nút tim trong Practice Full */
+    /* Cập nhật nút tim FLOAT trong Practice Full */
     var pfBtn = document.getElementById('pfFavBtn');
     if (pfBtn && typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
         var pActive = favHas(pfCurrentStt);
@@ -882,7 +968,7 @@ function favUpdateLockState() {
         }
     });
 
-    /* Nút tim trong Practice Full */
+    /* Nút tim FLOAT trong Practice Full */
     var pfBtn = document.getElementById('pfFavBtn');
     if (pfBtn) {
         var pIcon = pfBtn.querySelector('i');
@@ -1236,7 +1322,7 @@ function initFavorites() {
     /* Load local cache trước */
     favLoadFromLocal();
 
-    /* Bind nút tim trong Practice Full */
+    /* Bind nút tim FLOAT trong Practice Full */
     var pfBtn = document.getElementById('pfFavBtn');
     if (pfBtn && !pfBtn.__favBound) {
         pfBtn.__favBound = true;
@@ -1260,11 +1346,44 @@ function initFavorites() {
 
     /* Notify ban đầu */
     favNotifyChanged();
+
+    /* Sync nút float theo trạng thái Practice Full */
+    favSyncFloatVisibility();
 }
+
+/* ============ SHOW/HIDE NÚT FLOAT THEO PRACTICE FULL ============ */
+function favSyncFloatVisibility() {
+    var pfModal = document.getElementById('practiceFullModal');
+    var pfFavFloat = document.getElementById('pfFavBtn');
+    if (!pfFavFloat) return;
+    var isOpen = pfModal && pfModal.classList.contains('show');
+    if (isOpen) {
+        pfFavFloat.classList.add('show');
+        pfFavFloat.style.display = 'inline-flex';
+    } else {
+        pfFavFloat.classList.remove('show');
+        pfFavFloat.style.display = 'none';
+    }
+}
+
+/* Watch Practice Full modal open/close */
+(function() {
+    var pfModal = document.getElementById('practiceFullModal');
+    if (!pfModal) return;
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            if (m.attributeName === 'class') {
+                favSyncFloatVisibility();
+            }
+        });
+    });
+    observer.observe(pfModal, { attributes: true });
+})();
 
 /* ============ HOOK (gọi từ accounts_module / ui_module) ============ */
 window.favUpdateLockState = favUpdateLockState;
 window.favNotifyChanged = favNotifyChanged;
+window.favSyncFloatVisibility = favSyncFloatVisibility;
 window.favRefreshUI = function() {
     favUpdateLockState();
     favNotifyChanged();
@@ -1285,9 +1404,15 @@ window.favRefreshUI = function() {
 
 /* Auto-init khi DOM ready */
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFavorites);
+    document.addEventListener('DOMContentLoaded', function() {
+        initFavorites();
+        setTimeout(favSyncFloatVisibility, 100);
+    });
 } else {
-    setTimeout(initFavorites, 0);
+    setTimeout(function() {
+        initFavorites();
+        favSyncFloatVisibility();
+    }, 0);
 }
 
 /* Auto-init lại khi tier thay đổi */
