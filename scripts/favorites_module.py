@@ -2151,7 +2151,83 @@ function favSyncFloatVisibility() {
         }, 100);
     }
 })();
-
+/* ═══════════════════════════════════════════════════════════════
+   ★ PATCH RIÊNG: ĐỔI BỘ DỮ LIỆU → RESET TOGGLE + CHECK NÚT TIM
+   
+   Bắt sự kiện "change" của #pfDatasetSelect (dropdown Bộ dữ liệu
+   trong Practice Full). Khi user đổi dataset:
+   1. LUÔN reset nút toggle "Chỉ câu yêu thích" về TẮT
+   2. Kiểm tra câu mới hiển thị → cập nhật nút tim (đỏ/xám)
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+    
+    /* ═══ Hàm xử lý khi đổi dataset ═══ */
+    function handleDatasetChange() {
+        /* ─── 1. RESET nút toggle về TẮT ─── */
+        if (typeof favState !== 'undefined') {
+            favState.pfOnlyFav = false;
+        }
+        
+        /* ─── 2. Cập nhật UI nút toggle ─── */
+        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+            favUpdatePfOnlyFavBtn();
+        }
+        
+        /* ─── 3. Refresh dropdown "CÂU:" (hiện lại tất cả câu) ─── */
+        if (typeof favRefreshQuestionDropdown === 'function') {
+            favRefreshQuestionDropdown();
+        }
+        
+        /* ─── 4. Cập nhật nút tim theo câu mới hiển thị ─── */
+        setTimeout(function() {
+            if (typeof favUpdatePfFloatBtn === 'function') {
+                favUpdatePfFloatBtn();
+            }
+            
+            /* ─── 5. Kiểm tra câu mới có phải yêu thích không (backup) ─── */
+            var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                         ? String(pfCurrentStt)
+                         : null;
+            
+            if (newStt && typeof favHas === 'function' && typeof favShowToast === 'function') {
+                var isNewFav = favHas(newStt);
+                /* Không cần toast ở đây — chỉ log nhẹ để debug */
+                console.log('[Favorites] Đổi dataset → câu #' + newStt + ' | liked: ' + isNewFav);
+            }
+        }, 100);
+    }
+    
+    /* ═══ Gắn listener cho #pfDatasetSelect ═══ */
+    function attachListener() {
+        var sel = document.getElementById('pfDatasetSelect');
+        if (!sel) return false;
+        if (sel.__favDatasetBound) return true;
+        
+        sel.__favDatasetBound = true;
+        
+        /* Gọi SAU khi ui_template xử lý xong (đợi 250ms) */
+        sel.addEventListener('change', function() {
+            /* Delay để ui_template kịp switch RAW_DATA + loadPracticeFull */
+            setTimeout(handleDatasetChange, 250);
+            /* Backup: gọi lần 2 sau 500ms phòng trường hợp chậm */
+            setTimeout(handleDatasetChange, 500);
+        });
+        
+        return true;
+    }
+    
+    /* ═══ Cố gắng attach ngay, nếu chưa có DOM thì poll ═══ */
+    if (!attachListener()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (attachListener() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
+    
+    console.log('✅ [Favorites] Patch đổi dataset đã cài đặt');
+})();
 /* ═══════════════════════════════════════════════════════════════
    ★ PATCH điều hướng next/prev
    ═══════════════════════════════════════════════════════════════ */
