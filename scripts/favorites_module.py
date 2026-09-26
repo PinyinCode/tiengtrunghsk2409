@@ -1096,15 +1096,46 @@ function favTogglePfOnlyFav() {
     favState.pfOnlyFav = !favState.pfOnlyFav;
 
     /* ═══════════════════════════════════════════════════════════
-       ⭐ 3. FIX: KHI BẬT TOGGLE → CHUYỂN DATASET SANG CÂU YÊU THÍCH
-       - Kiểm tra dataset hiện tại có câu yêu thích không
-       - Nếu KHÔNG có → tự chuyển về dataset có câu yêu thích
-       - Nếu KHÔNG có câu yêu thích ở dataset nào → cảnh báo
+       ⭐ 3. NẾU ĐANG BẬT TOGGLE → KIỂM TRA CÂU HIỆN TẠI NGAY
+       - Check câu hiện tại (pfCurrentStt) có phải câu yêu thích không
+       - Nếu phải → giữ nguyên câu đó
+       - Nếu không phải → nhảy sang câu yêu thích đầu tiên
        ═══════════════════════════════════════════════════════════ */
     if (favState.pfOnlyFav) {
-        var currentDatasetId = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
 
-        /* Kiểm tra dataset hiện tại có câu yêu thích không */
+        /* Bước 1: Lấy danh sách TẤT CẢ câu yêu thích */
+        var allFavRecords = favGetRecords();
+
+        if (allFavRecords.length === 0) {
+            favShowToast('Chưa có câu yêu thích nào để luyện', 'warn');
+            favState.pfOnlyFav = false;
+            favUpdatePfOnlyFavBtn();
+            return;
+        }
+
+        /* Bước 2: Kiểm tra câu hiện tại có thuộc yêu thích không */
+        var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                         ? String(pfCurrentStt)
+                         : null;
+        var currentIsFav = currentStt ? favHas(currentStt) : false;
+
+        /* Bước 3: Xử lý theo kết quả */
+        if (currentIsFav) {
+            /* ⭐ CÂU HIỆN TẠI LÀ CÂU YÊU THÍCH → giữ nguyên, chỉ filter lại */
+            favShowToast('Đang luyện câu yêu thích #' + currentStt, 'add');
+
+            /* Update dropdown "CÂU:" để chỉ hiện câu yêu thích */
+            favRefreshQuestionDropdown();
+
+            /* Update nút toggle */
+            favUpdatePfOnlyFavBtn();
+            return;
+        }
+
+        /* ⭐ CÂU HIỆN TẠI KHÔNG PHẢI YÊU THÍCH → nhảy sang câu yêu thích đầu tiên */
+
+        /* Bước 4: Kiểm tra dataset hiện tại có câu yêu thích không */
+        var currentDatasetId = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
         var hasFavInCurrent = false;
         if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY[currentDatasetId]) {
             var currentData = DATASET_REGISTRY[currentDatasetId].data || [];
@@ -1116,23 +1147,18 @@ function favTogglePfOnlyFav() {
             }
         }
 
-        /* Nếu dataset hiện tại KHÔNG có câu yêu thích → tìm dataset có */
+        /* Bước 5: Nếu dataset hiện tại KHÔNG có câu yêu thích → tìm dataset khác */
         if (!hasFavInCurrent) {
             var foundDatasetId = null;
-            var foundData = null;
-
-            /* Quét TẤT CẢ dataset để tìm dataset có câu yêu thích */
             if (typeof DATASET_REGISTRY !== 'undefined') {
                 var dsIds = Object.keys(DATASET_REGISTRY);
                 for (var k = 0; k < dsIds.length; k++) {
                     var dsId = dsIds[k];
                     var ds = DATASET_REGISTRY[dsId];
                     if (!ds || !Array.isArray(ds.data)) continue;
-
                     for (var m = 0; m < ds.data.length; m++) {
                         if (favHas(ds.data[m].stt)) {
                             foundDatasetId = dsId;
-                            foundData = ds.data;
                             break;
                         }
                     }
@@ -1141,100 +1167,64 @@ function favTogglePfOnlyFav() {
             }
 
             if (foundDatasetId) {
-                /* ⭐ Tìm thấy dataset có câu yêu thích → chuyển sang */
-
-                /* Bước 1: Switch RAW_DATA */
+                /* ⭐ Chuyển dataset */
                 if (typeof window.__switchRawData === 'function') {
                     window.__switchRawData(foundDatasetId);
                 }
-
-                /* Bước 2: Cập nhật dataset select trong Practice Full */
                 var pfSel = document.getElementById('pfDatasetSelect');
-                if (pfSel) pfSel.value = foundDatasetId;
+                if (pfSel) pf].Sel.value = foundDatasetId;
 
-                /* Bước 3: Cập nhật UI dataset (top-level) */
                 if (typeof markCurrentDatasetActive === 'function') {
                     markCurrentDatasetActive();
                 }
-
-                /* Bước 4: Rebuild bộ lọc */
                 if (typeof pfBuildFilterOptions === 'function') {
                     pfBuildFilterOptions();
                 }
-
-                /* Bước 5: Reset filter + filter lại data */
                 if (typeof state !== 'undefined') {
                     state.search = '';
                     state.hsk = '';
                     state.subject = '';
                 }
-                if (typeof pfSearchInput !== 'undefined' && pfSearchInput) pfSearchInput.value = '';
 
-                /* Bước 6: Filter lại để lấy danh sách câu yêu thích */
-                if (typeof pfApplyFilter === 'function') {
-                    pfApplyFilter();
-                }
-
-                /* Bước 7: Tìm câu yêu thích đầu tiên trong dataset mới */
-                var favList = favGetRecords();
-                if (favList.length > 0 && typeof window.openPracticeFull === 'function') {
-                    /* Cập nhật danh sách filtered = chỉ câu yêu thích */
-                    if (typeof window.filtered !== 'undefined') {
-                        window.filtered = favList;
-                    }
-                    try { filtered = favList; } catch(e) {}
-
-                    setTimeout(function() {
-                        window.openPracticeFull(String(favList[0].stt));
-                    }, 100);
-                }
-
-                /* Thông báo */
                 var dsName = DATASET_REGISTRY[foundDatasetId]
                     ? (DATASET_REGISTRY[foundDatasetId].name || foundDatasetId)
                     : foundDatasetId;
                 favShowToast('Đã chuyển sang bộ: ' + dsName, 'add');
-
-            } else {
-                /* ⭐ KHÔNG tìm thấy dataset nào có câu yêu thích */
-                favShowToast('Không có câu yêu thích trong bộ dữ liệu nào', 'warn');
-
-                /* Tắt toggle vì không có gì để luyện */
-                favState.pfOnlyFav = false;
-                favUpdatePfOnlyFavBtn();
-                return;
             }
         }
+
+        /* Bước 6: Nhảy sang câu yêu thích đầu tiên (trong dataset hiện tại) */
+        var firstFavStt = String(allFavRecords[0stt);
+
+        /* Cập nhật biến `filtered` = danh sách câu yêu thích */
+        if (typeof window.filtered !== 'undefined') {
+            window.filtered = allFavRecords;
+        }
+        try { filtered = allFavRecords; } catch(e) {}
+
+        /* Mở Practice Full câu yêu thích đầu tiên */
+        if (typeof window.openPracticeFull === 'function') {
+            setTimeout(function() {
+                window.openPracticeFull(firstFavStt);
+                /* Update dropdown + nút toggle sau khi mở */
+                setTimeout(function() {
+                    favRefreshQuestionDropdown();
+                    favUpdatePfOnlyFavBtn();
+                    favUpdatePfFloatBtn();
+                }, 100);
+            }, 100);
+        }
+
+        favShowToast('Chỉ luyện ' + count + ' câu yêu thích', 'add');
+        return;
     }
 
-    /* ═══ 4. CẬP NHẬT UI NÚT TOGGLE ═══ */
+    /* ═══════════════════════════════════════════════════════════
+       4. NẾU TẮT TOGGLE → quay lại luyện tất cả câu
+       ═══════════════════════════════════════════════════════════ */
     favUpdatePfOnlyFavBtn();
-
-    /* ═══ 5. REFRESH DROPDOWN "CÂU:" ═══ */
     favRefreshQuestionDropdown();
-
-    /* ═══ 6. THÔNG BÁO TRẠNG THÁI ═══ */
-    favShowToast(
-        favState.pfOnlyFav
-            ? ('Chỉ luyện ' + count + ' câu yêu thích')
-            : 'Luyện tất cả câu',
-        favState.pfOnlyFav ? 'add' : 'remove'
-    );
-
-    /* ═══ 7. NẾU ĐANG Ở CÂU KHÔNG THUỘC YÊU THÍCH → NHẢY SANG CÂU YÊU THÍCH ĐẦU ═══ */
-    var pfModal = document.getElementById('practiceFullModal');
-    if (pfModal && pfModal.classList.contains('show')) {
-        if (favState.pfOnlyFav && typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
-            if (!favHas(pfCurrentStt)) {
-                var favList2 = favGetRecords();
-                if (favList2.length > 0 && typeof window.openPracticeFull === 'function') {
-                    setTimeout(function() {
-                        window.openPracticeFull(String(favList2[0].stt));
-                    }, 60);
-                }
-            }
-        }
-    }
+    favShowToast('Luyện tất cả câu', 'remove');
 }
 /* ═══════════════════════════════════════════════════════════════
    NOTIFY CHANGES
