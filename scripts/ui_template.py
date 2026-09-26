@@ -6323,8 +6323,20 @@ window.pfPrev = function() {
 function pfBuildQuickNav() {
     var sel = $('pfQuickNav');
     if (!sel) return;
-    var html = '<option value="">-- Chọn câu (' + filtered.length + ') --</option>';
-    filtered.forEach(function(r, i) {
+
+    // ═══ NẾU BẬT "CHỈ CÂU YÊU THÍCH" → CHỈ HIỆN CÂU YÊU THÍCH ═══
+    var sourceList = filtered;
+    if (typeof favState !== 'undefined'
+        && favState.pfOnlyFav
+        && typeof favCanUse === 'function'
+        && favCanUse()) {
+        sourceList = filtered.filter(function(r) {
+            return favHas(r.stt);
+        });
+    }
+
+    var html = '<option value="">-- Chọn câu (' + sourceList.length + ') --</option>';
+    sourceList.forEach(function(r, i) {
         var vi = (r.vi || '').substring(0, 45);
         var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
                      ? '#' + String(r.stt).trim() + ' · '
@@ -6335,7 +6347,6 @@ function pfBuildQuickNav() {
     sel.innerHTML = html;
     if (pfCurrentStt) sel.value = pfCurrentStt;
 }
-
 function pfQuickNavChange() {
     var sel = $('pfQuickNav');
     if (!sel) return;
