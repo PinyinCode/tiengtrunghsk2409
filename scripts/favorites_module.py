@@ -571,7 +571,6 @@ function favParseKey(key) {
     var str = String(key);
     var idx = str.indexOf('_');
     if (idx === -1) {
-        /* Key cũ → chỉ có stt, mặc định datasetId = 'tonghop' */
         return { datasetId: 'tonghop', stt: str };
     }
     return {
@@ -608,7 +607,7 @@ function favShowLockDialog() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LOAD / SAVE LOCAL — Có migration key cũ → key mới
+   LOAD / SAVE LOCAL — Migration key cũ → key mới
    ═══════════════════════════════════════════════════════════════ */
 function favLoadFromLocal() {
     try {
@@ -627,7 +626,6 @@ function favLoadFromLocal() {
                     return;
                 }
 
-                /* ⭐ Parse key: nếu key cũ (chỉ số) → cần migrate */
                 var parsed = favParseKey(k);
                 var ds = item.datasetId || parsed.datasetId || 'tonghop';
                 var stt = item.stt || parsed.stt;
@@ -694,7 +692,6 @@ async function favLoadFromCloud() {
             var d = doc.data() || {};
             var docId = String(doc.id);
 
-            /* ⭐ Parse docId */
             var parsed = favParseKey(docId);
             var ds = d.datasetId || parsed.datasetId || 'tonghop';
             var stt = d.stt || parsed.stt;
@@ -787,9 +784,7 @@ function favListenCloud() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ MIGRATION CLOUD: Doc ID cũ (chỉ stt) → key mới (dsId_stt)
-   - Tạo doc mới với key đúng
-   - Xoá doc cũ
+   ⭐ MIGRATION CLOUD
    ═══════════════════════════════════════════════════════════════ */
 var _favMigrating = false;
 
@@ -820,7 +815,6 @@ async function favMigrateLocalToCloud() {
             var newKey = favBuildKey(stt, ds);
 
             if (newKey !== docId) {
-                /* ⭐ Doc cũ → cần migrate */
                 toCreate.push({
                     ref: db.collection('favorites').doc(email)
                         .collection('items').doc(newKey),
@@ -834,7 +828,6 @@ async function favMigrateLocalToCloud() {
                 });
                 toDelete.push(doc.ref);
             } else if (!d.datasetId) {
-                /* Doc mới nhưng thiếu datasetId → update */
                 toCreate.push({
                     ref: doc.ref,
                     data: { datasetId: ds },
@@ -848,7 +841,6 @@ async function favMigrateLocalToCloud() {
             return;
         }
 
-        /* Batch 1: Tạo / update doc mới */
         var BATCH_SIZE = 400;
         for (var i = 0; i < toCreate.length; i += BATCH_SIZE) {
             var batch = db.batch();
@@ -863,7 +855,6 @@ async function favMigrateLocalToCloud() {
             await batch.commit();
         }
 
-        /* Batch 2: Xoá doc cũ */
         for (var j = 0; j < toDelete.length; j += BATCH_SIZE) {
             var delBatch = db.batch();
             var delChunk = toDelete.slice(j, j + BATCH_SIZE);
@@ -883,7 +874,7 @@ async function favMigrateLocalToCloud() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ADD / REMOVE / TOGGLE — Dùng key mới
+   ADD / REMOVE / TOGGLE
    ═══════════════════════════════════════════════════════════════ */
 async function favAdd(stt, record, datasetId) {
     if (!favCanUse()) { favShowLockDialog(); return false; }
@@ -898,7 +889,6 @@ async function favAdd(stt, record, datasetId) {
                    && currentUser
                    && currentUser.role === 'admin');
 
-    /* ─── GIỚI HẠN 500/NGÀY ─── */
     var MAX_PER_DAY = 500;
     var today = new Date().toDateString();
 
@@ -926,7 +916,6 @@ async function favAdd(stt, record, datasetId) {
         try { localStorage.setItem(dayKey, JSON.stringify(daily)); } catch(e) {}
     }
 
-    /* ─── LƯU LOCAL ─── */
     favState.items[key] = {
         stt: stt,
         datasetId: currentDsId,
@@ -937,7 +926,6 @@ async function favAdd(stt, record, datasetId) {
     favSaveToLocal();
     favNotifyChanged();
 
-    /* ─── ĐỒNG BỘ FIRESTORE ─── */
     if (typeof db !== 'undefined' && db) {
         try {
             await db.collection('favorites').doc(email)
@@ -983,7 +971,6 @@ async function favRemove(stt, datasetId) {
 
     var backup = favState.items[key];
     if (!backup) {
-        /* Thử key cũ (chưa migrate) */
         if (favState.items[stt]) {
             key = stt;
             backup = favState.items[key];
@@ -1080,11 +1067,9 @@ function favHas(stt, datasetId) {
 
     var targetDs = datasetId || favGetCurrentDsId();
 
-    /* ⭐ Check key mới */
     var key = favBuildKey(stt, targetDs);
     if (favState.items[key]) return true;
 
-    /* ⭐ Fallback key cũ (chưa migrate) */
     var oldItem = favState.items[String(stt)];
     if (oldItem) {
         var itemDs = oldItem.datasetId || 'tonghop';
@@ -1148,7 +1133,7 @@ function favGetDailyUsed() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ FIND RECORD — theo datasetId + stt
+   FIND RECORD
    ═══════════════════════════════════════════════════════════════ */
 function favFindRecordInDataset(dsId, stt) {
     if (!dsId || stt === null || stt === undefined) return null;
@@ -1197,26 +1182,8 @@ function favFindRecordAnywhere(stt) {
     return null;
 }
 
-function favGetRecordsFromArray(sourceArray) {
-    if (!sourceArray || !sourceArray.length) return [];
-    var out = [];
-    var seen = {};
-    for (var i = 0; i < sourceArray.length; i++) {
-        var r = sourceArray[i];
-        if (r && favHas(r.stt) && !seen[String(r.stt)]) {
-            seen[String(r.stt)] = true;
-            out.push(r);
-        }
-    }
-    return out;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ GET RECORDS — CHỈ lấy favorite thuộc dataset hiện tại
-   ═══════════════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════════════
    ⭐ LẤY TẤT CẢ RECORD YÊU THÍCH (không phân biệt dataset)
-   Mỗi record được đính kèm __favDatasetId để xử lý đúng
    ═══════════════════════════════════════════════════════════════ */
 function favGetRecords() {
     var out = [];
@@ -1232,7 +1199,6 @@ function favGetRecords() {
         var itemDs = item.datasetId || parsed.datasetId || 'tonghop';
         var itemStt = item.stt || parsed.stt;
 
-        /* ⭐ KHÔNG filter theo dataset — lấy TẤT CẢ */
         var record = null;
         if (typeof favFindRecordInDataset === 'function') {
             record = favFindRecordInDataset(itemDs, itemStt);
@@ -1245,13 +1211,12 @@ function favGetRecords() {
         if (record && !seen[seenKey]) {
             seen[seenKey] = true;
 
-            /* ⭐ Clone record để không làm hỏng object gốc trong DATASET_REGISTRY */
+            /* Clone record để không làm hỏng object gốc */
             var cloned = {};
             Object.keys(record).forEach(function(k) {
                 cloned[k] = record[k];
             });
 
-            /* ⭐ Đính kèm metadata */
             cloned.__favDatasetId = itemDs;
             cloned.__favKey = key;
             cloned.__favAddedAt = item.addedAt || 0;
@@ -1288,7 +1253,7 @@ function favGetSortedList() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DROPDOWN "CÂU:" — Chỉ filter khi bật toggle
+   DROPDOWN "CÂU:"
    ═══════════════════════════════════════════════════════════════ */
 function favGetQuestionsForDropdown() {
     if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
@@ -1359,7 +1324,7 @@ function favRefreshQuestionDropdown() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   NÚT TIM FLOAT (Practice Full)
+   NÚT TIM FLOAT
    ═══════════════════════════════════════════════════════════════ */
 function favUpdatePfFloatBtn() {
     var pfBtn = document.getElementById('pfFavBtn');
@@ -1398,9 +1363,9 @@ function favUpdatePfOnlyFavBtn() {
     var icon = btn.querySelector('i');
     var countEl = document.getElementById('pfFavOnlyCount');
     var can = favCanUse();
-    var currentDsId = favGetCurrentDsId();
-    var count = favCountInCurrentDataset();
+    var count = favCount();   /* ⭐ Đếm TỔNG */
 
+    /* ═══ 1. CHƯA ĐỦ QUYỀN ═══ */
     if (!can) {
         btn.classList.add('locked');
         btn.classList.remove('active', 'empty', 'current-not-fav');
@@ -1410,35 +1375,22 @@ function favUpdatePfOnlyFavBtn() {
         return;
     }
 
-    btn.classList.remove('locked');
+    btn.classList.remove('locked', 'current-not-fav');
     if (countEl) countEl.textContent = count;
 
+    /* ═══ 2. CHƯA CÓ CÂU YÊU THÍCH NÀO ═══ */
     if (count === 0) {
         btn.classList.add('empty');
-        btn.classList.remove('active', 'current-not-fav');
+        btn.classList.remove('active');
         if (icon) icon.className = 'far fa-heart';
-        btn.title = 'Chưa có câu yêu thích nào trong bộ này';
+        btn.title = 'Chưa có câu yêu thích nào';
         if (favState.pfOnlyFav) favState.pfOnlyFav = false;
         return;
     }
 
     btn.classList.remove('empty');
 
-    var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                     ? String(pfCurrentStt)
-                     : null;
-    var currentIsFav = currentStt ? favHas(currentStt, currentDsId) : false;
-
-    if (!favState.pfOnlyFav && !currentIsFav) {
-        btn.classList.add('current-not-fav');
-        btn.classList.remove('active');
-        if (icon) icon.className = 'far fa-heart';
-        btn.title = 'Câu hiện tại chưa được yêu thích. Bấm ❤️ để thêm vào trước.';
-        return;
-    }
-
-    btn.classList.remove('current-not-fav');
-
+    /* ═══ 3. CẬP NHẬT THEO TRẠNG THÁI TOGGLE ═══ */
     if (favState.pfOnlyFav) {
         btn.classList.add('active');
         if (icon) icon.className = 'fas fa-heart';
@@ -1457,15 +1409,13 @@ function favTogglePfOnlyFav() {
     var totalCount = favCount();
 
     /* ═══════════════════════════════════════════════════════════
-       ⭐ TRƯỜNG HỢP 1: ĐANG BẬT → BẤM ĐỂ TẮT (luôn cho phép)
-       Chuyển về chế độ xem toàn bộ dataset
+       ⭐ TRƯỜNG HỢP 1: ĐANG BẬT → TẮT
        ═══════════════════════════════════════════════════════════ */
     if (favState.pfOnlyFav) {
         favState.pfOnlyFav = false;
         favUpdatePfOnlyFavBtn();
         favRefreshQuestionDropdown();
 
-        /* ⭐ Refresh lại dropdown CÂU: với toàn bộ dataset */
         if (typeof pfBuildQuickNav === 'function') {
             try { pfBuildQuickNav(); } catch(e) {}
         }
@@ -1475,20 +1425,18 @@ function favTogglePfOnlyFav() {
     }
 
     /* ═══════════════════════════════════════════════════════════
-       ⭐ TRƯỜNG HỢP 2: ĐANG TẮT → BẤM ĐỂ BẬT
-       Chuyển về chế độ chỉ luyện câu yêu thích
+       ⭐ TRƯỜNG HỢP 2: ĐANG TẮT → BẬT
        ═══════════════════════════════════════════════════════════ */
     if (totalCount === 0) {
         favShowToast('Chưa có câu yêu thích nào', 'warn');
         return;
     }
 
-    /* ⭐ BẬT toggle (KHÔNG cần check câu hiện tại nữa) */
     favState.pfOnlyFav = true;
     favUpdatePfOnlyFavBtn();
     favRefreshQuestionDropdown();
 
-    /* ⭐ Nếu câu hiện tại KHÔNG phải yêu thích → tự nhảy sang câu yêu thích đầu tiên */
+    /* ⭐ Nếu câu hiện tại KHÔNG phải yêu thích → tự nhảy sang fav đầu tiên */
     var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                      ? String(pfCurrentStt)
                      : null;
@@ -1514,7 +1462,6 @@ function favScanAllHeartButtons() {
     var can = (typeof favCanUse === 'function') ? favCanUse() : false;
     var currentDsId = favGetCurrentDsId();
 
-    /* 1. Quét nút tim trên card */
     document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
         var stt = btn.dataset.stt;
         if (!stt) return;
@@ -1539,12 +1486,9 @@ function favScanAllHeartButtons() {
         btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
     });
 
-    /* 2. Nút tim float */
     if (typeof favUpdatePfFloatBtn === 'function') {
         favUpdatePfFloatBtn();
     }
-
-    /* 3. Nút toggle */
     if (typeof favUpdatePfOnlyFavBtn === 'function') {
         favUpdatePfOnlyFavBtn();
     }
@@ -1585,7 +1529,6 @@ function favNotifyChanged() {
 function favUpdateLockState() {
     var can = favCanUse();
 
-    /* Tab */
     var favTab = document.getElementById('dsFavBtn');
     if (favTab) {
         favTab.classList.toggle('fav-locked', !can);
@@ -1600,7 +1543,6 @@ function favUpdateLockState() {
         }
     }
 
-    /* Dropdown item */
     var favDd = document.getElementById('dsFavDropdownItem');
     if (favDd) {
         favDd.classList.toggle('fav-locked', !can);
@@ -1615,7 +1557,6 @@ function favUpdateLockState() {
         }
     }
 
-    /* Nút tim trên card */
     var currentDsId = favGetCurrentDsId();
     document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
         var icon = btn.querySelector('i');
@@ -1681,7 +1622,6 @@ function favRenderCurrentTab() {
 
     var can = favCanUse();
 
-    /* ═══ 1. KHÔNG CÓ QUYỀN → LOCK STATE ═══ */
     if (!can) {
         mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
             '<div style="width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;' +
@@ -1708,13 +1648,9 @@ function favRenderCurrentTab() {
         return;
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ 2. LẤY TẤT CẢ CÂU YÊU THÍCH — KHÔNG FILTER DATASET
-       ═══════════════════════════════════════════════════════════ */
     var allFavRecords = favGetRecords();
-    var items = favGetSortedList();   /* ⭐ KHÔNG filter dataset nữa */
+    var items = favGetSortedList();
 
-    /* ═══ 3. EMPTY STATE ═══ */
     if (items.length === 0) {
         mobileWrapper.innerHTML = '<div class="fav-empty">' +
             '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
@@ -1727,7 +1663,6 @@ function favRenderCurrentTab() {
         return;
     }
 
-    /* ═══ 4. COUNTER + HEADER ═══ */
     var isAdminUser = (typeof currentUser !== 'undefined'
                        && currentUser
                        && currentUser.role === 'admin');
@@ -1778,7 +1713,6 @@ function favRenderCurrentTab() {
         '</button>' +
     '</div>';
 
-    /* ═══ 5. FILTER theo search / hsk / subject ═══ */
     var filteredFav = allFavRecords.filter(function(r) {
         if (typeof state !== 'undefined') {
             if (state.search) {
@@ -1796,9 +1730,6 @@ function favRenderCurrentTab() {
         return true;
     });
 
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ 6. SORT — dùng __favAddedAt (không cần currentDs nữa)
-       ═══════════════════════════════════════════════════════════ */
     var sortMode = favState.sortMode || 'recent';
     if (sortMode === 'oldest') {
         filteredFav.sort(function(a, b) {
@@ -1811,13 +1742,11 @@ function favRenderCurrentTab() {
             return na - nb;
         });
     } else {
-        /* recent */
         filteredFav.sort(function(a, b) {
             return (b.__favAddedAt || 0) - (a.__favAddedAt || 0);
         });
     }
 
-    /* ═══ 7. RENDER ═══ */
     var cardsHtml = headerHtml;
 
     if (filteredFav.length === 0) {
@@ -1832,7 +1761,6 @@ function favRenderCurrentTab() {
 
     mobileWrapper.innerHTML = cardsHtml;
 
-    /* ═══ 8. UPDATE LOCK STATE ═══ */
     setTimeout(function() {
         if (typeof favUpdateLockState === 'function') favUpdateLockState();
     }, 50);
@@ -1847,11 +1775,6 @@ function favBuildCardHtml(r) {
     var sttSafe = escapeHtml(r.stt);
     var sttJs = escapeJs(r.stt);
 
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ LẤY datasetId THỰC CỦA RECORD (không phải dataset hiện tại)
-       - Nếu record từ favGetRecords() → có __favDatasetId
-       - Nếu không có → fallback CURRENT_DATASET
-       ═══════════════════════════════════════════════════════════ */
     var itemDsId = r.__favDatasetId
                    || (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
                    || 'tonghop';
@@ -1868,7 +1791,7 @@ function favBuildCardHtml(r) {
     }
 
     var can = favCanUse();
-    var active = favHas(r.stt, itemDsId);   /* ⭐ Truyền dsId THỰC */
+    var active = favHas(r.stt, itemDsId);
 
     var favBtn = '<button class="fav-btn' +
         (active ? ' active' : '') +
@@ -2115,12 +2038,43 @@ function favSyncFloatVisibility() {
             pfOnlyFloat.classList.add('show');
             pfOnlyFloat.style.display = 'inline-flex';
         }
+
         favUpdatePfFloatBtn();
         favUpdatePfOnlyFavBtn();
 
         setTimeout(function() {
             favRefreshQuestionDropdown();
         }, 80);
+
+        /* ⭐ Nếu toggle BẬT + câu hiện tại KHÔNG phải fav → tự nhảy fav đầu */
+        if (favState.pfOnlyFav && favCanUse()) {
+            setTimeout(function() {
+                var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                             ? String(pfCurrentStt)
+                             : null;
+                if (!curStt) return;
+
+                var curDs = favGetCurrentDsId();
+                var isFav = favHas(curStt, curDs);
+
+                if (!isFav) {
+                    var favList = favGetRecords();
+                    if (favList.length > 0) {
+                        var firstFavStt = String(favList[0].stt);
+                        if (firstFavStt !== curStt && !window.__favRedirecting) {
+                            window.__favRedirecting = true;
+                            setTimeout(function() {
+                                if (typeof loadPracticeFull === 'function') {
+                                    loadPracticeFull(firstFavStt);
+                                }
+                                window.__favRedirecting = false;
+                            }, 30);
+                        }
+                    }
+                }
+            }, 120);
+        }
+
     } else {
         if (pfFavFloat) {
             pfFavFloat.classList.remove('show');
@@ -2166,7 +2120,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   THEO DÕI pfCurrentStt
+   THEO DÕI pfCurrentStt — KHÔNG tự tắt toggle nữa
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _lastPfStt = null;
@@ -2189,22 +2143,7 @@ function favSyncFloatVisibility() {
             favScanAllHeartButtons();
         }
 
-        if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
-            var curDs = favGetCurrentDsId();
-            var isNewFav = (typeof favHas === 'function') ? favHas(cur, curDs) : false;
-            if (!isNewFav) {
-                favState.pfOnlyFav = false;
-                if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                    favUpdatePfOnlyFavBtn();
-                }
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-                if (typeof favShowToast === 'function') {
-                    favShowToast('Đã tắt "Chỉ câu yêu thích"', 'warn');
-                }
-            }
-        }
+        /* ⭐ KHÔNG tự tắt toggle — để loadPracticeFull xử lý */
     }
 
     setInterval(syncPfState, 250);
@@ -2331,7 +2270,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   PATCH openPracticeFull
+   ⭐ PATCH openPracticeFull — Auto-bật toggle khi mở từ tab Yêu thích
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2340,6 +2279,12 @@ function favSyncFloatVisibility() {
 
         var _origOpenPF = window.openPracticeFull;
         window.openPracticeFull = function(stt, evt) {
+            /* ⭐ AUTO-BẬT toggle khi mở từ tab Yêu thích */
+            if (favCanUse() && favState.currentView && !favState.pfOnlyFav) {
+                favState.pfOnlyFav = true;
+            }
+
+            /* ⭐ Nếu toggle đang bật, filter stt */
             if (favState.pfOnlyFav && favCanUse()) {
                 var favList = favGetRecords();
                 if (favList.length === 0) {
@@ -2360,6 +2305,9 @@ function favSyncFloatVisibility() {
             setTimeout(function() {
                 if (typeof favScanAllHeartButtons === 'function') {
                     favScanAllHeartButtons();
+                }
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
                 }
                 if (typeof favRefreshQuestionDropdown === 'function') {
                     favRefreshQuestionDropdown();
@@ -2387,7 +2335,8 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   PATCH loadPracticeFull
+   ⭐ PATCH loadPracticeFull — KHÔNG tự tắt toggle
+   - Nếu toggle BẬT + câu mới KHÔNG phải fav → tự nhảy fav đầu
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2407,26 +2356,35 @@ function favSyncFloatVisibility() {
                 if (typeof favScanAllHeartButtons === 'function') {
                     favScanAllHeartButtons();
                 }
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
+                }
 
-                if (typeof favState !== 'undefined' && favState.pfOnlyFav) {
+                /* ⭐ Nếu toggle BẬT + câu mới KHÔNG phải fav → tự nhảy fav đầu */
+                if (favState.pfOnlyFav && favCanUse()) {
                     var curDs = favGetCurrentDsId();
-                    var isNewFav = (typeof favHas === 'function') ? favHas(newStt, curDs) : false;
+                    var isNewFav = favHas(newStt, curDs);
+
                     if (!isNewFav) {
-                        favState.pfOnlyFav = false;
-                        if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                            favUpdatePfOnlyFavBtn();
-                        }
-                        if (typeof favRefreshQuestionDropdown === 'function') {
-                            favRefreshQuestionDropdown();
-                        }
-                        if (typeof favShowToast === 'function') {
-                            favShowToast('Đã tắt "Chỉ câu yêu thích"', 'warn');
+                        var favList = favGetRecords();
+                        if (favList.length > 0) {
+                            var firstFavStt = String(favList[0].stt);
+
+                            if (firstFavStt !== newStt && !window.__favRedirecting) {
+                                window.__favRedirecting = true;
+                                setTimeout(function() {
+                                    if (typeof loadPracticeFull === 'function') {
+                                        loadPracticeFull(firstFavStt);
+                                    }
+                                    window.__favRedirecting = false;
+                                }, 30);
+                            }
                         }
                     }
                 }
 
-                if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                    favUpdatePfOnlyFavBtn();
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
                 }
             }, 50);
 
