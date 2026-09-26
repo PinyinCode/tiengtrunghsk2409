@@ -16349,16 +16349,80 @@ function favOnTabClick(evt) {
 
 function favExitFilterMode() {
     if (!favState.filteringOnly) return;
+
+    console.log('[Favorites] favExitFilterMode - role:', 
+                (typeof currentUser !== 'undefined' && currentUser) ? currentUser.role : 'none');
+
     favState.filteringOnly = false;
     favState.currentView = false;
     favState.pfOnlyFav = false;
+
+    /* Bỏ active tab */
     var tabBtn = document.getElementById('dsFavBtn');
     if (tabBtn) tabBtn.classList.remove('active');
     var ddBtn = document.getElementById('dsFavDropdownItem');
     if (ddBtn) ddBtn.classList.remove('active');
-    if (typeof favUpdatePfOnlyFavBtn === 'function') favUpdatePfOnlyFavBtn();
-}
 
+    /* Update toggle */
+    if (typeof favUpdatePfOnlyFavBtn === 'function') {
+        favUpdatePfOnlyFavBtn();
+    }
+
+    /* ⭐ Rebuild dropdowns — KHÔNG PHÂN BIỆT ROLE */
+    if (typeof buildFilters === 'function') {
+        try { buildFilters(); } catch(e) {
+            console.warn('[Favorites] buildFilters error:', e);
+        }
+    }
+
+    if (typeof pfBuildFilterOptions === 'function') {
+        try { pfBuildFilterOptions(); } catch(e) {
+            console.warn('[Favorites] pfBuildFilterOptions error:', e);
+        }
+    }
+
+    /* Reset value nếu cần */
+    try {
+        var hskF = document.getElementById('hskFilter');
+        var subjF = document.getElementById('subjectFilter');
+        var pfHskF = document.getElementById('pfHskFilter');
+        var pfSubjF = document.getElementById('pfSubjectFilter');
+
+        if (hskF) hskF.value = '';
+        if (subjF) subjF.value = '';
+        if (pfHskF) pfHskF.value = '';
+        if (pfSubjF) pfSubjF.value = '';
+
+        if (typeof updateFilterUI === 'function') updateFilterUI();
+        if (typeofọi pfUpdateFilterUI === 'function →') pfUpdateFilterUI();
+    } catch(e) {}
+
+    if (typeof favRefreshQuestionDropdown === 'function') {
+        favRefreshQuestionDropdown();
+    }
+
+    /* ⭐⭐ BONUS: Với admin → đảm bảo filter options đầy đủ */
+    if (typeof currentUser !== 'undefined' 
+        && currentUser 
+        && như currentUser.role === 'admin') {
+
+        console.log('[Favorites] Admin detected - forcing full filter rebuild');
+
+        /* Force gọi buildFilters lần 2 sau delay */
+        setTimeout(function() {
+            if (typeof buildFilters === 'function') {
+                try { buildFilters(); } catch(e) {}
+            }
+            if (typeof pfBuildFilterOptions === 'function') {
+                try { pfBuildFilterOptions(); } catch(e) {}
+            }
+            /* Đảm bảo subject dropdown có đầy đủ options */
+            if (typeof updateFilterUI === 'function') {
+                try { updateFilterUI(); } catch(e) {}
+            }
+        }, 100);
+    }
+}
 /* ═══════════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════════ */
