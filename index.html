@@ -15740,30 +15740,87 @@ function favTogglePfOnlyFav() {
 
     /* ═══════════════════════════════════════════════════════════
        ⭐ TRƯỜNG HỢP 1: ĐANG BẬT → TẮT
+       → Quay về chế độ bình thường: rebuild câu từ dataset hiện tại
        ═══════════════════════════════════════════════════════════ */
     if (favState.pfOnlyFav) {
         favState.pfOnlyFav = false;
         favUpdatePfOnlyFavBtn();
-        favRefreshQuestionDropdown();
 
         /* ⭐ REBUILD LẠI HSK + CHỦ ĐỀ (về dataset hiện tại) */
         if (typeof pfBuildFilterOptions === 'function') {
-            pfBuildFilterOptions();
+            try { pfBuildFilterOptions(); } catch(e) {
+                console.warn('[Favorites] pfBuildFilterOptions error:', e);
+            }
         }
 
-        /* Reset filter nếu cần */
-        var hskSel = document.getElementById('pfHskFilter');
-        var subjSel = document.getElementById('pfSubjectFilter');
-        if (hskSel) hskSel.value = '';
-        if (subjSel) subjSel.value = '';
-        if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
+        /* ⭐ RESET filter (search + hsk + chủ đề) */
+        try {
+            var searchInput = document.getElementById('pfSearchInput');
+            var hskSel = document.getElementById('pfHskFilter');
+            var subjSel = document.getElementById('pfSubjectFilter');
+            var mainSearch = document.getElementById('searchInput');
+            var mainHsk = document.getElementById('hskFilter');
+            var mainSubj = document.getElementById('subjectFilter');
+
+            if (searchInput) searchInput.value = '';
+            if (hskSel) hskSel.value = '';
+            if (subjSel) subjSel.value = '';
+            if (mainSearch) mainSearch.value = '';
+            if (mainHsk) mainHsk.value = '';
+            if (mainSubj) mainSubj.value = '';
+
+            /* Reset state */
+            if (typeof state !== 'undefined') {
+                state.search = '';
+                state.hsk = '';
+                state.subject = '';
+            }
+        } catch(e) {}
+
+        /* ⭐ Update UI chip */
+        if (typeof pfUpdateFilterUI === 'function') {
+            try { pfUpdateFilterUI(); } catch(e) {}
+        }
+        if (typeof updateFilterUI === 'function') {
+            try { updateFilterUI(); } catch(e) {}
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           ⭐⭐ REBUILD DROPDOWN "CÂU:" TỪ DATASET HIỆN TẠI
+           Đây là điểm chính — phải build lại từ RAW_DATA/filtered
+           ═══════════════════════════════════════════════════════ */
+        if (typeof pfBuildQuickNav === 'function') {
+            try {
+                /* Tạm set flag để patch không can thiệp (vì toggle đã tắt) */
+                pfBuildQuickNav();
+                console.log('[Favorites] Đã rebuild dropdown CÂU: từ dataset hiện tại');
+            } catch(e) {
+                console.warn('[Favorites] pfBuildQuickNav error:', e);
+            }
+        }
+
+        /* ⭐ Nếu dropdown rỗng → tự build fallback */
+        setTimeout(function() {
+            var sel = document.getElementById('pfQuickNav');
+            if (!sel || sel.options.length <= 1) {
+                console.log('[Favorites] Dropdown CÂU: rỗng → build fallback');
+                favRebuildQuickNavFromCurrentDataset();
+            }
+        }, 100);
+
+        /* ⭐ Re-render trang chủ nếu đang ở tab Yêu thích */
+        if (typeof window.render === 'function' && favState.currentView) {
+            setTimeout(function() {
+                try { window.render(); } catch(e) {}
+            }, 80);
+        }
 
         favShowToast('Luyện tất cả câu', 'remove');
         return;
     }
 
     /* ═══════════════════════════════════════════════════════════
-       ⭐ TRƯỜNG HỢP 2: ĐANG TẮT → BẬT
+       TRƯỜNG HỢP 2: ĐANG TẮT → BẬT
        ═══════════════════════════════════════════════════════════ */
     if (totalCount === 0) {
         favShowToast('Chưa có câu yêu thích nào', 'warn');
@@ -15773,21 +15830,23 @@ function favTogglePfOnlyFav() {
     favState.pfOnlyFav = true;
     favUpdatePfOnlyFavBtn();
 
-    /* ⭐ REBUILD LẠI HSK + CHỦ ĐỀ (theo favorite) */
+    /* Rebuild HSK + chủ đề (theo favorite) */
     if (typeof pfBuildFilterOptions === 'function') {
-        pfBuildFilterOptions();
+        try { pfBuildFilterOptions(); } catch(e) {}
     }
 
-    /* Reset filter về '' để không bị filter cũ chặn */
-    var hskSel2 = document.getElementById('pfHskFilter');
-    var subjSel2 = document.getElementById('pfSubjectFilter');
-    if (hskSel2) hskSel2.value = '';
-    if (subjSel2) subjSel2.value = '';
-    if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
+    /* Reset filter */
+    try {
+        var hskSel2 = document.getElementById('pfHskFilter');
+        var subjSel2 = document.getElementById('pfSubjectFilter');
+        if (hskSel2) hskSel2.value = '';
+        if (subjSel2) subjSel2.value = '';
+        if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
+    } catch(e) {}
 
     favRefreshQuestionDropdown();
 
-    /* ⭐ Nếu câu hiện tại KHÔNG phải yêu thích → tự nhảy fav đầu */
+    /* Nếu câu hiện tại KHÔNG phải fav → nhảy về fav đầu */
     var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                      ? String(pfCurrentStt)
                      : null;
@@ -15827,7 +15886,46 @@ function favTogglePfOnlyFav() {
 
     favShowToast('Chỉ luyện ' + totalCount + ' câu yêu thích', 'add');
 }
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ FALLBACK: Rebuild dropdown "CÂU:" từ DATASET HIỆN TẠI
+   Dùng khi toggle tắt + hàm gốc không build được
+   ═══════════════════════════════════════════════════════════════ */
+function favRebuildQuickNavFromCurrentDataset() {
+    var sel = document.getElementById('pfQuickNav');
+    if (!sel) return;
 
+    /* Lấy dữ liệu đang hiển thị (đã filter theo HSK/chủ đề) */
+    var sourceList = [];
+    if (typeof filtered !== 'undefined' && Array.isArray(filtered)) {
+        sourceList = filtered;
+    } else if (typeof RAW_DATA !== 'undefined' && Array.isArray(RAW_DATA)) {
+        sourceList = RAW_DATA;
+    }
+
+    var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                 ? String(pfCurrentStt)
+                 : '';
+
+    var html = '<option value="">-- Chọn câu (' + sourceList.length + ') --</option>';
+
+    for (var j = 0; j < sourceList.length; j++) {
+        var r = sourceList[j];
+        var vi = (r.vi || '').substring(0, 45);
+        var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                     ? '#' + String(r.stt).trim() + ' · '
+                     : '';
+        var label = sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
+        var selected = (String(r.stt) === curStt) ? ' selected' : '';
+
+        html += '<option value="' + String(r.stt) + '"' + selected + '>' +
+                escapeHtml(label) + '</option>';
+    }
+
+    sel.innerHTML = html;
+    if (curStt) sel.value = curStt;
+
+    console.log('[Favorites] Rebuilt CÂU: từ dataset hiện tại, ' + sourceList.length + ' câu');
+}
 /* ═══════════════════════════════════════════════════════════════
    SCAN ALL HEART BUTTONS
    ═══════════════════════════════════════════════════════════════ */
@@ -17243,6 +17341,13 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    PATCH: ĐỔI BỘ DỮ LIỆU (#pfDatasetSelect.change)
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ PATCH: ĐỔI BỘ DỮ LIỆU (#pfDatasetSelect.change)
+   - Reset toggle Favorites Only
+   - Rebuild HSK + chủ đề theo dataset mới
+   - Rebuild dropdown "CÂU:" từ dataset mới
+   - Fallback build thủ công nếu cần
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
 
@@ -17251,37 +17356,86 @@ function favSyncFloatVisibility() {
     function handleDatasetChange() {
         console.log('[Favorites] Đổi bộ dữ liệu → đồng bộ');
 
-        /* ⭐ Nếu đang redirect thì bỏ qua */
+        /* ═══════════════════════════════════════════════════════
+           Bỏ qua nếu đang trong quá trình redirect tự động
+           (next/prev/chọn dropdown CÂU:) — tránh conflict
+           ═══════════════════════════════════════════════════════ */
         if (window.__favRedirecting) {
             console.log('[Favorites] Đang redirect — bỏ qua handleDatasetChange');
             return;
         }
 
-        if (typeof favState !== 'undefined') {
+        /* ═══════════════════════════════════════════════════════
+           1. RESET TOGGLE FAVORITES ONLY (đổi dataset = bỏ chế độ fav)
+           ═══════════════════════════════════════════════════════ */
+        if (favState.pfOnlyFav) {
+            console.log('[Favorites] Tắt toggle Favorites Only vì đổi dataset');
             favState.pfOnlyFav = false;
+
+            if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                favUpdatePfOnlyFavBtn();
+            }
         }
 
-        if (typeof favUpdatePfOnlyFavBtn === 'function') {
-            favUpdatePfOnlyFavBtn();
+        /* ═══════════════════════════════════════════════════════
+           2. REBUILD FILTER OPTIONS (HSK + Chủ đề) theo dataset mới
+           ═══════════════════════════════════════════════════════ */
+        if (typeof pfBuildFilterOptions === 'function') {
+            try {
+                pfBuildFilterOptions();
+            } catch(e) {
+                console.warn('[Favorites] pfBuildFilterOptions error:', e);
+            }
         }
 
-        if (typeof favRefreshQuestionDropdown === 'function') {
-            favRefreshQuestionDropdown();
+        /* ═══════════════════════════════════════════════════════
+           3. REBUILD DROPDOWN "CÂU:" từ dataset mới
+           ═══════════════════════════════════════════════════════ */
+        if (typeof pfBuildQuickNav === 'function') {
+            try {
+                pfBuildQuickNav();
+            } catch(e) {
+                console.warn('[Favorites] pfBuildQuickNav error:', e);
+            }
         }
 
+        /* ═══════════════════════════════════════════════════════
+           4. FALLBACK: Nếu dropdown "CÂU:" vẫn rỗng → build thủ công
+           ═══════════════════════════════════════════════════════ */
         setTimeout(function() {
+            var sel = document.getElementById('pfQuickNav');
+            if (!sel || sel.options.length <= 1) {
+                console.log('[Favorites] Dropdown CÂU: rỗng → build fallback');
+                if (typeof favRebuildQuickNavFromCurrentDataset === 'function') {
+                    favRebuildQuickNavFromCurrentDataset();
+                }
+            }
+
+            /* ⭐ Update UI sau khi build xong */
             if (typeof favScanAllHeartButtons === 'function') {
                 favScanAllHeartButtons();
             }
+            if (typeof pfUpdateFilterUI === 'function') {
+                pfUpdateFilterUI();
+            }
+        }, 100);
 
+        /* ═══════════════════════════════════════════════════════
+           5. LOG DEBUG
+           ═══════════════════════════════════════════════════════ */
+        setTimeout(function() {
             var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                          ? String(pfCurrentStt)
                          : null;
             var curDs = favGetCurrentDsId();
-            var isNewFav = newStt && typeof favHas === 'function' ? favHas(newStt, curDs) : false;
-            console.log('[Favorites] Câu mới #' + newStt + ' | ds: ' + curDs + ' | liked: ' + isNewFav);
-
-        }, 100);
+            var isNewFav = newStt && typeof favHas === 'function'
+                           ? favHas(newStt, curDs)
+                           : false;
+            console.log('[Favorites] Sau đổi dataset: #' + newStt +
+                        ' | ds: ' + curDs +
+                        ' | liked: ' + isNewFav +
+                        ' | toggle: ' + favState.pfOnlyFav);
+        }, 200);
     }
 
     function attachListener() {
@@ -17294,12 +17448,23 @@ function favSyncFloatVisibility() {
         sel.addEventListener('change', function() {
             console.log('[Favorites] #pfDatasetSelect change fired');
 
+            /* ⭐ Debounce: nếu đổi liên tục chỉ chạy 1 lần */
             if (_datasetChangeTimer) clearTimeout(_datasetChangeTimer);
             _datasetChangeTimer = setTimeout(function() {
                 handleDatasetChange();
+
+                /* ⭐ Backup: rebuild sau 500ms phòng race condition */
                 setTimeout(function() {
                     if (typeof favScanAllHeartButtons === 'function') {
                         favScanAllHeartButtons();
+                    }
+
+                    /* Nếu dropdown vẫn rỗng → build lại */
+                    var s = document.getElementById('pfQuickNav');
+                    if (!s || s.options.length <= 1) {
+                        if (typeof favRebuildQuickNavFromCurrentDataset === 'function') {
+                            favRebuildQuickNavFromCurrentDataset();
+                        }
                     }
                 }, 500);
             }, 250);
