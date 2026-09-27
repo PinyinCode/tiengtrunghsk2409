@@ -12525,6 +12525,9 @@ var BANK_CONFIG = {"bank_id": "970418", "bank_name": "BIDV", "account_no": "8897
 var PACKAGES = [{"id": "1m", "label": "1 tháng", "amount": 50000, "days": 30, "popular": false}, {"id": "3m", "label": "3 tháng", "amount": 120000, "days": 90, "popular": true, "save": "Tiết kiệm 33%"}, {"id": "1y", "label": "1 năm", "amount": 300000, "days": 365, "popular": false, "save": "Tiết kiệm 58%"}, {"id": "forever", "label": "Premium", "amount": 1000000, "days": 36500, "popular": false, "save": "Premium - Admin Hỗ trợ trực tiếp", "permanent": true}];
 var RENEWAL_SUPPORT_ZALO = "0922331886";
 
+/* ⭐ TELEGRAM CONFIG */
+var TELEGRAM_BOT_TOKEN = "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU";
+var TELEGRAM_CHAT_ID   = "-0";
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -15310,6 +15313,99 @@ setTimeout(function() {
         enterDemoMode();
     }
 }, 5000);
+
+/* ═══════════════════════════════════════════════════════════════
+   📱 TELEGRAM NOTIFICATION — Gửi tin nhắn khi có sự kiện
+   - notifyTelegramUserPaid: khi user bấm "Tôi đã thanh toán"
+   - notifyTelegramAdminConfirmed: khi admin duyệt đơn
+   ═══════════════════════════════════════════════════════════════ */
+function _telegramSendMessage(text) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
+        console.warn('[Telegram] Chưa cấu hình bot_token / chat_id hợp lệ');
+        console.warn('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? 'OK' : 'MISSING');
+        console.warn('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || 'MISSING');
+        return Promise.reject('not_configured');
+    }
+
+    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
+
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
+    })
+    .then(function(r) {
+        return r.json();
+    })
+    .then(function(data) {
+        if (!data.ok) {
+            console.error('[Telegram] ❌ API error:', data.description);
+            throw new Error(data.description || 'Telegram API error');
+        }
+        console.log('[Telegram] ✅ Đã gửi tin nhắn thành công');
+        return data;
+    })
+    .catch(function(err) {
+        console.error('[Telegram] ❌ Lỗi gửi:', err);
+        throw err;
+    });
+}
+
+window.notifyTelegramUserPaid = function(req) {
+    if (!req) return Promise.resolve();
+
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '💰 <b>USER ĐÃ THANH TOÁN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 <b>' + amountStr + 'đ</b>\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) +
+            (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
+        '🔑 Mã: <code>' + escapeHtml(req.transferCode || '—') + '</code>\n\n' +
+        '⏳ Vui lòng kiểm tra và xác nhận trong trang quản trị.';
+
+    return _telegramSendMessage(text);
+};
+
+window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
+    if (!req) return Promise.resolve();
+
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 ' + amountStr + 'đ\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) + '\n' +
+        (isPermanent
+            ? '💎 <b>KÍCH HOẠT VĨNH VIỄN</b>'
+            : '📅 Hạn mới: <b>' + escapeHtml(newExpiryStr || '?') + '</b>') + '\n\n' +
+        '🎉 User đã được gia hạn thành công.';
+
+    return _telegramSendMessage(text);
+};
+
+/* ═══ DEBUG: Test gửi tin nhắn ═══ */
+window.testTelegram = function() {
+    console.log('[Telegram] Test started...');
+    console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
+    console.log('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || '❌ MISSING');
+    return _telegramSendMessage('🧪 <b>Test Telegram</b>\n\nBot đang hoạt động tốt! ✅\n\nThời gian: ' + new Date().toLocaleString('vi-VN'))
+        .then(function() {
+            alert('✅ Đã gửi test! Kiểm tra Telegram.');
+        })
+        .catch(function(err) {
+            alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.');
+        });
+};
 
 /* ==== INTRO JS ==== */
 
