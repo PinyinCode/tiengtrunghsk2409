@@ -1421,6 +1421,9 @@ var BANK_CONFIG = __BANK_CONFIG__;
 var PACKAGES = __PACKAGES__;
 var RENEWAL_SUPPORT_ZALO = "__RENEWAL_SUPPORT_ZALO__";
 
+/* ⭐ TELEGRAM CONFIG */
+var TELEGRAM_BOT_TOKEN = "__TELEGRAM_BOT_TOKEN__";
+var TELEGRAM_CHAT_ID   = "__TELEGRAM_CHAT_ID__";
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -4200,23 +4203,125 @@ function initAuthUI() {
     scheduleAutoExpire();
 }
 /* ============ TIMEOUT FALLBACK ============ */
+/* ============ TIMEOUT FALLBACK ============ */
 setTimeout(function() {
     if (!appInitialized) {
         console.warn('Auth timeout, entering demo mode');
         enterDemoMode();
     }
 }, 5000);
-"""
 
-    # Inject config
+/* ═══════════════════════════════════════════════════════════════
+   📱 TELEGRAM NOTIFICATION — Gửi tin nhắn khi có sự kiện
+   - notifyTelegramUserPaid: khi user bấm "Tôi đã thanh toán"
+   - notifyTelegramAdminConfirmed: khi admin duyệt đơn
+   ═══════════════════════════════════════════════════════════════ */
+function _telegramSendMessage(text) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
+        console.warn('[Telegram] Chưa cấu hình bot_token / chat_id hợp lệ');
+        console.warn('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? 'OK' : 'MISSING');
+        console.warn('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || 'MISSING');
+        return Promise.reject('not_configured');
+    }
+
+    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
+
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
+    })
+    .then(function(r) {
+        return r.json();
+    })
+    .then(function(data) {
+        if (!data.ok) {
+            console.error('[Telegram] ❌ API error:', data.description);
+            throw new Error(data.description || 'Telegram API error');
+        }
+        console.log('[Telegram] ✅ Đã gửi tin nhắn thành công');
+        return data;
+    })
+    .catch(function(err) {
+        console.error('[Telegram] ❌ Lỗi gửi:', err);
+        throw err;
+    });
+}
+
+window.notifyTelegramUserPaid = function(req) {
+    if (!req) return Promise.resolve();
+
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '💰 <b>USER ĐÃ THANH TOÁN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 <b>' + amountStr + 'đ</b>\n' +
+        '📦 ' + escapeHtml(req.packageLabel            (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
+        '🔑 Mã: <code>' + escapeHtml(req.transferCode || '—') + '</code>\n\n' +
+        '⏳ Vui lòng kiểm tra và xác nhận trong trang quản trị.';
+
+    return _telegramSendMessage(text);
+};
+
+window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
+    if (!req) return Promise.resolve();
+
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 ' + amountStr + 'đ\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) + '\n' +
+        (isPermanent
+            ? '💎 <b>KÍCH HOẠT VĨNH VIỄN</b>'
+            : '📅 Hạn mới: <b>' + escapeHtml(newExpiryStr || '?') + '</b>') + '\n\n' +
+        '🎉 User đã được gia hạn thành công.';
+
+    return _telegramSendMessage(text);
+};
+
+/* ═══ DEBUG: Test gửi tin nhắn ═══ */
+window.testTelegram = function() {
+    console.log('[Telegram] Test started...');
+    console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
+    console.log('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || '❌ MISSING');
+    return _telegramSendMessage('🧪 <b>Test Telegram</b>\n\nBot đang hoạt động tốt! ✅\n\nThời gian: ' + new Date().toLocaleString('vi-VN'))
+        .then(function() {
+            alert('✅ Đã gửi test! Kiểm tra Telegram.');
+        })
+        .catch(function(err) {
+            alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.');
+        });
+};
+"""
+  # Inject config
     js = js.replace("__TRIAL_DAYS__", str(config.get("trial_days", 3)))
     js = js.replace("__TRIAL_MAX_QUESTIONS__", str(config.get("trial_max_questions", 50)))
     js = js.replace("__TRIAL_MAX_HSK__", str(config.get("trial_max_hsk", 5)))
     js = js.replace("__TRIAL_UNLIMITED_WRITING__",
                     "true" if config.get("trial_unlimited_writing", True) else "false")
     js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
-    js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii=False))
-    js = js.replace("__RENEWAL_SUPPORT_ZALO__", config.get("renewal_support_zalo", ""))
+    js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii ||=False))
+    js = js.replace("__REN reqEWAL_SUPPORT_ZALO__", config.p.get("renewal_support_zaloackage", ""))
+
+    # ⭐ TE)LEGRAM CONFIG — inject vào JS
+ +
+    telegram_token = config.get("telegram_bot_token", "") or ""
+    telegram_chat_id = config.get("telegram_chat_id", "") or ""
+    # Escape để tránh lỗi nếu token/chat_id có ký tự đặc biệt
+    telegram_token_escaped = telegram_token.replace("\\", "\\\\").replace('"', '\\"')
+    telegram_chat_id_escaped = str(telegram_chat_id).replace("\\", "\\\\").replace('"', '\\"')
+    js = js.replace("__TELEGRAM_BOT_TOKEN__", telegram_token_escaped)
+    js = js.replace("__TELEGRAM_CHAT_ID__", telegram_chat_id_escaped)
 
     return js
 
