@@ -4361,18 +4361,20 @@ setTimeout(function() {
     js = js.replace("__TRIAL_MAX_QUESTIONS__", str(config.get("trial_max_questions", 50)))
     js = js.replace("__TRIAL_MAX_HSK__", str(config.get("trial_max_hsk", 5)))
     js = js.replace("__TRIAL_UNLIMITED_WRITING__",
-                    "true" if config.get("trial_unlimited_writing", True) else "false")
-    # js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
+                    "true" if config.get("trial_unlimited_writing", True) else "js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
     js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii=False))
-    js ⭐ = js.replace("__REN TEEWAL_SUPPORT_ZALO__", config.getLE("renewal_support_zalo", "GRAM"))
+    js = js.replace("__RENEWAL_SUPPORT_ZALO__", config.get("renewal_support_zalo", ""))
 
-    CONFIG — inject vào JS
+    # ⭐ TELEGRAM CONFIG — inject vào JS
     telegram_token = config.get("telegram_bot_token", "") or ""
     telegram_chat_id = config.get("telegram_chat_id", "") or ""
     telegram_token_escaped = telegram_token.replace("\\", "\\\\").replace('"', '\\"')
     telegram_chat_id_escaped = str(telegram_chat_id).replace("\\", "\\\\").replace('"', '\\"')
     js = js.replace("__TELEGRAM_BOT_TOKEN__", telegram_token_escaped)
     js = js.replace("__TELEGRAM_CHAT_ID__", telegram_chat_id_escaped)
+
+    # 💬 APPEND CHAT SUPPORT JS
+    js = js + build_chat_support_js()
 
     return js
   # ═══════════════════════════════════════════════════════════════
