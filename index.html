@@ -128,7 +128,13 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
 .ds-main-row{
-    display:grid;grid-template-columns:1fr 1fr;gap:.5rem;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
+}
+@media(max-width:768px){
+    .ds-main-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr;}
 }
 @media(max-width:500px){
     .ds-main-row{grid-template-columns:1fr}
@@ -7159,6 +7165,12 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
+        <div class="ds-fav-row"><button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">
+            <i class="far fa-heart"></i>
+            <span>Yêu thích</span>
+            <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>
+            <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>
+        </button></div>
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
         <div class="ds-sub-label">
@@ -7167,12 +7179,6 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
         </div>
         <div class="ds-sub-grid" id="dsSubGrid"></div>
     </div>
-    <div class="ds-fav-row"><button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">
-            <i class="far fa-heart"></i>
-            <span>Yêu thích</span>
-            <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>
-            <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>
-        </button></div>
 </div>
 
 <div class="search-filter-row">
