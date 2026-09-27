@@ -3315,6 +3315,11 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    ⭐ PATCH next/prev — Dùng loadPracticeFull + tự đổi dataset
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ PATCH next/prev — Điều hướng trong DANH SÁCH ĐÃ LỌC
+   - Toggle BẬT: điều hướng trong favFilterRecords() (đã lọc)
+   - Toggle TẮT: gọi hàm gốc
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     function patchNavigateFn(fnName) {
         if (typeof window[fnName] !== 'function') return false;
@@ -3334,10 +3339,18 @@ function favSyncFloatVisibility() {
                 return res;
             }
 
-            /* ═══ BẬT TOGGLE → điều hướng trong danh sách yêu thích ═══ */
-            var favList = favGetRecords();
+            /* ═══════════════════════════════════════════════════════
+               ⭐ BẬT TOGGLE → điều hướng trong DANH SÁCH ĐÃ LỌC
+               Dùng favFilterRecords() thay vì favGetRecords()
+               ═══════════════════════════════════════════════════════ */
+            var allFav = favGetRecords();
+            var favList = favFilterRecords(allFav);  // ← ✅ DÙNG FILTERED LIST
+
             if (favList.length === 0) {
-                return _orig.apply(this, arguments);
+                if (typeof favShowToast === 'function') {
+                    favShowToast('Không có câu nào khớp bộ lọc', 'warn');
+                }
+                return;
             }
 
             var direction = (fnName.toLowerCase().indexOf('prev') !== -1) ? -1 : 1;
@@ -3348,6 +3361,7 @@ function favSyncFloatVisibility() {
             var curDs = favGetCurrentDsId();
             var curIdx = -1;
 
+            /* Tìm vị trí câu hiện tại trong DANH SÁCH ĐÃ LỌC */
             for (var i = 0; i < favList.length; i++) {
                 if (String(favList[i].stt) === curStt &&
                     favList[i].__favDatasetId === curDs) {
@@ -3358,9 +3372,11 @@ function favSyncFloatVisibility() {
 
             var nextIdx;
             if (curIdx === -1) {
+                /* Câu hiện tại không nằm trong danh sách đã lọc → nhảy về câu đầu */
                 nextIdx = 0;
             } else {
                 nextIdx = curIdx + direction;
+                /* Wrap-around */
                 if (nextIdx < 0) nextIdx = favList.length - 1;
                 if (nextIdx >= favList.length) nextIdx = 0;
             }
@@ -3439,7 +3455,6 @@ function favSyncFloatVisibility() {
         if (_tries > 40) clearInterval(_iv);
     }, 200);
 })();
-
 /* ═══════════════════════════════════════════════════════════════
    PUBLIC API
    ═══════════════════════════════════════════════════════════════ */
