@@ -17486,6 +17486,10 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    ⭐ PATCH next/prev — Dùng loadPracticeFull + tự đổi dataset
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ PATCH next/prev — Điều hướng theo DROPDOWN "CÂU:"
+   Đọc trực tiếp từ options của dropdown → index luôn khớp
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     function patchNavigateFn(fnName) {
         if (typeof window[fnName] !== 'function') return false;
@@ -17505,44 +17509,94 @@ function favSyncFloatVisibility() {
                 return res;
             }
 
-            /* ═══ BẬT TOGGLE → điều hướng trong danh sách yêu thích ═══ */
-            var favList = favGetRecords();
-            if (favList.length === 0) {
+            /* ═══════════════════════════════════════════════════════
+               ⭐ ĐỌC DANH SÁCH TỪ DROPDOWN #pfQuickNav
+               (đảm bảo index khớp với dropdown đang hiển thị)
+               ═══════════════════════════════════════════════════════ */
+            var navSel = document.getElementById('pfQuickNav');
+            if (!navSel) {
                 return _orig.apply(this, arguments);
             }
 
+            /* ⭐ Build list từ options (bỏ option placeholder đầu) */
+            var list = [];
+            for (var i = 0; i < navSel.options.length; i++) {
+                var opt = navSel.options[i];
+                if (!opt.value) continue;   /* Bỏ placeholder */
+
+                list.push({
+                    stt: opt.value,
+                    datasetId: opt.dataset.datasetId || favGetCurrentDsId(),
+                    index: i   /* Index thực trong dropdown */
+                });
+            }
+
+            if (list.length === 0) {
+                if (typeof favShowToast === 'function') {
+                    favShowToast('Không có câu nào để chuyển', 'warn');
+                }
+                return;
+            }
+
+            /* ═══ Xác định hướng ═══ */
             var direction = (fnName.toLowerCase().indexOf('prev') !== -1) ? -1 : 1;
 
+            /* ═══ Tìm vị trí câu hiện tại trong list ═══ */
             var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                          ? String(pfCurrentStt)
                          : null;
             var curDs = favGetCurrentDsId();
             var curIdx = -1;
 
-            for (var i = 0; i < favList.length; i++) {
-                if (String(favList[i].stt) === curStt &&
-                    favList[i].__favDatasetId === curDs) {
-                    curIdx = i;
+            for (var k = 0; k < list.length; k++) {
+                /* Match theo stt + dataset */
+                if (String(list[k].stt) === curStt
+                    && list[k].datasetId === curDs) {
+                    curIdx = k;
                     break;
                 }
             }
 
-            var nextIdx;
-            if (curIdx === -1) {
-                nextIdx = 0;
-            } else {
-                nextIdx = curIdx + direction;
-                if (nextIdx < 0) nextIdx = favList.length - 1;
-                if (nextIdx >= favList.length) nextIdx = 0;
+            /* ⭐ Nếu không match chính xác → thử match chỉ theo stt */
+            if (curIdx === -1 && curStt) {
+                for (var m = 0; m < list.length; m++) {
+                    if (String(list[m].stt) === curStt) {
+                        curIdx = m;
+                        break;
+                    }
+                }
             }
 
-            var nextItem = favList[nextIdx];
-            var nextStt = String(nextItem.stt);
-            var nextDs = nextItem.__favDatasetId || curDs;
+            /* ⭐ Nếu vẫn không tìm thấy → dùng selectedIndex của dropdown */
+            if (curIdx === -1 && navSel.selectedIndex > 0) {
+                curIdx = navSel.selectedIndex - 1;
+            }
 
-            /* ═══ Nếu câu kế thuộc dataset khác → chuyển dataset ═══ */
+            /* ⭐ Nếu dropdown đang ở placeholder → bắt đầu từ 0 */
+            if (curIdx === -1) {
+                curIdx = 0;
+            }
+
+            /* ═══ Tính index tiếp theo ═══ */
+            var nextIdx = curIdx + direction;
+            if (nextIdx < 0) nextIdx = list.length - 1;
+            if (nextIdx >= list.length) nextIdx = 0;
+
+            var nextItem = list[nextIdx];
+            var nextStt = String(nextItem.stt);
+            var nextDs = nextItem.datasetId;
+
+            /* ⭐ Set lại dropdown về index mới (để UI khớp) */
+            navSel.selectedIndex = nextItem.index;
+
+            console.log('[Favorites] Next/prev: ' + curStt + ' → ' + nextStt +
+                        ' (index ' + curIdx + ' → ' + nextIdx + ' / ' + list.length + ')');
+
+            /* ═══════════════════════════════════════════════════════
+               Nếu câu kế thuộc dataset khác → chuyển dataset trước
+               ═══════════════════════════════════════════════════════ */
             if (nextDs !== curDs) {
-                console.log('[Favorites] Next/prev đổi dataset: ' + curDs + ' → ' + nextDs);
+                console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + nextDs);
 
                 window.__favRedirecting = true;
 
