@@ -33,8 +33,50 @@ def build_accounts_css():
 .user-menu{position:relative}
 .user-avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);cursor:pointer;object-fit:cover;transition:.15s;display:block;}
 .user-avatar:hover{border-color:var(--primary);transform:scale(1.05)}
-.user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 10px 30px rgba(0,0,0,.15);padding:.5rem;min-width:290px;display:none;z-index:200;}
+.user-dropdown{
+    position:absolute;
+    top:calc(100% + .5rem);
+    right:0;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    padding:.5rem;
+    min-width:290px;
+    display:none;
+    z-index:200;
+}
 .user-dropdown.show{display:block}
+
+/* ═══════════════════════════════════════════════════════════════
+   MŨI TÊN TAM GIÁC — Chỉ lên avatar (nút mở dropdown)
+   - ::before: tạo mũi tên (border-color)
+   - ::after:  tạo khoảng trắng giữa mũi tên và dropdown
+   ═══════════════════════════════════════════════════════════════ */
+.user-dropdown::before{
+    content:'';
+    position:absolute;
+    top:-9px;
+    right:20px;
+    width:0;
+    height:0;
+    border-left:9px solid transparent;
+    border-right:9px solid transparent;
+    border-bottom:9px solid var(--border);
+    pointer-events:none;
+}
+.user-dropdown::after{
+    content:'';
+    position:absolute;
+    top:-7px;
+    right:22px;
+    width:0;
+    height:0;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-bottom:7px solid var(--surface);
+    pointer-events:none;
+}
 .user-info{padding:.75rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
 .user-info .name{font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:.2rem}
 .user-info .email{font-size:.75rem;color:var(--text-3);word-break:break-all}
@@ -919,6 +961,50 @@ def build_accounts_css():
         z-index:1000 !important;
     }
 }
+/* ═══════════════════════════════════════════════════════════════
+   🆕 USER DATA CHANGED TOAST — Thông báo khi admin duyệt
+   ═══════════════════════════════════════════════════════════════ */
+.user-changed-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    padding: .9rem 1.5rem;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #fff;
+    border-radius: 50px;
+    font-size: .9rem;
+    font-weight: 800;
+    font-family: inherit;
+    box-shadow: 0 12px 40px rgba(22, 163, 74, .5), 0 4px 12px rgba(0, 0, 0, .15);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity .3s ease, transform .4s cubic-bezier(.34, 1.56, .64, 1);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    max-width: 90vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.user-changed-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.user-changed-toast i {
+    font-size: 1.2rem;
+    animation: successPop .5s cubic-bezier(.34, 1.56, .64, 1);
+}
+.user-changed-toast.expired {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 12px 40px rgba(220, 38, 38, .5), 0 4px 12px rgba(0, 0, 0, .15);
+}
+.user-changed-toast.info {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    box-shadow: 0 12px 40px rgba(124, 58, 237, .5), 0 4px 12px rgba(0, 0, 0, .15);
+}
 """
 
 
@@ -1321,6 +1407,9 @@ def build_renewal_html():
 # ═══════════════════════════════════════════════════════════════
 # JS
 # ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════
+# JS
+# ═══════════════════════════════════════════════════════════════
 def build_accounts_js(config):
     js = r"""
 /* ============ CONFIG INJECTED ============ */
@@ -1345,6 +1434,8 @@ var appInitialized = false;
 var renewalSelectedPkg = null;
 var renewalCurrentReq = null;
 var renewalListener = null;
+
+var userWatcher = null;
 
 /* Search & Filter state */
 var adminSearchQuery = '';
@@ -1411,7 +1502,31 @@ function hasPermission(permKey) {
     }
     return perms[permKey] === true;
 }
+/* ═══════════════════════════════════════════════════════════════
+   🔔 TOAST THÔNG BÁO USER DATA CHANGED
+   ═══════════════════════════════════════════════════════════════ */
+function showUserChangedToast(message, type) {
+    var old = document.getElementById('userChangedToast');
+    if (old) old.remove();
 
+    var toast = document.createElement('div');
+    toast.id = 'userChangedToast';
+    toast.className = 'user-changed-toast' + (type ? ' ' + type : '');
+    toast.innerHTML = '<i class="fas fa-' +
+        (type === 'expired' ? 'exclamation-triangle' :
+         type === 'info' ? 'info-circle' : 'check-circle') +
+        '"></i><span>' + message + '</span>';
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(function() {
+        toast.classList.add('show');
+    });
+
+    setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 400);
+    }, 4000);
+}
 /* ============ TIER STATE ============ */
 function publishTierState() {
     if (!currentUser) {
@@ -1489,6 +1604,8 @@ try {
 /* ============ AUTH STATE ============ */
 async function handleAuthChange(user) {
     if (!user) {
+        // Logout → hủy watcher
+        if (userWatcher) { try { userWatcher(); } catch(e) {} userWatcher = null; }
         currentUser = null; isDemo = true;
         publishTierState();
         applyUserUI(); enterDemoMode();
@@ -1508,6 +1625,9 @@ async function handleAuthChange(user) {
         logLogin(currentUser);
         if (!appInitialized) { initApp(); appInitialized = true; }
         else { if (typeof refreshApp === 'function') refreshApp(); }
+        watchCurrentUser();
+        // Background verify sau 2s để phát hiện thay đổi từ admin
+        setTimeout(function() { verifyCurrentUserBackground(); }, 2000);
         return;
     }
 
@@ -1591,12 +1711,181 @@ async function handleAuthChange(user) {
         logLogin(currentUser);
         if (!appInitialized) { initApp(); appInitialized = true; }
         else { if (typeof refreshApp === 'function') refreshApp(); }
+        watchCurrentUser();
     } catch(e) {
         console.error('Auth check error:', e);
         isDemo = true; enterDemoMode();
     }
 }
+/* ═══════════════════════════════════════════════════════════════
+   🔄 REALTIME WATCHER — Tự động cập nhật khi admin duyệt gia hạn
+   ═══════════════════════════════════════════════════════════════ */
+function watchCurrentUser() {
+    if (!currentUser || !db) return;
 
+    if (userWatcher) {
+        try { userWatcher(); } catch(e) {}
+        userWatcher = null;
+    }
+
+    var email = currentUser.email;
+    if (!email) return;
+
+    console.log('👁 Watching user changes for:', email);
+
+    userWatcher = db.collection('allowed_users').doc(email).onSnapshot(function(doc) {
+        if (!doc.exists) return;
+        var data = doc.data();
+        if (!data) return;
+
+        var oldExpiryMs = null;
+        if (currentUser.expiresAt) {
+            var od = getExpiryDate(currentUser.expiresAt);
+            if (od) oldExpiryMs = od.getTime();
+        }
+
+        var newExpiryMs = null;
+        if (data.expiresAt) {
+            var nd = getExpiryDate(data.expiresAt);
+            if (nd) newExpiryMs = nd.getTime();
+        }
+
+        var oldPermanent = currentUser.isPermanent || false;
+        var newPermanent = data.isPermanent || false;
+        var oldRole = currentUser.role;
+        var newRole = data.role || 'user';
+        var oldName = currentUser.name;
+        var newName = data.name || currentUser.name;
+
+        if (oldExpiryMs === newExpiryMs
+            && oldPermanent === newPermanent
+            && oldRole === newRole
+            && oldName === newName) {
+            return;
+        }
+
+        console.log('🔄 User data changed:', {
+            oldExpiry: oldExpiryMs, newExpiry: newExpiryMs,
+            oldPermanent: oldPermanent, newPermanent: newPermanent
+        });
+
+        currentUser.expiresAt = data.expiresAt || null;
+        currentUser.isPermanent = newPermanent;
+        currentUser.name = newName;
+        currentUser.role = newRole;
+        currentUser.tier = data.tier || 'active';
+        if (data.permissions) currentUser.permissions = data.permissions;
+        if (data.isSubAdmin !== undefined) currentUser.isSubAdmin = data.isSubAdmin;
+
+        if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
+            var expDate = getExpiryDate(currentUser.expiresAt);
+            if (expDate && !isNaN(expDate.getTime())) {
+                var isExpired = expDate.getTime() < Date.now();
+                currentUser.isExpiredOnly = isExpired;
+                isDemo = isExpired;
+                if (isExpired) currentUser.tier = 'expired';
+                else if (currentUser.tier === 'expired') currentUser.tier = 'active';
+            }
+        } else {
+            currentUser.isExpiredOnly = false;
+            isDemo = false;
+        }
+
+        try { localStorage.removeItem('user_cache_' + email); } catch(e) {}
+        try {
+            localStorage.setItem('user_cache_' + email, JSON.stringify({
+                data: currentUser, expires: Date.now() + 12 * 60 * 60 * 1000
+            }));
+        } catch(e) {}
+
+        publishTierState();
+        applyUserUI();
+        if (typeof refreshApp === 'function') refreshApp();
+
+        /* ❤️ Cập nhật Yêu thích khi tier đổi (VD: trial → active sau khi admin duyệt) */
+        if (typeof window.favRefreshUI === 'function') window.favRefreshUI();
+
+        if (newPermanent && !oldPermanent) {
+            showUserChangedToast('💎 Tài khoản đã được kích hoạt VĨNH VIỄN!', 'success');
+        } else if (newExpiryMs && oldExpiryMs && newExpiryMs > oldExpiryMs) {
+            var newDate = new Date(newExpiryMs).toLocaleDateString('vi-VN');
+            var daysAdded = Math.round((newExpiryMs - oldExpiryMs) / 86400000);
+            showUserChangedToast('🎉 Đã gia hạn thêm ' + daysAdded + ' ngày (đến ' + newDate + ')', 'success');
+        } else if (newExpiryMs && !oldExpiryMs) {
+            var d2 = new Date(newExpiryMs).toLocaleDateString('vi-VN');
+            showUserChangedToast('🎉 Tài khoản đã được gia hạn đến ' + d2, 'success');
+        } else if (newRole !== oldRole) {
+            showUserChangedToast('ℹ️ Vai trò đã đổi thành: ' + newRole, 'info');
+        }
+
+    }, function(err) {
+        console.warn('User watcher error:', err);
+    });
+}
+
+/* ═════════════════════════════════════ {}
+══════════════════════════
+   🔍 VERIFY BACKGROUND — Fetch server sau 2s
+   ═══════════════════════════════════════════════════════════════ */
+function verifyCurrentUserBackground() {
+    if (!currentUser || !db) return;
+    var email = currentUser.email;
+    if (!email) return;
+
+    db.collection('allowed_users').doc(email).get({ source: 'server' })
+        .then(function(doc) {
+            if (!doc.exists) return;
+            var data = doc.data();
+            if (!data) return;
+
+            var oldExpiry = currentUser.expiresAt ? getExpiryDate(currentUser.expiresAt) : null;
+            var newExpiry = data.expiresAt ? getExpiryDate(data.expiresAt) : null;
+
+            var oldMs = oldExpiry ? oldExpiry.getTime() : 0;
+            var newMs = newExpiry ? newExpiry.getTime() : 0;
+            var oldPerm = currentUser.isPermanent || false;
+            var newPerm = data.isPermanent || false;
+
+            if (oldMs !== newMs || oldPerm !== newPerm) {
+                console.log('🔄 Background verify found changes — refreshing');
+                currentUser.expiresAt = data.expiresAt || null;
+                currentUser.isPermanent = newPerm;
+                currentUser.role = data.role || currentUser.role;
+                currentUser.name = data.name || currentUser.name;
+                currentUser.tier = data.tier || 'active';
+                if (data.permissions) currentUser.permissions = data.permissions;
+                if (data.isSubAdmin !== undefined) currentUser.isSubAdmin = data.isSubAdmin;
+
+                if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
+                    var expDate = getExpiryDate(currentUser.expiresAt);
+                    if (expDate && !isNaN(expDate.getTime())) {
+                        var isExpired = expDate.getTime() < Date.now();
+                        currentUser.isExpiredOnly = isExpired;
+                        isDemo = isExpired;
+                        if (isExpired) currentUser.tier = 'expired';
+                        else if (currentUser.tier === 'expired') currentUser.tier = 'active';
+                    }
+                } else {
+                    currentUser.isExpiredOnly = false;
+                    isDemo = false;
+                }
+
+                try { localStorage.removeItem('user_cache_' + email); } catch(e) {}
+                try {
+                    localStorage.setItem('user_cache_' + email, JSON.stringify({
+                        data: currentUser, expires: Date.now() + 12 * 60 * 60 * 1000
+                    }));
+                } catch(e) {}
+
+                publishTierState();
+                applyUserUI();
+                if (typeof refreshApp === 'function') refreshApp();
+            }
+        })
+        .catch(function(err) {
+            console.warn('Background verify error:', err);
+        });
+}
 function getDaysRemaining(userData) {
     if (!userData || !userData.expiresAt) return null;
     if (userData.role === 'admin') return null;
@@ -1771,9 +2060,6 @@ function renderExpiryBanner() {
 
 /* ═══════════════════════════════════════════════════════════════
    ✅ ĐỒNG BỘ TRẠNG THÁI DROPDOWN USER MENU
-   • sessionStorage bị xoá khi đóng tab
-   • Trong cùng session: giữ nguyên trạng thái user đã chọn
-   • Mặc định MỞ khi vào trang (F5)
    ═══════════════════════════════════════════════════════════════ */
 function applyUserDropdownState() {
     var dd = $('userDropdown');
@@ -1865,7 +2151,6 @@ function applyUserUI() {
         }
         updateUserDetails();
 
-        /* ✅ Đồng bộ trạng thái dropdown user menu */
         applyUserDropdownState();
     }
 
@@ -1880,8 +2165,10 @@ function applyUserUI() {
     var toggleFocusBtn = $('toggleFocusBtn');
     if (toggleFocusBtn) toggleFocusBtn.style.display = isDemo ? 'none' : 'flex';
     if (isDemo) document.body.classList.remove('hide-floating');
-}
 
+    /* ❤️ Cập nhật trạng thái Yêu thích khi tier thay đổi */
+    if (typeof window.favUpdateLockState === 'function') window.favUpdateLockState();
+}
 function updateUserDetails() {
     var detailsEl = $('userDetails');
     if (!detailsEl) return;
@@ -1984,7 +2271,6 @@ function logLogin(u) {
         }).then(function() { try { localStorage.setItem(logKey, today); } catch(e) {} }).catch(function(){});
     } catch(e) {}
 }
-
 /* ============ ADMIN SEARCH & FILTER ============ */
 function filterUsers(items) {
     var query = adminSearchQuery.toLowerCase().trim();
@@ -2101,17 +2387,67 @@ window.setAdminFilter = function(filter) {
     renderUsers(usersCache);
 };
 
-/* ============ RENEWAL MODAL ============ */
-window.openRenewalModal = function() {
+/* ═══════════════════════════════════════════════════════════════
+   🔒 OPEN RENEWAL MODAL — CHẶN 2 LỆNH CÙNG LÚC
+   • Nếu user đã có lệnh pending/user_paid → hỏi hủy để tạo mới
+   • Chỉ cho phép 1 lệnh tại 1 thời điểm
+   ═══════════════════════════════════════════════════════════════ */
+window.openRenewalModal = async function() {
     if (!currentUser) { showLoginModal(); return; }
     if (currentUser.role === 'admin') { alert('Admin có hạn vĩnh viễn, không cần gia hạn!'); return; }
     if (currentUser.isPermanent) { alert('💎 Bạn đã sở hữu gói VĨNH VIỄN!\n\nKhông cần gia hạn thêm.'); return; }
+
+    /* ═══ CHECK LỆNH CŨ — Chỉ cho phép 1 lệnh pending ═══ */
+    try {
+        var existingSnap = await db.collection('renewal_requests')
+            .where('email', '==', currentUser.email)
+            .where('status', 'in', ['pending', 'user_paid'])
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .get();
+
+        if (!existingSnap.empty) {
+            var oldReq = existingSnap.docs[0];
+            var oldData = oldReq.data();
+            var oldCreated = oldData.createdAt ? oldData.createdAt.toDate() : new Date();
+            var hoursAgo = Math.floor((Date.now() - oldCreated.getTime()) / 3600000);
+
+            var statusText = oldData.status === 'user_paid' ? 'Chờ admin xác nhận' : 'Chờ chuyển khoản';
+            var confirmMsg = '⚠️ Bạn đang có 1 lệnh gia hạn CHƯA hoàn tất:\n\n' +
+                '• Gói: ' + (oldData.packageLabel || oldData.package) + '\n' +
+                '• Số tiền: ' + formatMoney(oldData.amount) + 'đ\n' +
+                '• Mã: ' + oldData.transferCode + '\n' +
+                '• Tạo cách đây: ' + hoursAgo + ' giờ\n' +
+                '• Trạng thái: ' + statusText + '\n\n' +
+                '👉 Bạn KHÔNG THỂ tạo lệnh mới khi lệnh cũ chưa xử lý.\n\n' +
+                'Bạn có muốn HỦY lệnh cũ để tạo lệnh mới không?';
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            /* Hủy lệnh cũ */
+            await db.collection('renewal_requests').doc(oldReq.id).update({
+                status: 'cancelled',
+                cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
+                cancelledBy: 'user_replace',
+                cancelReason: 'User hủy để tạo lệnh mới'
+            });
+
+            alert('✅ Đã hủy lệnh cũ. Bạn có thể tạo lệnh mới.');
+        }
+    } catch(e) {
+        console.error('Check existing renewal error:', e);
+        /* Không block user nếu query lỗi */
+    }
+
     renewalSelectedPkg = null;
     renewalCurrentReq = null;
     renderRenewalStep1();
     $('renewalModal').classList.add('show');
     if ($('userDropdown')) $('userDropdown').classList.remove('show');
 };
+
 window.closeRenewalModal = function() {
     $('renewalModal').classList.remove('show');
     if (renewalListener) { try { renewalListener(); } catch(e) {} renewalListener = null; }
@@ -2178,8 +2514,29 @@ window.selectPackage = function(pkgId) {
     if (btn) btn.disabled = false;
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   🔒 GO TO PAYMENT — DOUBLE-CHECK TRƯỚC KHI TẠO LỆNH
+   ═══════════════════════════════════════════════════════════════ */
 async function goToPayment() {
     if (!renewalSelectedPkg) return;
+
+    /* ═══ CHECK LẦN 2 — Đảm bảo không có lệnh pending ═══ */
+    try {
+        var checkSnap = await db.collection('renewal_requests')
+            .where('email', '==', currentUser.email)
+            .where('status', 'in', ['pending', 'user_paid'])
+            .limit(1)
+            .get();
+
+        if (!checkSnap.empty) {
+            alert('⚠️ Bạn vẫn còn 1 lệnh gia hạn chưa xử lý.\n\nVui lòng hủy lệnh cũ trước khi tạo lệnh mới.');
+            closeRenewalModal();
+            return;
+        }
+    } catch(e) {
+        console.error('Double-check error:', e);
+    }
+
     var transferCode = generateTransferCode();
     var amount = renewalSelectedPkg.amount;
     var btn = $('renewalNextBtn');
@@ -2232,7 +2589,8 @@ function renderPaymentScreen() {
             '<div class="step"><span class="num">1</span><div>Chuyển <b>' + formatMoney(amount) + ' VNĐ</b> đến STK trên</div></div>' +
             '<div class="step"><span class="num">2</span><div>Ghi đúng nội dung: <b>' + escapeHtml(code) + '</b></div></div>' +
             '<div class="step"><span class="num">3</span><div>Nhấn nút <b>"Tôi đã thanh toán"</b></div></div>' +
-            '<div class="step"><span class="num">4</span><div>Chờ admin xác nhận trong <b>1-5 phút</b></div></div></div>' +
+            '<div class="step"><span class="num">4</span><div>Chờ admin xác nhận trong <b>1-5 phút</b></div></div>' +
+            '<div class="step" style="color:#dc2626;font-weight:700"><span class="num" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">!</span><div>Lệnh sẽ <b>tự động hủy sau 24h</b> nếu admin không xác nhận</div></div></div>' +
         '<div class="renewal-actions">' +
             '<button class="renewal-btn" onclick="cancelRenewal()"><i class="fas fa-times"></i> Hủy</button>' +
             '<button class="renewal-btn success" id="renewalConfirmBtn" onclick="userConfirmPaid()"><i class="fas fa-check"></i> Tôi đã thanh toán</button></div>';
@@ -2295,6 +2653,9 @@ function renderPendingConfirm() {
                 '<i class="fas fa-hourglass-half"></i></div>' +
             '<h3>Đang chờ xác nhận</h3>' +
             '<p>Admin sẽ kiểm tra và xác nhận trong <b>1-5 phút</b>.</p>' +
+            '<div class="info-box" style="border-color:#dc2626;background:rgba(220,38,38,.08)">' +
+                '<i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>' +
+                '<div><b>Lưu ý:</b> Nếu admin không xác nhận trong <b>24 giờ</b>, lệnh sẽ tự động bị hủy.</div></div>' +
             '<div class="info-box"><i class="fas fa-info-circle" style="color:#7c3aed"></i>' +
                 '<div>Nếu sau <b>10 phút</b> chưa được gia hạn, liên hệ Zalo kèm mã: <b>' + escapeHtml(renewalCurrentReq.code) + '</b></div></div>' +
             '<div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem">' +
@@ -2311,8 +2672,27 @@ function listenRenewalRequest(reqId) {
             showRenewalSuccess(data);
             if (renewalListener) { try { renewalListener(); } catch(e) {} renewalListener = null; }
             refreshCurrentUser();
+        } else if (data.status === 'expired') {
+            showRenewalExpired();
+            if (renewalListener) { try { renewalListener(); } catch(e) {} renewalListener = null; }
+        } else if (data.status === 'cancelled') {
+            if (renewalListener) { try { renewalListener(); } catch(e) {} renewalListener = null; }
         }
     });
+}
+
+function showRenewalExpired() {
+    $('renewalBody').innerHTML =
+        '<div class="renewal-success">' +
+            '<div class="icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 8px 24px rgba(220,38,38,.4)">' +
+                '<i class="fas fa-clock"></i></div>' +
+            '<h3>⏰ Lệnh đã hết hạn</h3>' +
+            '<p>Lệnh gia hạn này đã quá <b>24 giờ</b> mà admin chưa xác nhận nên đã bị hủy tự động.</p>' +
+            '<div class="info-box"><i class="fas fa-info-circle" style="color:#7c3aed"></i>' +
+                '<div>Bạn có thể tạo lệnh mới. Nếu đã chuyển tiền, vui lòng liên hệ Zalo kèm mã giao dịch.</div></div>' +
+            '<div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem">' +
+                '<button class="renewal-btn" onclick="closeRenewalModal()"><i class="fas fa-times"></i> Đóng</button>' +
+                '<button class="renewal-btn primary" onclick="closeRenewalModal(); setTimeout(openRenewalModal, 300)"><i class="fas fa-redo"></i> Tạo lệnh mới</button></div></div>';
 }
 
 function showRenewalSuccess(data) {
@@ -2339,7 +2719,8 @@ window.cancelRenewal = async function() {
         try {
             await db.collection('renewal_requests').doc(renewalCurrentReq.id).update({
                 status: 'cancelled',
-                cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
+                cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
+                cancelledBy: 'user'
             });
         } catch(e) {}
     }
@@ -2389,6 +2770,47 @@ async function refreshCurrentUser() {
     } catch(e) { console.error('refreshCurrentUser error:', e); }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ⏰ AUTO-EXPIRE: Tự động hủy lệnh gia hạn sau 24H
+   Chạy khi load trang + mỗi 1 giờ
+   ═══════════════════════════════════════════════════════════════ */
+async function autoExpireOldRenewals() {
+    if (!db) return;
+    try {
+        var cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        var snap = await db.collection('renewal_requests')
+            .where('status', 'in', ['pending', 'user_paid'])
+            .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(cutoff))
+            .limit(50)
+            .get();
+
+        if (snap.empty) return;
+
+        var batch = db.batch();
+        var count = 0;
+        snap.forEach(function(doc) {
+            batch.update(doc.ref, {
+                status: 'expired',
+                expiredAt: firebase.firestore.FieldValue.serverTimestamp(),
+                expireReason: 'Quá 24h không được xác nhận'
+            });
+            count++;
+        });
+
+        await batch.commit();
+        console.log('[Auto-expire] Đã hủy ' + count + ' lệnh gia hạn quá 24h');
+    } catch(e) {
+        console.error('[Auto-expire] Lỗi:', e);
+    }
+}
+
+function scheduleAutoExpire() {
+    /* Chạy lần đầu sau 10s để không block app load */
+    setTimeout(autoExpireOldRenewals, 10000);
+    /* Chạy lại mỗi 1 giờ */
+    setInterval(autoExpireOldRenewals, 60 * 60 * 1000);
+}
+
 /* ============ LỊCH SỬ GIA HẠN (USER) ============ */
 window.openRenewalHistory = async function() {
     if (!currentUser) { showLoginModal(); return; }
@@ -2423,7 +2845,6 @@ window.openRenewalHistory = async function() {
     }
 };
 
-/* ============ LỊCH SỬ GIA HẠN (ADMIN XEM CHO USER) ============ */
 window.openUserRenewalHistory = async function(email) {
     if (!currentUser || currentUser.role !== 'admin') {
         alert('Chỉ admin mới có quyền xem lịch sử gia hạn!');
@@ -2449,19 +2870,20 @@ window.openUserRenewalHistory = async function(email) {
             return;
         }
 
-        var totalAmount = 0, totalConfirmed = 0, totalPending = 0, totalRejected = 0;
+        var totalAmount = 0, totalConfirmed = 0, totalPending = 0, totalRejected = 0, totalExpired = 0;
         snapshot.forEach(function(doc) {
             var d = doc.data();
             if (d.status === 'confirmed') { totalAmount += (d.amount || 0); totalConfirmed++; }
             else if (d.status === 'pending' || d.status === 'user_paid') totalPending++;
             else if (d.status === 'rejected') totalRejected++;
+            else if (d.status === 'expired') totalExpired++;
         });
 
         var statsHtml = '<div class="renewal-history-stats">' +
             '<div class="rhs-item"><div class="rhs-label">Tổng chi tiêu</div><div class="rhs-value amount">' + formatMoney(totalAmount) + 'đ</div></div>' +
             '<div class="rhs-item"><div class="rhs-label">Số giao dịch</div><div class="rhs-value">' + snapshot.size + '</div></div>' +
             '<div class="rhs-item"><div class="rhs-label">Đã xác nhận</div><div class="rhs-value" style="color:var(--success)">' + totalConfirmed + '</div></div>' +
-            '<div class="rhs-item"><div class="rhs-label">Chờ / Từ chối</div><div class="rhs-value" style="color:#f59e0b">' + totalPending + ' / ' + totalRejected + '</div></div></div>';
+            '<div class="rhs-item"><div class="rhs-label">Chờ / Hủy / Hết hạn</div><div class="rhs-value" style="color:#f59e0b">' + totalPending + ' / ' + totalRejected + ' / ' + totalExpired + '</div></div></div>';
 
         var html = statsHtml;
         snapshot.forEach(function(doc) {
@@ -2485,7 +2907,8 @@ function buildHistoryItemHtml(d, showAdminInfo) {
         'user_paid': { text: '⏳ Chờ xác nhận',     cls: 'user_paid' },
         'confirmed': { text: '✅ Đã xác nhận',      cls: 'confirmed' },
         'cancelled': { text: '🚫 Đã hủy',           cls: 'cancelled' },
-        'rejected':  { text: '❌ Bị từ chối',       cls: 'rejected' }
+        'rejected':  { text: '❌ Bị từ chối',       cls: 'rejected' },
+        'expired':   { text: '⏰ Hết hạn (24h)',    cls: 'rejected' }
     };
     var st = statusMap[d.status] || { text: d.status || 'Không rõ', cls: 'pending' };
     var isPermanent = d.isPermanent || d.package === 'forever' || d.days >= 36500;
@@ -2500,6 +2923,12 @@ function buildHistoryItemHtml(d, showAdminInfo) {
     } else if (d.rejectedAt) {
         var rj = d.rejectedAt.toDate ? d.rejectedAt.toDate() : null;
         if (rj) confirmInfo = '<div class="rh-date"><i class="fas fa-times-circle" style="color:#dc2626"></i> Từ chối: ' + rj.toLocaleString('vi-VN') + (d.rejectReason ? ' — ' + escapeHtml(d.rejectReason) : '') + '</div>';
+    } else if (d.expiredAt) {
+        var ex = d.expiredAt.toDate ? d.expiredAt.toDate() : null;
+        if (ex) confirmInfo = '<div class="rh-date"><i class="fas fa-clock" style="color:#dc2626"></i> Hết hạn tự động: ' + ex.toLocaleString('vi-VN') + (d.expireReason ? ' — ' + escapeHtml(d.expireReason) : '') + '</div>';
+    } else if (d.cancelledAt) {
+        var cn = d.cancelledAt.toDate ? d.cancelledAt.toDate() : null;
+        if (cn) confirmInfo = '<div class="rh-date"><i class="fas fa-ban" style="color:#94a3b8"></i> Hủy: ' + cn.toLocaleString('vi-VN') + (d.cancelledBy ? ' — ' + escapeHtml(d.cancelledBy) : '') + '</div>';
     }
 
     var newExpiryInfo = '';
@@ -3023,6 +3452,9 @@ function buildRenewalRowHtml(d, isPending) {
     var isPermanent = d.isPermanent || d.package === 'forever' || d.days >= 36500;
     var canApprove = isSuperAdmin() || hasPermission('canRenew');
 
+    var hoursOld = Math.floor((Date.now() - created.getTime()) / 3600000);
+    var hoursLeft = Math.max(0, 24 - hoursOld);
+
     var statusCls, statusText;
     if (d.status === 'user_paid') { statusCls = 'user_paid'; statusText = '⏳ Chờ xác nhận'; }
     else if (d.status === 'pending') { statusCls = 'pending'; statusText = '⏱ Chờ CK'; }
@@ -3050,6 +3482,13 @@ function buildRenewalRowHtml(d, isPending) {
         newExpiryInfo = '<div class="rar-sub" style="color:#dc2626"><i class="fas fa-crown"></i> <b>💎 VĨNH VIỄN</b></div>';
     }
 
+    var timeWarnHtml = '';
+    if (isPending && hoursLeft <= 6) {
+        timeWarnHtml = '<div class="rar-sub" style="color:#dc2626;font-weight:700"><i class="fas fa-exclamation-triangle"></i> Còn ' + hoursLeft + 'h sẽ tự động hủy!</div>';
+    } else if (isPending) {
+        timeWarnHtml = '<div class="rar-sub" style="color:#f59e0b"><i class="fas fa-clock"></i> Còn ' + hoursLeft + 'h trước khi hết hạn</div>';
+    }
+
     return '<div class="renewal-admin-row">' +
         '<div class="rar-head">' +
             '<div>' +
@@ -3057,6 +3496,7 @@ function buildRenewalRowHtml(d, isPending) {
                 '<div class="u-email">' + escapeHtml(d.email) + '</div>' +
                 '<div class="rar-sub"><i class="fas fa-clock"></i> ' + timeStr + '</div>' +
                 newExpiryInfo +
+                timeWarnHtml +
             '</div>' +
             '<div class="rar-pkg">' +
                 '<div class="rar-amount">' + formatMoney(d.amount) + 'đ</div>' +
@@ -3199,6 +3639,14 @@ window.approveRenewal = async function(reqId) {
         var reqDoc = await db.collection('renewal_requests').doc(reqId).get();
         if (!reqDoc.exists) return alert('Không tìm thấy yêu cầu!');
         var req = reqDoc.data();
+
+        /* ═══ CHECK LỆNH CHƯA QUÁ 24H ═══ */
+        if (req.status === 'expired') {
+            alert('⚠️ Lệnh này đã hết hạn (quá 24h). Không thể xác nhận.');
+            loadRenewals();
+            return;
+        }
+
         var isPermanent = (req.package === 'forever') || (req.days >= 36500) || req.isPermanent;
         var userDoc = await db.collection('allowed_users').doc(req.email).get();
         var currentExpiry = null;
@@ -3579,18 +4027,11 @@ function formatTimeDiff(ms) {
 }
 
 /* ============ INIT AUTH UI ============ */
-/* ============ INIT AUTH UI ============ */
 function initAuthUI() {
     if ($('headerLoginBtn')) $('headerLoginBtn').addEventListener('click', showLoginModal);
     if ($('loginClose')) $('loginClose').addEventListener('click', hideLoginModal);
     if ($('loginModal')) $('loginModal').addEventListener('click', function(e) { if (e.target === this) hideLoginModal(); });
 
-    /* ═══════════════════════════════════════════════════════════
-       GOOGLE LOGIN — CHỈ DÙNG signInWithPopup
-       KHÔNG dùng signInWithRedirect để tránh lỗi:
-       "Unable to process request due to missing initial state"
-       (xảy ra khi browser chặn third-party storage)
-       ═══════════════════════════════════════════════════════════ */
     if ($('googleLoginBtn')) {
         $('googleLoginBtn').addEventListener('click', async function() {
             var btn = this;
@@ -3603,19 +4044,16 @@ function initAuthUI() {
 
             try {
                 var result = await auth.signInWithPopup(provider);
-                // Thành công — onAuthStateChanged sẽ tự xử lý tiếp
                 if (result && result.user) {
                     hideLoginModal();
                 }
             } catch (e) {
                 console.error('Login error:', e);
 
-                // Người dùng tự đóng popup — im lặng
                 if (e.code === 'auth/popup-closed-by-user' ||
                     e.code === 'auth/cancelled-popup-request') {
-                    // Không báo lỗi
+                    // Im lặng
                 }
-                // Popup bị chặn — hướng dẫn user
                 else if (e.code === 'auth/popup-blocked') {
                     showLoginError(
                         '<b>Trình duyệt đã chặn popup đăng nhập.</b><br>' +
@@ -3625,7 +4063,6 @@ function initAuthUI() {
                         '</span>'
                     );
                 }
-                // Storage bị chặn (chế độ ẩn danh, third-party cookie bị tắt, v.v.)
                 else if (e.code === 'auth/web-storage-unsupported' ||
                          (e.message && e.message.indexOf('missing initial state') !== -1)) {
                     showLoginError(
@@ -3636,7 +4073,6 @@ function initAuthUI() {
                         '• Hoặc thử trình duyệt khác (Chrome/Edge mới nhất)'
                     );
                 }
-                // Lỗi khác
                 else {
                     showLoginError('Lỗi đăng nhập: <b>' + (e.code || e.message) + '</b>');
                 }
@@ -3647,26 +4083,51 @@ function initAuthUI() {
         });
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       🔥 LOGOUT — XÓA TOÀN BỘ CACHE
+       ═══════════════════════════════════════════════════════════ */
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
-            if (confirm('Đăng xuất?')) {
-                try {
-                    if (currentUser && currentUser.email) {
-                        localStorage.removeItem('user_cache_' + currentUser.email);
+            if (!confirm('Đăng xuất?')) return;
+
+            try {
+                if (userWatcher) {
+                    try { userWatcher(); } catch(e) {}
+                    userWatcher = null;
+                }
+
+                if (currentUser && currentUser.email) {
+                    localStorage.removeItem('user_cache_' + currentUser.email);
+                }
+
+                var keysToRemove = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (k && (k.indexOf('user_cache_') === 0 || k === 'admin_users_cache')) {
+                        keysToRemove.push(k);
                     }
-                    sessionStorage.removeItem('userDropdownClosed');
-                } catch(e) {}
-                auth.signOut();
+                }
+                keysToRemove.forEach(function(k) {
+                    try { localStorage.removeItem(k); } catch(e) {}
+                });
+
+                if (currentUser && currentUser.email) {
+                    try { localStorage.removeItem('login_log_' + currentUser.email); } catch(e) {}
+                }
+
+                sessionStorage.removeItem('userDropdownClosed');
+                sessionStorage.removeItem('fabClosed');
+                sessionStorage.removeItem('session_start');
+
+                console.log('✅ Đã xóa', keysToRemove.length, 'cache keys khi đăng xuất');
+            } catch(e) {
+                console.warn('Lỗi khi xóa cache:', e);
             }
+
+            auth.signOut();
         });
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       USER DROPDOWN — Mặc định MỞ khi vào trang (F5)
-       • Lần đầu vào trang: dropdown mở sẵn (HTML có class "show")
-       • User đóng trong session: nhớ trong sessionStorage
-       • F5 / mở tab mới: reset về mặc định (mở)
-       ═══════════════════════════════════════════════════════════ */
     if ($('userAvatar')) {
         $('userAvatar').addEventListener('click', function(e) {
             e.stopPropagation();
@@ -3724,6 +4185,7 @@ function initAuthUI() {
             }, 150);
         });
     }
+
     if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('renewalHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target === this) $('renewalHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryBtn')) {
@@ -3733,7 +4195,9 @@ function initAuthUI() {
             openRenewalHistory();
         });
     }
+
     initAdminPanel();
+    scheduleAutoExpire();
 }
 /* ============ TIMEOUT FALLBACK ============ */
 setTimeout(function() {
