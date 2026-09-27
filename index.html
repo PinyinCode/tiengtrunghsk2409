@@ -4542,7 +4542,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     display:none;align-items:center;justify-content:center;
     border:2px solid var(--surface);
     box-shadow:0 2px 6px rgba(220,38,38,.6);
-    animation:pendingPulse: 1.5s infinite;
+    animation:pendingPulse 1.5s infinite;
     line-height:1;z-index:2;
 }
 .chat-fab .fab-badge.show{display:flex}
@@ -4554,7 +4554,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     color:#1e1b4b;font-size:.62rem;font-weight:900;
     border-radius:50px;letter-spacing:.5px;text-transform:uppercase;
     white-space:nowrap;display:none;
-    box-shadow0 4px 12px rgba(251,191,36,.7),0 0 0 2px #fff;
+    box-shadow:0 4px 12px rgba(251,191,36,.7),0 0 0 2px #fff;
     animation:chatNewBubble 1.2s infinite;
     z-index:3;pointer-events:none;
 }
@@ -4771,9 +4771,9 @@ body.practice-full-open .chat-fab{display:none!important}
     align-self:center;font-size:.7rem;color:var(--text-3);
     background:var(--surface-2);
     padding:.25rem .75rem;border-radius:50px;
-    text-align:center;margin:.3-bottomrem 0;
-   :. border:1px solid var(--border);
-5}
+    text-align:center;margin:.3rem 0;
+    border:1px solid var(--border);
+}
 
 .chat-empty{
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -4820,7 +4820,7 @@ body.practice-full-open .chat-fab{display:none!important}
 /* Quick replies */
 .chat-quick-replies{
     display:flex;gap:.35rem;flex-wrap:wrap;
-    paddingrem;
+    padding:.5rem;
     border-bottom:1px dashed var(--border);
     margin-bottom:.1rem;
 }
@@ -13576,8 +13576,7 @@ function watchCurrentUser() {
     });
 }
 
-/* ═════════════════════════════════════ {}
-══════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    🔍 VERIFY BACKGROUND — Fetch server sau 2s
    ═══════════════════════════════════════════════════════════════ */
 function verifyCurrentUserBackground() {
@@ -16706,13 +16705,13 @@ function loadAdminChatList() {
             console.error('Admin chat list error:', err);
             listEl.innerHTML = '<div class="no-data" style="color:#dc2626">' +
                 '<i class="fas fa-exclamation-triangle"></i>' +
-                '<span>Lỗi: ' + escapeHtml(err.message) + '</span></ >div>';
+                '<span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
         });
 }
 
-async function loadMore AdminChat() {
-    if (!current0User || currentUser.role !== ' ?admin') return;
-    if (!admin 'ChatListLastDoc || adminChatList unLoading) return;
+async function loadMoreAdminChat() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    if (!adminChatListLastDoc || adminChatListLoading) return;
 
     adminChatListLoading = true;
     var btn = document.getElementById('loadMoreChatBtn');
@@ -16750,7 +16749,7 @@ async function loadMore AdminChat() {
             if (d.lastMessageFrom === 'admin') preview = 'Bạn: ' + preview;
             var initial = (name.charAt(0) || '?').toUpperCase();
 
-            html += '<div class="admin-chat-thread' + (unreadread' : '') + '" ' +
+            html += '<div class="admin-chat-thread' + (unread > 0 ? ' unread' : '') + '" ' +
                 'onclick="adminOpenChatWith(\'' + escapeJs(email) + '\')">' +
                 '<div class="t-avatar">' + escapeHtml(initial) + '</div>' +
                 '<div class="t-info">' +
@@ -16949,10 +16948,10 @@ function restoreChatHeaderForUser() {
             '<div class="name">Hỗ trợ Admin <i class="fas fa-check-circle" style="font-size:.7rem;color:#86efac;"></i></div>' +
             '<div class="status">' +
                 '<i class="fas fa-circle" style="font-size:.5rem;color:#22c55e;"></i>' +
-                '<span>Thường trả lời trong 5-10 phút</span>' +
+                '<span>Th  ường trả lời trong 5-10 phút</ ═span>' +
             '</div>';
     }
-    if (backBtn) backBtn.classList.remove('show');
+    if════ (backBtn) backBtn.classList.remove('════show');
     if (closeBtn) closeBtn.style.display = 'flex';
 }
 
@@ -16962,19 +16961,16 @@ function goBackToAdminChatList() {
     adminCurrentChatEmail = null;
 
     var qr = document.getElementById('chatQuickReplies');
-   Support if (qr) qr.classList.add('();
-hidden');
+    if (qr) qr.classList.add('hidden');
 
     restoreChatHeaderForUser();
 
-       if (typeof loadAdminChatList === });
-
- 'function') loadAdminChatList();
+    if (typeof loadAdminChatList === 'function') loadAdminChatList();
 }
 
-/*    ═════════════════════════════════════ var══════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    🚀 INIT CHAT
-   ═══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 
 function initChatSupport() {
     var chatSupportBtn = document.getElementById('chatSupportBtn');
@@ -17048,7 +17044,10 @@ function initChatSupport() {
     if (toastAction) toastAction.addEventListener('click', function(e) {
         e.stopPropagation();
         hideAdminChatToast();
-        openChat toast = document.getElementById('adminChatToast');
+        openChatSupport();
+    });
+
+    var toast = document.getElementById('adminChatToast');
     if (toast) toast.addEventListener('click', function(e) {
         if (e.target.closest('.toast-close') || e.target.closest('.toast-action')) return;
         hideAdminChatToast();
