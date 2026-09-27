@@ -3631,6 +3631,9 @@ function initDatasetSelector() {
         }
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       NÚT TỔNG HỢP — Click để về tab tổng hợp
+       ═══════════════════════════════════════════════════════════ */
     document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
         if (btn.__boundDataset) return;
         btn.__boundDataset = true;
@@ -3638,12 +3641,19 @@ function initDatasetSelector() {
             switchDataset('tonghop');
             var sub = $('dsSubWrap');
             if (sub) sub.style.display = 'none';
-            document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
+
+            /* Bỏ active TẤT CẢ tab */
+            document.querySelectorAll('.ds-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             btn.classList.add('active');
-            if (cnBtn) cnBtn.classList.remove('active');
         });
     });
 
+    /* ═══════════════════════════════════════════════════════════
+       NÚT CHUYÊN NGÀNH — Click để mở/đóng dropdown
+       Khi mở → bỏ active TẤT CẢ tab khác (Tổng hợp + Yêu thích)
+       ═══════════════════════════════════════════════════════════ */
     if (cnBtn && !cnBtn.__boundToggle) {
         cnBtn.__boundToggle = true;
         cnBtn.addEventListener('click', function() {
@@ -3651,18 +3661,24 @@ function initDatasetSelector() {
             if (!sub) return;
             var isOpen = sub.style.display !== 'none';
             if (isOpen) {
+                /* Đóng dropdown → bỏ active nút CN */
                 sub.style.display = 'none';
                 cnBtn.classList.remove('active');
             } else {
+                /* Mở dropdown → active nút CN, bỏ active TẤT CẢ tab khác */
                 sub.style.display = 'block';
-                cnBtn.classList.add('active');
-                document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+
+                document.querySelectorAll('.ds-btn').forEach(function(b) {
                     b.classList.remove('active');
                 });
+                cnBtn.classList.add('active');
             }
         });
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       SUB-BUTTONS CHUYÊN NGÀNH — Click để chuyển dataset
+       ═══════════════════════════════════════════════════════════ */
     document.querySelectorAll('.ds-sub-btn').forEach(function(btn) {
         if (btn.__boundSub) return;
         btn.__boundSub = true;
@@ -3674,16 +3690,22 @@ function initDatasetSelector() {
                 return;
             }
             var id = this.dataset.dataset;
-            document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             this.classList.add('active');
             switchDataset(id);
+
+            /* Bỏ active TẤT CẢ tab chính, chỉ giữ nút CN active */
+            document.querySelectorAll('.ds-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             if (cnBtn) cnBtn.classList.add('active');
         });
     });
 
     markCurrentDatasetActive();
 }
-
 function markCurrentDatasetActive() {
     var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
