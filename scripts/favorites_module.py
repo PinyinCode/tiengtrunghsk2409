@@ -1800,7 +1800,49 @@ function favRefreshQuestionDropdown() {
         return false;
     }
 }
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ REBUILD dropdown "CÂU:" từ danh sách record ĐÃ FILTER
+   - Dùng khi toggle bật + có favFilters
+   - Gọi từ: favRefreshQuestionDropdown, pfApplyFilter, pfBuildQuickNav
+   ═══════════════════════════════════════════════════════════════ */
+function favRebuildQuickNavForFav(records) {
+    var sel = document.getElementById('pfQuickNav');
+    if (!sel) return;
 
+    var list = records || favGetRecords();
+    var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                 ? String(pfCurrentStt)
+                 : '';
+    var curDs = favGetCurrentDsId();
+
+    var html = '<option value="">-- Chọn câu yêu thích (' + list.length + ') --</option>';
+
+    for (var j = 0; j < list.length; j++) {
+        var r = list[j];
+        var vi = (r.vi || '').substring(0, 45);
+        var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                     ? '#' + String(r.stt).trim() + ' · '
+                     : '';
+        var dsTag = r.__favDatasetId && r.__favDatasetId !== curDs
+                    ? '[' + r.__favDatasetId + '] '
+                    : '';
+        var label = dsTag + sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
+
+        var selected = (String(r.stt) === curStt && r.__favDatasetId === curDs)
+                       ? ' selected'
+                       : '';
+
+        html += '<option value="' + String(r.stt) + '"' +
+                ' data-dataset-id="' + escapeHtml(r.__favDatasetId || '') + '"' +
+                selected + '>' +
+                escapeHtml(label) + '</option>';
+    }
+
+    sel.innerHTML = html;
+    if (curStt) sel.value = curStt;
+}
+
+window.favRebuildQuickNavForFav = favRebuildQuickNavForFav;
 /* ═══════════════════════════════════════════════════════════════
    NÚT TIM FLOAT
    ═══════════════════════════════════════════════════════════════ */
