@@ -33,8 +33,50 @@ def build_accounts_css():
 .user-menu{position:relative}
 .user-avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);cursor:pointer;object-fit:cover;transition:.15s;display:block;}
 .user-avatar:hover{border-color:var(--primary);transform:scale(1.05)}
-.user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 10px 30px rgba(0,0,0,.15);padding:.5rem;min-width:290px;display:none;z-index:200;}
+..user-dropdown{
+    position:absolute;
+    top:calc(100% + .5rem);
+    right:0;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    padding:.5rem;
+    min-width:290px;
+    display:none;
+    z-index:200;
+}
 .user-dropdown.show{display:block}
+
+/* ═══════════════════════════════════════════════════════════════
+   MŨI TÊN TAM GIÁC — Chỉ lên avatar (nút mở dropdown)
+   - ::before: tạo mũi tên (border-color)
+   - ::after:  tạo khoảng trắng giữa mũi tên và dropdown
+   ═══════════════════════════════════════════════════════════════ */
+.user-dropdown::before{
+    content:'';
+    position:absolute;
+    top:-9px;
+    right:20px;
+    width:0;
+    height:0;
+    border-left:9px solid transparent;
+    border-right:9px solid transparent;
+    border-bottom:9px solid var(--border);
+    pointer-events:none;
+}
+.user-dropdown::after{
+    content:'';
+    position:absolute;
+    top:-7px;
+    right:22px;
+    width:0;
+    height:0;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-bottom:7px solid var(--surface);
+    pointer-events:none;
+}
 .user-info{padding:.75rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
 .user-info .name{font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:.2rem}
 .user-info .email{font-size:.75rem;color:var(--text-3);word-break:break-all}
