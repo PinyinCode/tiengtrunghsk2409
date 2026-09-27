@@ -376,6 +376,10 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-color: transparent;
 }
+.ds-btn[data-dataset-group="chuyen-nganh"].has-lock.active {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-color: transparent;
+}
 
 /* ═══════════════════════════════════════════════════════════ */
 /* FAVORITES TAB ROW — nằm dưới ds-sub-wrap                     */
@@ -500,11 +504,9 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #fff;
 }
-@keyframes favBadgePulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.1); }
-}
 
+/* ============================================================ */
+/* FLASHCARD UI */
 /* ============================================================ */
 /* FLASHCARD UI */
 /* ============================================================ */
@@ -1722,6 +1724,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 
 /* ═══════════════════════════════════════════════════════════ */
 /* ONBOARDING MODAL - CHỌN CHỦ ĐỀ QUAN TÂM                     */
+/* ĐÃ SỬA: gọn gàng, không tràn màn hình, header/footer cố định */
 /* ═══════════════════════════════════════════════════════════ */
 .onboarding-modal {
     position: fixed;
@@ -1761,6 +1764,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     to   { transform: translateY(0) scale(1);      opacity: 1; }
 }
 
+/* Nút X đóng góc trên phải */
 .onboarding-close {
     position: absolute;
     top: 14px;
@@ -1859,6 +1863,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 [data-theme="dark"] .onboarding-counter.ok { color: #4ade80; }
 [data-theme="dark"] .onboarding-counter.full { color: #fcd34d; }
 
+/* Body: CHỈ phần này scroll */
 .onboarding-body {
     padding: 1.15rem 1.5rem;
     overflow-y: auto;
@@ -2033,6 +2038,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     background: var(--surface-2);
 }
 
+/* Icon fallback — đảm bảo icon luôn hiện dù FA chưa load */
 .onboarding-btn.primary i.fa-check::before {
     content: '\2713';
     font-family: inherit;
@@ -2053,7 +2059,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ══════════════════════════════════════════════════════════════ */
-/* BANNER "CHỦ ĐỀ GỢI Ý"                                          */
+/* BANNER "CHỦ ĐỀ GỢI Ý" - REDESIGN                              */
 /* ══════════════════════════════════════════════════════════════ */
 .onboarding-active-banner {
     display: flex;
@@ -2136,6 +2142,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     box-shadow: 0 4px 12px rgba(139,92,246,.5);
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* CHIP "+N CHỦ ĐỀ KHÁC" - Giới hạn hiển thị khi chọn nhiều    */
+/* ═══════════════════════════════════════════════════════════ */
 .onboarding-active-banner .ob-chip-more {
     background: linear-gradient(135deg, #94a3b8, #64748b) !important;
     position: relative;
@@ -2148,6 +2157,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     transform: translateY(-1px) scale(1.05);
     box-shadow: 0 4px 12px rgba(100, 116, 139, .5);
 }
+
+/* Tooltip cho chip "+N" khi hover */
 .onboarding-active-banner .ob-chip-more::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -2179,6 +2190,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     visibility: visible;
     transform: translateX(-50%) translateY(0);
 }
+
+/* Mũi tên nhỏ cho tooltip */
 .onboarding-active-banner .ob-chip-more::before {
     content: '';
     position: absolute;
@@ -2198,6 +2211,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     visibility: visible;
     transform: translateX(-50%) translateY(0);
 }
+
 [data-theme="dark"] .onboarding-active-banner .ob-chip-more::after {
     background: #1e293b;
     border: 1px solid #334155;
@@ -2248,6 +2262,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     transform: translateY(0) scale(.97);
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* THỐNG KÊ KHOÁ - DÒNG 2 CỦA BANNER CHỦ ĐỀ                     */
+/* ═══════════════════════════════════════════════════════════ */
 .onboarding-active-banner .ob-stats-bar {
     display: flex;
     align-items: center;
@@ -2258,6 +2275,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     margin-top: .35rem;
     border-top: 1px dashed rgba(139,92,246,.35);
 }
+
 .onboarding-active-banner .ob-stat-item {
     display: inline-flex;
     align-items: center;
@@ -2276,6 +2294,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     background: rgba(30,41,59,.7);
     border-color: rgba(245,158,11,.5);
 }
+
 .onboarding-active-banner .ob-stat-icon {
     display: inline-flex;
     align-items: center;
@@ -2292,6 +2311,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     background: linear-gradient(135deg, rgba(245,158,11,.25), rgba(217,119,6,.2));
     color: #fcd34d;
 }
+
 .onboarding-active-banner .ob-stat-industry .ob-stat-icon {
     background: linear-gradient(135deg, #dbeafe, #bfdbfe);
     color: #1d4ed8;
@@ -2306,6 +2326,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 [data-theme="dark"] .onboarding-active-banner .ob-stat-industry {
     border-color: rgba(59,130,246,.5);
 }
+
 .onboarding-active-banner .ob-stat-text {
     white-space: nowrap;
     font-weight: 600;
@@ -2320,6 +2341,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 [data-theme="dark"] .onboarding-active-banner .ob-stat-text b {
     color: #fca5a5;
 }
+
 .onboarding-active-banner .ob-cta-btn {
     margin-left: auto;
     padding: .5rem 1rem;
@@ -2352,6 +2374,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     0%, 100% { box-shadow: 0 4px 14px rgba(124,58,237,.4); }
     50%      { box-shadow: 0 4px 20px rgba(124,58,237,.7); }
 }
+
 [data-theme="dark"] .onboarding-active-banner {
     background: linear-gradient(135deg,
         rgba(99,102,241,.15),
@@ -2364,6 +2387,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 [data-theme="dark"] .onboarding-active-banner .ob-change-btn {
     background: var(--surface-2);
 }
+
 @media (max-width: 500px) {
     .onboarding-active-banner {
         padding: .7rem .8rem;
@@ -2418,6 +2442,10 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         font-size: .75rem;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════ */
+/* ONBOARDING MODAL - MOBILE (bottom sheet)                    */
+/* ═══════════════════════════════════════════════════════════ */
 @media (max-width: 500px) {
     .onboarding-modal {
         padding: .5rem;
@@ -2486,6 +2514,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     }
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* ICON KHOÁ + SỐ CÂU BỊ KHOÁ TRÊN CHIP CHỦ ĐỀ                 */
+/* ═══════════════════════════════════════════════════════════ */
 .onboarding-topic .topic-lock {
     display: inline-flex;
     align-items: center;
@@ -2530,6 +2561,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         font-size: .55rem;
     }
 }
+
+/* STAT: Giới hạn mỗi chủ đề (XANH LÁ) */
 .onboarding-active-banner .ob-stat-pertopic {
     border-color: rgba(22,163,74,.4);
 }
@@ -2544,6 +2577,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     background: linear-gradient(135deg, rgba(22,163,74,.3), rgba(21,128,61,.2));
     color: #4ade80;
 }
+
+/* STAT: Câu khoá trong chủ đề đang chọn (ĐỎ) */
 .onboarding-active-banner .ob-stat-selected {
     border-color: rgba(220,38,38,.4);
     background: linear-gradient(135deg, rgba(254,226,226,.5), rgba(254,202,202,.3));
@@ -2560,6 +2595,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     background: linear-gradient(135deg, rgba(220,38,38,.3), rgba(185,28,28,.2));
     color: #fca5a5;
 }
+
+/* STAT: Chủ đề khác chưa mở khoá (TÍM) */
 .onboarding-active-banner .ob-stat-topics {
     border-color: rgba(139,92,246,.4);
     background: linear-gradient(135deg, rgba(237,233,254,.5), rgba(221,214,254,.3));
@@ -2576,6 +2613,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     background: linear-gradient(135deg, rgba(139,92,246,.3), rgba(109,40,217,.2));
     color: #c4b5fd;
 }
+/* ═══════════════════════════════════════════════════════════ */
+/* STATS INLINE — 3 thông tin gộp trên 1 dòng ngang            */
+/* ═══════════════════════════════════════════════════════════ */
 .onboarding-active-banner .ob-stats-bar.ob-stats-inline {
     display: flex;
     flex-direction: row;
@@ -2587,6 +2627,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     margin-top: .35rem;
     border-top: 1px dashed rgba(139,92,246,.35);
 }
+
 .onboarding-active-banner .ob-stat-inline {
     display: inline-flex;
     align-items: center;
@@ -2613,6 +2654,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     font-size: 1.05em;
     margin: 0 .1em;
 }
+
+/* Chip chủ đề khoá — màu TÍM */
 .onboarding-active-banner .ob-stat-inline-topics {
     background: linear-gradient(135deg, rgba(139,92,246,.12), rgba(109,40,217,.06));
     border-color: rgba(139,92,246,.35);
@@ -2620,6 +2663,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .onboarding-active-banner .ob-stat-inline-topics i {
     color: #7c3aed;
 }
+
+/* Chip chuyên ngành khoá — màu XANH DƯƠNG */
 .onboarding-active-banner .ob-stat-inline-industry {
     background: linear-gradient(135deg, rgba(6,182,212,.12), rgba(8,145,178,.06));
     border-color: rgba(6,182,212,.35);
@@ -2627,6 +2672,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .onboarding-active-banner .ob-stat-inline-industry i {
     color: #0891b2;
 }
+
+/* Dark mode */
 [data-theme="dark"] .onboarding-active-banner .ob-stat-inline {
     background: linear-gradient(135deg, rgba(59,130,246,.2), rgba(37,99,235,.1));
     border-color: rgba(96,165,250,.4);
@@ -2642,6 +2689,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 [data-theme="dark"] .onboarding-active-banner .ob-stat-inline b {
     color: #fca5a5;
 }
+
+/* Mobile: cho phép xuống dòng nếu chật */
 @media (max-width: 500px) {
     .onboarding-active-banner .ob-stats-bar.ob-stats-inline {
         gap: .35rem;
@@ -2708,14 +2757,16 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     100%{opacity:0;transform:scale(1.4);}
 }
 
-/* Trạng thái KHOÁ — đã fix */
+/* Trạng thái KHOÁ */
 .fav-btn.locked{
     color:#dc2626;
-    background:rgba(220,38,38,.1);
+   {
+ background:rgba(220,   38,38,.1);
 }
-.fav-btn.locked:hover{
-    transform:scale(1.12);
-    background:rgba(220,38,38,.2);
+.fav-btn position.locked:hover{
+    transform:scale(1:.12);
+    background:absolutergba(220,38,38;
+,.2);
     color:#b91c1c;
 }
 .fav-btn.locked i{font-size:.65rem;}
@@ -2773,14 +2824,13 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Tab trong dataset selector (trong ds-fav-row)
+   ❤️ FAVORITES — Tab trong dataset selector
    ═══════════════════════════════════════════════════════════════ */
 .ds-btn[data-dataset-group="favorites"]{
     position:relative;
     overflow:visible;
 }
-.ds-btn[data-dataset-group="favorites"] .ds-fav-badge{
-    top:-8px;
+.ds-btn[data-dataset-group="favorites"] .ds-fav-badge    top:-8px;
     right:-6px;
     min-width:22px;
     height:22px;
@@ -2793,7 +2843,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 2px 8px rgba(239,68,68,. justify5),0 0 0 2px var(--surface);
+    box-shadow:0 2px 8px rgba(239,68,68,.5),0 0 0 2px var(--surface);
     animation:favBadgePulse 2s ease-in-out infinite;
     z-index:10;
     line-height:1;
@@ -2802,12 +2852,11 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     display:none;
 }
 @keyframes favBadgePulse{
-    0%,100%{transform:scale(-content1);}
-    50%{transform::scale(1.1);}
-center}
-.ds-btn[data-dataset-group="f;
-avorites"] .ds-fav-lock{
-       position:absolute;
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.1);}
+}
+.ds-btn[data-dataset-group="favorites"] .ds-fav-lock{
+    position:absolute;
     top:-8px;
     right:-6px;
     width:22px;
@@ -2817,6 +2866,7 @@ avorites"] .ds-fav-lock{
     color:#fff;
     display:flex;
     align-items:center;
+    justify-content:center;
     font-size:.62rem;
     box-shadow:0 2px 8px rgba(220,38,38,.55),0 0 0 2px var(--surface);
     z-index:10;
@@ -2944,7 +2994,7 @@ avorites"] .ds-fav-lock{
     border-color:rgba(248,113,113,.5);
 }
 
-/*444 ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    ❤️ FAVORITES — Empty state
    ═══════════════════════════════════════════════════════════════ */
 .fav-empty{
@@ -2965,7 +3015,7 @@ avorites"] .ds-fav-lock{
     margin:0 auto 1rem;
     border-radius:50%;
     background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(220,38,38,.1));
-    color:#ef4;
+    color:#ef4444;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -3011,6 +3061,7 @@ avorites"] .ds-fav-lock{
     font-size:.85rem;
 }
 
+/* Empty state cho tier bị khoá */
 .fav-locked-empty{
     grid-column:1 / -1;
     padding:3rem 1.5rem;
@@ -3098,6 +3149,9 @@ avorites"] .ds-fav-lock{
 }
 .fav-toast i{font-size:1rem;}
 
+/* ═══════════════════════════════════════════════════════════════
+   ❤️ FAVORITES — Responsive
+   ═══════════════════════════════════════════════════════════════ */
 @media (max-width:500px){
     .fav-btn{width:30px;height:30px;font-size:.75rem;}
     .fav-header{padding:.55rem .7rem;gap:.4rem;}
@@ -3171,7 +3225,6 @@ def build_ui_html():
         </div>
         <div class="ds-sub-grid" id="dsSubGrid"></div>
     </div>
-    <!-- __FAV_DATASET_TAB__ -->
 </div>
 
 <div class="search-filter-row">
