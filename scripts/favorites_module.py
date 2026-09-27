@@ -823,129 +823,7 @@ body:not(.practice-full-open) .pf-fav-filter-btn,
 body:not(.practice-full-open) .pf-fav-filter-summary{
     display:none !important;
 }
-
-
-/* ═══════════════════════════════════════════════════════════════
-   🎯 SUMMARY BAR — 1 DÒNG, CHIP "+N ..." KHI VƯỢT QUÁ
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Buộc summary bar chỉ 1 dòng — không wrap */
-.pf-fav-filter-summary {
-    flex-wrap: nowrap !important;
-    overflow: hidden;
-    align-items: center;
-}
-
-/* Các chip có thể co lại nhưng không xuống dòng */
-.pf-fav-filter-summary .pf-fav-summary-chip {
-    flex-shrink: 0;
-}
-
-/* Chip đếm và nút Xoá không co */
-.pf-fav-filter-summary .pf-fav-summary-count,
-.pf-fav-filter-summary .pf-fav-summary-clear {
-    flex-shrink: 0;
-}
-
-/* Chip "+N ..." */
-.pf-fav-summary-chip.more {
-    background: linear-gradient(135deg, rgba(148,163,184,.15), rgba(100,116,139,.1));
-    border-color: rgba(148,163,184,.4);
-    color: #475569;
-    font-weight: 800;
-    cursor: help;
-    position: relative;
-    padding-right: .65rem;
-}
-[data-theme="dark"] .pf-fav-summary-chip.more {
-    background: linear-gradient(135deg, rgba(148,163,184,.2), rgba(100,116,139,.15));
-    color: #cbd5e1;
-}
-
-.pf-fav-summary-chip.more:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(100,116,139,.3);
-}
-
-/* Tooltip cho chip +N */
-.pf-fav-summary-chip.more::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: #0f172a;
-    color: #fff;
-    padding: .55rem .75rem;
-    border-radius: 10px;
-    font-size: .7rem;
-    font-weight: 500;
-    white-space: pre-line;
-    line-height: 1.55;
-    width: max-content;
-    max-width: min(340px, 85vw);
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-4px);
-    transition: opacity .18s ease, transform .18s ease, visibility .18s;
-    z-index: 9999;
-    pointer-events: none;
-    letter-spacing: 0;
-    text-align: left;
-}
-.pf-fav-summary-chip.more::before {
-    content: '';
-    position: absolute;
-    top: calc(100% + 3px);
-    right: 14px;
-    border: 6px solid transparent;
-    border-bottom-color: #0f172a;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-4px);
-    transition: opacity .18s ease, transform .18s ease, visibility .18s;
-    z-index: 10000;
-    pointer-events: none;
-}
-.pf-fav-summary-chip.more:hover::after,
-.pf-fav-summary-chip.more:hover::before {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-[data-theme="dark"] .pf-fav-summary-chip.more::after {
-    background: #1e293b;
-    border: 1px solid #334155;
-}
-[data-theme="dark"] .pf-fav-summary-chip.more::before {
-    border-bottom-color: #1e293b;
-}
-
-/* Container chip filter có thể bị cắt khi hẹp */
-.pf-fav-summary-chips-wrap {
-    display: flex;
-    align-items: center;
-    gap: .3rem;
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-}
-
-/* Mobile: số chip hiển thị ít hơn để đủ chỗ */
-@media (max-width: 500px) {
-    .pf-fav-filter-summary {
-        gap: .25rem;
-        padding: .35rem .55rem .4rem;
-    }
-    .pf-fav-summary-chip.more::after {
-        font-size: .68rem;
-        max-width: 90vw;
-        padding: .5rem .65rem;
-    }
-}
 """
-
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -4025,18 +3903,10 @@ window.favFilterClearAll = function() {
 /* ═══════════════════════════════════════════════════════════════════════════
    RENDER SUMMARY BAR
    ═══════════════════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════════════════
-   🎯 RENDER SUMMARY BAR — 1 DÒNG, GỘP CHIP THÀNH "+N ..."
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Số chip filter tối đa hiển thị (không tính chip đếm ❤️ và nút Xoá) */
-var FAV_SUMMARY_MAX_CHIPS = 3;
-
 function favRenderFilterSummary() {
     var summary = document.getElementById('pfFavFilterSummary');
     if (!summary) return;
 
-    /* ═══ 1. KHÔNG BẬT TOGGLE → ẨN ═══ */
     if (!favState.pfOnlyFav || !favCanUse()) {
         summary.classList.remove('show');
         summary.innerHTML = '';
@@ -4052,43 +3922,6 @@ function favRenderFilterSummary() {
 
     summary.classList.add('show');
 
-    /* ═══ 2. GOM TẤT CẢ CHIP FILTER ACTIVE VÀO 1 MẢNG ═══ */
-    var allChips = [];
-
-    /* Chip datasets */
-    (f.datasets || []).forEach(function(ds) {
-        allChips.push({
-            type: 'dataset',
-            icon: 'fa-layer-group',
-            label: favFilterGetDatasetName(ds),
-            value: ds,
-            field: 'datasets'
-        });
-    });
-
-    /* Chip HSK */
-    (f.hsk || []).forEach(function(h) {
-        allChips.push({
-            type: 'hsk',
-            icon: 'fa-signal',
-            label: h,
-            value: h,
-            field: 'hsk'
-        });
-    });
-
-    /* Chip subjects */
-    (f.subjects || []).forEach(function(s) {
-        allChips.push({
-            type: 'subject',
-            icon: 'fa-tag',
-            label: s,
-            value: s,
-            field: 'subjects'
-        });
-    });
-
-    /* ═══ 3. BUILD HTML ═══ */
     var html = '';
 
     /* Chip đếm */
@@ -4104,36 +3937,38 @@ function favRenderFilterSummary() {
         '</span>';
     }
 
-    /* Wrap chứa chip filter */
-    html += '<div class="pf-fav-summary-chips-wrap">';
+    /* Chip datasets */
+    (f.datasets || []).forEach(function(ds) {
+        html += '<span class="pf-fav-summary-chip dataset">' +
+            '<i class="fas fa-layer-group"></i>' +
+            escapeHtml(favFilterGetDatasetName(ds)) +
+            '<i class="fas fa-times" onclick="favFilterRemove(\'datasets\',\'' + escapeJs(ds) + '\')"></i>' +
+        '</span>';
+    });
 
-    if (allChips.length > 0) {
-        var visibleChips = allChips.slice(0, FAV_SUMMARY_MAX_CHIPS);
-        var hiddenChips = allChips.slice(FAV_SUMMARY_MAX_CHIPS);
+    /* Chip HSK */
+    (f.hsk || []).forEach(function(h) {
+        html += '<span class="pf-fav-summary-chip hsk">' +
+            '<i class="fas fa-signal"></i>' +
+            escapeHtml(h) +
+            '<i class="fas fa-times" onclick="favFilterRemove(\'hsk\',\'' + escapeJs(h) + '\')"></i>' +
+        '</span>';
+    });
 
-        visibleChips.forEach(function(c) {
-            html += favBuildSummaryChip(c);
-        });
+    /* Chip subjects */
+    (f.subjects || []).forEach(function(s) {
+        var label = s.length > 18 ? s.substring(0, 18) + '…' : s;
+        html += '<span class="pf-fav-summary-chip subject" title="' + escapeHtml(s) + '">' +
+            '<i class="fas fa-tag"></i>' +
+            escapeHtml(label) +
+            '<i class="fas fa-times" onclick="favFilterRemove(\'subjects\',\'' + escapeJs(s) + '\')"></i>' +
+        '</span>';
+    });
 
-        /* Chip "+N ..." nếu có chip bị ẩn */
-        if (hiddenChips.length > 0) {
-            var tooltipLines = hiddenChips.map(function(c) {
-                return '• ' + c.label;
-            }).join('\n');
-
-            html += '<span class="pf-fav-summary-chip more" ' +
-                'data-tooltip="' + escapeHtml(tooltipLines) + '" ' +
-                'title="">' +
-                '+' + hiddenChips.length + ' …' +
-            '</span>';
-        }
-    }
-    html += '</div>';
-
-    /* Nút Xoá lọc — luôn bên phải */
+    /* Nút xoá hết */
     if (hasFilter) {
         html += '<button class="pf-fav-summary-clear" onclick="favFilterClearAll()">' +
-            '<i class="fas fa-times-circle"></i> Xoá' +
+            '<i class="fas fa-times-circle"></i> Xoá lọc' +
         '</button>';
     }
 
@@ -4143,20 +3978,6 @@ function favRenderFilterSummary() {
     favUpdateFilterBtnBadge();
 }
 
-/* Helper build 1 chip */
-function favBuildSummaryChip(c) {
-    var label = c.label;
-    var displayLabel = label.length > 20 ? label.substring(0, 20) + '…' : label;
-
-    return '<span class="pf-fav-summary-chip ' + c.type + '" ' +
-        'title="' + escapeHtml(label) + '">' +
-        '<i class="fas ' + c.icon + '"></i>' +
-        escapeHtml(displayLabel) +
-        '<i class="fas fa-times" ' +
-        'onclick="favFilterRemove(\'' + c.field + '\',\'' + escapeJs(c.value) + '\')">' +
-        '</i>' +
-    '</span>';
-}
 function favUpdateFilterBtnVisibility() {
     var btn = document.getElementById('pfFavFilterBtn');
     if (!btn) return;
@@ -4188,25 +4009,6 @@ function favUpdateFilterBtnBadge() {
 /* ═══════════════════════════════════════════════════════════════════════════
    HOOK vào favTogglePfOnlyFav
    ═══════════════════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════════════════
-   🎯 ẨN/HIỆN 3 FILTER CŨ KHI BẬT/TẮT FAVORITES ONLY
-   - Khi bật: ẩn Bộ dữ liệu / HSK / Chủ đề, chỉ giữ nút Lọc + dropdown Câu
-   - Khi tắt: hiện lại bình thường
-   - Sync class .fav-only-active trên <body>
-   ═══════════════════════════════════════════════════════════════════════════ */
-function favToggleOldFilters(active) {
-    if (active) {
-        document.body.classList.add('fav-only-active');
-    } else {
-        document.body.classList.remove('fav-only-active');
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   HOOK 1: favTogglePfOnlyFav — Khi user bật/tắt toggle
-   - BẬT: inject UI + render summary + ẩn 3 filter cũ
-   - TẮT: clear filter + ẩn UI + hiện lại 3 filter cũ
-   ═══════════════════════════════════════════════════════════════════════════ */
 (function() {
     function tryHook() {
         if (typeof window.favTogglePfOnlyFav !== 'function') return false;
@@ -4214,21 +4016,16 @@ function favToggleOldFilters(active) {
 
         var _orig = window.favTogglePfOnlyFav;
         window.favTogglePfOnlyFav = function() {
-            var wasActive = favState.pfOnlyFav;
-
             var result = _orig.apply(this, arguments);
 
             setTimeout(function() {
+                /* Khi BẬT: ensure UI visible */
                 if (favState.pfOnlyFav) {
-                    /* ═══ BẬT ═══ */
                     favInjectFilterUI();
                     favRenderFilterSummary();
                     favUpdateFilterBtnVisibility();
-
-                    /* Ẩn 3 filter cũ */
-                    favToggleOldFilters(true);
                 } else {
-                    /* ═══ TẮT ═══ */
+                    /* Khi TẮT: clear filter + hide UI */
                     favState.favFilters = {
                         datasets: [], hsk: [], subjects: [], search: ''
                     };
@@ -4239,9 +4036,6 @@ function favToggleOldFilters(active) {
                         summary.classList.remove('show');
                         summary.innerHTML = '';
                     }
-
-                    /* Hiện lại 3 filter cũ */
-                    favToggleOldFilters(false);
                 }
             }, 50);
 
@@ -4261,7 +4055,7 @@ function favToggleOldFilters(active) {
 })();
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOOK 2: favRefreshQuestionDropdown — Filter theo favFilters
+   HOOK vào favRefreshQuestionDropdown — Filter theo favFilters
    ═══════════════════════════════════════════════════════════════════════════ */
 (function() {
     function tryHook() {
@@ -4270,6 +4064,7 @@ function favToggleOldFilters(active) {
 
         var _orig = window.favRefreshQuestionDropdown;
         window.favRefreshQuestionDropdown = function() {
+            /* Nếu toggle BẬT → dùng filter */
             if (favState.pfOnlyFav && favCanUse()) {
                 var allFav = favGetRecords();
                 var filtered = favFilterRecords(allFav);
@@ -4295,7 +4090,7 @@ function favToggleOldFilters(active) {
 })();
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOOK 3: pfBuildQuickNav — Fallback khi hàm này gọi trực tiếp
+   HOOK vào pfBuildQuickNav (fallback nếu pfBuildQuickNav được gọi trực tiếp)
    ═══════════════════════════════════════════════════════════════════════════ */
 (function() {
     var _hooked = false;
@@ -4322,7 +4117,7 @@ function favToggleOldFilters(active) {
 })();
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOOK 4: favSyncFloatVisibility — Inject UI + sync class khi mở modal
+   HOOK vào favSyncFloatVisibility — Inject UI khi mở modal
    ═══════════════════════════════════════════════════════════════════════════ */
 (function() {
     function tryHook() {
@@ -4339,14 +4134,10 @@ function favToggleOldFilters(active) {
                 var modal = document.getElementById('practiceFullModal');
                 var isOpen = modal && modal.classList.contains('show');
 
-                /* ⭐ Sync class fav-only-active */
-                if (isOpen && favState.pfOnlyFav && favCanUse()) {
-                    favToggleOldFilters(true);
+                if (isOpen && favState.pfOnlyFav) {
                     favRenderFilterSummary();
                     favUpdateFilterBtnVisibility();
                 } else {
-                    favToggleOldFilters(false);
-
                     var summary = document.getElementById('pfFavFilterSummary');
                     if (summary) summary.classList.remove('show');
                     var btn = document.getElementById('pfFavFilterBtn');
@@ -4370,47 +4161,7 @@ function favToggleOldFilters(active) {
 })();
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOOK 5: favUpdateLockState — Tắt filter khi mất quyền/logout
-   ═══════════════════════════════════════════════════════════════════════════ */
-(function() {
-    function tryHook() {
-        if (typeof window.favUpdateLockState !== 'function') return false;
-        if (window.favUpdateLockState.__favOldFiltersHooked) return true;
-
-        var _orig = window.favUpdateLockState;
-        window.favUpdateLockState = function() {
-            var result = _orig.apply(this, arguments);
-
-            setTimeout(function() {
-                if (!favCanUse() || !favState.pfOnlyFav) {
-                    favToggleOldFilters(false);
-                }
-            }, 20);
-
-            return result;
-        };
-        window.favUpdateLockState.__favOldFiltersHooked = true;
-        return true;
-    }
-
-    if (!tryHook()) {
-        var _t = 0;
-        var _iv = setInterval(function() {
-            _t++;
-            if (tryHook() || _t > 60) clearInterval(_iv);
-        }, 200);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   🎯 PATCH pfApplyFilter — Dùng favFilters khi toggle BẬT
-   - Khi ẩn 3 filter cũ: bỏ qua giá trị của select HSK/Chủ đề
-   - Chỉ dùng favFilters (từ panel Lọc)
-   ═══════════════════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════════════════
-   🎯 PATCH pfApplyFilter — Dùng favFilters khi toggle BẬT
-   - Khi ẩn 3 filter cũ: bỏ qua giá trị của select HSK/Chủ đề
-   - Chỉ dùng favFilters (từ panel Lọc)
+   PATCH pfApplyFilter — Dùng favFilters khi toggle BẬT
    ═══════════════════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -4418,53 +4169,34 @@ function favToggleOldFilters(active) {
         if (window.pfApplyFilter.__favFilterPanelPatched) return true;
 
         var _orig = window.pfApplyFilter;
-
         window.pfApplyFilter = function() {
-            /* ═══════════════════════════════════════════════════════
-               KHÔNG BẬT TOGGLE → gọi hàm gốc
-               ═══════════════════════════════════════════════════════ */
             if (!favState.pfOnlyFav || !favCanUse()) {
                 return _orig.apply(this, arguments);
             }
-
-            /* ═══════════════════════════════════════════════════════
-               1. ĐỌC FILTER TỪ UI
-               - Nếu filter cũ đang bị ẨN (.fav-only-active):
-                 → BỎ QUA giá trị của #pfHskFilter / #pfSubjectFilter
-                 → Chỉ dùng favState.favFilters (từ panel Lọc)
-               ═══════════════════════════════════════════════════════ */
-            var oldFiltersHidden = document.body.classList.contains('fav-only-active');
 
             var searchInput = document.getElementById('pfSearchInput');
             var hskSel = document.getElementById('pfHskFilter');
             var subjSel = document.getElementById('pfSubjectFilter');
 
             var searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
-            var hskVal = oldFiltersHidden ? '' : (hskSel ? hskSel.value : '');
-            var subjVal = oldFiltersHidden ? '' : (subjSel ? subjSel.value : '');
+            var hskVal = hskSel ? hskSel.value : '';
+            var subjVal = subjSel ? subjSel.value : '';
 
-            /* ═══════════════════════════════════════════════════════
-               2. ĐỒNG BỘ FILTER → favFilters
-               ═══════════════════════════════════════════════════════ */
+            /* Đồng bộ filter UI → favFilters */
             var f = favState.favFilters;
             f.search = searchVal;
-
-            if (!oldFiltersHidden) {
-                if (hskVal) {
-                    if (f.hsk.indexOf(hskVal) === -1) f.hsk = [hskVal];
-                } else {
-                    f.hsk = [];
-                }
-                if (subjVal) {
-                    if (f.subjects.indexOf(subjVal) === -1) f.subjects = [subjVal];
-                } else {
-                    f.subjects = [];
-                }
+            if (hskVal) {
+                if (f.hsk.indexOf(hskVal) === -1) f.hsk = [hskVal];
+            } else {
+                f.hsk = [];
+            }
+            if (subjVal) {
+                if (f.subjects.indexOf(subjVal) === -1) f.subjects = [subjVal];
+            } else {
+                f.subjects = [];
             }
 
-            /* ═══════════════════════════════════════════════════════
-               3. ĐỒNG BỘ VỀ MAIN PAGE
-               ═══════════════════════════════════════════════════════ */
+            /* Đồng bộ về main page */
             var mainSearch = document.getElementById('searchInput');
             var mainHsk = document.getElementById('hskFilter');
             var mainSubj = document.getElementById('subjectFilter');
@@ -4478,87 +4210,50 @@ function favToggleOldFilters(active) {
                 state.subject = subjVal;
             }
 
-            /* ═══════════════════════════════════════════════════════
-               4. FILTER RECORDS theo favFilters
-               ═══════════════════════════════════════════════════════ */
-            var filteredFav = favFilterRecords(favGetRecords());
+            /* Filter records */
+            var filtered = favFilterRecords(favGetRecords());
 
-            try {
-                filtered = filteredFav;
-            } catch(e) {
-                try { window.filtered = filteredFav; } catch(e2) {}
+            try { filtered = filtered; } catch(e) {
+                try { window.filtered = filtered; } catch(e2) {}
             }
 
             if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
             if (typeof updateFilterUI === 'function') updateFilterUI();
 
-            /* ═══════════════════════════════════════════════════════
-               5. REBUILD dropdown "CÂU:"
-               ═══════════════════════════════════════════════════════ */
+            /* Rebuild dropdown */
             if (typeof favRebuildQuickNavForFav === 'function') {
-                favRebuildQuickNavForFav(filteredFav);
-            } else if (typeof favRefreshQuestionDropdown === 'function') {
-                favRefreshQuestionDropdown();
+                favRebuildQuickNavForFav(filtered);
             }
 
-            /* ═══════════════════════════════════════════════════════
-               6. RENDER MAIN PAGE
-               ═══════════════════════════════════════════════════════ */
+            /* Render main page */
             if (typeof render === 'function') render(true);
 
-            /* ═══════════════════════════════════════════════════════
-               7. NHẢY VỀ CÂU ĐẦU TIÊN HỢP LỆ
-               ═══════════════════════════════════════════════════════ */
-            if (filteredFav.length > 0) {
-                var first = filteredFav[0];
-                var firstStt = String(first.stt);
-                var firstDs = first.__favDatasetId;
+            /* Nhảy câu đầu */
+            if (filtered.length > 0) {
+                var firstStt = String(filtered[0].stt);
+                var firstDs = filtered[0].__favDatasetId;
                 var curDs = favGetCurrentDsId();
 
                 if (firstDs && firstDs !== curDs) {
-                    /* ─── Cần đổi dataset ─── */
                     window.__favRedirecting = true;
-
                     if (typeof window.__switchRawData === 'function') {
                         try { window.__switchRawData(firstDs); } catch(e) {}
                     }
-
                     var dsSel = document.getElementById('pfDatasetSelect');
                     if (dsSel) dsSel.value = firstDs;
-
-                    if (typeof pfBuildFilterOptions === 'function') {
-                        pfBuildFilterOptions();
-                    }
-                    if (typeof pfBuildDatasetSelect === 'function') {
-                        pfBuildDatasetSelect();
-                    }
+                    if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+                    if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
 
                     setTimeout(function() {
-                        if (typeof loadPracticeFull === 'function') {
-                            loadPracticeFull(firstStt);
-                        }
+                        if (typeof loadPracticeFull === 'function') loadPracticeFull(firstStt);
                         setTimeout(function() {
                             window.__favRedirecting = false;
-                            if (typeof favRefreshQuestionDropdown === 'function') {
-                                favRefreshQuestionDropdown();
-                            }
                         }, 150);
                     }, 60);
-
                 } else {
-                    /* ─── Cùng dataset → load luôn ─── */
                     window.__favRedirecting = true;
-
-                    if (typeof loadPracticeFull === 'function') {
-                        loadPracticeFull(firstStt);
-                    }
-
-                    setTimeout(function() {
-                        window.__favRedirecting = false;
-                        if (typeof favRefreshQuestionDropdown === 'function') {
-                            favRefreshQuestionDropdown();
-                        }
-                    }, 120);
+                    if (typeof loadPracticeFull === 'function') loadPracticeFull(firstStt);
+                    setTimeout(function() { window.__favRedirecting = false; }, 120);
                 }
             } else {
                 if (typeof favShowToast === 'function') {
@@ -4566,12 +4261,9 @@ function favToggleOldFilters(active) {
                 }
             }
 
-            /* ═══════════════════════════════════════════════════════
-               8. UPDATE SUMMARY BAR
-               ═══════════════════════════════════════════════════════ */
+            /* Update summary bar */
             favRenderFilterSummary();
         };
-
         window.pfApplyFilter.__favFilterPanelPatched = true;
         return true;
     }
@@ -4586,7 +4278,7 @@ function favToggleOldFilters(active) {
 })();
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOOK 6: openPracticeFull — Inject UI + sync class khi mở modal
+   PATCH openPracticeFull — Inject filter UI khi mở modal
    ═══════════════════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -4602,12 +4294,9 @@ function favToggleOldFilters(active) {
 
             setTimeout(function() {
                 favInjectFilterUI();
-                if (favState.pfOnlyFav && favCanUse()) {
-                    favToggleOldFilters(true);
+                if (favState.pfOnlyFav) {
                     favRenderFilterSummary();
                     favUpdateFilterBtnVisibility();
-                } else {
-                    favToggleOldFilters(false);
                 }
             }, 30);
 
@@ -4657,15 +4346,6 @@ function favToggleOldFilters(active) {
     }, 3000);
 })();
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   🔧 FIX CUỐI — Đảm bảo class .fav-only-active LUÔN sync đúng
-   Chạy định kỳ để bắt kịp mọi thay đổi state
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   EXPORT
-   ═══════════════════════════════════════════════════════════════════════════ */
-window.favToggleOldFilters = favToggleOldFilters;
 /* ═══════════════════════════════════════════════════════════════════════════
    EXPORT PUBLIC API
    ═══════════════════════════════════════════════════════════════════════════ */
