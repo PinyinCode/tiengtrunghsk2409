@@ -3225,6 +3225,7 @@ def build_ui_html():
         </div>
         <div class="ds-sub-grid" id="dsSubGrid"></div>
     </div>
+    <!-- __FAV_DATASET_TAB__ -->
 </div>
 
 <div class="search-filter-row">
