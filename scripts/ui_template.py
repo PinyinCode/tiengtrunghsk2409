@@ -114,7 +114,13 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
 .ds-main-row{
-    display:grid;grid-template-columns:1fr 1fr;gap:.5rem;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
+}
+@media(max-width:768px){
+    .ds-main-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr;}
 }
 @media(max-width:500px){
     .ds-main-row{grid-template-columns:1fr}
@@ -3217,6 +3223,7 @@ def build_ui_html():
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
+        <!-- __FAV_DATASET_TAB__ -->
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
         <div class="ds-sub-label">
@@ -3225,7 +3232,6 @@ def build_ui_html():
         </div>
         <div class="ds-sub-grid" id="dsSubGrid"></div>
     </div>
-    <!-- __FAV_DATASET_TAB__ -->
 </div>
 
 <div class="search-filter-row">
