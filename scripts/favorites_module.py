@@ -515,7 +515,7 @@ def build_favorites_html():
 def build_favorites_js():
     return r"""
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Module quản lý câu yêu thích
+   ❤️ FAVORITES MODULE — v3.0 (clean & optimized)
    KEY = datasetId + "_" + stt  (VD: "tonghop_1", "ketoan_5")
    ═══════════════════════════════════════════════════════════════ */
 
@@ -552,17 +552,18 @@ function favGetStorageKey() {
     return email ? ('favorites_cache_' + email) : 'favorites_guest';
 }
 
+function favGetCurrentDsId() {
+    return (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+           ? CURRENT_DATASET
+           : 'tonghop';
+}
+
 /* ═══════════════════════════════════════════════════════════════
    ⭐ KEY BUILDER — datasetId + "_" + stt
    ═══════════════════════════════════════════════════════════════ */
 function favBuildKey(stt, datasetId) {
     if (stt === null || stt === undefined) return null;
-    var ds = datasetId;
-    if (!ds) {
-        ds = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
-             ? CURRENT_DATASET
-             : 'tonghop';
-    }
+    var ds = datasetId || favGetCurrentDsId();
     return String(ds) + '_' + String(stt);
 }
 
@@ -570,19 +571,11 @@ function favParseKey(key) {
     if (!key) return null;
     var str = String(key);
     var idx = str.indexOf('_');
-    if (idx === -1) {
-        return { datasetId: 'tonghop', stt: str };
-    }
+    if (idx === -1) return { datasetId: 'tonghop', stt: str };
     return {
         datasetId: str.substring(0, idx),
         stt: str.substring(idx + 1)
     };
-}
-
-function favGetCurrentDsId() {
-    return (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
-           ? CURRENT_DATASET
-           : 'tonghop';
 }
 
 /* ============ LOCK DIALOG ============ */
@@ -602,57 +595,54 @@ function favShowLockDialog() {
                     'Gia hạn ngay để lưu câu yêu thích?')) {
             if (typeof openRenewalModal === 'function') openRenewalModal();
         }
-        return;
     }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LOAD / SAVE LOCAL — Migration key cũ → key mới
+   LOCAL STORAGE — Load / Save / Migration
    ═══════════════════════════════════════════════════════════════ */
 function favLoadFromLocal() {
     try {
         var key = favGetStorageKey();
         var cached = JSON.parse(localStorage.getItem(key) || 'null');
-        if (cached && cached.items && typeof cached.items === 'object') {
+        if (!cached || !cached.items || typeof cached.items !== 'object') return false;
 
-            var rawItems = cached.items;
-            var migrated = {};
-            var needResave = false;
+        var rawItems = cached.items;
+        var migrated = {};
+        var needResave = false;
 
-            Object.keys(rawItems).forEach(function(k) {
-                var item = rawItems[k];
-                if (!item || typeof item !== 'object') {
-                    needResave = true;
-                    return;
-                }
-
-                var parsed = favParseKey(k);
-                var ds = item.datasetId || parsed.datasetId || 'tonghop';
-                var stt = item.stt || parsed.stt;
-
-                var newKey = favBuildKey(stt, ds);
-                if (newKey !== k) needResave = true;
-
-                migrated[newKey] = {
-                    stt: String(stt),
-                    datasetId: ds,
-                    addedAt: item.addedAt || Date.now(),
-                    hsk: item.hsk || '',
-                    subject: item.subject || ''
-                };
-            });
-
-            favState.items = migrated;
-
-            if (needResave) {
-                favSaveToLocal();
-                if (typeof favMigrateLocalToCloud === 'function') {
-                    favMigrateLocalToCloud();
-                }
+        Object.keys(rawItems).forEach(function(k) {
+            var item = rawItems[k];
+            if (!item || typeof item !== 'object') {
+                needResave = true;
+                return;
             }
 
-            return true;
+            var parsed = favParseKey(k);
+            var ds = item.datasetId || parsed.datasetId || 'tonghop';
+            var stt = item.stt || parsed.stt;
+            var newKey = favBuildKey(stt, ds);
+
+            if (newKey !== k) needResave = true;
+
+            migrated[newKey] = {
+                stt: String(stt),
+                datasetId: ds,
+                addedAt: item.addedAt || Date.now(),
+                hsk: item.hsk || '',
+                subject: item.subject || ''
+            };
+        });
+
+        favState.items = migrated;
+
+        if (needResave) {
+            favSaveToLocal();
+            if (typeof favMigrateLocalToCloud === 'function') {
+                favMigrateLocalToCloud();
+            }
         }
+        return true;
     } catch(e) {
         console.warn('[Favorites] Load local error:', e);
     }
@@ -661,8 +651,7 @@ function favLoadFromLocal() {
 
 function favSaveToLocal() {
     try {
-        var key = favGetStorageKey();
-        localStorage.setItem(key, JSON.stringify({
+        localStorage.setItem(favGetStorageKey(), JSON.stringify({
             items: favState.items,
             savedAt: Date.now()
         }));
@@ -672,15 +661,14 @@ function favSaveToLocal() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LOAD FROM CLOUD — Doc ID = key mới
+   CLOUD — Load / Listen / Migrate
    ═══════════════════════════════════════════════════════════════ */
 async function favLoadFromCloud() {
-    if (!favCanUse()) return;
+    if (!favCanUse() || favState.loading) return;
     var email = favGetCurrentEmail();
     if (!email || typeof db === 'undefined' || !db) return;
-    if (favState.loading) return;
-    favState.loading = true;
 
+    favState.loading = true;
     try {
         var snap = await db.collection('favorites').doc(email)
             .collection('items').get();
@@ -695,8 +683,8 @@ async function favLoadFromCloud() {
             var parsed = favParseKey(docId);
             var ds = d.datasetId || parsed.datasetId || 'tonghop';
             var stt = d.stt || parsed.stt;
-
             var newKey = favBuildKey(stt, ds);
+
             if (newKey !== docId) needMigration = true;
 
             items[newKey] = {
@@ -719,7 +707,6 @@ async function favLoadFromCloud() {
         if (needMigration && typeof favMigrateLocalToCloud === 'function') {
             favMigrateLocalToCloud();
         }
-
     } catch(e) {
         console.warn('[Favorites] Load cloud error:', e);
     } finally {
@@ -727,9 +714,6 @@ async function favLoadFromCloud() {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   LISTEN CLOUD — Realtime
-   ═══════════════════════════════════════════════════════════════ */
 function favListenCloud() {
     if (!favCanUse()) return;
     var email = favGetCurrentEmail();
@@ -743,7 +727,6 @@ function favListenCloud() {
     favState.listener = db.collection('favorites').doc(email)
         .collection('items')
         .onSnapshot(function(snap) {
-
             var items = {};
             var needMigration = false;
 
@@ -754,8 +737,8 @@ function favListenCloud() {
                 var parsed = favParseKey(docId);
                 var ds = d.datasetId || parsed.datasetId || 'tonghop';
                 var stt = d.stt || parsed.stt;
-
                 var newKey = favBuildKey(stt, ds);
+
                 if (newKey !== docId) needMigration = true;
 
                 items[newKey] = {
@@ -777,26 +760,22 @@ function favListenCloud() {
             if (needMigration && typeof favMigrateLocalToCloud === 'function') {
                 favMigrateLocalToCloud();
             }
-
         }, function(err) {
             console.warn('[Favorites] Listener error:', err);
         });
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ MIGRATION CLOUD
+   MIGRATION CLOUD
    ═══════════════════════════════════════════════════════════════ */
 var _favMigrating = false;
 
 async function favMigrateLocalToCloud() {
-    if (_favMigrating) return;
-    if (!favCanUse()) return;
-
+    if (_favMigrating || !favCanUse()) return;
     var email = favGetCurrentEmail();
     if (!email || typeof db === 'undefined' || !db) return;
 
     _favMigrating = true;
-
     try {
         var snap = await db.collection('favorites').doc(email)
             .collection('items').get();
@@ -811,7 +790,6 @@ async function favMigrateLocalToCloud() {
             var parsed = favParseKey(docId);
             var ds = d.datasetId || parsed.datasetId || 'tonghop';
             var stt = d.stt || parsed.stt;
-
             var newKey = favBuildKey(stt, ds);
 
             if (newKey !== docId) {
@@ -836,36 +814,25 @@ async function favMigrateLocalToCloud() {
             }
         });
 
-        if (toCreate.length === 0 && toDelete.length === 0) {
-            _favMigrating = false;
-            return;
-        }
+        if (toCreate.length === 0 && toDelete.length === 0) return;
 
-        var BATCH_SIZE = 400;
-        for (var i = 0; i < toCreate.length; i += BATCH_SIZE) {
+        var BATCH = 400;
+        for (var i = 0; i < toCreate.length; i += BATCH) {
             var batch = db.batch();
-            var chunk = toCreate.slice(i, i + BATCH_SIZE);
-            chunk.forEach(function(entry) {
-                if (entry.isUpdate) {
-                    batch.update(entry.ref, entry.data);
-                } else {
-                    batch.set(entry.ref, entry.data);
-                }
+            toCreate.slice(i, i + BATCH).forEach(function(entry) {
+                if (entry.isUpdate) batch.update(entry.ref, entry.data);
+                else batch.set(entry.ref, entry.data);
             });
             await batch.commit();
         }
-
-        for (var j = 0; j < toDelete.length; j += BATCH_SIZE) {
-            var delBatch = db.batch();
-            var delChunk = toDelete.slice(j, j + BATCH_SIZE);
-            delChunk.forEach(function(ref) {
-                delBatch.delete(ref);
+        for (var j = 0; j < toDelete.length; j += BATCH) {
+            var del = db.batch();
+            toDelete.slice(j, j + BATCH).forEach(function(ref) {
+                del.delete(ref);
             });
-            await delBatch.commit();
+            await del.commit();
         }
-
         console.log('[Favorites] Migrated: +' + toCreate.length + ' / -' + toDelete.length);
-
     } catch(e) {
         console.warn('[Favorites] Migration error:', e);
     } finally {
@@ -874,7 +841,7 @@ async function favMigrateLocalToCloud() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ADD / REMOVE / TOGGLE
+   ADD / REMOVE / TOGGLE / CLEAR
    ═══════════════════════════════════════════════════════════════ */
 async function favAdd(stt, record, datasetId) {
     if (!favCanUse()) { favShowLockDialog(); return false; }
@@ -897,9 +864,7 @@ async function favAdd(stt, record, datasetId) {
         var daily = { date: today, count: 0 };
         try {
             var saved = JSON.parse(localStorage.getItem(dayKey) || 'null');
-            if (saved && saved.date === today) {
-                daily = saved;
-            }
+            if (saved && saved.date === today) daily = saved;
         } catch(e) {}
 
         if (daily.count >= MAX_PER_DAY) {
@@ -1000,7 +965,6 @@ async function favRemove(stt, datasetId) {
 async function favToggle(stt, record, datasetId) {
     if (!favCanUse()) { favShowLockDialog(); return; }
     stt = String(stt);
-
     var dsId = datasetId || favGetCurrentDsId();
 
     if (favHas(stt, dsId)) {
@@ -1034,7 +998,6 @@ async function favClearAll() {
         try {
             var snap = await db.collection('favorites').doc(email)
                 .collection('items').get();
-
             if (snap.size === 0) return;
 
             var BATCH_SIZE = 450;
@@ -1043,8 +1006,9 @@ async function favClearAll() {
 
             for (var i = 0; i < docs.length; i += BATCH_SIZE) {
                 var batch = db.batch();
-                var chunk = docs.slice(i, i + BATCH_SIZE);
-                chunk.forEach(function(ref) { batch.delete(ref); });
+                docs.slice(i, i + BATCH_SIZE).forEach(function(ref) {
+                    batch.delete(ref);
+                });
                 await batch.commit();
             }
         } catch(e) {
@@ -1060,11 +1024,10 @@ async function favClearAll() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CHECK / COUNT
+   CHECK / COUNT / DAILY LIMIT
    ═══════════════════════════════════════════════════════════════ */
 function favHas(stt, datasetId) {
     if (stt === null || stt === undefined) return false;
-
     var targetDs = datasetId || favGetCurrentDsId();
 
     var key = favBuildKey(stt, targetDs);
@@ -1075,7 +1038,6 @@ function favHas(stt, datasetId) {
         var itemDs = oldItem.datasetId || 'tonghop';
         return itemDs === targetDs;
     }
-
     return false;
 }
 
@@ -1099,7 +1061,6 @@ function favCountInCurrentDataset() {
 function favGetDailyRemaining() {
     var email = favGetCurrentEmail();
     if (!email) return 0;
-
     var isAdmin = (typeof currentUser !== 'undefined'
                    && currentUser
                    && currentUser.role === 'admin');
@@ -1107,31 +1068,25 @@ function favGetDailyRemaining() {
 
     var MAX_PER_DAY = 500;
     var today = new Date().toDateString();
-
     try {
         var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
         if (saved && saved.date === today) {
             return Math.max(0, MAX_PER_DAY - saved.count);
         }
     } catch(e) {}
-
     return MAX_PER_DAY;
 }
 
 function favGetDailyUsed() {
     var email = favGetCurrentEmail();
     if (!email) return 0;
-
     var today = new Date().toDateString();
     try {
         var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
-        if (saved && saved.date === today) {
-            return saved.count;
-        }
+        if (saved && saved.date === today) return saved.count;
     } catch(e) {}
     return 0;
 }
-
 /* ═══════════════════════════════════════════════════════════════
    FIND RECORD
    ═══════════════════════════════════════════════════════════════ */
@@ -1153,7 +1108,6 @@ function favFindRecordInDataset(dsId, stt) {
             if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
         }
     }
-
     return null;
 }
 
@@ -1178,12 +1132,11 @@ function favFindRecordAnywhere(stt) {
             if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
         }
     }
-
     return null;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ LẤY TẤT CẢ RECORD YÊU THÍCH (không phân biệt dataset)
+   ⭐ LẤY TẤT CẢ RECORD YÊU THÍCH (mọi dataset)
    ═══════════════════════════════════════════════════════════════ */
 function favGetRecords() {
     var out = [];
@@ -1199,19 +1152,13 @@ function favGetRecords() {
         var itemDs = item.datasetId || parsed.datasetId || 'tonghop';
         var itemStt = item.stt || parsed.stt;
 
-        var record = null;
-        if (typeof favFindRecordInDataset === 'function') {
-            record = favFindRecordInDataset(itemDs, itemStt);
-        }
-        if (!record && typeof favFindRecordAnywhere === 'function') {
-            record = favFindRecordAnywhere(itemStt);
-        }
+        var record = favFindRecordInDataset(itemDs, itemStt);
+        if (!record) record = favFindRecordAnywhere(itemStt);
 
         var seenKey = itemDs + '_' + itemStt;
         if (record && !seen[seenKey]) {
             seen[seenKey] = true;
 
-            /* Clone record để không làm hỏng object gốc */
             var cloned = {};
             Object.keys(record).forEach(function(k) {
                 cloned[k] = record[k];
@@ -1235,7 +1182,9 @@ function favIsFavoriteRecord(r) {
 
 /* ============ SORT ============ */
 function favGetSortedList() {
-    var items = Object.keys(favState.items).map(function(k) { return favState.items[k]; });
+    var items = Object.keys(favState.items).map(function(k) {
+        return favState.items[k];
+    });
     var mode = favState.sortMode;
 
     if (mode === 'oldest') {
@@ -1256,31 +1205,17 @@ function favGetSortedList() {
    DROPDOWN "CÂU:"
    ═══════════════════════════════════════════════════════════════ */
 function favGetQuestionsForDropdown() {
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ KHI BẬT TOGGLE: Trả về TẤT CẢ câu yêu thích
-       (không filter theo dataset hiện tại)
-       ═══════════════════════════════════════════════════════════ */
-    if (favState.pfOnlyFav && favCanUse()) {
-        return favGetRecords();   /* Đã có __favDatasetId trong mỗi record */
-    }
-
-    /* ═══ KHI TẮT TOGGLE: Trả về RAW_DATA hiện tại ═══ */
+    if (favState.pfOnlyFav && favCanUse()) return favGetRecords();
     if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
     return RAW_DATA;
 }
+
 function favRefreshQuestionDropdown() {
     var fns = [
-        'renderQuestionSelect',
-        'buildQuestionDropdown',
-        'updateQuestionList',
-        'renderQuestionList',
-        'buildQuestionSelect',
-        'renderPfQuestionSelect',
-        'renderQuestionPicker',
-        'updateQuestionPicker',
-        'refreshQuestionDropdown',
-        'populateQuestionSelect',
-        'renderPfQSelect'
+        'renderQuestionSelect', 'buildQuestionDropdown', 'updateQuestionList',
+        'renderQuestionList', 'buildQuestionSelect', 'renderPfQuestionSelect',
+        'renderQuestionPicker', 'updateQuestionPicker', 'refreshQuestionDropdown',
+        'populateQuestionSelect', 'renderPfQSelect'
     ];
     for (var i = 0; i < fns.length; i++) {
         if (typeof window[fns[i]] === 'function') {
@@ -1303,7 +1238,9 @@ function favRefreshQuestionDropdown() {
 
     try {
         var list = favGetQuestionsForDropdown();
-        var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : '';
+        var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                     ? String(pfCurrentStt)
+                     : '';
         var html = '';
         for (var j = 0; j < list.length; j++) {
             var r = list[j];
@@ -1319,9 +1256,9 @@ function favRefreshQuestionDropdown() {
         return false;
     }
 }
+
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ REBUILD DROPDOWN "CÂU:" từ 1 danh sách record có sẵn
-   - Dùng khi cần filter riêng (cross-filter HSK/chủ đề)
+   REBUILD DROPDOWN "CÂU:" từ danh sách record có sẵn
    ═══════════════════════════════════════════════════════════════ */
 function favRebuildQuickNavForFav(records) {
     var sel = document.getElementById('pfQuickNav');
@@ -1359,6 +1296,44 @@ function favRebuildQuickNavForFav(records) {
     sel.innerHTML = html;
     if (curStt) sel.value = curStt;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FALLBACK: Rebuild dropdown từ dataset hiện tại
+   ═══════════════════════════════════════════════════════════════ */
+function favRebuildQuickNavFromCurrentDataset() {
+    var sel = document.getElementById('pfQuickNav');
+    if (!sel) return;
+
+    var sourceList = [];
+    if (typeof filtered !== 'undefined' && Array.isArray(filtered)) {
+        sourceList = filtered;
+    } else if (typeof RAW_DATA !== 'undefined' && Array.isArray(RAW_DATA)) {
+        sourceList = RAW_DATA;
+    }
+
+    var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                 ? String(pfCurrentStt)
+                 : '';
+
+    var html = '<option value="">-- Chọn câu (' + sourceList.length + ') --</option>';
+
+    for (var j = 0; j < sourceList.length; j++) {
+        var r = sourceList[j];
+        var vi = (r.vi || '').substring(0, 45);
+        var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                     ? '#' + String(r.stt).trim() + ' · '
+                     : '';
+        var label = sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
+        var selected = (String(r.stt) === curStt) ? ' selected' : '';
+
+        html += '<option value="' + String(r.stt) + '"' + selected + '>' +
+                escapeHtml(label) + '</option>';
+    }
+
+    sel.innerHTML = html;
+    if (curStt) sel.value = curStt;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    NÚT TIM FLOAT
    ═══════════════════════════════════════════════════════════════ */
@@ -1369,7 +1344,9 @@ function favUpdatePfFloatBtn() {
     var icon = pfBtn.querySelector('i');
     var label = pfBtn.querySelector('.pf-fav-float-label');
     var can = favCanUse();
-    var stt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : null;
+    var stt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+              ? String(pfCurrentStt)
+              : null;
     var currentDsId = favGetCurrentDsId();
 
     if (!can) {
@@ -1399,9 +1376,8 @@ function favUpdatePfOnlyFavBtn() {
     var icon = btn.querySelector('i');
     var countEl = document.getElementById('pfFavOnlyCount');
     var can = favCanUse();
-    var count = favCount();   /* ⭐ Đếm TỔNG */
+    var count = favCount();
 
-    /* ═══ 1. CHƯA ĐỦ QUYỀN ═══ */
     if (!can) {
         btn.classList.add('locked');
         btn.classList.remove('active', 'empty', 'current-not-fav');
@@ -1414,7 +1390,6 @@ function favUpdatePfOnlyFavBtn() {
     btn.classList.remove('locked', 'current-not-fav');
     if (countEl) countEl.textContent = count;
 
-    /* ═══ 2. CHƯA CÓ CÂU YÊU THÍCH NÀO ═══ */
     if (count === 0) {
         btn.classList.add('empty');
         btn.classList.remove('active');
@@ -1426,7 +1401,6 @@ function favUpdatePfOnlyFavBtn() {
 
     btn.classList.remove('empty');
 
-    /* ═══ 3. CẬP NHẬT THEO TRẠNG THÁI TOGGLE ═══ */
     if (favState.pfOnlyFav) {
         btn.classList.add('active');
         if (icon) icon.className = 'fas fa-heart';
@@ -1444,22 +1418,15 @@ function favTogglePfOnlyFav() {
     var currentDsId = favGetCurrentDsId();
     var totalCount = favCount();
 
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ TRƯỜNG HỢP 1: ĐANG BẬT → TẮT
-       → Quay về chế độ bình thường: rebuild câu từ dataset hiện tại
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ TRƯỜNG HỢP 1: ĐANG BẬT → TẮT ═══ */
     if (favState.pfOnlyFav) {
         favState.pfOnlyFav = false;
         favUpdatePfOnlyFavBtn();
 
-        /* ⭐ REBUILD LẠI HSK + CHỦ ĐỀ (về dataset hiện tại) */
         if (typeof pfBuildFilterOptions === 'function') {
-            try { pfBuildFilterOptions(); } catch(e) {
-                console.warn('[Favorites] pfBuildFilterOptions error:', e);
-            }
+            try { pfBuildFilterOptions(); } catch(e) {}
         }
 
-        /* ⭐ RESET filter (search + hsk + chủ đề) */
         try {
             var searchInput = document.getElementById('pfSearchInput');
             var hskSel = document.getElementById('pfHskFilter');
@@ -1475,7 +1442,6 @@ function favTogglePfOnlyFav() {
             if (mainHsk) mainHsk.value = '';
             if (mainSubj) mainSubj.value = '';
 
-            /* Reset state */
             if (typeof state !== 'undefined') {
                 state.search = '';
                 state.hsk = '';
@@ -1483,7 +1449,6 @@ function favTogglePfOnlyFav() {
             }
         } catch(e) {}
 
-        /* ⭐ Update UI chip */
         if (typeof pfUpdateFilterUI === 'function') {
             try { pfUpdateFilterUI(); } catch(e) {}
         }
@@ -1491,30 +1456,17 @@ function favTogglePfOnlyFav() {
             try { updateFilterUI(); } catch(e) {}
         }
 
-        /* ═══════════════════════════════════════════════════════
-           ⭐⭐ REBUILD DROPDOWN "CÂU:" TỪ DATASET HIỆN TẠI
-           Đây là điểm chính — phải build lại từ RAW_DATA/filtered
-           ═══════════════════════════════════════════════════════ */
         if (typeof pfBuildQuickNav === 'function') {
-            try {
-                /* Tạm set flag để patch không can thiệp (vì toggle đã tắt) */
-                pfBuildQuickNav();
-                console.log('[Favorites] Đã rebuild dropdown CÂU: từ dataset hiện tại');
-            } catch(e) {
-                console.warn('[Favorites] pfBuildQuickNav error:', e);
-            }
+            try { pfBuildQuickNav(); } catch(e) {}
         }
 
-        /* ⭐ Nếu dropdown rỗng → tự build fallback */
         setTimeout(function() {
             var sel = document.getElementById('pfQuickNav');
             if (!sel || sel.options.length <= 1) {
-                console.log('[Favorites] Dropdown CÂU: rỗng → build fallback');
                 favRebuildQuickNavFromCurrentDataset();
             }
         }, 100);
 
-        /* ⭐ Re-render trang chủ nếu đang ở tab Yêu thích */
         if (typeof window.render === 'function' && favState.currentView) {
             setTimeout(function() {
                 try { window.render(); } catch(e) {}
@@ -1525,9 +1477,7 @@ function favTogglePfOnlyFav() {
         return;
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       TRƯỜNG HỢP 2: ĐANG TẮT → BẬT
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ TRƯỜNG HỢP 2: ĐANG TẮT → BẬT ═══ */
     if (totalCount === 0) {
         favShowToast('Chưa có câu yêu thích nào', 'warn');
         return;
@@ -1536,12 +1486,10 @@ function favTogglePfOnlyFav() {
     favState.pfOnlyFav = true;
     favUpdatePfOnlyFavBtn();
 
-    /* Rebuild HSK + chủ đề (theo favorite) */
     if (typeof pfBuildFilterOptions === 'function') {
         try { pfBuildFilterOptions(); } catch(e) {}
     }
 
-    /* Reset filter */
     try {
         var hskSel2 = document.getElementById('pfHskFilter');
         var subjSel2 = document.getElementById('pfSubjectFilter');
@@ -1552,7 +1500,6 @@ function favTogglePfOnlyFav() {
 
     favRefreshQuestionDropdown();
 
-    /* Nếu câu hiện tại KHÔNG phải fav → nhảy về fav đầu */
     var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
                      ? String(pfCurrentStt)
                      : null;
@@ -1564,7 +1511,6 @@ function favTogglePfOnlyFav() {
             var firstFavStt = String(favList[0].stt);
             var firstDs = favList[0].__favDatasetId;
 
-            /* Đổi dataset nếu fav đầu thuộc dataset khác */
             if (firstDs && firstDs !== currentDsId) {
                 window.__favRedirecting = true;
                 if (typeof window.__switchRawData === 'function') {
@@ -1592,46 +1538,7 @@ function favTogglePfOnlyFav() {
 
     favShowToast('Chỉ luyện ' + totalCount + ' câu yêu thích', 'add');
 }
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ FALLBACK: Rebuild dropdown "CÂU:" từ DATASET HIỆN TẠI
-   Dùng khi toggle tắt + hàm gốc không build được
-   ═══════════════════════════════════════════════════════════════ */
-function favRebuildQuickNavFromCurrentDataset() {
-    var sel = document.getElementById('pfQuickNav');
-    if (!sel) return;
 
-    /* Lấy dữ liệu đang hiển thị (đã filter theo HSK/chủ đề) */
-    var sourceList = [];
-    if (typeof filtered !== 'undefined' && Array.isArray(filtered)) {
-        sourceList = filtered;
-    } else if (typeof RAW_DATA !== 'undefined' && Array.isArray(RAW_DATA)) {
-        sourceList = RAW_DATA;
-    }
-
-    var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                 ? String(pfCurrentStt)
-                 : '';
-
-    var html = '<option value="">-- Chọn câu (' + sourceList.length + ') --</option>';
-
-    for (var j = 0; j < sourceList.length; j++) {
-        var r = sourceList[j];
-        var vi = (r.vi || '').substring(0, 45);
-        var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
-                     ? '#' + String(r.stt).trim() + ' · '
-                     : '';
-        var label = sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
-        var selected = (String(r.stt) === curStt) ? ' selected' : '';
-
-        html += '<option value="' + String(r.stt) + '"' + selected + '>' +
-                escapeHtml(label) + '</option>';
-    }
-
-    sel.innerHTML = html;
-    if (curStt) sel.value = curStt;
-
-    console.log('[Favorites] Rebuilt CÂU: từ dataset hiện tại, ' + sourceList.length + ' câu');
-}
 /* ═══════════════════════════════════════════════════════════════
    SCAN ALL HEART BUTTONS
    ═══════════════════════════════════════════════════════════════ */
@@ -1657,31 +1564,24 @@ function favScanAllHeartButtons() {
 
         btn.classList.remove('locked');
         btn.classList.toggle('active', active);
-        if (icon) {
-            icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-        }
+        if (icon) icon.className = active ? 'fas fa-heart' : 'far fa-heart';
         btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
     });
 
-    if (typeof favUpdatePfFloatBtn === 'function') {
-        favUpdatePfFloatBtn();
-    }
-    if (typeof favUpdatePfOnlyFavBtn === 'function') {
-        favUpdatePfOnlyFavBtn();
-    }
+    favUpdatePfFloatBtn();
+    favUpdatePfOnlyFavBtn();
 }
 
 /* ═══════════════════════════════════════════════════════════════
    NOTIFY CHANGES
    ═══════════════════════════════════════════════════════════════ */
 function favNotifyChanged() {
-    /* ⭐ Quét lại tất cả nút tim */
     if (typeof favScanAllHeartButtons === 'function') {
         favScanAllHeartButtons();
     }
 
-    /* ⭐ Cập nhật badge trên tab + dropdown */
     var count = favCount();
+
     ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
         var badge = document.getElementById(id);
         if (badge) {
@@ -1690,19 +1590,14 @@ function favNotifyChanged() {
         }
     });
 
-    /* ⭐⭐ CẬP NHẬT HEADER COUNT ngay (không cần chờ render) */
     var headerCountEl = document.querySelector('.fav-header .fav-count-text');
-    if (headerCountEl) {
-        headerCountEl.textContent = count + ' câu';
-    }
+    if (headerCountEl) headerCountEl.textContent = count + ' câu';
 
-    /* ⭐⭐⭐ Nếu đang ở tab Yêu thích → render lại NGAY */
     if (favState.currentView && favState.filteringOnly) {
         if (typeof window.render === 'function') {
             clearTimeout(favState.__renderTimer);
             favState.__renderTimer = setTimeout(function() {
                 window.render();
-                /* Backup: cập nhật lại header sau khi render */
                 setTimeout(function() {
                     var el = document.querySelector('.fav-header .fav-count-text');
                     if (el) el.textContent = favCount() + ' câu';
@@ -1710,10 +1605,6 @@ function favNotifyChanged() {
             }, 80);
         } else {
             favRenderCurrentTab();
-            setTimeout(function() {
-                var el = document.querySelector('.fav-header .fav-count-text');
-                if (el) el.textContent = favCount() + ' câu';
-            }, 20);
         }
     }
 }
@@ -1759,9 +1650,7 @@ function favUpdateLockState() {
             btn.classList.remove('locked');
             var active = favHas(btn.dataset.stt, btnDsId);
             btn.classList.toggle('active', active);
-            if (icon) {
-                icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-            }
+            if (icon) icon.className = active ? 'fas fa-heart' : 'far fa-heart';
             btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
         } else {
             btn.classList.add('locked');
@@ -1809,12 +1698,6 @@ function favShowToast(message, type) {
 /* ═══════════════════════════════════════════════════════════════
    RENDER TAB YÊU THÍCH
    ═══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   RENDER TAB YÊU THÍCH
-   - Đếm đúng số câu (allFavRecords.length)
-   - Header có class "fav-count-text" để update trực tiếp
-   - Empty state khi hết câu
-   ═══════════════════════════════════════════════════════════════ */
 function favRenderCurrentTab() {
     if (!favState.currentView) return;
     if (typeof mobileWrapper === 'undefined' || !mobileWrapper) return;
@@ -1822,7 +1705,7 @@ function favRenderCurrentTab() {
 
     var can = favCanUse();
 
-    /* ═══ 1. KHÔNG CÓ QUYỀN → LOCK STATE ═══ */
+    /* ═══ KHÔNG CÓ QUYỀN → LOCK STATE ═══ */
     if (!can) {
         mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
             '<div style="width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;' +
@@ -1849,12 +1732,9 @@ function favRenderCurrentTab() {
         return;
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ 2. LẤY TẤT CẢ CÂU YÊU THÍCH — KHÔNG FILTER DATASET
-       ═══════════════════════════════════════════════════════════ */
     var allFavRecords = favGetRecords();
 
-    /* ═══ 3. EMPTY STATE — Không còn câu nào ═══ */
+    /* ═══ EMPTY STATE ═══ */
     if (allFavRecords.length === 0) {
         mobileWrapper.innerHTML = '<div class="fav-empty">' +
             '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
@@ -1865,16 +1745,14 @@ function favRenderCurrentTab() {
             '</div>' +
         '</div>';
 
-        /* ⭐ Cập nhật badge = 0 ngay */
         ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
             var b = document.getElementById(id);
             if (b) { b.textContent = '0'; b.dataset.count = '0'; }
         });
-
         return;
     }
 
-    /* ═══ 4. COUNTER + HEADER ═══ */
+    /* ═══ COUNTER + HEADER ═══ */
     var isAdminUser = (typeof currentUser !== 'undefined'
                        && currentUser
                        && currentUser.role === 'admin');
@@ -1897,7 +1775,6 @@ function favRenderCurrentTab() {
                       '<i class="fas fa-calendar-day"></i> ' + used + '/' + MAX_PER_DAY + ' hôm nay</span>';
     }
 
-    /* ⭐ Header — dùng class "fav-count-text" để có thể update trực tiếp */
     var headerHtml = '<div class="fav-header" style="grid-column:1 / -1;' +
         'display:flex;align-items:center;gap:.5rem;padding:.65rem .85rem;' +
         'background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(220,38,38,.04));' +
@@ -1926,7 +1803,7 @@ function favRenderCurrentTab() {
         '</button>' +
     '</div>';
 
-    /* ═══ 5. FILTER theo search / hsk / subject ═══ */
+    /* ═══ FILTER ═══ */
     var filteredFav = allFavRecords.filter(function(r) {
         if (typeof state !== 'undefined') {
             if (state.search) {
@@ -1944,7 +1821,7 @@ function favRenderCurrentTab() {
         return true;
     });
 
-    /* ═══ 6. SORT ═══ */
+    /* ═══ SORT ═══ */
     var sortMode = favState.sortMode || 'recent';
     if (sortMode === 'oldest') {
         filteredFav.sort(function(a, b) {
@@ -1957,13 +1834,12 @@ function favRenderCurrentTab() {
             return na - nb;
         });
     } else {
-        /* recent */
         filteredFav.sort(function(a, b) {
             return (b.__favAddedAt || 0) - (a.__favAddedAt || 0);
         });
     }
 
-    /* ═══ 7. RENDER ═══ */
+    /* ═══ RENDER ═══ */
     var cardsHtml = headerHtml;
 
     if (filteredFav.length === 0) {
@@ -1978,17 +1854,12 @@ function favRenderCurrentTab() {
 
     mobileWrapper.innerHTML = cardsHtml;
 
-    /* ═══ 8. UPDATE LOCK STATE + SYNC HEADER + BADGE ═══ */
     setTimeout(function() {
         if (typeof favUpdateLockState === 'function') favUpdateLockState();
 
-        /* ⭐ Sync lại header count sau render (chống race condition) */
         var headerCountEl = document.querySelector('.fav-header .fav-count-text');
-        if (headerCountEl) {
-            headerCountEl.textContent = favCount() + ' câu';
-        }
+        if (headerCountEl) headerCountEl.textContent = favCount() + ' câu';
 
-        /* ⭐ Sync badge */
         var total = favCount();
         ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
             var b = document.getElementById(id);
@@ -1999,6 +1870,7 @@ function favRenderCurrentTab() {
         });
     }, 50);
 }
+
 function favBuildCardHtml(r) {
     var zhJs = escapeJs(r.zh);
     var viJs = escapeJs(r.vi);
@@ -2075,13 +1947,8 @@ window.favOnCardBtnClick = function(evt, stt) {
 
     var currentDsId = btnDsId || favGetCurrentDsId();
 
-    var record = null;
-    if (typeof favFindRecordInDataset === 'function') {
-        record = favFindRecordInDataset(currentDsId, stt);
-    }
-    if (!record && typeof favFindRecordAnywhere === 'function') {
-        record = favFindRecordAnywhere(stt);
-    }
+    var record = favFindRecordInDataset(currentDsId, stt);
+    if (!record) record = favFindRecordAnywhere(stt);
 
     favToggle(stt, record, currentDsId);
 };
@@ -2094,13 +1961,8 @@ window.favOnPfBtnClick = function(evt) {
     var stt = String(pfCurrentStt);
     var currentDsId = favGetCurrentDsId();
 
-    var record = null;
-    if (typeof favFindRecordInDataset === 'function') {
-        record = favFindRecordInDataset(currentDsId, stt);
-    }
-    if (!record && typeof favFindRecordAnywhere === 'function') {
-        record = favFindRecordAnywhere(stt);
-    }
+    var record = favFindRecordInDataset(currentDsId, stt);
+    if (!record) record = favFindRecordAnywhere(stt);
 
     favToggle(stt, record, currentDsId).then(function() {
         favUpdatePfFloatBtn();
@@ -2162,20 +2024,15 @@ function favOnTabClick(evt) {
 
     var favRecords = favGetRecords();
 
-    try {
-        filtered = favRecords;
-    } catch(e1) {
+    try { filtered = favRecords; } catch(e1) {
         try { window.filtered = favRecords; } catch(e2) {}
     }
     try { window.filtered = favRecords; } catch(e) {}
-
-    try { renderedCount = 0; } catch(e) { try { window.renderedCount = 0; } catch(e2) {} }
-
-    if (typeof favRenderCurrentTab === 'function') {
-        favRenderCurrentTab();
-    } else if (typeof window.render === 'function') {
-        window.render(true);
+    try { renderedCount = 0; } catch(e) {
+        try { window.renderedCount = 0; } catch(e2) {}
     }
+
+    favRenderCurrentTab();
 
     setTimeout(function() {
         var mainEl = document.getElementById('mainContent');
@@ -2279,7 +2136,6 @@ function favSyncFloatVisibility() {
             favRefreshQuestionDropdown();
         }, 80);
 
-        /* ⭐ Nếu toggle BẬT + câu hiện tại KHÔNG phải fav → tự nhảy fav đầu */
         if (favState.pfOnlyFav && favCanUse()) {
             setTimeout(function() {
                 var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
@@ -2307,7 +2163,6 @@ function favSyncFloatVisibility() {
                 }
             }, 120);
         }
-
     } else {
         if (pfFavFloat) {
             pfFavFloat.classList.remove('show');
@@ -2323,15 +2178,6 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    WATCH PRACTICE FULL MODAL
    ═══════════════════════════════════════════════════════════════ */
-
-/* [PHẦN TRƯỚC GIỮ NGUYÊN — từ đầu file đến hết favSyncFloatVisibility] */
-
-/* ═══════════════════════════════════════════════════════════════
-   WATCH PRACTICE FULL MODAL
-   ═══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   WATCH PRACTICE FULL MODAL
-   ═══════════════════════════════════════════════════════════════ */
 (function() {
     function attach() {
         var pfModal = document.getElementById('practiceFullModal');
@@ -2342,9 +2188,7 @@ function favSyncFloatVisibility() {
         var obs = new MutationObserver(function(mutations) {
             mutations.forEach(function(m) {
                 if (m.attributeName === 'class') {
-                    if (typeof favSyncFloatVisibility === 'function') {
-                        favSyncFloatVisibility();
-                    }
+                    favSyncFloatVisibility();
                 }
             });
         });
@@ -2362,7 +2206,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   THEO DÕI pfCurrentStt — KHÔNG tự tắt toggle
+   THEO DÕI pfCurrentStt
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _lastPfStt = null;
@@ -2375,15 +2219,9 @@ function favSyncFloatVisibility() {
         _lastPfStt = cur;
         if (!cur) return;
 
-        if (typeof favUpdatePfFloatBtn === 'function') {
-            favUpdatePfFloatBtn();
-        }
-        if (typeof favUpdatePfOnlyFavBtn === 'function') {
-            favUpdatePfOnlyFavBtn();
-        }
-        if (typeof favScanAllHeartButtons === 'function') {
-            favScanAllHeartButtons();
-        }
+        favUpdatePfFloatBtn();
+        favUpdatePfOnlyFavBtn();
+        favScanAllHeartButtons();
     }
 
     setInterval(syncPfState, 250);
@@ -2401,49 +2239,12 @@ function favSyncFloatVisibility() {
         window.render = function() {
             var result = _origRender.apply(this, arguments);
             setTimeout(function() {
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-            }, 10);
-            return result;
-        };
-        window.render.__favScanPatched = true;
-        return true;
-    }
+                favScanAllHeartButtons();
 
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 40) clearInterval(_iv);
-        }, 100);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   PATCH switchDataset()
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.render !== 'function') return false;
-        if (window.render.__favScanPatched) return true;
-
-        var _origRender = window.render;
-        window.render = function() {
-            var result = _origRender.apply(this, arguments);
-            setTimeout(function() {
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-
-                /* ⭐ Sync header count sau khi render xong */
                 var el = document.querySelector('.fav-header .fav-count-text');
-                if (el && typeof favCount === 'function') {
-                    el.textContent = favCount() + ' câu';
-                }
+                if (el) el.textContent = favCount() + ' câu';
 
-                /* ⭐ Sync badge = 0 nếu hết */
-                if (typeof favCount === 'function' && favCount() === 0) {
+                if (favCount() === 0) {
                     ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
                         var b = document.getElementById(id);
                         if (b) { b.textContent = '0'; b.dataset.count = '0'; }
@@ -2466,16 +2267,35 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH pfBuildQuickNav — Build dropdown "CÂU:"
-   - BẬT toggle: hiện TẤT CẢ câu yêu thích (mọi dataset) kèm data-dataset-id
-   - TẮT toggle: gọi hàm gốc (dataset hiện tại)
+   PATCH switchDataset()
    ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.switchDataset !== 'function') return false;
+        if (window.switchDataset.__favPatched) return true;
+
+        var _origSwitch = window.switchDataset;
+        window.switchDataset = function(group, sub) {
+            if (group !== 'favorites') {
+                favExitFilterMode();
+            }
+            return _origSwitch.apply(this, arguments);
+        };
+        window.switchDataset.__favPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 40) clearInterval(_iv);
+        }, 100);
+    }
+})();
+
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH pfBuildQuickNav — Build dropdown "CÂU:"
-   - BẬT toggle: 
-     * Nếu đang có filter (HSK/chủ đề) → chỉ hiện câu fav khớp
-     * Nếu không filter → hiện TẤT CẢ câu fav (mọi dataset)
-   - TẮT toggle: gọi hàm gốc (dataset hiện tại)
+   PATCH pfBuildQuickNav
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2486,23 +2306,13 @@ function favSyncFloatVisibility() {
 
         window.pfBuildQuickNav = function() {
             var sel = document.getElementById('pfQuickNav');
-            if (!sel) {
-                return _origBuildQuickNav.apply(this, arguments);
-            }
+            if (!sel) return _origBuildQuickNav.apply(this, arguments);
 
-            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
             if (!favState.pfOnlyFav || !favCanUse()) {
                 return _origBuildQuickNav.apply(this, arguments);
             }
 
-            /* ═══════════════════════════════════════════════════════
-               BẬT TOGGLE → Build dropdown từ danh sách câu yêu thích
-               ═══════════════════════════════════════════════════════ */
-
-            /* ⭐ Bước 1: Lấy tất cả favorite */
             var favRecords = favGetRecords();
-
-            /* ⭐ Bước 2: Đọc filter hiện tại (search / HSK / chủ đề) */
             var searchInput = document.getElementById('pfSearchInput');
             var hskSel = document.getElementById('pfHskFilter');
             var subjSel = document.getElementById('pfSubjectFilter');
@@ -2510,10 +2320,8 @@ function favSyncFloatVisibility() {
             var searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
             var hskVal = hskSel ? hskSel.value : '';
             var subjVal = subjSel ? subjSel.value : '';
-
             var hasFilter = !!(searchVal || hskVal || subjVal);
 
-            /* ⭐ Bước 3: Nếu có filter → lọc favorite theo filter */
             var list = favRecords;
             if (hasFilter) {
                 list = favRecords.filter(function(r) {
@@ -2531,63 +2339,7 @@ function favSyncFloatVisibility() {
                 });
             }
 
-            /* ⭐ Bước 4: Ưu tiên dùng hàm favRebuildQuickNavForFav nếu có */
-            if (typeof favRebuildQuickNavForFav === 'function') {
-                favRebuildQuickNavForFav(list);
-                return;
-            }
-
-            /* ═══════════════════════════════════════════════════════
-               FALLBACK: Tự build dropdown nếu không có hàm hỗ trợ
-               ═══════════════════════════════════════════════════════ */
-            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : '';
-            var curDs = favGetCurrentDsId();
-
-            var labelPrefix = hasFilter
-                ? '-- Chọn câu yêu thích (đã lọc: ' + list.length + '/' + favRecords.length + ') --'
-                : '-- Chọn câu yêu thích (' + list.length + ') --';
-
-            var html = '<option value="">' + labelPrefix + '</option>';
-
-            for (var j = 0; j < list.length; j++) {
-                var r = list[j];
-                var vi = (r.vi || '').substring(0, 45);
-                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
-                             ? '#' + String(r.stt).trim() + ' · '
-                             : '';
-                var dsTag = r.__favDatasetId && r.__favDatasetId !== curDs
-                            ? '[' + r.__favDatasetId + '] '
-                            : '';
-                var label = dsTag + sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
-
-                var selected = (String(r.stt) === curStt && r.__favDatasetId === curDs)
-                               ? ' selected'
-                               : '';
-
-                html += '<option value="' + String(r.stt) + '"' +
-                        ' data-dataset-id="' + escapeHtml(r.__favDatasetId || '') + '"' +
-                        selected + '>' +
-                        escapeHtml(label) + '</option>';
-            }
-
-            sel.innerHTML = html;
-
-            /* ⭐ Set value về câu hiện tại nếu có trong list */
-            if (curStt) {
-                var foundOpt = null;
-                for (var k = 0; k < sel.options.length; k++) {
-                    if (sel.options[k].value === curStt &&
-                        sel.options[k].dataset.datasetId === curDs) {
-                        foundOpt = sel.options[k];
-                        break;
-                    }
-                }
-                if (foundOpt) {
-                    sel.value = curStt;
-                }
-            }
+            favRebuildQuickNavForFav(list);
         };
 
         window.pfBuildQuickNav.__favPatched = true;
@@ -2602,7 +2354,6 @@ function favSyncFloatVisibility() {
         }, 200);
     }
 
-    /* ⭐ Retry patch nếu bị override bởi code khác */
     setInterval(function() {
         if (typeof window.pfBuildQuickNav === 'function'
             && !window.pfBuildQuickNav.__favPatched) {
@@ -2612,7 +2363,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ LISTENER pfQuickNav CHANGE — Tự chuyển dataset khi chọn câu
+   LISTENER pfQuickNav CHANGE
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _navChanging = false;
@@ -2639,30 +2390,29 @@ function favSyncFloatVisibility() {
 
             var curDs = favGetCurrentDsId();
 
-            /* ═══ Đổi dataset nếu cần ═══ */
-            if (targetDs && targetDs !== curDs) {
-                console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + targetDs);
+            /* ⭐ Fallback: nếu targetDs rỗng → tìm từ favState */
+            if (!targetDs || targetDs === '') {
+                Object.keys(favState.items).forEach(function(k) {
+                    var item = favState.items[k];
+                    if (String(item.stt) === String(stt)) {
+                        targetDs = item.datasetId || favParseKey(k).datasetId;
+                    }
+                });
+                if (!targetDs) targetDs = curDs;
+            }
 
+            if (targetDs !== curDs) {
                 evt.stopPropagation();
                 window.__favRedirecting = true;
 
                 if (typeof window.__switchRawData === 'function') {
-                    try {
-                        window.__switchRawData(targetDs);
-                    } catch(e) {
-                        console.warn('[Favorites] __switchRawData error:', e);
-                    }
+                    try { window.__switchRawData(targetDs); } catch(e) {}
                 }
-
                 var dsSel = document.getElementById('pfDatasetSelect');
                 if (dsSel) dsSel.value = targetDs;
 
-                if (typeof pfBuildFilterOptions === 'function') {
-                    pfBuildFilterOptions();
-                }
-                if (typeof pfBuildDatasetSelect === 'function') {
-                    pfBuildDatasetSelect();
-                }
+                if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+                if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
 
                 setTimeout(function() {
                     if (typeof loadPracticeFull === 'function') {
@@ -2674,17 +2424,13 @@ function favSyncFloatVisibility() {
                         _navChanging = false;
                     }, 150);
                 }, 60);
-
                 return;
             }
 
-            /* ═══ Cùng dataset → load luôn ═══ */
             window.__favRedirecting = true;
-
             if (typeof loadPracticeFull === 'function') {
                 loadPracticeFull(String(stt));
             }
-
             setTimeout(function() {
                 window.__favRedirecting = false;
                 favRefreshQuestionDropdown();
@@ -2692,7 +2438,6 @@ function favSyncFloatVisibility() {
             }, 120);
         });
 
-        console.log('✅ [Favorites] Đã gắn listener cho #pfQuickNav');
         return true;
     }
 
@@ -2706,7 +2451,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH __switchRawData — Không reset toggle khi tự đổi
+   PATCH __switchRawData
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2716,13 +2461,10 @@ function favSyncFloatVisibility() {
         var _origSwitch = window.__switchRawData;
         window.__switchRawData = function(dsId) {
             var wasPfOnlyFav = favState.pfOnlyFav;
-
             var result = _origSwitch.apply(this, arguments);
-
             if (wasPfOnlyFav && favCanUse()) {
                 favState.pfOnlyFav = true;
             }
-
             return result;
         };
         window.__switchRawData.__favPatched = true;
@@ -2739,71 +2481,7 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   PATCH các hàm build dropdown "CÂU:" khác (fallback)
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    var CANDIDATES = [
-        'renderQuestionSelect',
-        'buildQuestionDropdown',
-        'updateQuestionList',
-        'renderQuestionList',
-        'buildQuestionSelect',
-        'renderPfQuestionSelect',
-        'renderQuestionPicker',
-        'updateQuestionPicker',
-        'refreshQuestionDropdown',
-        'populateQuestionSelect',
-        'renderPfQSelect'
-    ];
-
-    function patchFn(name) {
-        if (typeof window[name] !== 'function') return false;
-        if (window[name].__favDropdownPatched) return true;
-
-        var _orig = window[name];
-        window[name] = function() {
-            if (!favState.pfOnlyFav || !favCanUse()) {
-                return _orig.apply(this, arguments);
-            }
-
-            var _origRaw = (typeof RAW_DATA !== 'undefined') ? RAW_DATA : null;
-            if (!_origRaw) return _orig.apply(this, arguments);
-
-            try {
-                var favRecords = favGetQuestionsForDropdown();
-                window.__favOrigRawDataDD = _origRaw;
-                try { RAW_DATA = favRecords; } catch(e) {}
-
-                var result = _orig.apply(this, arguments);
-
-                try { RAW_DATA = window.__favOrigRawDataDD; } catch(e) {}
-                delete window.__favOrigRawDataDD;
-                return result;
-            } catch(e) {
-                console.warn('[Favorites] ' + name + ' patch error:', e);
-                try {
-                    if (window.__favOrigRawDataDD) RAW_DATA = window.__favOrigRawDataDD;
-                } catch(err) {}
-                return _orig.apply(this, arguments);
-            }
-        };
-        window[name].__favDropdownPatched = true;
-        return true;
-    }
-
-    var _tries = 0;
-    var _iv = setInterval(function() {
-        _tries++;
-        CANDIDATES.forEach(patchFn);
-        if (_tries > 40) clearInterval(_iv);
-    }, 150);
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH openPracticeFull
-   - Auto-bật toggle khi mở từ tab Yêu thích
-   - Bỏ filter khi đang __favRedirecting
-   - Đổi dataset nếu fav đầu thuộc dataset khác
+   PATCH openPracticeFull
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
@@ -2811,13 +2489,21 @@ function favSyncFloatVisibility() {
         if (window.openPracticeFull.__favFilterPatched) return true;
 
         var _origOpenPF = window.openPracticeFull;
+
         window.openPracticeFull = function(stt, evt) {
-            /* ⭐ AUTO-BẬT toggle khi mở từ tab Yêu thích */
+            /* Auto-bật toggle khi mở từ tab Yêu thích */
             if (favCanUse() && favState.currentView && !favState.pfOnlyFav) {
                 favState.pfOnlyFav = true;
             }
 
-            /* ⭐ Nếu toggle bật + KHÔNG đang redirect → filter stt */
+            /* Rebuild filter options khi toggle bật */
+            if (favState.pfOnlyFav && favCanUse()) {
+                if (typeof pfBuildFilterOptions === 'function') {
+                    try { pfBuildFilterOptions(); } catch(e) {}
+                }
+            }
+
+            /* Filter stt nếu không redirect */
             if (favState.pfOnlyFav && favCanUse() && !window.__favRedirecting) {
                 var favList = favGetRecords();
                 if (favList.length === 0) {
@@ -2827,16 +2513,21 @@ function favSyncFloatVisibility() {
 
                 var targetStt = String(stt);
                 var curDs = favGetCurrentDsId();
+                var matchedFav = null;
 
-                var isFav = favList.some(function(r) {
-                    return String(r.stt) === targetStt &&
-                           r.__favDatasetId === curDs;
-                });
+                for (var k = 0; k < favList.length; k++) {
+                    if (String(favList[k].stt) === targetStt &&
+                        favList[k].__favDatasetId === curDs) {
+                        matchedFav = favList[k];
+                        break;
+                    }
+                }
 
-                if (!isFav) {
-                    stt = String(favList[0].stt);
+                if (!matchedFav) {
+                    var firstFav = favList[0];
+                    stt = String(firstFav.stt);
+                    var firstDs = firstFav.__favDatasetId;
 
-                    var firstDs = favList[0].__favDatasetId;
                     if (firstDs && firstDs !== curDs) {
                         window.__favRedirecting = true;
                         if (typeof window.__switchRawData === 'function') {
@@ -2844,8 +2535,8 @@ function favSyncFloatVisibility() {
                         }
                         var dsSel = document.getElementById('pfDatasetSelect');
                         if (dsSel) dsSel.value = firstDs;
-                        if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
                         if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
+                        if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
                         setTimeout(function() {
                             window.__favRedirecting = false;
                         }, 150);
@@ -2856,24 +2547,24 @@ function favSyncFloatVisibility() {
             var result = _origOpenPF.apply(this, arguments);
 
             setTimeout(function() {
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-                if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                    favUpdatePfOnlyFavBtn();
-                }
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
+                favScanAllHeartButtons();
+                favUpdatePfOnlyFavBtn();
+                favUpdatePfFloatBtn();
+                favRefreshQuestionDropdown();
             }, 30);
+
             setTimeout(function() {
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
+                if (favState.pfOnlyFav && favCanUse()) {
+                    if (typeof pfBuildFilterOptions === 'function') {
+                        pfBuildFilterOptions();
+                    }
                 }
+                favRefreshQuestionDropdown();
             }, 200);
 
             return result;
         };
+
         window.openPracticeFull.__favFilterPatched = true;
         return true;
     }
@@ -2888,150 +2579,58 @@ function favSyncFloatVisibility() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH loadPracticeFull
-   - KHÔNG tự tắt toggle
-   - Bỏ auto-nhảy khi __favRedirecting
-   ═══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH openPracticeFull
-   - Auto-bật toggle khi mở từ tab Yêu thích
-   - Rebuild HSK + chủ đề theo favorite khi toggle bật
-   - Filter stt theo fav (tránh bug trùng stt)
-   - Đổi dataset nếu fav đầu thuộc dataset khác
-   - Bỏ qua filter khi đang __favRedirecting
+   PATCH loadPracticeFull
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
-        if (typeof window.openPracticeFull !== 'function') return false;
-        if (window.openPracticeFull.__favFilterPatched) return true;
+        if (typeof window.loadPracticeFull !== 'function') return false;
+        if (window.loadPracticeFull.__favUnifiedPatched) return true;
 
-        var _origOpenPF = window.openPracticeFull;
+        var _origLoadPF = window.loadPracticeFull;
+        window.loadPracticeFull = function(stt) {
+            var result = _origLoadPF.apply(this, arguments);
 
-        window.openPracticeFull = function(stt, evt) {
-            /* ═══════════════════════════════════════════════════════
-               1. AUTO-BẬT toggle khi mở từ tab Yêu thích
-               ═══════════════════════════════════════════════════════ */
-            if (favCanUse() && favState.currentView && !favState.pfOnlyFav) {
-                favState.pfOnlyFav = true;
-                console.log('[Favorites] Auto bật Favorites Only vì mở từ tab Yêu thích');
-            }
+            setTimeout(function() {
+                var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                             ? String(pfCurrentStt)
+                             : null;
+                if (!newStt) return;
 
-            /* ═══════════════════════════════════════════════════════
-               2. NẾU TOGGLE BẬT → rebuild HSK + chủ đề theo favorite
-               ═══════════════════════════════════════════════════════ */
-            if (favState.pfOnlyFav && favCanUse()) {
-                if (typeof pfBuildFilterOptions === 'function') {
-                    try {
-                        pfBuildFilterOptions();
-                    } catch(e) {
-                        console.warn('[Favorites] pfBuildFilterOptions error:', e);
-                    }
-                }
-            }
+                favScanAllHeartButtons();
+                favUpdatePfOnlyFavBtn();
 
-            /* ═══════════════════════════════════════════════════════
-               3. NẾU TOGGLE BẬT + KHÔNG đang redirect → filter stt
-               ═══════════════════════════════════════════════════════ */
-            if (favState.pfOnlyFav && favCanUse() && !window.__favRedirecting) {
-                var favList = favGetRecords();
-
-                if (favList.length === 0) {
-                    favShowToast('Chưa có câu yêu thích nào', 'warn');
+                if (window.__favRedirecting) {
+                    favRefreshQuestionDropdown();
                     return;
                 }
 
-                var targetStt = String(stt);
-                var curDs = favGetCurrentDsId();
+                if (favState.pfOnlyFav && favCanUse()) {
+                    var curDs = favGetCurrentDsId();
+                    var isNewFav = favHas(newStt, curDs);
 
-                /* ⭐ Kiểm tra câu này có trong fav không (cùng dataset) */
-                var matchedFav = null;
-                for (var k = 0; k < favList.length; k++) {
-                    if (String(favList[k].stt) === targetStt &&
-                        favList[k].__favDatasetId === curDs) {
-                        matchedFav = favList[k];
-                        break;
-                    }
-                }
-
-                /* ⭐ Nếu không match → nhảy về fav đầu tiên */
-                if (!matchedFav) {
-                    var firstFav = favList[0];
-                    stt = String(firstFav.stt);
-
-                    var firstDs = firstFav.__favDatasetId;
-
-                    /* Đổi dataset nếu fav đầu thuộc dataset khác */
-                    if (firstDs && firstDs !== curDs) {
-                        console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + firstDs);
-
-                        window.__favRedirecting = true;
-
-                        if (typeof window.__switchRawData === 'function') {
-                            try {
-                                window.__switchRawData(firstDs);
-                            } catch(e) {
-                                console.warn('[Favorites] __switchRawData error:', e);
+                    if (!isNewFav) {
+                        var favList = favGetRecords();
+                        if (favList.length > 0) {
+                            var firstFavStt = String(favList[0].stt);
+                            if (firstFavStt !== newStt) {
+                                window.__favRedirecting = true;
+                                setTimeout(function() {
+                                    loadPracticeFull(firstFavStt);
+                                    setTimeout(function() {
+                                        window.__favRedirecting = false;
+                                    }, 150);
+                                }, 30);
                             }
                         }
-
-                        var dsSel = document.getElementById('pfDatasetSelect');
-                        if (dsSel) dsSel.value = firstDs;
-
-                        /* Rebuild dataset selector + filter options */
-                        if (typeof pfBuildDatasetSelect === 'function') {
-                            pfBuildDatasetSelect();
-                        }
-                        if (typeof pfBuildFilterOptions === 'function') {
-                            pfBuildFilterOptions();
-                        }
-
-                        /* Reset cờ sau khi xong */
-                        setTimeout(function() {
-                            window.__favRedirecting = false;
-                        }, 150);
                     }
                 }
-            }
 
-            /* ═══════════════════════════════════════════════════════
-               4. GỌI HÀM GỐC
-               ═══════════════════════════════════════════════════════ */
-            var result = _origOpenPF.apply(this, arguments);
-
-            /* ═══════════════════════════════════════════════════════
-               5. SAU KHI MỞ MODAL → update UI
-               ═══════════════════════════════════════════════════════ */
-            setTimeout(function() {
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-                if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                    favUpdatePfOnlyFavBtn();
-                }
-                if (typeof favUpdatePfFloatBtn === 'function') {
-                    favUpdatePfFloatBtn();
-                }
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-            }, 30);
-
-            setTimeout(function() {
-                /* ⭐ Backup: rebuild filter options lần 2 phòng race condition */
-                if (favState.pfOnlyFav && favCanUse()) {
-                    if (typeof pfBuildFilterOptions === 'function') {
-                        pfBuildFilterOptions();
-                    }
-                }
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-            }, 200);
+                favRefreshQuestionDropdown();
+            }, 50);
 
             return result;
         };
-
-        window.openPracticeFull.__favFilterPatched = true;
+        window.loadPracticeFull.__favUnifiedPatched = true;
         return true;
     }
 
@@ -3047,101 +2646,34 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    PATCH: ĐỔI BỘ DỮ LIỆU (#pfDatasetSelect.change)
    ═══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH: ĐỔI BỘ DỮ LIỆU (#pfDatasetSelect.change)
-   - Reset toggle Favorites Only
-   - Rebuild HSK + chủ đề theo dataset mới
-   - Rebuild dropdown "CÂU:" từ dataset mới
-   - Fallback build thủ công nếu cần
-   ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
 
     var _datasetChangeTimer = null;
 
     function handleDatasetChange() {
-        console.log('[Favorites] Đổi bộ dữ liệu → đồng bộ');
+        if (window.__favRedirecting) return;
 
-        /* ═══════════════════════════════════════════════════════
-           Bỏ qua nếu đang trong quá trình redirect tự động
-           (next/prev/chọn dropdown CÂU:) — tránh conflict
-           ═══════════════════════════════════════════════════════ */
-        if (window.__favRedirecting) {
-            console.log('[Favorites] Đang redirect — bỏ qua handleDatasetChange');
-            return;
-        }
-
-        /* ═══════════════════════════════════════════════════════
-           1. RESET TOGGLE FAVORITES ONLY (đổi dataset = bỏ chế độ fav)
-           ═══════════════════════════════════════════════════════ */
-        if (favState.pfOnlyFav) {
-            console.log('[Favorites] Tắt toggle Favorites Only vì đổi dataset');
+        if (favState.pfOnlyFavattach) {
             favState.pfOnlyFav = false;
-
-            if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                favUpdatePfOnlyFavBtn();
-            }
+           Listener favUpdatePfOnlyFavBtn();
         }
 
-        /* ═══════════════════════════════════════════════════════
-           2. REBUILD FILTER OPTIONS (HSK + Chủ đề) theo dataset mới
-           ═══════════════════════════════════════════════════════ */
-        if (typeof pfBuildFilterOptions === 'function') {
-            try {
-                pfBuildFilterOptions();
-            } catch(e) {
-                console.warn('[Favorites] pfBuildFilterOptions error:', e);
-            }
+        if (typeof() pfBuildFilterOptions === 'function') || {
+            try { pfBuildFilterOptions(); _ } catch(e) {}
         }
-
-        /* ═══════════════════════════════════════════════════════
-           3. REBUILD DROPDOWN "CÂU:" từ dataset mới
-           ═══════════════════════════════════════════════════════ */
         if (typeof pfBuildQuickNav === 'function') {
-            try {
-                pfBuildQuickNav();
-            } catch(e) {
-                console.warn('[Favorites] pfBuildQuickNav error:', e);
-            }
+            try { pfBuildQuickNav(); } catch(e) {}
         }
 
-        /* ═══════════════════════════════════════════════════════
-           4. FALLBACK: Nếu dropdown "CÂU:" vẫn rỗng → build thủ công
-           ═══════════════════════════════════════════════════════ */
         setTimeout(function() {
             var sel = document.getElementById('pfQuickNav');
             if (!sel || sel.options.length <= 1) {
-                console.log('[Favorites] Dropdown CÂU: rỗng → build fallback');
-                if (typeof favRebuildQuickNavFromCurrentDataset === 'function') {
-                    favRebuildQuickNavFromCurrentDataset();
-                }
+                favRebuildQuickNavFromCurrentDataset();
             }
-
-            /* ⭐ Update UI sau khi build xong */
-            if (typeof favScanAllHeartButtons === 'function') {
-                favScanAllHeartButtons();
-            }
-            if (typeof pfUpdateFilterUI === 'function') {
-                pfUpdateFilterUI();
-            }
+            favScanAllHeartButtons();
+            if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
         }, 100);
-
-        /* ═══════════════════════════════════════════════════════
-           5. LOG DEBUG
-           ═══════════════════════════════════════════════════════ */
-        setTimeout(function() {
-            var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : null;
-            var curDs = favGetCurrentDsId();
-            var isNewFav = newStt && typeof favHas === 'function'
-                           ? favHas(newStt, curDs)
-                           : false;
-            console.log('[Favorites] Sau đổi dataset: #' + newStt +
-                        ' | ds: ' + curDs +
-                        ' | liked: ' + isNewFav +
-                        ' | toggle: ' + favState.pfOnlyFav);
-        }, 200);
     }
 
     function attachListener() {
@@ -3152,31 +2684,19 @@ function favSyncFloatVisibility() {
         sel.__favDatasetBound = true;
 
         sel.addEventListener('change', function() {
-            console.log('[Favorites] #pfDatasetSelect change fired');
-
-            /* ⭐ Debounce: nếu đổi liên tục chỉ chạy 1 lần */
             if (_datasetChangeTimer) clearTimeout(_datasetChangeTimer);
             _datasetChangeTimer = setTimeout(function() {
                 handleDatasetChange();
-
-                /* ⭐ Backup: rebuild sau 500ms phòng race condition */
                 setTimeout(function() {
-                    if (typeof favScanAllHeartButtons === 'function') {
-                        favScanAllHeartButtons();
-                    }
-
-                    /* Nếu dropdown vẫn rỗng → build lại */
+                    favScanAllHeartButtons();
                     var s = document.getElementById('pfQuickNav');
                     if (!s || s.options.length <= 1) {
-                        if (typeof favRebuildQuickNavFromCurrentDataset === 'function') {
-                            favRebuildQuickNavFromCurrentDataset();
-                        }
+                        favRebuildQuickNavFromCurrentDataset();
                     }
                 }, 500);
             }, 250);
         });
 
-        console.log('✅ [Favorites] Đã gắn listener cho #pfDatasetSelect');
         return true;
     }
 
@@ -3184,17 +2704,13 @@ function favSyncFloatVisibility() {
         var _tries = 0;
         var _iv = setInterval(function() {
             _tries++;
-            if (attachListener() || _tries > 60) clearInterval(_iv);
+            if (tries > 60) clearInterval(_iv);
         }, 200);
     }
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH next/prev — Dùng loadPracticeFull + tự đổi dataset
-   ═══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH next/prev — Điều hướng theo DROPDOWN "CÂU:"
-   Đọc trực tiếp từ options của dropdown → index luôn khớp
+   PATCH next/prev — Đọc từ DROPDOWN "CÂU:"
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     function patchNavigateFn(fnName) {
@@ -3204,66 +2720,46 @@ function favSyncFloatVisibility() {
         var _orig = window[fnName];
 
         window[fnName] = function() {
-            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
             if (!favState.pfOnlyFav || !favCanUse()) {
                 var res = _orig.apply(this, arguments);
                 setTimeout(function() {
-                    if (typeof favScanAllHeartButtons === 'function') {
-                        favScanAllHeartButtons();
-                    }
+                    favScanAllHeartButtons();
                 }, 30);
                 return res;
             }
 
-            /* ═══════════════════════════════════════════════════════
-               ⭐ ĐỌC DANH SÁCH TỪ DROPDOWN #pfQuickNav
-               (đảm bảo index khớp với dropdown đang hiển thị)
-               ═══════════════════════════════════════════════════════ */
             var navSel = document.getElementById('pfQuickNav');
-            if (!navSel) {
-                return _orig.apply(this, arguments);
-            }
+            if (!navSel) return _orig.apply(this, arguments);
 
-            /* ⭐ Build list từ options (bỏ option placeholder đầu) */
             var list = [];
             for (var i = 0; i < navSel.options.length; i++) {
                 var opt = navSel.options[i];
-                if (!opt.value) continue;   /* Bỏ placeholder */
-
+                if (!opt.value) continue;
                 list.push({
                     stt: opt.value,
                     datasetId: opt.dataset.datasetId || favGetCurrentDsId(),
-                    index: i   /* Index thực trong dropdown */
+                    index: i
                 });
             }
 
             if (list.length === 0) {
-                if (typeof favShowToast === 'function') {
-                    favShowToast('Không có câu nào để chuyển', 'warn');
-                }
+                favShowToast('Không có câu nào để chuyển', 'warn');
                 return;
             }
 
-            /* ═══ Xác định hướng ═══ */
             var direction = (fnName.toLowerCase().indexOf('prev') !== -1) ? -1 : 1;
 
-            /* ═══ Tìm vị trí câu hiện tại trong list ═══ */
             var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : null;
+                         ? String(pfCurrentStt) : null;
             var curDs = favGetCurrentDsId();
             var curIdx = -1;
 
             for (var k = 0; k < list.length; k++) {
-                /* Match theo stt + dataset */
-                if (String(list[k].stt) === curStt
-                    && list[k].datasetId === curDs) {
+                if (String(list[k].stt) === curStt && list[k].datasetId === curDs) {
                     curIdx = k;
                     break;
                 }
             }
-
-            /* ⭐ Nếu không match chính xác → thử match chỉ theo stt */
             if (curIdx === -1 && curStt) {
                 for (var m = 0; m < list.length; m++) {
                     if (String(list[m].stt) === curStt) {
@@ -3272,18 +2768,11 @@ function favSyncFloatVisibility() {
                     }
                 }
             }
-
-            /* ⭐ Nếu vẫn không tìm thấy → dùng selectedIndex của dropdown */
             if (curIdx === -1 && navSel.selectedIndex > 0) {
                 curIdx = navSel.selectedIndex - 1;
             }
+            if (curIdx === -1) curIdx = 0;
 
-            /* ⭐ Nếu dropdown đang ở placeholder → bắt đầu từ 0 */
-            if (curIdx === -1) {
-                curIdx = 0;
-            }
-
-            /* ═══ Tính index tiếp theo ═══ */
             var nextIdx = curIdx + direction;
             if (nextIdx < 0) nextIdx = list.length - 1;
             if (nextIdx >= list.length) nextIdx = 0;
@@ -3292,37 +2781,17 @@ function favSyncFloatVisibility() {
             var nextStt = String(nextItem.stt);
             var nextDs = nextItem.datasetId;
 
-            /* ⭐ Set lại dropdown về index mới (để UI khớp) */
             navSel.selectedIndex = nextItem.index;
 
-            console.log('[Favorites] Next/prev: ' + curStt + ' → ' + nextStt +
-                        ' (index ' + curIdx + ' → ' + nextIdx + ' / ' + list.length + ')');
-
-            /* ═══════════════════════════════════════════════════════
-               Nếu câu kế thuộc dataset khác → chuyển dataset trước
-               ═══════════════════════════════════════════════════════ */
             if (nextDs !== curDs) {
-                console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + nextDs);
-
                 window.__favRedirecting = true;
-
                 if (typeof window.__switchRawData === 'function') {
-                    try {
-                        window.__switchRawData(nextDs);
-                    } catch(e) {
-                        console.warn('[Favorites] __switchRawData error:', e);
-                    }
+                    try { window.__switchRawData(nextDs); } catch(e) {}
                 }
-
                 var dsSel = document.getElementById('pfDatasetSelect');
                 if (dsSel) dsSel.value = nextDs;
-
-                if (typeof pfBuildFilterOptions === 'function') {
-                    pfBuildFilterOptions();
-                }
-                if (typeof pfBuildDatasetSelect === 'function') {
-                    pfBuildDatasetSelect();
-                }
+                if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+                if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
 
                 setTimeout(function() {
                     if (typeof loadPracticeFull === 'function') {
@@ -3330,27 +2799,318 @@ function favSyncFloatVisibility() {
                     }
                     setTimeout(function() {
                         window.__favRedirecting = false;
-                        if (typeof favRefreshQuestionDropdown === 'function') {
-                            favRefreshQuestionDropdown();
-                        }
+                        favRefreshQuestionDropdown();
                     }, 150);
                 }, 60);
-
                 return;
             }
 
-            /* ═══ Cùng dataset → load trực tiếp ═══ */
             window.__favRedirecting = true;
-
             if (typeof loadPracticeFull === 'function') {
                 loadPracticeFull(nextStt);
             }
-
             setTimeout(function() {
                 window.__favRedirecting = false;
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
+                favRefreshQuestionDropdown();
+            }, 120);
+        };
+
+        window[fnName].__favFilterPatched = true;
+        return true;
+    }
+
+    var fns = ['pfNavigate', 'pfNext', 'pfPrev', 'practiceNext', 'practicePrev', 'nextPractice', 'prevPractice'];
+    var _tries = 0;
+    var _iv = setInterval(function() {
+        _tries++;
+        fns.forEach(function(fn) {
+            if (typeof window[fn] === 'function' && !window[fn].__favFilterPatched) {
+                patchNavigateFn(fn);
+            }
+        });
+        if (_tries > 40) clearInterval(_iv);
+    }, 200);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   PATCH pfBuildFilterOptions
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.pfBuildFilterOptions !== 'function') return false;
+        if (window.pfBuildFilterOptions.__favPatched) return true;
+
+        var _origBuildFilterOptions = window.pfBuildFilterOptions;
+        window.pfBuildFilterOptions = function() {
+            if (!favState.pfOnlyFav || !favCanUse()) {
+                return _origBuildFilterOptions.apply(this, arguments);
+            }
+
+            var hskSel = document.getElementById('pfHskFilter');
+            var subjSel = document.getElementById('pfSubjectFilter');
+            if (!hskSel || !subjSel) {
+                return _origBuildFilterOptions.apply(this, arguments);
+            }
+
+            var favRecords = favGetRecords();
+            var hskSet = {};
+            var subjectSet = {};
+
+            favRecords.forEach(function(r) {
+                if (r.hsk) hskSet[r.hsk] = (hskSet[r.hsk] || 0) + 1;
+                var s = (r.subject || '').trim();
+                if (s) subjectSet[s] = (subjectSet[s] || 0) + 1;
+            });
+
+            var hskList = Object.keys(hskSet).sort();
+            var hskHtml = '<option value="">Tất cả (' + favRecords.length + ' câu)</option>';
+            hskList.forEach(function(h) {
+                hskHtml += '<option value="' + escapeHtml(h) + '">' +
+                           escapeHtml(h) + ' (' + hskSet[h] + ')</option>';
+            });
+            hskSel.innerHTML = hskHtml;
+
+            var subjList = Object.keys(subjectSet).sort();
+            var subjHtml = '<option value="">Tất cả chủ đề</option>';
+            subjList.forEach(function(s) {
+                subjHtml += '<option value="' + escapeHtml(s) + '">' +
+                            escapeHtml(s) + ' (' + subjectSet[s] + ')</option>';
+            });
+            subjSel.innerHTML = subjHtml;
+
+            if (hskSel.value && hskList.indexOf(hskSel.value) === -1) hskSel.value = '';
+            if (subjSel.value && subjList.indexOf(subjSel.value) === -1) subjSel.value = '';
+
+            if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
+        };
+        window.pfBuildFilterOptions.__favPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   PATCH pfApplyFilter
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function tryPatch() {
+        if (typeof window.pfApplyFilter !== 'function') return false;
+        if (window.pfApplyFilter.__favPatched) return true;
+
+        var _origPFApply = window.pfApplyFilter;
+        window.pfApplyFilter = function() {
+            if (!favState.pfOnlyFav || !favCanUse()) {
+                return _origPFApply.apply(this, arguments);
+            }
+
+            var searchInput = document.getElementById('pfSearchInput');
+            var hskSel = document.getElementById('pfHskFilter');
+            var subjSel = document.getElementById('pfSubjectFilter');
+
+            var searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            var hskVal = hskSel ? hskSel.value : '';
+            var subjVal = subjSel ? subjSel.value : '';
+
+            var mainSearch = document.getElementById('searchInput');
+            var mainHsk = document.getElementById('hskFilter');
+            var mainSubj = document.getElementById('subjectFilter');
+            if (mainSearch) mainSearch.value = searchInput ? searchInput.value : '';
+            if (mainHsk) mainHsk.value = hskVal;
+            if (mainSubj) mainSubj.value = subjVal;
+
+            if (typeof state !== 'undefined') {
+                state.search = searchVal;
+                state.hsk = hskVal;
+                state.subject = subjVal;
+            }
+
+            var favRecords = favGetRecords();
+            var filteredFav = favRecords.filter(function(r) {
+                if (searchVal) {
+                    var inVi = (r.vi || '').toLowerCase().indexOf(searchVal) !== -1;
+                    var inZh = (r.zh || '').toLowerCase().indexOf(searchVal) !== -1;
+                    var inPinyin = (r.pinyin || '').toLowerCase().indexOf(searchVal) !== -1;
+                    var inTopic = (r.topic || '').toLowerCase().indexOf(searchVal) !== -1;
+                    var inSubject = (r.subject || '').toLowerCase().indexOf(searchVal) !== -1;
+                    if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
                 }
+                if (hskVal && r.hsk !== hskVal) return false;
+                if (subjVal && r.subject !== subjVal) return false;
+                return true;
+            });
+
+            try { filtered = filteredFav; } catch(e) {
+                try { window.filtered = filteredFav; } catch(e2) {}
+            }
+
+            if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
+            if (typeof updateFilterUI === 'function') updateFilterUI();
+
+            favRebuildQuickNavForFav(filteredFav);
+            render(true);
+
+            if (filteredFav.length > 0) {
+                var firstFav = filteredFav[0];
+                var firstStt = String(firstFav.stt);
+                var firstDs = firstFav.__favDatasetId;
+                var curDs = favGetCurrentDsId();
+
+                if (firstDs && firstDs !== curDs) {
+                    window.__favRedirecting = true;
+                    if (typeof window.__switchRawData === 'function') {
+                        try { window.__switchRawData(firstDs); } catch(e) {}
+                    }
+                    var dsSel = document.getElementById('pfDatasetSelect');
+                    if (dsSel) dsSel.value = firstDs;
+                    if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
+                    if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+
+                    setTimeout(function() {
+                        if (typeof loadPracticeFull === 'function') {
+                            loadPracticeFull(firstStt);
+                        }
+                        setTimeout(function() {
+                            window.__favRedirecting = false;
+                            favRefreshQuestionDropdown();
+                        }, 150);
+                    }, 60);
+                } else {
+                    window.__favRedirecting = true;
+                    if (typeof loadPracticeFull === 'function') {
+                        loadPracticeFull(firstStt);
+                    }
+                    setTimeout(function() {
+                        window.__favRedirecting = false;
+                        favRefreshQuestionDropdown();
+                    }, 120);
+                }
+            } else {
+                favShowToast('Không có câu yêu thích nào khớp bộ lọc', 'warn');
+            }
+        };
+        window.pfApplyFilter.__favPatched = true;
+        return true;
+    }
+
+    if (!tryPatch()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (tryPatch() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   PATCH next/prev — Đọc từ DROPDOWN "CÂU:"
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    function patchNavigateFn(fnName) {
+        if (typeof window[fnName] !== 'function') return false;
+        if (window[fnName].__favFilterPatched) return true;
+
+        var _orig = window[fnName];
+
+        window[fnName] = function() {
+            if (!favState.pfOnlyFav || !favCanUse()) {
+                var res = _orig.apply(this, arguments);
+                setTimeout(function() {
+                    favScanAllHeartButtons();
+                }, 30);
+                return res;
+            }
+
+            var navSel = document.getElementById('pfQuickNav');
+            if (!navSel) return _orig.apply(this, arguments);
+
+            var list = [];
+            for (var i = 0; i < navSel.options.length; i++) {
+                var opt = navSel.options[i];
+                if (!opt.value) continue;
+                list.push({
+                    stt: opt.value,
+                    datasetId: opt.dataset.datasetId || favGetCurrentDsId(),
+                    index: i
+                });
+            }
+
+            if (list.length === 0) {
+                favShowToast('Không có câu nào để chuyển', 'warn');
+                return;
+            }
+
+            var direction = (fnName.toLowerCase().indexOf('prev') !== -1) ? -1 : 1;
+
+            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                         ? String(pfCurrentStt) : null;
+            var curDs = favGetCurrentDsId();
+            var curIdx = -1;
+
+            for (var k = 0; k < list.length; k++) {
+                if (String(list[k].stt) === curStt && list[k].datasetId === curDs) {
+                    curIdx = k;
+                    break;
+                }
+            }
+            if (curIdx === -1 && curStt) {
+                for (var m = 0; m < list.length; m++) {
+                    if (String(list[m].stt) === curStt) {
+                        curIdx = m;
+                        break;
+                    }
+                }
+            }
+            if (curIdx === -1 && navSel.selectedIndex > 0) {
+                curIdx = navSel.selectedIndex - 1;
+            }
+            if (curIdx === -1) curIdx = 0;
+
+            var nextIdx = curIdx + direction;
+            if (nextIdx < 0) nextIdx = list.length - 1;
+            if (nextIdx >= list.length) nextIdx = 0;
+
+            var nextItem = list[nextIdx];
+            var nextStt = String(nextItem.stt);
+            var nextDs = nextItem.datasetId;
+
+            navSel.selectedIndex = nextItem.index;
+
+            if (nextDs !== curDs) {
+                window.__favRedirecting = true;
+                if (typeof window.__switchRawData === 'function') {
+                    try { window.__switchRawData(nextDs); } catch(e) {}
+                }
+                var dsSel = document.getElementById('pfDatasetSelect');
+                if (dsSel) dsSel.value = nextDs;
+                if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+                if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
+
+                setTimeout(function() {
+                    if (typeof loadPracticeFull === 'function') {
+                        loadPracticeFull(nextStt);
+                    }
+                    setTimeout(function() {
+                        window.__favRedirecting = false;
+                        favRefreshQuestionDropdown();
+                    }, 150);
+                }, 60);
+                return;
+            }
+
+            window.__favRedirecting = true;
+            if (typeof loadPracticeFull === 'function') {
+                loadPracticeFull(nextStt);
+            }
+            setTimeout(function() {
+                window.__favRedirecting = false;
+                favRefreshQuestionDropdown();
             }, 120);
         };
 
@@ -3446,7 +3206,6 @@ if (document.readyState === 'loading') {
         var style = document.createElement('style');
         style.id = 'favOnlyFloatFix';
         style.textContent = [
-            '/* Fix: nút toggle chỉ câu yêu thích — góc PHẢI, TRÊN nút tim */',
             '.pf-fav-only-float {',
             '    left: auto !important;',
             '    right: clamp(14px, 2vw, 22px) !important;',
@@ -3483,251 +3242,10 @@ if (document.readyState === 'loading') {
             try {
                 window.pfBuildQuickNav();
                 return true;
-            } catch(e) {
-                console.warn('[Favorites] pfBuildQuickNav error:', e);
-            }
+            } catch(e) {}
         }
         return _origRefresh.apply(this, arguments);
     };
     window.favRefreshQuestionDropdown.__favFixed = true;
 })();
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH pfBuildFilterOptions — Lọc HSK + Chủ đề theo favorite
-   - BẬT toggle: chỉ hiện HSK/chủ đề có trong fav
-   - TẮT toggle: gọi hàm gốc
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.pfBuildFilterOptions !== 'function') return false;
-        if (window.pfBuildFilterOptions.__favPatched) return true;
-
-        var _origBuildFilterOptions = window.pfBuildFilterOptions;
-        window.pfBuildFilterOptions = function() {
-            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
-            if (!favState.pfOnlyFav || !favCanUse()) {
-                return _origBuildFilterOptions.apply(this, arguments);
-            }
-
-            /* ═══════════════════════════════════════════════════════
-               BẬT TOGGLE → Build 2 dropdown từ danh sách favorite
-               ═══════════════════════════════════════════════════════ */
-            var hskSel = document.getElementById('pfHskFilter');
-            var subjSel = document.getElementById('pfSubjectFilter');
-            if (!hskSel || !subjSel) {
-                return _origBuildFilterOptions.apply(this, arguments);
-            }
-
-            var favRecords = favGetRecords();
-
-            /* ⭐ Thu thập HSK + Subject có trong favorite */
-            var hskSet = {};
-            var subjectSet = {};
-
-            favRecords.forEach(function(r) {
-                if (r.hsk) hskSet[r.hsk] = (hskSet[r.hsk] || 0) + 1;
-                var s = (r.subject || '').trim();
-                if (s) subjectSet[s] = (subjectSet[s] || 0) + 1;
-            });
-
-            /* ⭐ Build HSK dropdown */
-            var hskList = Object.keys(hskSet).sort();
-            var hskHtml = '<option value="">Tất cả (' + favRecords.length + ' câu)</option>';
-            hskList.forEach(function(h) {
-                hskHtml += '<option value="' + escapeHtml(h) + '">' +
-                           escapeHtml(h) + ' (' + hskSet[h] + ')</option>';
-            });
-            hskSel.innerHTML = hskHtml;
-
-            /* ⭐ Build Subject dropdown */
-            var subjList = Object.keys(subjectSet).sort();
-            var subjHtml = '<option value="">Tất cả chủ đề</option>';
-            subjList.forEach(function(s) {
-                subjHtml += '<option value="' + escapeHtml(s) + '">' +
-                            escapeHtml(s) + ' (' + subjectSet[s] + ')</option>';
-            });
-            subjSel.innerHTML = subjHtml;
-
-            /* ⭐ Reset value nếu giá trị cũ không còn trong list */
-            if (hskSel.value && hskList.indexOf(hskSel.value) === -1) {
-                hskSel.value = '';
-            }
-            if (subjSel.value && subjList.indexOf(subjSel.value) === -1) {
-                subjSel.value = '';
-            }
-
-            /* ⭐ Update UI chip */
-            if (typeof pfUpdateFilterUI === 'function') {
-                pfUpdateFilterUI();
-            }
-        };
-        window.pfBuildFilterOptions.__favPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-})();
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH pfApplyFilter — Khi toggle bật:
-   - Filter câu theo favorite + HSK/Chủ đề
-   - Rebuild dropdown "CÂU:"
-   - Nhảy về câu ĐẦU TIÊN hợp lệ
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.pfApplyFilter !== 'function') return false;
-        if (window.pfApplyFilter.__favPatched) return true;
-
-        var _origPFApply = window.pfApplyFilter;
-        window.pfApplyFilter = function() {
-            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
-            if (!favState.pfOnlyFav || !favCanUse()) {
-                return _origPFApply.apply(this, arguments);
-            }
-
-            /* ═══════════════════════════════════════════════════════
-               BẬT TOGGLE → filter riêng theo favorite
-               ═══════════════════════════════════════════════════════ */
-
-            /* Lấy giá trị filter hiện tại */
-            var searchInput = document.getElementById('pfSearchInput');
-            var hskSel = document.getElementById('pfHskFilter');
-            var subjSel = document.getElementById('pfSubjectFilter');
-
-            var searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
-            var hskVal = hskSel ? hskSel.value : '';
-            var subjVal = subjSel ? subjSel.value : '';
-
-            /* Đồng bộ filter về trang chủ */
-            var mainSearch = document.getElementById('searchInput');
-            var mainHsk = document.getElementById('hskFilter');
-            var mainSubj = document.getElementById('subjectFilter');
-            if (mainSearch) mainSearch.value = searchInput ? searchInput.value : '';
-            if (mainHsk) mainHsk.value = hskVal;
-            if (mainSubj) mainSubj.value = subjVal;
-
-            if (typeof state !== 'undefined') {
-                state.search = searchVal;
-                state.hsk = hskVal;
-                state.subject = subjVal;
-            }
-
-            /* ⭐ Lấy favorite records */
-            var favRecords = favGetRecords();
-
-            /* ⭐ Filter theo search + HSK + chủ đề */
-            var filteredFav = favRecords.filter(function(r) {
-                if (searchVal) {
-                    var inVi = (r.vi || '').toLowerCase().indexOf(searchVal) !== -1;
-                    var inZh = (r.zh || '').toLowerCase().indexOf(searchVal) !== -1;
-                    var inPinyin = (r.pinyin || '').toLowerCase().indexOf(searchVal) !== -1;
-                    var inTopic = (r.topic || '').toLowerCase().indexOf(searchVal) !== -1;
-                    var inSubject = (r.subject || '').toLowerCase().indexOf(searchVal) !== -1;
-                    if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
-                }
-                if (hskVal && r.hsk !== hskVal) return false;
-                if (subjVal && r.subject !== subjVal) return false;
-                return true;
-            });
-
-            /* ⭐ Cập nhật biến `filtered` global */
-            try {
-                filtered = filteredFav;
-            } catch(e) {
-                try { window.filtered = filteredFav; } catch(e2) {}
-            }
-
-            /* ⭐ Update UI chip */
-            if (typeof pfUpdateFilterUI === 'function') {
-                pfUpdateFilterUI();
-            }
-            if (typeof updateFilterUI === 'function') {
-                updateFilterUI();
-            }
-
-            /* ⭐ Rebuild dropdown "CÂU:" (chỉ fav + filter mới) */
-            if (typeof favRebuildQuickNavForFav === 'function') {
-                favRebuildQuickNavForFav(filteredFav);
-            } else if (typeof pfBuildQuickNav === 'function') {
-                try { pfBuildQuickNav(); } catch(e) {}
-            }
-
-            /* ⭐ Render lại trang chủ (nếu đang ở tab Yêu thích) */
-            render(true);
-
-            /* ═══════════════════════════════════════════════════════
-               ⭐⭐ NHẢY VỀ CÂU ĐẦU TIÊN HỢP LỆ
-               ═══════════════════════════════════════════════════════ */
-            if (filteredFav.length > 0) {
-                var firstFav = filteredFav[0];
-                var firstStt = String(firstFav.stt);
-                var firstDs = firstFav.__favDatasetId;
-                var curDs = favGetCurrentDsId();
-
-                /* Nếu câu đầu thuộc dataset khác → đổi dataset */
-                if (firstDs && firstDs !== curDs) {
-                    console.log('[Favorites] Đổi dataset để nhảy câu đầu: ' + curDs + ' → ' + firstDs);
-
-                    window.__favRedirecting = true;
-
-                    if (typeof window.__switchRawData === 'function') {
-                        try { window.__switchRawData(firstDs); } catch(e) {}
-                    }
-                    var dsSel = document.getElementById('pfDatasetSelect');
-                    if (dsSel) dsSel.value = firstDs;
-
-                    if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
-                    if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
-
-                    setTimeout(function() {
-                        if (typeof loadPracticeFull === 'function') {
-                            loadPracticeFull(firstStt);
-                        }
-                        setTimeout(function() {
-                            window.__favRedirecting = false;
-                            if (typeof favRefreshQuestionDropdown === 'function') {
-                                favRefreshQuestionDropdown();
-                            }
-                        }, 150);
-                    }, 60);
-                } else {
-                    /* Cùng dataset → load câu đầu */
-                    window.__favRedirecting = true;
-
-                    if (typeof loadPracticeFull === 'function') {
-                        loadPracticeFull(firstStt);
-                    }
-
-                    setTimeout(function() {
-                        window.__favRedirecting = false;
-                        if (typeof favRefreshQuestionDropdown === 'function') {
-                            favRefreshQuestionDropdown();
-                        }
-                    }, 120);
-                }
-            } else {
-                /* ⭐ Không có câu nào hợp lệ */
-                if (typeof favShowToast === 'function') {
-                    favShowToast('Không có câu yêu thích nào khớp bộ lọc', 'warn');
-                }
-            }
-        };
-        window.pfApplyFilter.__favPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-})();
-
 """
