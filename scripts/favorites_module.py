@@ -3675,4 +3675,222 @@ if (document.readyState === 'loading') {
         }, 200);
     }
 })();
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ PATCH: Chọn CHỦ ĐỀ → tự nhảy BỘ DỮ LIỆU tương ứng
+   - Tìm chủ đề trong tất cả dataset
+   - Nếu chủ đề chỉ thuộc 1 dataset → tự chuyển
+   - Nếu thuộc nhiều dataset → ưu tiên dataset hiện tại, hoặc bộ "tonghop"
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    var _subjectChanging = false;
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ TÌM DATASET CHỨA CHỦ ĐỀ
+       Trả về: { dsId, count } hoặc null
+       ═══════════════════════════════════════════════════════════ */
+    function findDatasetForSubject(subject) {
+        if (!subject) return null;
+
+        var currentDs = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                        ? CURRENT_DATASET
+                        : 'tonghop';
+
+        var found = {};   /* dsId → count */
+
+        /* ─── 1. Quét DATASET_REGISTRY ─── */
+        if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+            Object.keys(DATASET_REGISTRY).forEach(function(dsId) {
+                var ds = DATASET_REGISTRY[dsId];
+                if (!ds || !Array.isArray(ds.data)) return;
+
+                for (var i = 0; i < ds.data.length; i++) {
+                    var r = ds.data[i];
+                    if ((r.subject || '').trim() === subject) {
+                        found[dsId] = (found[dsId] || 0) + 1;
+                    }
+                }
+            });
+        }
+
+        /* ─── 2. Fallback: quét RAW_DATA (dataset hiện tại) ─── */
+        if (Object.keys(found).length === 0
+            && typeof RAW_DATA !== 'undefined'
+            && RAW_DATA) {
+            for (var j = 0; j < RAW_DATA.length; j++) {
+                if ((RAW_DATA[j].subject || '').trim() === subject) {
+                    found[currentDs] = (found[currentDs] || 0) + 1;
+                }
+            }
+        }
+
+        var dsIds = Object.keys(found);
+        if (dsIds.length === 0) return null;
+
+        /* ═══════════════════════════════════════════════════════
+           ⭐ QUYẾT ĐỊNH DATASET ĐÍCH
+           1. Nếu chủ đề chỉ có trong 1 dataset → chọn nó
+           2. Nếu chủ đề có trong dataset hiện tại → giữ nguyên
+           3. Nếu chủ đề có trong 'tonghop' → ưu tiên tonghop
+           4. Ngược lại → chọn dataset có nhiều câu nhất
+           ═══════════════════════════════════════════════════════ */
+        if (dsIds.length === 1) {
+            return { dsId: dsIds[0], count: found[dsIds[0]] };
+        }
+
+        /* Ưu tiên dataset hiện tại */
+        if (found[currentDs]) {
+            return { dsId: currentDs, count: found[currentDs] };
+        }
+
+        /* Ưu tiên tonghop */
+        if (found['tonghop']) {
+            return { dsId: 'tonghop', count: found['tonghop'] };
+        }
+
+        /* Chọn dataset nhiều câu nhất */
+        var bestDs = dsIds[0];
+        var bestCount = found[bestDs];
+        dsIds.forEach(function(id) {
+            if (found[id] > bestCount) {
+                bestDs = id;
+                bestCount = found[id];
+            }
+        });
+
+        return { dsId: bestDs, count: bestCount };
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ XỬ LÝ ĐỔI CHỦ ĐỀ → ĐỔI DATASET
+       ═══════════════════════════════════════════════════════════ */
+    function handleSubjectChange() {
+        var subjSel = document.getElementById('pfSubjectFilter');
+        if (!subjSel) return;
+
+        var subject = subjSel.value;
+        if (!subject) {
+            console.log('[Favorites] Chủ đề reset về "Tất cả" → không đổi dataset');
+            return;
+        }
+
+        var result = findDatasetForSubject(subject);
+        if (!result) {
+            console.log('[Favorites] Không tìm thấy dataset cho chủ đề:', subject);
+            return;
+        }
+
+        var currentDs = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+                        ? CURRENT_DATASET
+                        : 'tonghop';
+
+        /* Nếu chủ đề đã thuộc dataset hiện tại → không cần đổi */
+        if (result.dsId === currentDs) {
+            console.log('[Favorites] Chủ đề "' + subject + '" đã thuộc dataset ' + currentDs);
+            return;
+        }
+
+        console.log('[Favorites] Chủ đề "' + subject + '" thuộc dataset ' + result.dsId +
+                    ' (' + result.count + ' câu) → tự đổi từ ' + currentDs);
+
+        /* ═══ Set cờ để tránh các patch khác can thiệp ═══ */
+        window.__favRedirecting = true;
+
+        /* ═══ Đổi dataset ═══ */
+        if (typeof window.__switchRawData === 'function') {
+            try {
+                window.__switchRawData(result.dsId);
+            } catch(e) {
+                console.warn('[Favorites] __switchRawData error:', e);
+            }
+        }
+
+        /* ═══ Đồng bộ select dataset ═══ */
+        var dsSel = document.getElementById('pfDatasetSelect');
+        if (dsSel) dsSel.value = result.dsId;
+
+        /* ═══ Rebuild dropdown dataset ═══ */
+        if (typeof pfBuildDatasetSelect === 'function') {
+            try { pfBuildDatasetSelect(); } catch(e) {}
+        }
+
+        /* ═══ Rebuild filter options theo dataset mới ═══ */
+        if (typeof pfBuildFilterOptions === 'function') {
+            try { pfBuildFilterOptions(); } catch(e) {}
+        }
+
+        /* ═══ Restore chủ đề đã chọn (vì rebuild có thể reset) ═══ */
+        setTimeout(function() {
+            var subjSel2 = document.getElementById('pfSubjectFilter');
+            if (subjSel2) {
+                /* Set lại value subject vừa chọn */
+                for (var i = 0; i < subjSel2.options.length; i++) {
+                    if (subjSel2.options[i].value === subject) {
+                        subjSel2.value = subject;
+                        break;
+                    }
+                }
+            }
+
+            /* ═══ Apply filter để load câu đầu tiên của chủ đề mới ═══ */
+            if (typeof pfApplyFilter === 'function') {
+                try { pfApplyFilter(); } catch(e) {}
+            } else if (typeof applyFilter === 'function') {
+                try { applyFilter(); } catch(e) {}
+            }
+
+            /* ═══ Update UI ═══ */
+            if (typeof pfUpdateFilterUI === 'function') {
+                try { pfUpdateFilterUI(); } catch(e) {}
+            }
+            if (typeof favRefreshQuestionDropdown === 'function') {
+                try { favRefreshQuestionDropdown(); } catch(e) {}
+            }
+            if (typeof favScanAllHeartButtons === 'function') {
+                try { favScanAllHeartButtons(); } catch(e) {}
+            }
+
+            /* ═══ Reset cờ sau khi xong ═══ */
+            setTimeout(function() {
+                window.__favRedirecting = false;
+                console.log('[Favorites] Đổi dataset xong, cờ redirect = false');
+            }, 150);
+
+            _subjectChanging = false;
+        }, 100);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ ATTACH LISTENER
+       ═══════════════════════════════════════════════════════════ */
+    function attachSubjectListener() {
+        var sel = document.getElementById('pfSubjectFilter');
+        if (!sel) return false;
+        if (sel.__favSubjectBound) return true;
+
+        sel.__favSubjectBound = true;
+
+        sel.addEventListener('change', function(evt) {
+            console.log('[Favorites] #pfSubjectFilter change fired');
+
+            if (_subjectChanging) return;
+            _subjectChanging = true;
+
+            /* Debounceong nhẹ */
+            ` setTimeout(function() {
+                handleSubjectChange();
+           ui }, 30);
+        });
+
+        console.log('✅ [Favorites]_module Đã g.jsắn listener cho #pfSubjectFilter');
+`)        return true;
+    }
+
+    if (!attachSubjectListener()) {
+        var _tries = 0;
+        var _iv = setInterval(function() {
+            _tries++;
+            if (attachSubjectListener() || _tries > 60) clearInterval(_iv);
+        }, 200);
+    }
+})();
 """
