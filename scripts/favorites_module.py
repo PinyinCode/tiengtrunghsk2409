@@ -2766,36 +2766,83 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    PATCH switchDataset()
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ PATCH loadPracticeFull
+   - KHÔNG auto-nhảy khi user chủ động chọn câu từ dropdown
+   - Skip hoàn toàn nếu __favManualNav (user bấm trực tiếp)
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
-        if (typeof window.render !== 'function') return false;
-        if (window.render.__favScanPatched) return true;
+        if (typeof window.loadPracticeFull !== 'function') return false;
+        if (window.loadPracticeFull.__favUnifiedPatched) return true;
 
-        var _origRender = window.render;
-        window.render = function() {
-            var result = _origRender.apply(this, arguments);
+        var _origLoadPF = window.loadPracticeFull;
+        window.loadPracticeFull = function(stt) {
+            var result = _origLoadPF.apply(this, arguments);
+
             setTimeout(function() {
+                var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                             ? String(pfCurrentStt)
+                             : null;
+                if (!newStt) return;
+
                 if (typeof favScanAllHeartButtons === 'function') {
                     favScanAllHeartButtons();
                 }
-
-                /* ⭐ Sync header count sau khi render xong */
-                var el = document.querySelector('.fav-header .fav-count-text');
-                if (el && typeof favCount === 'function') {
-                    el.textContent = favCount() + ' câu';
+                if (typeof favUpdatePfOnlyFavBtn === 'function') {
+                    favUpdatePfOnlyFavBtn();
                 }
 
-                /* ⭐ Sync badge = 0 nếu hết */
-                if (typeof favCount === 'function' && favCount() === 0) {
-                    ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
-                        var b = document.getElementById(id);
-                        if (b) { b.textContent = '0'; b.dataset.count = '0'; }
-                    });
+                /* ═══ ⭐ BỎ QUA AUTO-NHẢY khi user chủ động ═══ */
+                if (window.__favManualNav) {
+                    console.log('[Favorites] Manual nav — bỏ qua auto-nhảy');
+                    if (typeof favRefreshQuestionDropdown === 'function') {
+                        favRefreshQuestionDropdown();
+                    }
+                    return;
                 }
-            }, 20);
+
+                /* ═══ Đang redirect → bỏ qua ═══ */
+                if (window.__favRedirecting) {
+                    if (typeof favRefreshQuestionDropdown === 'function') {
+                        favRefreshQuestionDropdown();
+                    }
+                    return;
+                }
+
+                /* ═══ Toggle bật + câu mới không phải fav → nhảy fav đầu ═══ */
+                if (favState.pfOnlyFav && favCanUse()) {
+                    var curDs = favGetCurrentDsId();
+                    var isNewFav = favHas(newStt, curDs);
+
+                    if (!isNewFav) {
+                        var favList = favFilterRecords(favGetRecords());
+                        if (favList.length > 0) {
+                            var firstFavStt = String(favList[0].stt);
+
+                            if (firstFavStt !== newStt) {
+                                window.__favRedirecting = true;
+                                setTimeout(function() {
+                                    if (typeof loadPracticeFull === 'function') {
+                                        loadPracticeFull(firstFavStt);
+                                    }
+                                    setTimeout(function() {
+                                        window.__favRedirecting = false;
+                                    }, 150);
+                                }, 30);
+                            }
+                        }
+                    }
+                }
+
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
+            }, 50);
+
             return result;
         };
-        window.render.__favScanPatched = true;
+        window.loadPracticeFull.__favUnifiedPatched = true;
         return true;
     }
 
