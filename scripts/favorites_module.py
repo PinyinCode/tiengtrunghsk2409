@@ -4407,14 +4407,22 @@ function favToggleOldFilters(active) {
    - Khi ẩn 3 filter cũ: bỏ qua giá trị của select HSK/Chủ đề
    - Chỉ dùng favFilters (từ panel Lọc)
    ═══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎯 PATCH pfApplyFilter — Dùng favFilters khi toggle BẬT
+   - Khi ẩn 3 filter cũ: bỏ qua giá trị của select HSK/Chủ đề
+   - Chỉ dùng favFilters (từ panel Lọc)
+   ═══════════════════════════════════════════════════════════════════════════ */
 (function() {
     function tryPatch() {
         if (typeof window.pfApplyFilter !== 'function') return false;
         if (window.pfApplyFilter.__favFilterPanelPatched) return true;
 
         var _orig = window.pfApplyFilter;
+
         window.pfApplyFilter = function() {
-            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
+            /* ═══════════════════════════════════════════════════════
+               KHÔNG BẬT TOGGLE → gọi hàm gốc
+               ═══════════════════════════════════════════════════════ */
             if (!favState.pfOnlyFav || !favCanUse()) {
                 return _orig.apply(this, arguments);
             }
@@ -4471,12 +4479,14 @@ function favToggleOldFilters(active) {
             }
 
             /* ═══════════════════════════════════════════════════════
-               4. FILTER RECORDS
+               4. FILTER RECORDS theo favFilters
                ═══════════════════════════════════════════════════════ */
-            var filtered = favFilterRecords(favGetRecords());
+            var filteredFav = favFilterRecords(favGetRecords());
 
-            try { filtered = filtered; } catch(e) {
-                try { window.filtered = filtered; } catch(e2) {}
+            try {
+                filtered = filteredFav;
+            } catch(e) {
+                try { window.filtered = filteredFav; } catch(e2) {}
             }
 
             if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();
@@ -4486,7 +4496,9 @@ function favToggleOldFilters(active) {
                5. REBUILD dropdown "CÂU:"
                ═══════════════════════════════════════════════════════ */
             if (typeof favRebuildQuickNavForFav === 'function') {
-                favRebuildQuickNavForFav(filtered);
+                favRebuildQuickNavForFav(filteredFav);
+            } else if (typeof favRefreshQuestionDropdown === 'function') {
+                favRefreshQuestionDropdown();
             }
 
             /* ═══════════════════════════════════════════════════════
@@ -4497,25 +4509,29 @@ function favToggleOldFilters(active) {
             /* ═══════════════════════════════════════════════════════
                7. NHẢY VỀ CÂU ĐẦU TIÊN HỢP LỆ
                ═══════════════════════════════════════════════════════ */
-            if (filtered.length > 0) {
-                var first = filtered[0];
+            if (filteredFav.length > 0) {
+                var first = filteredFav[0];
                 var firstStt = String(first.stt);
                 var firstDs = first.__favDatasetId;
                 var curDs = favGetCurrentDsId();
 
                 if (firstDs && firstDs !== curDs) {
+                    /* ─── Cần đổi dataset ─── */
                     window.__favRedirecting = true;
 
                     if (typeof window.__switchRawData === 'function') {
                         try { window.__switchRawData(firstDs); } catch(e) {}
                     }
-                    var;
 
- dsSel = document.getElementById('pf                   DatasetSelect');
-                    if (dsSel) ds ifSel.value = firstDs;
+                    var dsSel = document.getElementById('pfDatasetSelect');
+                    if (dsSel) dsSel.value = firstDs;
 
-                    if ( (typeof pfBuildFilterOptions === 'function')typeof pfBuildFilterOptions();
-                    if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
+                    if (typeof pfBuildFilterOptions === 'function') {
+                        pfBuildFilterOptions();
+                    }
+                    if (typeof pfBuildDatasetSelect === 'function') {
+                        pfBuildDatasetSelect();
+                    }
 
                     setTimeout(function() {
                         if (typeof loadPracticeFull === 'function') {
@@ -4528,8 +4544,12 @@ function favToggleOldFilters(active) {
                             }
                         }, 150);
                     }, 60);
+
                 } else {
-                    window.__favRedirecting = true loadPracticeFull === 'function') {
+                    /* ─── Cùng dataset → load luôn ─── */
+                    window.__favRedirecting = true;
+
+                    if (typeof loadPracticeFull === 'function') {
                         loadPracticeFull(firstStt);
                     }
 
@@ -4551,6 +4571,7 @@ function favToggleOldFilters(active) {
                ═══════════════════════════════════════════════════════ */
             favRenderFilterSummary();
         };
+
         window.pfApplyFilter.__favFilterPanelPatched = true;
         return true;
     }
