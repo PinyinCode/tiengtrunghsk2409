@@ -4657,12 +4657,6 @@ function favToggleOldFilters(active) {
     }, 3000);
 })();
 
-Vấn đề Cách fix
-Hook patch có thể bị race condition Dùng setInterval 300ms để cưỡng chế sync
-User bật toggle → mở modal → class chưa set Force sync mỗi 300ms
-User tắt toggle → class chưa remove Force sync mỗi 300ms
-Đóng modal → class vẫn còn Force sync (vì isModalOpen false)
-
 
 /* ═══════════════════════════════════════════════════════════════════════════
    EXPORT
