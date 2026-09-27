@@ -1105,7 +1105,7 @@ body.practice-full-open .chat-fab{display:none!important}
 }
 .chat-skeleton .sk-line.short{width:60%;}
 """
-  def build_accounts_html():
+def build_accounts_html():
     return r"""
 <div class="login-modal" id="loginModal">
     <div class="login-box">
