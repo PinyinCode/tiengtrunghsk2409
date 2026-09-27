@@ -16,7 +16,7 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
 ✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
 
 ✅ FAVORITES:
-   - Tab Yêu thích (cuối dataset selector)
+   - Tab Yêu thích — nằm dưới ds-sub-wrap (tự đẩy xuống khi mở Chuyên ngành)
    - Item Yêu thích trong dropdown bộ dữ liệu
    - Nút tim trên card (đổi màu theo trạng thái)
    - Nút tim FLOAT góc phải (Practice Full)
@@ -92,37 +92,95 @@ data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
 # ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
+# ═══════════════════════════════════════════════════════════════════
+#  ICON MAP — MỖI NGÀNH 1 ICON RIÊNG
+#  Màu đồng nhất cho TẤT CẢ = UNIFIED_COLOR (tím giống IT)
+# ═══════════════════════════════════════════════════════════════════
 ICON_MAP = {
-    "nhân sự":           ("fa-users",          "#0891b2"),
-    "thu mua":           ("fa-shopping-cart",  "#f59e0b"),
-    "xuất nhập khẩu":    ("fa-ship",           "#0ea5e9"),
-    "kế toán":           ("fa-calculator",     "#16a34a"),
-    "chất lượng":        ("fa-award",          "#8b5cf6"),
-    "kế hoạch sản xuất": ("fa-calendar-alt",   "#d97706"),
-    "sản xuất":          ("fa-industry",       "#dc2626"),
-    "kho":               ("fa-warehouse",      "#65a30d"),
-    "it":                ("fa-laptop-code",    "#7c3aed"),
-    "kinh doanh":        ("fa-chart-line",     "#0ea5e9"),
-    "hành chính":        ("fa-briefcase",      "#6366f1"),
-    "kỹ thuật":          ("fa-tools",          "#f97316"),
-    "bảo trì":           ("fa-tools",          "#f97316"),
-    "qa":                ("fa-award",          "#8b5cf6"),
-    "qc":                ("fa-award",          "#8b5cf6"),
-    "r&d":               ("fa-flask",          "#8b5cf6"),
-    "marketing":         ("fa-bullhorn",       "#ec4899"),
+    # ─── Nhân sự / Hành chính ───
+    "nhân sự":              "fa-users",
+    "hành chính":           "fa-briefcase",
+    "hành chính - nhân sự": "fa-briefcase",
+    "hành chính nhân sự":   "fa-briefcase",
+
+    # ─── Mua bán / Kho vận ───
+    "thu mua":              "fa-shopping-cart",
+    "xuất nhập khẩu":       "fa-ship",
+    "logistics":            "fa-truck",
+    "vận tải":              "fa-truck",
+    "kho":                  "fa-warehouse",
+    "bán hàng":             "fa-store",
+    "kinh doanh":           "fa-chart-line",
+    "marketing":            "fa-bullhorn",
+    "dịch vụ khách hàng":   "fa-headset",
+    "chăm sóc khách hàng":  "fa-headset",
+
+    # ─── Kế toán / Tài chính ───
+    "kế toán":              "fa-calculator",
+    "tài chính":            "fa-coins",
+    "hành chính kế toán":   "fa-file-invoice-dollar",
+
+    # ─── Sản xuất / Kỹ thuật ───
+    "sản xuất":             "fa-industry",
+    "kế hoạch sản xuất":    "fa-calendar-alt",
+    "kỹ thuật":             "fa-tools",
+    "bảo trì":              "fa-tools",
+    "chất lượng":           "fa-award",
+    "qa":                   "fa-award",
+    "qc":                   "fa-award",
+    "r&d":                  "fa-flask",
+    "nghiên cứu":           "fa-flask",
+
+    # ─── Ngành đặc thù ───
+    "giày da":              "fa-shoe-prints",
+    "may mặc":              "fa-tshirt",
+    "dệt may":              "fa-tshirt",
+    "thực phẩm":            "fa-utensils",
+    "nông nghiệp":          "fa-seedling",
+
+    # ─── IT / Công nghệ ───
+    "máy tính & it":        "fa-laptop-code",
+    "máy tính":             "fa-laptop-code",
+    "công nghệ thông tin":  "fa-laptop-code",
+    "it":                   "fa-laptop-code",
 }
-DEFAULT_ICON = ("fa-folder", "#64748b")
+
+# Icon mặc định nếu không match ngành nào
+DEFAULT_ICON_NAME = "fa-folder"
+
+# ═══════════════════════════════════════════════════════════════════
+#  MÀU ĐỒNG NHẤT — TẤT CẢ NÚT DÙNG CÙNG MÀU NÀY
+#  (Tím giống IT hiện tại)
+# ═══════════════════════════════════════════════════════════════════
+UNIFIED_COLOR = "#7c3aed"     # ← Đổi màu ở đây nếu muốn (VD: "#6366f1", "#0ea5e9")
 
 
 def auto_detect_icon_color(display_name):
-    """Chọn icon/màu dựa theo tên chuyên ngành."""
+    """
+    Trả về tuple (icon, color).
+    - Icon: RIÊNG cho từng ngành (match theo nhiều cấp)
+    - Color: LUÔN = UNIFIED_COLOR → đồng bộ style
+    """
     key = display_name.strip().lower()
+
+    # ─── 1. Match CHÍNH XÁC tên ───
     if key in ICON_MAP:
-        return ICON_MAP[key]
-    for k, v in ICON_MAP.items():
-        if k in key or key in k:
-            return v
-    return DEFAULT_ICON
+        return (ICON_MAP[key], UNIFIED_COLOR)
+
+    # ─── 2. Match theo TỪ riêng (tránh "it" match bừa trong "unity") ───
+    #     VD: "máy tính & it" → ["máy", "tính", "&", "it"] → key "it" có trong list
+    words = re.split(r'[\s&\-_/,\.]+', key)
+    # Ưu tiên key DÀI match trước (tránh "it" match trước "máy tính & it")
+    for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
+        if k in words:
+            return (ICON_MAP[k], UNIFIED_COLOR)
+
+    # ─── 3. Match substring (CHỈ key >= 3 ký tự, tránh "it"/"qa"/"qc") ───
+    for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
+        if len(k) >= 3 and k in key:
+            return (ICON_MAP[k], UNIFIED_COLOR)
+
+    return (DEFAULT_ICON_NAME, UNIFIED_COLOR)
 
 
 def slugify_dataset_id(filename):
@@ -733,14 +791,19 @@ ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 # ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
-# ═══ 1. Tab Yêu thích — chèn SAU nút Chuyên ngành (đứng cuối) ═══
-ui_html = re.sub(
-    r'(<button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">.*?</button>)',
-    r'\1\n        ' + _fav_html["dataset_tab"],
-    ui_html,
-    count=1,
-    flags=re.DOTALL
+# ═══════════════════════════════════════════════════════════════════
+# ═══ 1. Tab Yêu thích — chèn vào placeholder SAU ds-sub-wrap ═══
+# Khi mở dropdown Chuyên ngành → tab Yêu thích tự bị đẩy xuống
+# ═══════════════════════════════════════════════════════════════════
+ui_html = ui_html.replace(
+    '<!-- __FAV_DATASET_TAB__ -->',
+    '<div class="ds-fav-row">' + _fav_html["dataset_tab"] + '</div>'
 )
+if 'ds-fav-row' not in ui_html:
+    print("⚠️  Chưa chèn được tab Yêu thích — kiểm tra placeholder")
+    print("   <!-- __FAV_DATASET_TAB__ --> trong ui_template.py")
+else:
+    print("✅ Đã chèn tab Yêu thích (ds-fav-row) sau ds-sub-wrap")
 
 # ═══════════════════════════════════════════════════════════════════
 # ═══ 2. ★ HAI NÚT FLOAT trong Practice Full ═══
