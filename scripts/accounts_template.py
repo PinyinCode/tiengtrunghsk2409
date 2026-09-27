@@ -4203,7 +4203,6 @@ function initAuthUI() {
     scheduleAutoExpire();
 }
 /* ============ TIMEOUT FALLBACK ============ */
-/* ============ TIMEOUT FALLBACK ============ */
 setTimeout(function() {
     if (!appInitialized) {
         console.warn('Auth timeout, entering demo mode');
@@ -4263,7 +4262,8 @@ window.notifyTelegramUserPaid = function(req) {
         '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
         '📧 ' + escapeHtml(req.email) + '\n' +
         '💵 <b>' + amountStr + 'đ</b>\n' +
-        '📦 ' + escapeHtml(req.packageLabel            (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) +
+            (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
         '🔑 Mã: <code>' + escapeHtml(req.transferCode || '—') + '</code>\n\n' +
         '⏳ Vui lòng kiểm tra và xác nhận trong trang quản trị.';
 
@@ -4303,21 +4303,20 @@ window.testTelegram = function() {
         });
 };
 """
-  # Inject config
+
+    # Inject config
     js = js.replace("__TRIAL_DAYS__", str(config.get("trial_days", 3)))
     js = js.replace("__TRIAL_MAX_QUESTIONS__", str(config.get("trial_max_questions", 50)))
     js = js.replace("__TRIAL_MAX_HSK__", str(config.get("trial_max_hsk", 5)))
     js = js.replace("__TRIAL_UNLIMITED_WRITING__",
                     "true" if config.get("trial_unlimited_writing", True) else "false")
     js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
-    js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii ||=False))
-    js = js.replace("__REN reqEWAL_SUPPORT_ZALO__", config.p.get("renewal_support_zaloackage", ""))
+    js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii=False))
+    js = js.replace("__RENEWAL_SUPPORT_ZALO__", config.get("renewal_support_zalo", ""))
 
-    # ⭐ TE)LEGRAM CONFIG — inject vào JS
- +
+    # ⭐ TELEGRAM CONFIG — inject vào JS
     telegram_token = config.get("telegram_bot_token", "") or ""
     telegram_chat_id = config.get("telegram_chat_id", "") or ""
-    # Escape để tránh lỗi nếu token/chat_id có ký tự đặc biệt
     telegram_token_escaped = telegram_token.replace("\\", "\\\\").replace('"', '\\"')
     telegram_chat_id_escaped = str(telegram_chat_id).replace("\\", "\\\\").replace('"', '\\"')
     js = js.replace("__TELEGRAM_BOT_TOKEN__", telegram_token_escaped)
