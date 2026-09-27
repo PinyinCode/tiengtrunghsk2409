@@ -33,7 +33,7 @@ def build_accounts_css():
 .user-menu{position:relative}
 .user-avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);cursor:pointer;object-fit:cover;transition:.15s;display:block;}
 .user-avatar:hover{border-color:var(--primary);transform:scale(1.05)}
-..user-dropdown{
+.user-dropdown{
     position:absolute;
     top:calc(100% + .5rem);
     right:0;
