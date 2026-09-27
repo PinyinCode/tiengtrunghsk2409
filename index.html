@@ -6780,6 +6780,34 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
 
 
 /* ═══════════════════════════════════════════════════════════════════
+   ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
+   PC: [Tổng hợp] [Chuyên ngành] [Yêu thích] — 3 cột đều
+   Mobile: Yêu thích tự xuống hàng riêng
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* PC: ds-main-row chia 3 cột */
+@media (min-width: 769px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr 1fr !important;
+    }
+}
+
+/* Mobile: 2 cột (Yêu thích xuống hàng) */
+@media (max-width: 768px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* Mobile rất nhỏ: 1 cột dọc */
+@media (max-width: 500px) {
+    .ds-main-row {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
    ★★★ HEADER DESIGN ★★★
    ═══════════════════════════════════════════════════════════════════ */
 
@@ -7165,12 +7193,12 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
-        <div class="ds-fav-row"><button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">
+        <button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">
             <i class="far fa-heart"></i>
             <span>Yêu thích</span>
             <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>
             <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>
-        </button></div>
+        </button>
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
         <div class="ds-sub-label">
