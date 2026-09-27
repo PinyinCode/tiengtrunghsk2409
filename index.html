@@ -18950,7 +18950,38 @@ function favToggleOldFilters(active) {
     }, 3000);
 })();
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔧 FIX CUỐI — Đảm bảo class .fav-only-active LUÔN sync đúng
+   Chạy định kỳ để bắt kịp mọi thay đổi state
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function() {
+    var _lastActive = null;
 
+    function forceSyncClass() {
+        var modal = document.getElementById('practiceFullModal');
+        var isModalOpen = modal && modal.classList.contains('show');
+
+        var shouldBeActive = !!(
+            favState.pfOnlyFav
+            && favCanUse()
+            && isModalOpen
+        );
+
+        if (shouldBeActive === _lastActive) return;
+        _lastActive = shouldBeActive;
+
+        if (shouldBeActive) {
+            document.body.classList.add('fav-only-active');
+            console.log('[Fav FIX] ADD .fav-only-active');
+        } else {
+            document.body.classList.remove('fav-only-active');
+            console.log('[Fav FIX] REMOVE .fav-only-active');
+        }
+    }
+
+    setInterval(forceSyncClass, 300);
+    forceSyncClass();
+})();
 /* ═══════════════════════════════════════════════════════════════════════════
    EXPORT
    ═══════════════════════════════════════════════════════════════════════════ */
