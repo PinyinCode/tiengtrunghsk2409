@@ -23,6 +23,11 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
    - ★ Nút toggle "Chỉ câu yêu thích" góc trái (Practice Full)
      → Khi bật: dropdown "CÂU:" chỉ liệt kê câu yêu thích
    - Chỉ tier ACTIVE/ADMIN dùng được, tier khác hiển thị 🔒
+
+✅ CHAT SUPPORT: Module độc lập (chat_support.py)
+   - User ↔ Admin realtime qua Firestore
+   - FAB + badge poll 60s
+   - Admin panel có tab "Chat hỗ trợ"
 """
 import json
 import os
@@ -57,6 +62,13 @@ from favorites_module import (
     build_favorites_css,
     build_favorites_html,
     build_favorites_js,
+)
+
+# ⬇️⬇️⬇️ Module Chat Support (độc lập)
+from chat_support import (
+    build_chat_css,
+    build_chat_html,
+    build_chat_js,
 )
 
 
@@ -805,6 +817,7 @@ full_css = (
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
     + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
     + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
+    + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
@@ -888,6 +901,7 @@ full_body = (
     '<div class="page-wrap">\n'
     + ui_html
     + "\n" + auth_html
+    + "\n" + build_chat_html()
     + '\n</div>'
 )
 
@@ -901,6 +915,7 @@ full_js = (
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
+    + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
 )
 
 
@@ -979,13 +994,13 @@ window.__switchRawData = function(datasetId) {
 
         console.log('📲 Telegram module init:', {
             hasToken: _TG_TOKEN && _TG_TOKEN.indexOf('__') !== 0 && _TG_TOKEN.length > 20,
-            tokenPreview: _TG_TOKEN,
- ? _TG_TOKEN.substring(0, 15) +                        '...' : '(empty)',
-            text chatId: _TG_CHAT: || '(empty)'
+            tokenPreview: (_TG_TOKEN && _TG_TOKEN.length > 15)
+                ? _TG_TOKEN.substring(0, 15) + '...'
+                : '(empty)',
+            chatId: _TG_CHAT || '(empty)'
         });
 
-        text window.sendTelegramMessage = function(text),
- {
+        window.sendTelegramMessage = function(text) {
             try {
                 if (!_TG_TOKEN || !_TG_CHAT || _TG_TOKEN.indexOf('__') === 0 || _TG_TOKEN.length < 20) {
                     console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
@@ -995,7 +1010,9 @@ window.__switchRawData = function(datasetId) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        chat_id: _TG_CHAT                        parse_mode: 'HTML',
+                        chat_id: _TG_CHAT,
+                        text: text,
+                        parse_mode: 'HTML',
                         disable_web_page_preview: true
                     })
                 })
@@ -1103,6 +1120,7 @@ print(f"❤️  Yêu thích: 3 tab cùng hàng (PC) + dropdown + 2 nút float")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
+print(f"💬 Chat Support: đã thêm (user ↔ admin)")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
