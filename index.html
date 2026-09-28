@@ -6681,27 +6681,39 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
 /* ==== 💬 CHAT SUPPORT CSS ==== */
 
 /* ═══ CHAT BUTTON ═══ */
-.chat-float-btn{display:flex;align-items:center;gap:.5rem;padding:.7rem 1.1rem;border-radius:50px;background:linear-gradient(135deg, #4f46e5, #7c3aed, #a855f7);color:#fff;text-decoration:none;font-weight:700;font-size:.85rem;box-shadow:0 8px 24px rgba(124,58,237,.45);transition:all .35s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent;white-space:nowrap;border:2px solid #fff;font-family:inherit;overflow:visible;position:relative;cursor:pointer;animation:chatPulse 2.5s infinite;}
+.chat-float-btn{display:flex;align-items:center;gap:.5rem;padding:.7rem 1.1rem;border-radius:50px;background:linear-gradient(135deg, #4f46e5, #7c3aed, #a855f7);color:#fff;text-decoration:none;font-weight:700;font-size:.85rem;box-shadow:0 8px 24px rgba(124,58,237,.45);transition:all .35s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent;white-space:nowrap;border:2px solid #fff;font-family:inherit;overflow:visible;position:relative;cursor:pointer;}
 .chat-float-btn:hover,.chat-float-btn:active{transform:scale(1.05);box-shadow:0 12px 32px rgba(124,58,237,.65),0 0 0 6px rgba(139,92,246,.2);color:#fff;}
 .chat-float-btn i.fa-comments{font-size:1.2rem;flex-shrink:0;line-height:1;position:relative;z-index:2;}
 .chat-float-btn .chat-text{line-height:1.15;display:flex;flex-direction:column;position:relative;z-index:2;transition:opacity .2s, max-width .35s;max-width:200px;overflow:hidden;}
 .chat-float-btn .chat-label{font-size:.65rem;opacity:.85;font-weight:500;white-space:nowrap}
 .chat-float-btn .chat-name{font-size:.85rem;font-weight:700;white-space:nowrap}
-.chat-float-btn::before{content:'';position:absolute;inset:0;border-radius:50px;background:linear-gradient(135deg, #4f46e5, #a855f7);opacity:.5;z-index:1;animation:chatPulse 2s infinite;pointer-events:none;}
-@keyframes chatPulse{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:0}100%{transform:scale(1);opacity:0}}
 
+/* Pulse ring: ẩn mặc định — chỉ bật khi có tin chưa đọc */
+.chat-float-btn::before{content:'';position:absolute;inset:0;border-radius:50px;background:linear-gradient(135deg, #4f46e5, #a855f7);opacity:0;z-index:1;pointer-events:none;transition:opacity .3s ease;}
+
+/* ✨ Lóe sáng nhẹ 1 lần khi icon mount — không loop, thu hút ánh nhìn */
+.chat-float-btn.intro-glow{animation:chatIntroGlow 1.8s cubic-bezier(.4,0,.2,1) 1;}
+@keyframes chatIntroGlow{
+    0%{box-shadow:0 8px 24px rgba(124,58,237,.45),0 0 0 0 rgba(139,92,246,.6);}
+    70%{box-shadow:0 8px 28px rgba(124,58,237,.7),0 0 0 16px rgba(139,92,246,0);}
+    100%{box-shadow:0 8px 24px rgba(124,58,237,.45),0 0 0 0 rgba(139,92,246,0);}
+}
+
+/* ═══ KHI CÓ TIN CHƯA ĐỌC — đỏ + rung + pulse ═══ */
 .chat-float-btn.has-unread{background:linear-gradient(135deg, #dc2626, #b91c1c, #7f1d1d);animation:chatUrgentPulse 1.2s infinite;box-shadow:0 8px 24px rgba(220,38,38,.6);}
-.chat-float-btn.has-unread::before{background:linear-gradient(135deg, #dc2626, #7f1d1d);animation:chatUrgentPulse 1.2s infinite;}
+.chat-float-btn.has-unread::before{opacity:.5;background:linear-gradient(135deg, #dc2626, #7f1d1d);animation:chatUrgentPulse 1.2s infinite;}
 .chat-float-btn.has-unread i.fa-comments{animation:chatBellShake 0.6s infinite;color:#fde68a;text-shadow:0 0 8px rgba(253,230,138,.9);}
 @keyframes chatBellShake{0%,100%{transform:rotate(0deg);}15%{transform:rotate(-15deg);}30%{transform:rotate(15deg);}45%{transform:rotate(-12deg);}60%{transform:rotate(12deg);}75%{transform:rotate(-6deg);}}
 @keyframes chatUrgentPulse{0%,100%{transform:scale(1);box-shadow:0 8px 24px rgba(220,38,38,.6),0 0 0 0 rgba(220,38,38,.7);}50%{transform:scale(1.08);box-shadow:0 12px 32px rgba(220,38,38,.8),0 0 0 14px rgba(220,38,38,0);}}
 
+/* Badge số tin chưa đọc */
 .chat-float-btn .chat-badge{position:absolute;top:-6px;right:-6px;min-width:24px;height:24px;padding:0 .45rem;border-radius:50px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;font-size:.72rem;font-weight:900;display:none;align-items:center;justify-content:center;border:2.5px solid #fff;line-height:1;box-shadow:0 3px 10px rgba(251,191,36,.7);animation:chatBadgeBounce 0.8s infinite;z-index:5;}
 .chat-float-btn.has-unread .chat-badge{background:linear-gradient(135deg,#fff,#fef3c7);color:#dc2626;box-shadow:0 3px 12px rgba(255,255,255,.8),0 0 0 2px #dc2626;}
 .chat-float-btn .chat-badge.show{display:flex}
 @keyframes chatBadgeBounce{0%,100%{transform:scale(1);}50%{transform:scale(1.18);}}
 .chat-float-btn.hidden{display:none}
 
+/* Responsive */
 @media (max-width:768px){
     .chat-float-btn{width:46px;height:46px;padding:0;border-radius:50%;justify-content:center;gap:0;}
     .chat-float-btn i.fa-comments{font-size:1.25rem;}
@@ -6779,7 +6791,7 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
 .chat-quick-btn:hover{background:#2563eb;color:#fff;}
 
 /* ═══ LIMIT BANNER ═══ */
-.chat-limit-banner{display:none;margin:0 0 .5rem;padding:.65rem .85rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:10px;font-size:.78rem;color:#78350f;line-height:1.45;animation:chatLimitSlide .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;align-items:flex-start;gap:.5rem;}
+.chat-limit-banner{display:none7;margin:0 0 .,#5rem;padding:.65rem .f85rem;background:linear-gradient(135dedeg,#fef3c68a);border:1.5px solid #f59e0b;border-radius:10px;font-size:.78rem;color:#78350f;line-height:1.45;animation:chatLimitSlide .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;align-items:flex-start;gap:.5rem;}
 .chat-limit-banner.show{display:flex}
 .chat-limit-banner.danger{background:linear-gradient(135deg,#fecaca,#fca5a5);border-color:#dc2626;color:#7f1d1d;}
 .chat-limit-banner .clb-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;animation:chatLimitPulse 1.5s infinite;}
@@ -19888,20 +19900,29 @@ window.favFilterCount = favFilterCount;
     }
 
     function mountChatButton() {
-        var group = document.getElementById('floatingLeftGroup');
-        if (!group) { setTimeout(mountChatButton, 500); return; }
-        if (document.getElementById('chatFloatBtn')) return;
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'chat-float-btn hidden';
-        btn.id = 'chatFloatBtn';
-        btn.title = 'Chat với Admin';
-        btn.innerHTML = '<i class="fas fa-comments"></i>' +
-            '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
-            '<span class="chat-badge" id="chatFabBadge">0</span>';
-        group.insertBefore(btn, group.firstChild);
-        btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
-    }
+    var group = document.getElementById('floatingLeftGroup');
+    if (!group) { setTimeout(mountChatButton, 500); return; }
+    if (document.getElementById('chatFloatBtn')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chat-float-btn hidden';
+    btn.id = 'chatFloatBtn';
+    btn.title = 'Chat với Admin';
+    btn.innerHTML = '<i class="fas fa-comments"></i>' +
+        '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
+        '<span class="chat-badge" id="chatFabBadge">0</span>';
+    group.insertBefore(btn, group.firstChild);
+    btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
+
+    /* ✨ Lóe sáng nhẹ 1 lần khi icon mount — thu hút ánh nhìn, sau đó đứng yên.
+       Bỏ qua nếu user đang có tin chưa đọc (vì lúc đó icon đã tự rung đỏ). */
+    setTimeout(function() {
+        if (!btn.classList.contains('has-unread')) {
+            btn.classList.add('intro-glow');
+            setTimeout(function() { btn.classList.remove('intro-glow'); }, 2000);
+        }
+    }, 800);
+}
     function updateFabVisibility() {
         var fab = $id('chatFloatBtn');
         if (!fab) return;
