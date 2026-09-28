@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Chat Support + Quota Dashboard — TỐI ƯU CHO 200+ USER
+Chat Support + Quota Dashboard + User Online — TỐI ƯU CHO 200+ USER
 ════════════════════════════════════════════════════════════════
+
 CHAT:
 • onSnapshot thay vì poll → giảm 97% reads
 • Messages lưu trong ARRAY của doc chat_threads/{email}
 • Giới hạn 50 tin/ngày/user + gợi ý Zalo
 • Tự mở chat khi admin gửi tin
-• Nút chat trong floating-left-group (trái)
+• Nút chat FAB + intro-glow 1 lần khi mount (không nhấp nháy)
 • Icon rung + đỏ khi có tin chưa đọc
 • Modal góc trái-dưới + mũi tên chỉ về nút chat
 
@@ -16,14 +17,25 @@ QUOTA:
 • Wrap Firestore methods tự động
 • Dashboard trong Admin Panel
 • Cảnh báo khi >70% / >90% quota
-════════════════════════════════════════════════════════════════
+
+USER ONLINE (RTDB):
+• Track user online qua Firebase Realtime Database
+• KHÔNG tốn Firestore quota
+• onDisconnect tự động xóa khi user tắt tab
+• Admin xem danh sách user online realtime
 """
+
+import json
+
 
 DAILY_LIMIT = 50
 LIMIT_WARN_AT = 40
 MAX_MESSAGES = 100
 
 
+# ═══════════════════════════════════════════════════════════════
+#  CSS
+# ═══════════════════════════════════════════════════════════════
 def build_chat_css():
     return r"""
 /* ═══ CHAT BUTTON ═══ */
@@ -37,7 +49,7 @@ def build_chat_css():
 /* Pulse ring: ẩn mặc định — chỉ bật khi có tin chưa đọc */
 .chat-float-btn::before{content:'';position:absolute;inset:0;border-radius:50px;background:linear-gradient(135deg, #4f46e5, #a855f7);opacity:0;z-index:1;pointer-events:none;transition:opacity .3s ease;}
 
-/* ✨ Lóe sáng nhẹ 1 lần khi icon mount — không loop, thu hút ánh nhìn */
+/* ✨ Lóe sáng nhẹ 1 lần khi icon mount — không loop */
 .chat-float-btn.intro-glow{animation:chatIntroGlow 1.8s cubic-bezier(.4,0,.2,1) 1;}
 @keyframes chatIntroGlow{
     0%{box-shadow:0 8px 24px rgba(124,58,237,.45),0 0 0 0 rgba(139,92,246,.6);}
@@ -52,14 +64,12 @@ def build_chat_css():
 @keyframes chatBellShake{0%,100%{transform:rotate(0deg);}15%{transform:rotate(-15deg);}30%{transform:rotate(15deg);}45%{transform:rotate(-12deg);}60%{transform:rotate(12deg);}75%{transform:rotate(-6deg);}}
 @keyframes chatUrgentPulse{0%,100%{transform:scale(1);box-shadow:0 8px 24px rgba(220,38,38,.6),0 0 0 0 rgba(220,38,38,.7);}50%{transform:scale(1.08);box-shadow:0 12px 32px rgba(220,38,38,.8),0 0 0 14px rgba(220,38,38,0);}}
 
-/* Badge số tin chưa đọc */
 .chat-float-btn .chat-badge{position:absolute;top:-6px;right:-6px;min-width:24px;height:24px;padding:0 .45rem;border-radius:50px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;font-size:.72rem;font-weight:900;display:none;align-items:center;justify-content:center;border:2.5px solid #fff;line-height:1;box-shadow:0 3px 10px rgba(251,191,36,.7);animation:chatBadgeBounce 0.8s infinite;z-index:5;}
 .chat-float-btn.has-unread .chat-badge{background:linear-gradient(135deg,#fff,#fef3c7);color:#dc2626;box-shadow:0 3px 12px rgba(255,255,255,.8),0 0 0 2px #dc2626;}
 .chat-float-btn .chat-badge.show{display:flex}
 @keyframes chatBadgeBounce{0%,100%{transform:scale(1);}50%{transform:scale(1.18);}}
 .chat-float-btn.hidden{display:none}
 
-/* Responsive */
 @media (max-width:768px){
     .chat-float-btn{width:46px;height:46px;padding:0;border-radius:50%;justify-content:center;gap:0;}
     .chat-float-btn i.fa-comments{font-size:1.25rem;}
@@ -137,7 +147,7 @@ def build_chat_css():
 .chat-quick-btn:hover{background:#2563eb;color:#fff;}
 
 /* ═══ LIMIT BANNER ═══ */
-.chat-limit-banner{display:none7;margin:0 0 .,#5rem;padding:.65rem .f85rem;background:linear-gradient(135dedeg,#fef3c68a);border:1.5px solid #f59e0b;border-radius:10px;font-size:.78rem;color:#78350f;line-height:1.45;animation:chatLimitSlide .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;align-items:flex-start;gap:.5rem;}
+.chat-limit-banner{display:none;margin:0 0 .5rem;padding:.65rem .85rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:10px;font-size:.78rem;color:#78350f;line-height:1.45;animation:chatLimitSlide .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;align-items:flex-start;gap:.5rem;}
 .chat-limit-banner.show{display:flex}
 .chat-limit-banner.danger{background:linear-gradient(135deg,#fecaca,#fca5a5);border-color:#dc2626;color:#7f1d1d;}
 .chat-limit-banner .clb-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;animation:chatLimitPulse 1.5s infinite;}
@@ -216,9 +226,23 @@ def build_chat_css():
 .quota-history-table .qht-ok{color:#16a34a;font-weight:700;}
 .quota-history-table .qht-warn{color:#d97706;font-weight:700;}
 .quota-history-table .qht-danger{color:#dc2626;font-weight:700;}
+
+/* ═══ USER ONLINE (RTDB PRESENCE) ═══ */
+.online-user-row{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;border-radius:10px;background:var(--surface-2);margin-bottom:.4rem;transition:.15s;}
+.online-user-row:hover{background:var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.ou-dot{width:10px;height:10px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.2);animation:onlinePulse 2s infinite;flex-shrink:0;}
+@keyframes onlinePulse{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,.2);}50%{box-shadow:0 0 0 6px rgba(22,163,74,.1);}}
+.ou-info{flex:1;min-width:0;}
+.ou-name{font-weight:700;font-size:.85rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ou-sub{font-size:.7rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ou-chat-btn{width:32px;height:32px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
+.ou-chat-btn:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(124,58,237,.4);}
 """
 
 
+# ═══════════════════════════════════════════════════════════════
+#  HTML
+# ═══════════════════════════════════════════════════════════════
 def build_chat_html():
     return r"""
 <div class="chat-modal" id="chatModal">
@@ -263,7 +287,7 @@ def build_chat_html():
 
 
 def build_quota_html():
-    """HTML cho section Quota trong Admin Panel. Chèn vào build_accounts_html()."""
+    """HTML cho section Quota trong Admin Panel."""
     return r"""
 <div class="admin-section collapsed" id="adminQuotaSection">
     <div class="admin-section-head">
@@ -350,6 +374,48 @@ def build_quota_html():
 """
 
 
+def build_online_section_html():
+    """HTML cho section User Online trong Admin Panel (RTDB presence)."""
+    return r"""
+<div class="admin-section" id="adminOnlineSection">
+    <div class="admin-section-head">
+        <div class="ash-left">
+            <div class="ash-icon" style="background:rgba(22,163,74,.15);color:#16a34a;">
+                <i class="fas fa-circle"></i>
+            </div>
+            <div class="ash-text">
+                <div class="ash-title"><span>User đang online</span></div>
+                <div class="ash-subtitle">
+                    <span class="chip ok">
+                        <i class="fas fa-circle" style="color:#16a34a;font-size:.5rem"></i>
+                        <span id="onlineCount">0</span> user
+                    </span>
+                    <span class="chip" style="font-size:.62rem;">
+                        <i class="fas fa-bolt" style="color:#f59e0b;"></i> Realtime
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="ash-actions">
+            <button class="admin-toggle-btn active" id="toggleOnlineBtn" title="Ẩn">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+    </div>
+    <div class="admin-section-body">
+        <div class="admin-section-inner">
+            <div id="onlineUserList">
+                <div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+"""
+
+
+# ═══════════════════════════════════════════════════════════════
+#  JS
+# ═══════════════════════════════════════════════════════════════
 def build_chat_js():
     return r"""
 (function() {
@@ -368,7 +434,8 @@ def build_chat_js():
         isOpen: false,
         lastThreadData: null,
         lastSeenAt: 0,
-        typingTimer: null
+        typingTimer: null,
+        onlineUnsub: null
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -466,29 +533,28 @@ def build_chat_js():
     }
 
     function mountChatButton() {
-    var group = document.getElementById('floatingLeftGroup');
-    if (!group) { setTimeout(mountChatButton, 500); return; }
-    if (document.getElementById('chatFloatBtn')) return;
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chat-float-btn hidden';
-    btn.id = 'chatFloatBtn';
-    btn.title = 'Chat với Admin';
-    btn.innerHTML = '<i class="fas fa-comments"></i>' +
-        '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
-        '<span class="chat-badge" id="chatFabBadge">0</span>';
-    group.insertBefore(btn, group.firstChild);
-    btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
+        var group = document.getElementById('floatingLeftGroup');
+        if (!group) { setTimeout(mountChatButton, 500); return; }
+        if (document.getElementById('chatFloatBtn')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'chat-float-btn hidden';
+        btn.id = 'chatFloatBtn';
+        btn.title = 'Chat với Admin';
+        btn.innerHTML = '<i class="fas fa-comments"></i>' +
+            '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
+            '<span class="chat-badge" id="chatFabBadge">0</span>';
+        group.insertBefore(btn, group.firstChild);
+        btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
 
-    /* ✨ Lóe sáng nhẹ 1 lần khi icon mount — thu hút ánh nhìn, sau đó đứng yên.
-       Bỏ qua nếu user đang có tin chưa đọc (vì lúc đó icon đã tự rung đỏ). */
-    setTimeout(function() {
-        if (!btn.classList.contains('has-unread')) {
-            btn.classList.add('intro-glow');
-            setTimeout(function() { btn.classList.remove('intro-glow'); }, 2000);
-        }
-    }, 800);
-}
+        /* ✨ Lóe sáng nhẹ 1 lần khi icon mount */
+        setTimeout(function() {
+            if (!btn.classList.contains('has-unread')) {
+                btn.classList.add('intro-glow');
+                setTimeout(function() { btn.classList.remove('intro-glow'); }, 2000);
+            }
+        }, 800);
+    }
     function updateFabVisibility() {
         var fab = $id('chatFloatBtn');
         if (!fab) return;
@@ -630,6 +696,93 @@ def build_chat_js():
         if (nearBottom) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       👥 RTDB ONLINE WATCH — chỉ chạy khi admin mở modal chat
+       ═══════════════════════════════════════════════════════════ */
+    function startOnlineWatch() {
+        if (!isAdmin()) return;
+        if (typeof firebase === 'undefined' || typeof firebase.database !== 'function') {
+            console.warn('RTDB not available for online watch');
+            return;
+        }
+        if (CHAT.onlineUnsub) return;
+
+        try {
+            var ref = firebase.database().ref('presence');
+            var handler = ref.on('value', function(snap) {
+                var val = snap.val() || {};
+                var now = Date.now();
+                var cutoff = now - 3 * 60 * 1000;
+                var users = [];
+
+                Object.keys(val).forEach(function(k) {
+                    var u = val[k];
+                    if (u && u.at && u.at > cutoff) {
+                        users.push({
+                            email: u.email || decodeURIComponent(k),
+                            name: u.name || 'User',
+                            at: u.at
+                        });
+                    }
+                });
+
+                users.sort(function(a, b) { return b.at - a.at; });
+                renderOnlineList(users);
+            });
+
+            CHAT.onlineUnsub = function() {
+                try { ref.off('value', handler); } catch(e) {}
+            };
+            console.log('👥 Online watch started');
+        } catch(e) {
+            console.warn('startOnlineWatch error:', e);
+        }
+    }
+
+    function stopOnlineWatch() {
+        if (CHAT.onlineUnsub) {
+            try { CHAT.onlineUnsub(); } catch(e) {}
+            CHAT.onlineUnsub = null;
+            console.log('👥 Online watch stopped');
+        }
+    }
+
+    function renderOnlineList(users) {
+        var el = document.getElementById('onlineUserList');
+        var countEl = document.getElementById('onlineCount');
+        if (!el) return;
+
+        if (countEl) countEl.textContent = users.length;
+
+        if (users.length === 0) {
+            el.innerHTML = '<div class="no-data"><i class="fas fa-user-slash"></i><span>Không có user nào online</span></div>';
+            return;
+        }
+
+        var html = '';
+        users.forEach(function(u) {
+            var diff = Date.now() - u.at;
+            var status;
+            if (diff < 60000) status = '🟢 Vừa xong';
+            else if (diff < 120000) status = '🟡 ' + Math.floor(diff / 60000) + ' phút trước';
+            else status = '⚪ ' + Math.floor(diff / 60000) + ' phút trước';
+
+            html += '<div class="online-user-row">' +
+                '<div class="ou-dot"></div>' +
+                '<div class="ou-info">' +
+                    '<div class="ou-name">' + esc(u.name) + '</div>' +
+                    '<div class="ou-sub">' + esc(u.email) + ' · ' + status + '</div>' +
+                '</div>' +
+                '<button class="ou-chat-btn" type="button" ' +
+                    'onclick="if(window.__chatOpenThread){window.__chatOpenThread(\'' + jsStr(u.email) + '\');}" ' +
+                    'title="Chat với user">' +
+                    '<i class="fas fa-comments"></i>' +
+                '</button>' +
+            '</div>';
+        });
+        el.innerHTML = html;
+    }
+
     function startAdminListWatch() {
         stopAdminListWatch();
         var db = getDb();
@@ -736,13 +889,19 @@ def build_chat_js():
         $id('chatModal').classList.add('show');
         var dd = $id('userDropdown');
         if (dd) dd.classList.remove('show');
-        if (isAdmin()) openAdminListView();
-        else { openUserView(); updateCounterUI(); }
+        if (isAdmin()) {
+            openAdminListView();
+            startOnlineWatch();
+        } else {
+            openUserView();
+            updateCounterUI();
+        }
     }
     function closeChat() {
         CHAT.isOpen = false;
         $id('chatModal').classList.remove('show');
         stopAdminThreadWatch();
+        stopOnlineWatch();
         CHAT.adminCurrentEmail = null;
         CHAT.lastSeenAt = Date.now();
     }
@@ -886,6 +1045,21 @@ def build_chat_js():
                 inp.focus();
             });
         });
+
+        /* Toggle Online section */
+        var toggleOnlineBtn = $id('toggleOnlineBtn');
+        var onlineSection = $id('adminOnlineSection');
+        if (toggleOnlineBtn && onlineSection) {
+            toggleOnlineBtn.addEventListener('click', function() {
+                onlineSection.classList.toggle('collapsed');
+                var isVisible = !onlineSection.classList.contains('collapsed');
+                var icon = this.querySelector('i');
+                if (icon) icon.className = isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
+                this.classList.toggle('active', isVisible);
+                this.title = isVisible ? 'Ẩn' : 'Hiện';
+            });
+        }
+
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
     }
@@ -993,7 +1167,6 @@ def build_quota_js():
         var docProto = firebase.firestore.DocumentReference.prototype;
         var colProto = firebase.firestore.CollectionReference.prototype;
 
-        // get() doc → 1 read
         var origDocGet = docProto.get;
         docProto.get = function() {
             return origDocGet.apply(this, arguments).then(function(r) {
@@ -1002,7 +1175,6 @@ def build_quota_js():
             });
         };
 
-        // get() collection → snap.size reads
         var origColGet = colProto.get;
         colProto.get = function() {
             return origColGet.apply(this, arguments).then(function(snap) {
@@ -1011,28 +1183,24 @@ def build_quota_js():
             });
         };
 
-        // set() → 1 write
         var origSet = docProto.set;
         docProto.set = function() {
             window.__quotaTrack('write', 1);
             return origSet.apply(this, arguments);
         };
 
-        // update() → 1 write
         var origUpdate = docProto.update;
         docProto.update = function() {
             window.__quotaTrack('write', 1);
             return origUpdate.apply(this, arguments);
         };
 
-        // delete() → 1 delete
         var origDelete = docProto.delete;
         docProto.delete = function() {
             window.__quotaTrack('delete', 1);
             return origDelete.apply(this, arguments);
         };
 
-        // add() → 1 write
         var origAdd = colProto.add;
         colProto.add = function() {
             window.__quotaTrack('write', 1);
@@ -1052,7 +1220,6 @@ def build_quota_js():
     }
 
     function updateQuotaUI() {
-        // Reads
         var elR = $id('quotaReads');
         var barR = $id('quotaReadsBar');
         var pR = pct(QUOTA.reads, LIMIT_READS);
@@ -1060,7 +1227,6 @@ def build_quota_js():
         if (barR) barR.style.width = pR + '%';
         if (elR) setCardStatus(elR.closest('.quota-card'), pR);
 
-        // Writes
         var elW = $id('quotaWrites');
         var barW = $id('quotaWritesBar');
         var pW = pct(QUOTA.writes, LIMIT_WRITES);
@@ -1068,7 +1234,6 @@ def build_quota_js():
         if (barW) barW.style.width = pW + '%';
         if (elW) setCardStatus(elW.closest('.quota-card'), pW);
 
-        // Deletes
         var elD = $id('quotaDeletes');
         var barD = $id('quotaDeletesBar');
         var pD = pct(QUOTA.deletes, LIMIT_DELETES);
@@ -1076,7 +1241,6 @@ def build_quota_js():
         if (barD) barD.style.width = pD + '%';
         if (elD) setCardStatus(elD.closest('.quota-card'), pD);
 
-        // Status chip
         var chip = $id('quotaStatusChip');
         if (chip) {
             var maxPct = Math.max(pR, pW, pD);
@@ -1085,7 +1249,6 @@ def build_quota_js():
             else { chip.textContent = 'OK (' + Math.round(maxPct) + '%)'; chip.style.color = ''; }
         }
 
-        // Reset time (00:00 UTC)
         var elTime = $id('quotaResetTime');
         if (elTime) {
             var now = new Date();
@@ -1098,7 +1261,6 @@ def build_quota_js():
             elTime.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
         }
 
-        // Read rate
         var now2 = Date.now();
         if (now2 - QUOTA.lastMinuteTs >= 60000) {
             QUOTA.lastMinuteReads = QUOTA.reads;
@@ -1107,7 +1269,6 @@ def build_quota_js():
         var elRate = $id('quotaReadRate');
         if (elRate) elRate.textContent = QUOTA.lastMinuteReads.toLocaleString('vi-VN');
 
-        // Online users (đếm từ localStorage — chỉ là ước lượng)
         var elOnline = $id('quotaOnlineUsers');
         if (elOnline) {
             var count = 0;
@@ -1120,7 +1281,6 @@ def build_quota_js():
             elOnline.textContent = count.toLocaleString('vi-VN');
         }
 
-        // History
         var histBody = $id('quotaHistoryBody');
         if (histBody) {
             var keys = Object.keys(QUOTA.history).sort().reverse();
@@ -1149,7 +1309,6 @@ def build_quota_js():
         }
     }
 
-    // Lưu vào history mỗi phút
     function saveToHistory() {
         var k = todayKey();
         QUOTA.history[k] = {
@@ -1165,7 +1324,6 @@ def build_quota_js():
         if (QUOTA.inited) return;
         QUOTA.inited = true;
         loadQuota();
-        // Thử wrap Firestore — retry cho đến khi firebase sẵn sàng
         var tries = 0;
         var timer = setInterval(function() {
             tries++;
@@ -1176,7 +1334,6 @@ def build_quota_js():
         setTimeout(saveToHistory, 3000);
     }
 
-    // Public functions
     window.__quotaReset = function() {
         if (!confirm('Reset đếm quota hôm nay?')) return;
         QUOTA.reads = 0; QUOTA.writes = 0; QUOTA.deletes = 0;
@@ -1216,7 +1373,7 @@ def build_quota_js():
 
 
 def build_quota_init_js():
-    """JS bind các nút trong Quota section. Gọi sau khi admin panel mở."""
+    """JS bind các nút trong Quota section."""
     return r"""
 (function() {
     'use strict';
@@ -1249,12 +1406,24 @@ def build_quota_init_js():
             refBtn._bound = true;
             refBtn.addEventListener('click', function() {
                 window.dispatchEvent(new Event('quota-refresh'));
-                if (window.__quotaTrack) window.__quotaTrack('read', 0); // trigger update
+                if (window.__quotaTrack) window.__quotaTrack('read', 0);
+            });
+        }
+        var toggleQuotaBtn = $id('toggleQuotaBtn');
+        var quotaSection = $id('adminQuotaSection');
+        if (toggleQuotaBtn && quotaSection && !toggleQuotaBtn._bound) {
+            toggleQuotaBtn._bound = true;
+            toggleQuotaBtn.addEventListener('click', function() {
+                quotaSection.classList.toggle('collapsed');
+                var isVisible = !quotaSection.classList.contains('collapsed');
+                var icon = this.querySelector('i');
+                if (icon) icon.className = isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
+                this.classList.toggle('active', isVisible);
+                this.title = isVisible ? 'Ẩn' : 'Hiện';
             });
         }
     }
 
-    // Bind ngay + retry (vì section có thể render sau)
     bindQuotaButtons();
     setTimeout(bindQuotaButtons, 1000);
     setTimeout(bindQuotaButtons, 3000);
