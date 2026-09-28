@@ -83,10 +83,9 @@ from chat_support import (
     build_quota_html,
     build_quota_js,
     build_quota_init_js,
-    build_online_section_html,
-    build_config_js,              # ⭐ THÊM
-    build_telegram_notify_js,     # ⭐ THÊM
+    build_online_section_html,   # ⬅️ THÊM: Section User Online (RTDB)
 )
+
 
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
@@ -918,12 +917,7 @@ full_body = (
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
-    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
-    build_config_js(CONFIG)
-    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
-    + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
-    # 3. Các module còn lại
-    + "\n/* ==== UI JS ==== */\n" + build_ui_js()
+    build_ui_js()
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
@@ -932,16 +926,6 @@ full_js = (
     + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
     + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
-
-# ═══════════════════════════════════════════════════════════════════
-#  ⭐ FIX (2026-09-28): ESCAPE </script> TRONG full_js
-#  Lý do: favorites_module.py (và có thể các module khác) chứa chuỗi
-#         '</span>' / '</div>' trong JS string → nếu gặp '</script>'
-#         trình duyệt sẽ ĐÓNG THẺ SCRIPT SỚM → trang trắng, code rò rỉ.
-#  Giải pháp: escape '</script>' → '<\/script>' trước khi nhúng vào HTML.
-# ═══════════════════════════════════════════════════════════════════
-full_js = full_js.replace('</script>', '<\\/script>')
-full_js = full_js.replace('</SCRIPT>', '<\\/SCRIPT>')
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1082,56 +1066,7 @@ window.__switchRawData = function(datasetId) {
             } catch(e) { console.warn('notifyTelegramAdminConfirmed:', e); }
         };
 
-        /* ═══════════════════════════════════════════════════════════
-           ⭐ THÊM MỚI — Alias cho chat_support module
-           Chat module gọi window.__sendTelegramNotify(email, name, text, from)
-           Hàm này format rồi gọi lại sendTelegramMessage ở trên.
-           ═══════════════════════════════════════════════════════════ */
-        var _chatTgLastSent = 0;
-        var _CHAT_TG_MIN_INTERVAL = 2000;   // 2s tránh spam
-
-        function _escapeTelegramHtml(s) {
-            if (s == null) return '';
-            return String(s)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
-
-        window.__sendTelegramNotify = function(userEmail, userName, messageText, from) {
-            try {
-                // Nếu chat_support module đã tự định nghĩa → không ghi đè
-                // (kiểm tra bằng cờ __chatNotifyReady)
-                if (window.__chatNotifyReady) return;
-
-                // Rate-limit client-side
-                var now = Date.now();
-                if (now - _chatTgLastSent < _CHAT_TG_MIN_INTERVAL) {
-                    console.log('[ChatTelegram] ⏸ Skip (rate-limit)');
-                    return;
-                }
-                _chatTgLastSent = now;
-
-                var siteName = window.SITE_NAME || document.title || 'Website';
-                var isAdmin = (from === 'admin');
-                var header = isAdmin ? '📤 <b>Admin vừa trả lời</b>'
-                                     : '💬 <b>Tin nhắn mới từ</b>';
-
-                var msg =
-                    header + ' ' + _escapeTelegramHtml(siteName) + '\n' +
-                    '👤 <b>Tên:</b> ' + _escapeTelegramHtml(userName || 'User') + '\n' +
-                    '📧 <b>Email:</b> <code>' + _escapeTelegramHtml(userEmail || '') + '</code>\n' +
-                    '─────────────────\n' +
-                    _escapeTelegramHtml(messageText || '') + '\n' +
-                    '─────────────────\n' +
-                    '⏰ ' + new Date().toLocaleString('vi-VN');
-
-                console.log('[ChatTelegram] 📤 Sending...', { to: _TG_CHAT, from: from });
-                window.sendTelegramMessage(msg);
-            } catch(e) { console.warn('__sendTelegramNotify:', e); }
-        };
-
-        console.log('✅ Telegram module loaded (chat alias ready)');
+        console.log('✅ Telegram module loaded');
     } catch(e) {
         console.error('❌ Telegram module failed (KHÔNG ảnh hưởng app):', e);
     }
