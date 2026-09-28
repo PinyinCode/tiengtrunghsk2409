@@ -1721,7 +1721,7 @@ def build_renewal_css():
 
 def build_renewal_js(config=None):
     return ""
- # ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════
 # 💬 CHAT SUPPORT JS — Thêm vào cuối build_accounts_js
 # Cách dùng: append chuỗi JS này vào cuối biến `js` trong build_accounts_js
 # ═══════════════════════════════════════════════════════════════
