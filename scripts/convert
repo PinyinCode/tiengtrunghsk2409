@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + data.
@@ -15,10 +15,19 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
 
 ✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
 
-✅ FAVORITES: Tab Yêu thích — chỉ tier ACTIVE/ADMIN lưu được,
-   tier khác hiển thị 🔒 mời nâng cấp. Lưu Firebase + offline queue.
-   Tab Yêu thích nằm CUỐI dataset selector.
-   Nút tim PF là FLOAT góc dưới phải, to rõ ràng.
+✅ FAVORITES:
+   - Tab Yêu thích — 3 tab cùng hàng trên PC (Tổng hợp + Chuyên ngành + Yêu thích)
+   - Item Yêu thích trong dropdown bộ dữ liệu
+   - Nút tim trên card (đổi màu theo trạng thái)
+   - Nút tim FLOAT góc phải (Practice Full)
+   - ★ Nút toggle "Chỉ câu yêu thích" góc trái (Practice Full)
+     → Khi bật: dropdown "CÂU:" chỉ liệt kê câu yêu thích
+   - Chỉ tier ACTIVE/ADMIN dùng được, tier khác hiển thị 🔒
+
+✅ CHAT SUPPORT: Module độc lập (chat_support.py)
+   - User ↔ Admin realtime qua Firestore
+   - FAB + badge poll 60s
+   - Admin panel có tab "Chat hỗ trợ"
 """
 import json
 import os
@@ -48,16 +57,23 @@ from intro_template import (
     build_intro_js,
 )
 
-# ⬇️⬇️⬇️ MỚI: Import module Favorites
+# ⬇️⬇️⬇️ Module Favorites
 from favorites_module import (
     build_favorites_css,
     build_favorites_html,
     build_favorites_js,
 )
 
+# ⬇️⬇️⬇️ Module Chat Support (độc lập)
+from chat_support import (
+    build_chat_css,
+    build_chat_html,
+    build_chat_js,
+)
+
 
 # ═══════════════════════════════════════════════════════════════════
-#  HELPER: escape string an toàn khi nhúng vào JS (giữa 2 dấu ")
+#  HELPER: escape string an toàn khi nhúng vào JS
 # ═══════════════════════════════════════════════════════════════════
 def _js_str(s):
     """Escape string để nhúng an toàn vào JS (giữa 2 dấu \")."""
@@ -73,7 +89,7 @@ def _js_str(s):
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  LOAD CONFIG + DATA (đa dataset, tự động quét thư mục data/)
+#  LOAD CONFIG + DATA
 # ═══════════════════════════════════════════════════════════════════
 CONFIG = load_config()
 print_banner(CONFIG)
@@ -83,48 +99,105 @@ OUTPUT_HTML = CONFIG["output_html"]
 SHEET_INDEX = CONFIG["sheet_index"]
 DATA_DIR = CONFIG.get("data_dir", "data")
 
-# ─── 1. Đọc dataset gốc (1700 câu) ───
+# ─── 1. Đọc dataset gốc ───
 data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
 # ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
+# ═══════════════════════════════════════════════════════════════════
+#  ICON MAP — MỖI NGÀNH 1 ICON RIÊNG
+#  Màu đồng nhất cho TẤT CẢ = UNIFIED_COLOR (tím giống IT)
+# ═══════════════════════════════════════════════════════════════════
 ICON_MAP = {
-    "nhân sự":           ("fa-users",          "#0891b2"),
-    "thu mua":           ("fa-shopping-cart",  "#f59e0b"),
-    "xuất nhập khẩu":    ("fa-ship",           "#0ea5e9"),
-    "kế toán":           ("fa-calculator",     "#16a34a"),
-    "chất lượng":        ("fa-award",          "#8b5cf6"),
-    "kế hoạch sản xuất": ("fa-calendar-alt",   "#d97706"),
-    "sản xuất":          ("fa-industry",       "#dc2626"),
-    "kho":               ("fa-warehouse",      "#65a30d"),
-    "it":                ("fa-laptop-code",    "#7c3aed"),
-    "kinh doanh":        ("fa-chart-line",     "#0ea5e9"),
-    "hành chính":        ("fa-briefcase",      "#6366f1"),
-    "kỹ thuật":          ("fa-tools",          "#f97316"),
-    "bảo trì":           ("fa-tools",          "#f97316"),
-    "qa":                ("fa-award",          "#8b5cf6"),
-    "qc":                ("fa-award",          "#8b5cf6"),
-    "r&d":               ("fa-flask",          "#8b5cf6"),
-    "marketing":         ("fa-bullhorn",       "#ec4899"),
+    # ─── Nhân sự / Hành chính ───
+    "nhân sự":              "fa-users",
+    "hành chính":           "fa-briefcase",
+    "hành chính - nhân sự": "fa-briefcase",
+    "hành chính nhân sự":   "fa-briefcase",
+
+    # ─── Mua bán / Kho vận ───
+    "thu mua":              "fa-shopping-cart",
+    "xuất nhập khẩu":       "fa-ship",
+    "logistics":            "fa-truck",
+    "vận tải":              "fa-truck",
+    "kho":                  "fa-warehouse",
+    "bán hàng":             "fa-store",
+    "kinh doanh":           "fa-chart-line",
+    "marketing":            "fa-bullhorn",
+    "dịch vụ khách hàng":   "fa-headset",
+    "chăm sóc khách hàng":  "fa-headset",
+
+    # ─── Kế toán / Tài chính ───
+    "kế toán":              "fa-calculator",
+    "tài chính":            "fa-coins",
+    "hành chính kế toán":   "fa-file-invoice-dollar",
+
+    # ─── Sản xuất / Kỹ thuật ───
+    "sản xuất":             "fa-industry",
+    "kế hoạch sản xuất":    "fa-calendar-alt",
+    "kỹ thuật":             "fa-tools",
+    "bảo trì":              "fa-tools",
+    "chất lượng":           "fa-award",
+    "qa":                   "fa-award",
+    "qc":                   "fa-award",
+    "r&d":                  "fa-flask",
+    "nghiên cứu":           "fa-flask",
+
+    # ─── Ngành đặc thù ───
+    "giày da":              "fa-shoe-prints",
+    "may mặc":              "fa-tshirt",
+    "dệt may":              "fa-tshirt",
+    "thực phẩm":            "fa-utensils",
+    "nông nghiệp":          "fa-seedling",
+
+    # ─── IT / Công nghệ ───
+    "máy tính & it":        "fa-laptop-code",
+    "máy tính":             "fa-laptop-code",
+    "công nghệ thông tin":  "fa-laptop-code",
+    "it":                   "fa-laptop-code",
 }
-DEFAULT_ICON = ("fa-folder", "#64748b")
+
+# Icon mặc định nếu không match ngành nào
+DEFAULT_ICON_NAME = "fa-folder"
+
+# ═══════════════════════════════════════════════════════════════════
+#  MÀU ĐỒNG NHẤT — TẤT CẢ NÚT DÙNG CÙNG MÀU NÀY
+#  (Tím giống IT hiện tại)
+# ═══════════════════════════════════════════════════════════════════
+UNIFIED_COLOR = "#7c3aed"     # ← Đổi màu ở đây nếu muốn (VD: "#6366f1", "#0ea5e9")
 
 
 def auto_detect_icon_color(display_name):
-    """Chọn icon/màu dựa theo tên chuyên ngành (không phân biệt hoa thường)."""
+    """
+    Trả về tuple (icon, color).
+    - Icon: RIÊNG cho từng ngành (match theo nhiều cấp)
+    - Color: LUÔN = UNIFIED_COLOR → đồng bộ style
+    """
     key = display_name.strip().lower()
+
+    # ─── 1. Match CHÍNH XÁC tên ───
     if key in ICON_MAP:
-        return ICON_MAP[key]
-    for k, v in ICON_MAP.items():
-        if k in key or key in k:
-            return v
-    return DEFAULT_ICON
+        return (ICON_MAP[key], UNIFIED_COLOR)
+
+    # ─── 2. Match theo TỪ riêng (tránh "it" match bừa trong "unity") ───
+    #     VD: "máy tính & it" → ["máy", "tính", "&", "it"] → key "it" có trong list
+    words = re.split(r'[\s&\-_/,\.]+', key)
+    # Ưu tiên key DÀI match trước (tránh "it" match trước "máy tính & it")
+    for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
+        if k in words:
+            return (ICON_MAP[k], UNIFIED_COLOR)
+
+    # ─── 3. Match substring (CHỈ key >= 3 ký tự, tránh "it"/"qa"/"qc") ───
+    for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
+        if len(k) >= 3 and k in key:
+            return (ICON_MAP[k], UNIFIED_COLOR)
+
+    return (DEFAULT_ICON_NAME, UNIFIED_COLOR)
 
 
 def slugify_dataset_id(filename):
     """Tạo id slug từ tên file: 'Nhân_sự.xlsx' → 'nhan-su'."""
-    base = filename.rsplit(".", 1)[0]  # bỏ .xlsx
-    # Bỏ dấu tiếng Việt
+    base = filename.rsplit(".", 1)[0]
     base = unicodedata.normalize("NFD", base)
     base = "".join(c for c in base if unicodedata.category(c) != "Mn")
     base = base.replace("đ", "d").replace("Đ", "D")
@@ -132,7 +205,7 @@ def slugify_dataset_id(filename):
     return base or "dataset"
 
 
-# ─── 3. Khởi tạo DATASET_REGISTRY với dataset "tonghop" ───
+# ─── 3. Khởi tạo DATASET_REGISTRY ───
 DATASET_REGISTRY = {
     "tonghop": {
         "id": "tonghop",
@@ -145,7 +218,7 @@ DATASET_REGISTRY = {
     }
 }
 
-# ─── 4. Quét thư mục data/ để tự động phát hiện chuyên ngành ───
+# ─── 4. Quét thư mục data/ ───
 _tonghop_abs = os.path.abspath(EXCEL_FILE)
 _chuyen_nganh_count = 0
 
@@ -153,18 +226,15 @@ if os.path.isdir(DATA_DIR):
     excel_files = []
     for ext in ("*.xlsx", "*.xls", "*.csv"):
         excel_files.extend(glob.glob(os.path.join(DATA_DIR, ext)))
-    excel_files.sort()  # Sắp xếp A→Z theo tên file
+    excel_files.sort()
 
     print(f"\n🔍 Quét thư mục '{DATA_DIR}/' — tìm thấy {len(excel_files)} file Excel")
 
     for filepath in excel_files:
         filename = os.path.basename(filepath)
 
-        # Bỏ qua file tạm của Excel (bắt đầu bằng ~$)
         if filename.startswith("~$"):
             continue
-
-        # Bỏ qua file tổng hợp (đã đọc ở trên)
         if os.path.abspath(filepath) == _tonghop_abs:
             print(f"⏭️  {filename} — bỏ qua (file tổng hợp)")
             continue
@@ -175,13 +245,10 @@ if os.path.isdir(DATA_DIR):
                 print(f"⚠️  {filename}: file rỗng, bỏ qua")
                 continue
 
-            # Tên hiển thị = tên file bỏ extension, thay _ bằng khoảng trắng
             display_name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
-            # Title case nếu viết thường hoặc viết HOA toàn bộ
             if display_name.islower() or display_name.isupper():
                 display_name = display_name.title()
 
-            # Sinh id slug, tránh trùng
             dataset_id = slugify_dataset_id(filename)
             base_id = dataset_id
             counter = 2
@@ -189,7 +256,6 @@ if os.path.isdir(DATA_DIR):
                 dataset_id = f"{base_id}-{counter}"
                 counter += 1
 
-            # Tự động detect icon + màu theo tên
             icon, color = auto_detect_icon_color(display_name)
 
             DATASET_REGISTRY[dataset_id] = {
@@ -214,14 +280,14 @@ else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
     print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
-# ─── 5. Serialize DATASET_REGISTRY → JSON (giữ nguyên tiếng Việt) ───
+# ─── 5. Serialize DATASET_REGISTRY ───
 dataset_registry_json = json.dumps(
     DATASET_REGISTRY,
     ensure_ascii=False,
     separators=(",", ":"),
 ).replace("</", "<\\/")
 
-# ─── 6. RAW_DATA = tổng hợp (backward compat với code cũ) ───
+# ─── 6. RAW_DATA ───
 json_data = json.dumps(data_tonghop, ensure_ascii=False, separators=(",", ":"))
 json_data = json_data.replace("</", "<\\/")
 
@@ -229,7 +295,7 @@ firebase_config_json = json.dumps(CONFIG["firebase_config"], ensure_ascii=False)
 synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=False, separators=(",", ":"))
 fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=False, separators=(",", ":"))
 
-# ─── 7. Onboarding config (Demo + Trial chọn chủ đề quan tâm) ───
+# ─── 7. Onboarding config ───
 onboarding_config_json = json.dumps(
     CONFIG.get("onboarding", {}),
     ensure_ascii=False,
@@ -303,7 +369,7 @@ FULLWIDTH_CSS = r"""
 
 .result-count { margin-top: .5rem !important; }
 
-/* ═══ GRID CARDS: 1 CỘT MOBILE — 2 CỘT MÁY TÍNH ═══ */
+/* ═══ GRID CARDS ═══ */
 .mobile-view {
     display: grid !important;
     width: 100% !important;
@@ -392,6 +458,34 @@ FULLWIDTH_CSS = r"""
 
 
 /* ═══════════════════════════════════════════════════════════════════
+   ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
+   PC: [Tổng hợp] [Chuyên ngành] [Yêu thích] — 3 cột đều
+   Mobile: Yêu thích tự xuống hàng riêng
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* PC: ds-main-row chia 3 cột */
+@media (min-width: 769px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr 1fr !important;
+    }
+}
+
+/* Mobile: 2 cột (Yêu thích xuống hàng) */
+@media (max-width: 768px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* Mobile rất nhỏ: 1 cột dọc */
+@media (max-width: 500px) {
+    .ds-main-row {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
    ★★★ HEADER DESIGN ★★★
    ═══════════════════════════════════════════════════════════════════ */
 
@@ -416,7 +510,6 @@ FULLWIDTH_CSS = r"""
     gap: .9rem !important;
 }
 
-/* ─── Logo icon ─── */
 .logo-icon {
     width: clamp(46px, 4.5vw, 58px) !important;
     height: clamp(46px, 4.5vw, 58px) !important;
@@ -476,7 +569,6 @@ FULLWIDTH_CSS = r"""
         inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
 }
 
-/* ─── Text group ─── */
 .logo-text {
     display: flex !important;
     flex-direction: column !important;
@@ -486,7 +578,6 @@ FULLWIDTH_CSS = r"""
     gap: 4px !important;
 }
 
-/* ─── Tiêu đề: gradient text ─── */
 .logo-text .title {
     font-size: clamp(1.25rem, 1.9vw, 1.7rem) !important;
     font-weight: 900 !important;
@@ -509,9 +600,6 @@ FULLWIDTH_CSS = r"""
     -webkit-text-fill-color: transparent !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★★ SUBTITLE: PILL NỔI BẬT VỚI ICON ✦ LẤP LÁNH ★★
-   ═══════════════════════════════════════════════════════════════════ */
 .logo-text .subtitle {
     display: inline-flex !important;
     align-items: center !important;
@@ -603,7 +691,6 @@ FULLWIDTH_CSS = r"""
         0 0 16px rgba(165, 180, 252, 0.6) !important;
 }
 
-/* ─── Header actions ─── */
 .header-actions {
     flex: 0 0 auto !important;
     margin-left: auto !important;
@@ -640,7 +727,6 @@ FULLWIDTH_CSS = r"""
     border-color: rgba(165, 180, 252, 0.5) !important;
 }
 
-/* ─── Badge Trial: shimmer ─── */
 .header-actions .trial-badge {
     position: relative !important;
     overflow: hidden !important;
@@ -684,7 +770,6 @@ FULLWIDTH_CSS = r"""
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
 }
 
-/* ─── Mobile ─── */
 @media (max-width: 768px) {
     .logo { gap: .65rem !important; }
     .logo-icon {
@@ -732,12 +817,13 @@ full_css = (
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
     + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
     + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
+    + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP HTML BODY  ← ⬇️⬇️⬇️ SỬA 2 ĐOẠN Ở ĐÂY
+#  GHÉP HTML BODY
 # ═══════════════════════════════════════════════════════════════════
 ui_html = build_ui_html()
 ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
@@ -746,21 +832,64 @@ ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 # ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
-# ═══ 1. Tab Yêu thích — chèn SAU nút Chuyên ngành (đứng cuối) ═══
-# Regex: tìm nguyên cụm nút Chuyên ngành (bao gồm nội dung con), rồi chèn Yêu thích sau nó
-ui_html = re.sub(
-    r'(<button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">.*?</button>)',
-    r'\1\n        ' + _fav_html["dataset_tab"],
-    ui_html,
-    count=1,
-    flags=re.DOTALL
+# ═══════════════════════════════════════════════════════════════════
+# ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
+# 3 tab cùng hàng trên PC, mobile tự xuống hàng
+# ═══════════════════════════════════════════════════════════════════
+ui_html = ui_html.replace(
+    '<!-- __FAV_DATASET_TAB__ -->',
+    _fav_html["dataset_tab"]
 )
+if 'data-dataset-group="favorites"' not in ui_html:
+    print("⚠️  Chưa chèn được tab Yêu thích — kiểm tra placeholder")
+    print("   <!-- __FAV_DATASET_TAB__ --> trong ui_template.py")
+else:
+    print("✅ Đã chèn tab Yêu thích vào ds-main-row")
 
-# ═══ 2. Nút tim FLOAT — chèn trước TikTok float trong Practice Full ═══
+# ═══════════════════════════════════════════════════════════════════
+# ═══ 2. ★ HAI NÚT FLOAT trong Practice Full ═══
+#     - Nút tim (pf_float_btn) — góc phải
+#     - Nút toggle "Chỉ câu yêu thích" (pf_fav_only_btn) — góc trái
+#     Cả 2 chèn ngay trước TikTok float
+# ═══════════════════════════════════════════════════════════════════
+_pf_buttons = _fav_html["pf_float_btn"] + '\n' + _fav_html["pf_fav_only_btn"]
+
 ui_html = ui_html.replace(
     '<a class="pf-tiktok-float" id="pfTiktokFloat"',
-    _fav_html["pf_float_btn"] + '\n<a class="pf-tiktok-float" id="pfTiktokFloat"'
+    _pf_buttons + '\n<a class="pf-tiktok-float" id="pfTiktokFloat"'
 )
+
+# ═══ 3. Dropdown item Yêu thích — chèn SAU item Chuyên ngành trong DROPDOWN ═══
+# Tìm item Chuyên ngành trong dropdown (không phải tab) và chèn Yêu thích sau nó
+_dd_patterns = [
+    # Pattern chính: dropdown item với class ds-dropdown-item + data-dataset-group
+    r'(<button[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</button>)',
+    # Fallback: dropdown item có id riêng
+    r'(<button[^>]*id="dsChuyenNganhDropdownItem"[^>]*>.*?</button>)',
+    # Fallback: <a> tag thay vì <button>
+    r'(<a[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</a>)',
+]
+
+_dd_inserted = False
+for _pat in _dd_patterns:
+    if _dd_inserted:
+        break
+    _new, _n = re.subn(
+        _pat,
+        r'\1\n            ' + _fav_html["dataset_dropdown_item"],
+        ui_html,
+        count=1,
+        flags=re.DOTALL
+    )
+    if _n > 0:
+        ui_html = _new
+        _dd_inserted = True
+        print("✅ Đã chèn 'Yêu thích' vào dropdown bộ dữ liệu")
+
+if not _dd_inserted:
+    print("⚠️  Chưa tìm thấy item Chuyên ngành trong dropdown.")
+    print("   → Kiểm tra lại class/id của dropdown item trong ui_template.py")
+    print("   → Hoặc chèn thủ công snippet 'dataset_dropdown_item' vào đúng vị trí")
 
 social_html = build_social_html()
 ui_html = ui_html.replace(
@@ -772,6 +901,7 @@ full_body = (
     '<div class="page-wrap">\n'
     + ui_html
     + "\n" + auth_html
+    + "\n" + build_chat_html()
     + '\n</div>'
 )
 
@@ -785,6 +915,7 @@ full_js = (
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
+    + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
 )
 
 
@@ -863,7 +994,9 @@ window.__switchRawData = function(datasetId) {
 
         console.log('📲 Telegram module init:', {
             hasToken: _TG_TOKEN && _TG_TOKEN.indexOf('__') !== 0 && _TG_TOKEN.length > 20,
-            tokenPreview: _TG_TOKEN ? _TG_TOKEN.substring(0, 15) + '...' : '(empty)',
+            tokenPreview: (_TG_TOKEN && _TG_TOKEN.length > 15)
+                ? _TG_TOKEN.substring(0, 15) + '...'
+                : '(empty)',
             chatId: _TG_CHAT || '(empty)'
         });
 
@@ -937,12 +1070,12 @@ window.__switchRawData = function(datasetId) {
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
 html_output = (HTML_SHELL
-    # 1. Nhúng khối lớn TRƯỚC
+    # 1. Nhúng khối lớn
     .replace("__CSS__",  full_css)
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
 
-    # 2. Data blobs (JSON — đã escape </ ở trên)
+    # 2. Data blobs
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
@@ -960,7 +1093,7 @@ html_output = (HTML_SHELL
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
 
-    # 4. String configs — dùng _js_str để escape an toàn
+    # 4. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
@@ -983,10 +1116,11 @@ print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
 print(f"📝 Tổng số câu hỏi: {total_questions}")
-print(f"❤️  Đã tích hợp: Yêu thích (tab cuối + nút float góc dưới)")
+print(f"❤️  Yêu thích: 3 tab cùng hàng (PC) + dropdown + 2 nút float")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
+print(f"💬 Chat Support: đã thêm (user ↔ admin)")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
