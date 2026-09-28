@@ -29,15 +29,9 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
    - FAB + badge poll 60s
    - Admin panel có tab "Chat hỗ trợ"
 
-✅ QUOTA DASHBOARD: Đếm reads/writes/deletes client-side
-   - Chèn vào Admin Panel qua placeholder __ADMIN_QUOTA_SECTION__
-
 ✅ FIX (2026-09):
-   - Import + chèn Quota HTML/JS (trước đây bị thiếu)
-   - Escape "</" cho TẤT CẢ JSON blobs (tránh phá </script>)
-   - Helper _safe_replace() cảnh báo khi placeholder không match
-   - Verify window.db / window.currentUser shim
-   - Thêm log debug chi tiết từng bước ghép
+   - Chèn QUOTA DASHBOARD vào Admin Panel (trước đây bị thiếu)
+   - Escape "</" cho TẤT CẢ JSON blobs
 """
 import json
 import os
@@ -48,7 +42,7 @@ import unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config_loader import load_config, print_banner
+from config_loader import load_config, print_banner, CONFIG_FILE
 from data_reader import read_excel
 from ui_template import build_ui_css, build_ui_html, build_ui_js
 from social_template import (
@@ -74,7 +68,7 @@ from favorites_module import (
     build_favorites_js,
 )
 
-# ⬇️⬇️⬇️ Module Chat Support + Quota (độc lập)
+# ⬇️⬇️⬇️ Module Chat Support (độc lập) + Quota
 from chat_support import (
     build_chat_css,
     build_chat_html,
@@ -89,7 +83,7 @@ from chat_support import (
 #  HELPER: escape string an toàn khi nhúng vào JS
 # ═══════════════════════════════════════════════════════════════════
 def _js_str(s):
-    """Escape string để nhúng an toàn vào JS (giữa 2 dấu \\")."""
+    """Escape string để nhúng an toàn vào JS (giữa 2 dấu \")."""
     if s is None:
         return ""
     return (str(s)
@@ -103,26 +97,14 @@ def _js_str(s):
 
 def _json_blob(obj, compact=True):
     """
-    Serialize object → JSON string an toàn để nhúng vào <script>.
-    - ensure_ascii=False: giữ tiếng Việt/Trung
-    - Escape "</" → "<\\/" để tránh đóng </script> sớm
+    Serialize object → JSON an toàn để nhúng vào <script>.
+    Escape "</" → "<\\/" để tránh đóng </script> sớm.
     """
     if compact:
         s = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
     else:
         s = json.dumps(obj, ensure_ascii=False)
     return s.replace("</", "<\\/")
-
-
-def _safe_replace(html, placeholder, replacement, label=""):
-    """
-    Replace placeholder trong html, có cảnh báo nếu không tìm thấy.
-    Trả về (html_mới, đã_replace: bool).
-    """
-    if placeholder not in html:
-        print(f"⚠️  Không tìm thấy placeholder {placeholder!r} — {label}")
-        return html, False
-    return html.replace(placeholder, replacement), True
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -140,10 +122,7 @@ DATA_DIR = CONFIG.get("data_dir", "data")
 data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
-# ═══════════════════════════════════════════════════════════════════
-#  ICON MAP — MỖI NGÀNH 1 ICON RIÊNG
-#  Màu đồng nhất cho TẤT CẢ = UNIFIED_COLOR (tím giống IT)
-# ═══════════════════════════════════════════════════════════════════
+# ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
 ICON_MAP = {
     # ─── Nhân sự / Hành chính ───
     "nhân sự":              "fa-users",
@@ -194,14 +173,7 @@ ICON_MAP = {
 }
 
 DEFAULT_ICON_NAME = "fa-folder"
-
-# ═══════════════════════════════════════════════════════════════════
-#  MÀU ĐỒNG NHẤT — TẤT CẢ NÚT DÙNG CÙNG MÀU NÀY (Tím)
-# ═══════════════════════════════════════════════════════════════════
 UNIFIED_COLOR = "#7c3aed"
-
-# Cache sorted keys (tối ưu, tránh sort lại 2 lần)
-_ICON_KEYS_BY_LEN = sorted(ICON_MAP.keys(), key=len, reverse=True)
 
 
 def auto_detect_icon_color(display_name):
@@ -218,12 +190,12 @@ def auto_detect_icon_color(display_name):
 
     # ─── 2. Match theo TỪ riêng ───
     words = re.split(r'[\s&\-_/,\.]+', key)
-    for k in _ICON_KEYS_BY_LEN:
+    for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if k in words:
             return (ICON_MAP[k], UNIFIED_COLOR)
 
     # ─── 3. Match substring (CHỈ key >= 3 ký tự) ───
-    for k in _ICON_KEYS_BY_LEN:
+    for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if len(k) >= 3 and k in key:
             return (ICON_MAP[k], UNIFIED_COLOR)
 
@@ -254,7 +226,7 @@ DATASET_REGISTRY = {
 }
 
 # ─── 4. Quét thư mục data/ ───
-_tonghop_abs = os.path.realpath(EXCEL_FILE)
+_tonghop_abs = os.path.abspath(EXCEL_FILE)
 _chuyen_nganh_count = 0
 
 if os.path.isdir(DATA_DIR):
@@ -270,7 +242,7 @@ if os.path.isdir(DATA_DIR):
 
         if filename.startswith("~$"):
             continue
-        if os.path.realpath(filepath) == _tonghop_abs:
+        if os.path.abspath(filepath) == _tonghop_abs:
             print(f"⏭️  {filename} — bỏ qua (file tổng hợp)")
             continue
 
@@ -315,10 +287,9 @@ else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
     print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
-# ─── 5. Serialize DATASET_REGISTRY + các blob JSON (đã escape an toàn) ───
+# ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
 json_data = _json_blob(data_tonghop)
-
 firebase_config_json = _json_blob(CONFIG["firebase_config"])
 synonyms_json = _json_blob(CONFIG["synonyms"])
 fillers_json = _json_blob(CONFIG["filler_words"])
@@ -329,19 +300,20 @@ telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  BUILD AUTH + CHÈN QUOTA SECTION
+#  BUILD AUTH + CHÈN QUOTA SECTION  ⬅️ ĐÂY LÀ FIX #2
 # ═══════════════════════════════════════════════════════════════════
 auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
-# ⬇️⬇️⬇️ Chèn Quota Dashboard vào Admin Panel (placeholder trong accounts_template)
-auth_html, _ok_quota = _safe_replace(
-    auth_html,
-    "<!-- __ADMIN_QUOTA_SECTION__ -->",
-    build_quota_html(),
-    label="Quota Dashboard trong Admin Panel"
-)
-if _ok_quota:
+# ⬇️⬇️⬇️ THÊM: Chèn Quota Dashboard vào Admin Panel
+if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
+    auth_html = auth_html.replace(
+        '<!-- __ADMIN_QUOTA_SECTION__ -->',
+        build_quota_html()
+    )
     print("✅ Đã chèn Quota Dashboard vào Admin Panel")
+else:
+    print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_QUOTA_SECTION__ -->")
+    print("   → Kiểm tra accounts_template.py → build_accounts_html()")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -853,52 +825,32 @@ full_css = (
 #  GHÉP HTML BODY
 # ═══════════════════════════════════════════════════════════════════
 ui_html = build_ui_html()
+ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
+ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 
-# ─── TikTok bar + Intro banner ───
-ui_html, _ = _safe_replace(
-    ui_html,
-    "<!-- __TIKTOK_BAR__ -->",
-    build_tiktok_bar_html(),
-    label="TikTok bar"
-)
-ui_html, _ = _safe_replace(
-    ui_html,
-    "<!-- __QUICK_INTRO_BANNER__ -->",
-    build_intro_html(),
-    label="Intro banner"
-)
-
-# ─── Favorites snippets ───
+# ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
 # ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
-ui_html, _ok_fav_tab = _safe_replace(
-    ui_html,
-    "<!-- __FAV_DATASET_TAB__ -->",
-    _fav_html["dataset_tab"],
-    label="Tab Yêu thích trong ds-main-row"
+ui_html = ui_html.replace(
+    '<!-- __FAV_DATASET_TAB__ -->',
+    _fav_html["dataset_tab"]
 )
-if _ok_fav_tab and 'data-dataset-group="favorites"' not in ui_html:
-    print("⚠️  Tab Yêu thích có replace nhưng không thấy data-dataset-group='favorites'")
-elif _ok_fav_tab:
+if 'data-dataset-group="favorites"' not in ui_html:
+    print("⚠️  Chưa chèn được tab Yêu thích — kiểm tra placeholder")
+    print("   <!-- __FAV_DATASET_TAB__ --> trong ui_template.py")
+else:
     print("✅ Đã chèn tab Yêu thích vào ds-main-row")
 
 # ═══ 2. HAI NÚT FLOAT trong Practice Full ═══
 _pf_buttons = _fav_html["pf_float_btn"] + '\n' + _fav_html["pf_fav_only_btn"]
 
-_PF_ANCHOR = '<a class="pf-tiktok-float" id="pfTiktokFloat"'
-if _PF_ANCHOR in ui_html:
-    ui_html = ui_html.replace(
-        _PF_ANCHOR,
-        _pf_buttons + '\n' + _PF_ANCHOR,
-        1
-    )
-    print("✅ Đã chèn 2 nút float Favorites (tim + chỉ câu yêu thích)")
-else:
-    print("⚠️  Không tìm thấy anchor pfTiktokFloat để chèn 2 nút float Favorites")
-    print("   → Kiểm tra <a class='pf-tiktok-float' id='pfTiktokFloat' trong ui_template.py")
+ui_html = ui_html.replace(
+    '<a class="pf-tiktok-float" id="pfTiktokFloat"',
+    _pf_buttons + '\n<a class="pf-tiktok-float" id="pfTiktokFloat"'
+)
 
-# ═══ 3. Dropdown item Yêu thích — chèn SAU item Chuyên ngành ═══
+# ═══ 3. Dropdown item Yêu thích ═══
 _dd_patterns = [
     r'(<button[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</button>)',
     r'(<button[^>]*id="dsChuyenNganhDropdownItem"[^>]*>.*?</button>)',
@@ -911,7 +863,7 @@ for _pat in _dd_patterns:
         break
     _new, _n = re.subn(
         _pat,
-        lambda m: m.group(1) + '\n            ' + _fav_html["dataset_dropdown_item"],
+        r'\1\n            ' + _fav_html["dataset_dropdown_item"],
         ui_html,
         count=1,
         flags=re.DOTALL
@@ -923,19 +875,15 @@ for _pat in _dd_patterns:
 
 if not _dd_inserted:
     print("⚠️  Chưa tìm thấy item Chuyên ngành trong dropdown.")
-    print("   → Kiểm tra class/id của dropdown item trong ui_template.py")
+    print("   → Kiểm tra lại class/id của dropdown item trong ui_template.py")
     print("   → Hoặc chèn thủ công snippet 'dataset_dropdown_item' vào đúng vị trí")
 
-# ─── Social HTML (chèn trước writer modal) ───
 social_html = build_social_html()
-_WRITER_ANCHOR = '<div class="writer-modal" id="writerModal">'
-if _WRITER_ANCHOR in ui_html:
-    ui_html = ui_html.replace(_WRITER_ANCHOR, social_html + '\n' + _WRITER_ANCHOR, 1)
-    print("✅ Đã chèn Social HTML")
-else:
-    print("⚠️  Không tìm thấy writer-modal để chèn Social HTML")
+ui_html = ui_html.replace(
+    '<div class="writer-modal" id="writerModal">',
+    social_html + '\n<div class="writer-modal" id="writerModal">'
+)
 
-# ─── Ghép body hoàn chỉnh ───
 full_body = (
     '<div class="page-wrap">\n'
     + ui_html
@@ -955,8 +903,8 @@ full_js = (
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
     + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
-    + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
-    + "\n/* ==== 📊 QUOTA INIT JS (bind buttons) ==== */\n" + build_quota_init_js()
+    + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()          # ⬅️ THÊM
+    + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()   # ⬅️ THÊM
 )
 
 
@@ -1024,39 +972,6 @@ window.__switchRawData = function(datasetId) {
     CURRENT_DATASET = datasetId;
     return true;
 };
-
-/* ============ SHIM: Đảm bảo window.db / window.currentUser LUÔN đồng bộ ============
-   - accounts_template.py khai báo `var db` và `var currentUser` ở top-level
-   - Chat Support (chat_support.py) đọc `window.db` / `window.currentUser`
-   - Ở browser, `var` top-level = window.X → OK
-   - Nhưng để CHẮC CHẮN, ta định nghĩa getter fallback ở đây.
-*/
-(function() {
-    try {
-        // Nếu window.db chưa có, tạo alias lazy cho biến `db` toàn cục
-        if (typeof window.db === 'undefined') {
-            Object.defineProperty(window, 'db', {
-                configurable: true,
-                get: function() {
-                    // `db` là biến var top-level trong accounts_js
-                    try { return (typeof db !== 'undefined') ? db : null; }
-                    catch(e) { return null; }
-                }
-            });
-        }
-        if (typeof window.currentUser === 'undefined') {
-            Object.defineProperty(window, 'currentUser', {
-                configurable: true,
-                get: function() {
-                    try { return (typeof currentUser !== 'undefined') ? currentUser : null; }
-                    catch(e) { return null; }
-                }
-            });
-        }
-    } catch(e) {
-        console.warn('[Shim] Không thể tạo alias window.db / window.currentUser:', e);
-    }
-})();
 </script>
 
 <script>
@@ -1149,7 +1064,7 @@ html_output = (HTML_SHELL
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
 
-    # 2. Data blobs (đã escape "</" trong helper _json_blob)
+    # 2. Data blobs (đã escape "</" qua _json_blob)
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
@@ -1167,7 +1082,7 @@ html_output = (HTML_SHELL
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
 
-    # 4. String configs (đã escape an toàn)
+    # 4. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
@@ -1195,7 +1110,7 @@ print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
 print(f"💬 Chat Support: đã thêm (user ↔ admin)")
-print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")
+print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")   # ⬅️ THÊM log
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
