@@ -8,9 +8,7 @@ Ghép 7 template: ui + social + accounts + intro + favorites + chat + quota.
 ✅ ONBOARDING: Demo + Trial hỏi chọn chủ đề → filter + chia đều theo HSK.
 ✅ INTRO: Banner + Modal 6 slide.
 ✅ FAVORITES: 3 tab cùng hàng + nút tim float + toggle "chỉ câu yêu thích".
-✅ CHAT SUPPORT: onSnapshot + array messages (tối ưu 200+ user)
-                 + giới hạn 50 tin/ngày + gợi ý Zalo + tự mở khi có tin.
-✅ QUOTA: Dashboard theo dõi reads/writes/deletes Firestore trong Admin Panel.
+✅ CHAT SUPPORT + QUOTA: Nút chat + Zalo + TikTok ở góc trái-dưới.
 """
 import json
 import os
@@ -827,14 +825,20 @@ for _pat in _dd_patterns:
 if not _dd_inserted:
     print("⚠️  Chưa tìm thấy item Chuyên ngành trong dropdown.")
 
-# ═══ 4. Social HTML ═══
+# ═══ 4. Social HTML (Zalo + TikTok) — LUÔN CHÈN ĐƯỢC ═══
 social_html = build_social_html()
-ui_html = ui_html.replace(
-    '<div class="writer-modal" id="writerModal">',
-    social_html + '\n<div class="writer-modal" id="writerModal">'
-)
+if '<div class="writer-modal" id="writerModal">' in ui_html:
+    ui_html = ui_html.replace(
+        '<div class="writer-modal" id="writerModal">',
+        social_html + '\n<div class="writer-modal" id="writerModal">'
+    )
+    print("✅ Đã chèn Social HTML (Zalo + TikTok) vào trước writerModal")
+else:
+    # Fallback: append vào cuối ui_html — LUÔN HOẠT ĐỘNG
+    ui_html = ui_html + '\n' + social_html
+    print("✅ Đã chèn Social HTML (Zalo + TikTok) vào cuối ui_html (fallback)")
 
-# ═══ 5. Auth HTML — chèn Quota Section vào Admin Panel ═══
+# ═══ 5. Auth HTML — chèn Quota Section ═══
 _quota_html = build_quota_html()
 
 if "<!-- __ADMIN_QUOTA_SECTION__ -->" in auth_html:
@@ -985,7 +989,7 @@ window.__switchRawData = function(datasetId) {
                 if (reqData.isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
                 msg += '\n';
                 msg += '⏱ ' + (reqData.isPermanent ? 'Mãi mãi' : (reqData.days || 0) + ' ngày') + '\n';
-                msg += '🔑 <code>' + (reqData.transferCode || '') + '</code>\n';
+                msg += '🔑 <code>' +O (reqData.transferCode || '')_L + '</code>\n';
                 msg += '⚡ <b>Vào Admin Panel xác nhận!</b>';
                 window.sendTelegramMessage(msg);
             } catch(e) { console.warn('notifyTelegramUserPaid:', e); }
@@ -1019,21 +1023,16 @@ window.__switchRawData = function(datasetId) {
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
 html_output = (HTML_SHELL
-    # 1. Nhúng khối lớn
     .replace("__CSS__",  full_css)
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
-
-    # 2. Data blobs
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
     .replace("__SYNONYMS__",          synonyms_json)
     .replace("__FILLER_WORDS__",      fillers_json)
     .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
-
-    # 3. Numeric configs
-    .replace("__DEMO_LIMIT__",            str(int(CONFIG["demo_limit"])))
+    .replace("__DEMIMIT__",            str(int(CONFIG["demo_limit"])))
     .replace("__DEMO_DAILY_LIMIT__",      str(int(CONFIG["demo_daily_limit"])))
     .replace("__DEMO_HSK_MAX__",          str(int(CONFIG["demo_hsk_max"])))
     .replace("__TRIAL_MAX_QUESTIONS__",   str(int(CONFIG.get("trial_max_questions", 50))))
@@ -1041,8 +1040,6 @@ html_output = (HTML_SHELL
     .replace("__TRIAL_UNLIMITED_WRITING__",
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
-
-    # 4. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
@@ -1070,7 +1067,7 @@ print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
 print(f"💬 Chat Support: onSnapshot + array (tối ưu 200+ user)")
-print(f"📊 Quota Dashboard: có trong Admin Panel (mặc định thu gọn)")
+print(f"📊 Quota Dashboard: có trong Admin Panel")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
