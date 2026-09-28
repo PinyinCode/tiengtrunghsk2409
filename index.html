@@ -6707,9 +6707,9 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
     pointer-events:none;
 }
 
-/* Khi cụm floating group đang mở → đẩy chat lên VỪA ĐỦ để không đè */
+/* Khi cụm floating group đang mở → đẩy chat lên vừa đủ, có khoảng cách với TikTok */
 body.has-floating-group #chatFloatWrap{
-    bottom:calc(55px + env(safe-area-inset-bottom));
+    bottom:calc(150px + env(safe-area-inset-bottom));
 }
 
 @media (max-width:768px){
@@ -6718,7 +6718,7 @@ body.has-floating-group #chatFloatWrap{
         bottom:calc(12px + env(safe-area-inset-bottom));
     }
     body.has-floating-group #chatFloatWrap{
-        bottom:calc(42px + env(safe-area-inset-bottom));
+        bottom:calc(150px + env(safe-area-inset-bottom));
     }
 }
 @media (max-width:400px){
@@ -6727,7 +6727,7 @@ body.has-floating-group #chatFloatWrap{
         bottom:calc(10px + env(safe-area-inset-bottom));
     }
     body.has-floating-group #chatFloatWrap{
-        bottom:calc(40px + env(safe-area-inset-bottom));
+        bottom:calc(144px + env(safe-area-inset-bottom));
     }
 }
 
@@ -6805,10 +6805,10 @@ body.has-floating-group #chatFloatWrap{
 .chat-limit-banner .clb-text b{color:#dc2626;font-weight:900;}
 .chat-limit-banner .clb-actions{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem;}
 .chat-limit-banner .clb-btn{padding:.35rem .7rem;border-radius:50px;border:none;font-size:.72rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;transition:.15s;white-space:nowrap;}
-.chat-limit-banner .clb-btn.zalo{background:linear-gradient(135deg,#0068ff,#0052cc);color:#fff;box-shadow:0 3px 10px rgba(0,104,255,.35);}
-.chat-limit-banner .clb-btn.zalo:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,104,255,.5);color:#fff;}
-.chat-limit-banner .clb-btn.dismiss{background:rgba(120,53,15,.15);color:#78350f;}
-.chat-limit-banner .clb-btn.dismiss:hover{background:rgba(120,53,15,.25);}
+.chat-limit-banner .clb-btn.zalo{background:linear-gradient(135deg,#0068ff,#0052cc);color:#fff;clbox-shadow:0 3pxb 10px rgba(0-btn,104,255,.35);.d}
+.chat-limit-bismissanner .clb-btn.zalo:hover:hover{transform:translateY(-{1px);box-shadow:0background 5px 14px rgba:rgba(0,(104,255,.5120);color:#fff;}
+.ch,at-limit-banner .53clb-btn.dismiss{background:rgba,(120,53,15,.15,.2515);color:#78350f;}
+.chat-limit-banner .);}
 @keyframes chatLimitSlide{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 
 /* ═══ ADMIN LIST ═══ */
