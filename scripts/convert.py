@@ -100,6 +100,10 @@ from admin_chat_manager import (
     build_admin_chat_html,
     build_admin_chat_js,
 )
+from draggable_fab import (
+    build_draggable_fab_css,
+    build_draggable_fab_js,
+)
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
 # ═══════════════════════════════════════════════════════════════════
@@ -851,9 +855,9 @@ full_css = (
     + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
     + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
     + "\n/* ==== 📋 ADMIN CHAT MANAGER CSS ==== */\n" + build_admin_chat_css()
+    + "\n/* ==== 🎯 DRAGGABLE FAB CSS ==== */\n" + build_draggable_fab_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
-
 
 # ═══════════════════════════════════════════════════════════════════
 #  GHÉP HTML BODY
@@ -943,6 +947,7 @@ full_js = (
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
     + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
     + "\n/* ==== 📋 ADMIN CHAT MANAGER JS ==== */\n" + build_admin_chat_js()
+    + "\n/* ==== 🎯 DRAGGABLE FAB JS ==== */\n" + build_draggable_fab_js()
     + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
     + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
