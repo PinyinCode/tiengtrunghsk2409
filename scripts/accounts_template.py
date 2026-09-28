@@ -1721,6 +1721,1216 @@ def build_renewal_css():
 
 def build_renewal_js(config=None):
     return ""
+ # ═══════════════════════════════════════════════════════════════
+# 💬 CHAT SUPPORT JS — Thêm vào cuối build_accounts_js
+# Cách dùng: append chuỗi JS này vào cuối biến `js` trong build_accounts_js
+# ═══════════════════════════════════════════════════════════════
+def build_chat_support_js():
+    """
+    Trả về chuỗi JS cho Chat Support.
+    Gọi hàm này và append vào cuối `js` trong build_accounts_js.
+    """
+    return r"""
+
+/* ═══════════════════════════════════════════════════════════════
+   💬 CHAT SUPPORT — User ↔ Admin
+   Tối ưu Firestore free tier:
+   - Badge watcher: POLL 60s (không onSnapshot liên tục)
+   - Messages: limit 50, load more khi cần
+   - Admin list: limit 30, pagination
+   - Close listener khi tab ẩn
+   - Gộp Telegram notify 30s
+   ═══════════════════════════════════════════════════════════════ */
+
+var chatUnsubscribe = null;
+var adminChatUnsubscribe = null;
+var adminOpenChatUnsub = null;
+var adminCurrentChatEmail = null;
+var chatBadgeWatcher = null;
+var chatBadgePollTimer = null;
+var chatToastTimer = null;
+var chatZaloDismissed = false;
+
+var adminChatListLimit = 30;
+var adminChatListLastDoc = null;
+var adminChatListLoading = false;
+
+var _tgChatQueue = {
+    messages: [],
+    userInfo: null,
+    timer: null,
+    timerStart: 0
+};
+var TG_CHAT_BATCH_DELAY = 30000;
+var CHAT_MSG_LIMIT = 50;
+
+/* ═══════════════════════════════════════════════════════════════
+   📲 TELEGRAM NOTIFY — Gộp 30s
+   ═══════════════════════════════════════════════════════════════ */
+
+function queueUserChatForTelegram(chatData) {
+    if (_tgChatQueue.messages.length === 0) {
+        _tgChatQueue.userInfo = {
+            email: chatData.email,
+            name: chatData.name,
+            zaloPhone: chatData.zaloPhone,
+            tier: chatData.tier,
+            daysLeft: chatData.daysLeft
+        };
+        _tgChatQueue.timerStart = Date.now();
+        console.log('📲 Telegram: bắt đầu gộp tin (chờ 30s)');
+    }
+    _tgChatQueue.messages.push({
+        text: chatData.text,
+        at: Date.now()
+    });
+    if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
+    _tgChatQueue.timer = setTimeout(flushTelegramChatQueue, TG_CHAT_BATCH_DELAY);
+    console.log('📲 Telegram queue: ' + _tgChatQueue.messages.length + ' tin chờ gửi');
+}
+
+function flushTelegramChatQueue() {
+    if (_tgChatQueue.messages.length === 0) return;
+    var userInfo = _tgChatQueue.userInfo;
+    var messages = _tgChatQueue.messages.slice();
+    _tgChatQueue.messages = [];
+    _tgChatQueue.userInfo = null;
+    _tgChatQueue.timer = null;
+    _tgChatQueue.timerStart = 0;
+    sendTelegramChatBatch(userInfo, messages);
+}
+
+function sendTelegramChatBatch(userInfo, messages) {
+    var token = window.TELEGRAM_BOT_TOKEN;
+    var chatId = window.TELEGRAM_CHAT_ID;
+
+    if (!token || !chatId || token.indexOf('__') === 0 || token.length < 20) {
+        console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
+        return;
+    }
+
+    var tierEmoji = {
+        'demo': '👤 Demo',
+        'trial': '🎁 Trial',
+        'active': '💎 Active',
+        'expired': '❌ Hết hạn'
+    };
+
+    var daysInfo = '';
+    if (userInfo.daysLeft !== null && userInfo.daysLeft !== undefined) {
+        if (userInfo.daysLeft <= 0) daysInfo = ' (đã hết hạn)';
+        else if (userInfo.daysLeft <= 7) daysInfo = ' (còn ' + userInfo.daysLeft + ' ngày)';
+    }
+
+    var siteUrl = 'https://hoctiengtrunghsk.github.io';
+    var chatLink = siteUrl + '/#chat=' + encodeURIComponent(userInfo.email);
+
+    var msg = '';
+    if (messages.length === 1) {
+        msg += '💬 <b>TIN NHẮN MỚI TỪ USER</b>\n';
+    } else {
+        msg += '💬 <b>' + messages.length + ' TIN NHẮN MỚI TỪ USER</b>\n';
+    }
+
+    msg += '━━━━━━━━━━━━━━━━━━━━\n';
+    msg += '👤 <b>' + escTg(userInfo.name) + '</b>\n';
+    msg += '📧 <code>' + escTg(userInfo.email) + '</code>\n';
+    msg += '📱 Zalo: ' + escTg(userInfo.zaloPhone) + '\n';
+    msg += '🏷 Tier: ' + (tierEmoji[userInfo.tier] || userInfo.tier) + daysInfo + '\n';
+    msg += '🕐 ' + new Date().toLocaleString('vi-VN') + '\n';
+    msg += '━━━━━━━━━━━━━━━━━━━━\n';
+
+    if (messages.length === 1) {
+        msg += '💬 <b>Nội dung:</b>\n';
+        msg += escTg(messages[0].text) + '\n';
+    } else {
+        msg += '💬 <b>Nội dung (' + messages.length + ' tin):</b>\n';
+        messages.forEach(function(m) {
+            var timeStr = new Date(m.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            msg += '<b>[' + timeStr + ']</b> ' + escTg(m.text) + '\n';
+        });
+    }
+
+    var buttons = [{ text: '💬 Mở chat trả lời', url: chatLink }];
+
+    if (userInfo.zaloPhone && userInfo.zaloPhone !== 'Chưa có') {
+        var zaloNum = userInfo.zaloPhone.replace(/\D/g, '');
+        if (zaloNum.length >= 9) {
+            buttons.push({
+                text: '📱 Zalo: ' + userInfo.zaloPhone,
+                url: 'https://zalo.me/' + zaloNum
+            });
+        }
+    }
+
+    fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: msg,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true,
+            reply_markup: { inline_keyboard: [buttons] }
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) console.log('✅ Telegram: đã gửi ' + messages.length + ' tin');
+        else console.warn('⚠️ Telegram error:', d.description);
+    })
+    .catch(function(e) { console.warn('❌ Telegram fetch:', e); });
+}
+
+function escTg(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function setupChatQueueBeforeUnload() {
+    if (window.__chatUnloadBound) return;
+    window.__chatUnloadBound = true;
+
+    window.addEventListener('beforeunload', function() {
+        if (_tgChatQueue.messages.length > 0) {
+            console.log('🚨 User đóng tab — gửi nốt ' + _tgChatQueue.messages.length + ' tin');
+            if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
+            try { flushTelegramChatQueue(); } catch(_e) {}
+        }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden && _tgChatQueue.messages.length > 0) {
+            var elapsed = Date.now() - _tgChatQueue.timerStart;
+            if (elapsed >= 10000) {
+                console.log('👁 User ẩn tab — gửi sớm sau ' + Math.round(elapsed / 1000) + 's');
+                if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
+                flushTelegramChatQueue();
+            }
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   💬 USER — Mở chat, gửi tin
+   ═══════════════════════════════════════════════════════════════ */
+
+window.openChatSupport = function() {
+    if (!currentUser) { showLoginModal(); return; }
+    document.getElementById('chatModal').classList.add('show');
+
+    var dd = document.getElementById('userDropdown');
+    if (dd) dd.classList.remove('show');
+    try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
+
+    if (typeof restoreChatHeaderForUser === 'function') restoreChatHeaderForUser();
+
+    var qr = document.getElementById('chatQuickReplies');
+    if (qr) qr.classList.add('hidden');
+
+    adminCurrentChatEmail = null;
+    loadUserChat();
+};
+
+window.closeChatSupport = function() {
+    document.getElementById('chatModal').classList.remove('show');
+    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
+    if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
+    adminCurrentChatEmail = null;
+};
+
+function loadUserChat() {
+    if (!currentUser) return;
+    var email = currentUser.email;
+    var bodyEl = document.getElementById('chatBody');
+
+    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
+
+    var threadRef = db.collection('chat_threads').doc(email);
+    threadRef.get().then(function(doc) {
+        if (!doc.exists) {
+            threadRef.set({
+                userEmail: email,
+                userName: currentUser.name || email.split('@')[0],
+                lastMessage: '',
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastMessageFrom: 'user',
+                unreadByAdmin: 0,
+                unreadByUser: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    });
+
+    chatUnsubscribe = threadRef.collection('messages')
+        .orderBy('createdAt', 'desc')
+        .limit(CHAT_MSG_LIMIT)
+        .onSnapshot(function(snap) {
+            renderUserChat(snap);
+            markUserChatRead();
+            if (typeof updateChatWaitingBanner === 'function') updateChatWaitingBanner();
+            updateChatZaloSuggestVisibility();
+        }, function(err) {
+            console.error('Chat listen error:', err);
+            bodyEl.innerHTML = '<div class="chat-empty">' +
+                '<i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>' +
+                '<div class="title">Không tải được chat</div>' +
+                '<div class="desc">' + escapeHtml(err.message) + '</div>' +
+                '</div>';
+        });
+}
+
+function renderUserChat(snap) {
+    var bodyEl = document.getElementById('chatBody');
+    if (!bodyEl) return;
+
+    if (snap.empty) {
+        bodyEl.innerHTML = '<div class="chat-empty">' +
+            '<i class="fas fa-comments"></i>' +
+            '<div class="title">Bắt đầu cuộc trò chuyện</div>' +
+            '<div class="desc">Gửi tin nhắn cho admin nếu bạn cần hỗ trợ về thanh toán, tài khoản hoặc bất kỳ vấn đề gì khác.</div>' +
+            '</div>';
+        return;
+    }
+
+    var docs = [];
+    snap.forEach(function(doc) { docs.push(doc); });
+    docs.reverse();
+
+    var html = '';
+    var lastDate = null;
+
+    docs.forEach(function(doc) {
+        var d = doc.data();
+        var created = d.createdAt ? d.createdAt.toDate() : new Date();
+        var dateStr = created.toLocaleDateString('vi-VN');
+        if (dateStr !== lastDate) {
+            html += '<div class="chat-system">' + dateStr + '</div>';
+            lastDate = dateStr;
+        }
+        var timeStr = created.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        var isMe = (d.from === 'user');
+
+        html += '<div class="chat-msg ' + (isMe ? 'from-user' : 'from-admin') + '">' +
+            '<div class="bubble">' + escapeHtml(d.text || '').replace(/\n/g, '<br>') + '</div>' +
+            '<span class="msg-time">' + timeStr + '</span>' +
+        '</div>';
+    });
+
+    bodyEl.innerHTML = html;
+    setTimeout(function() { bodyEl.scrollTop = bodyEl.scrollHeight; }, 50);
+}
+
+function markUserChatRead() {
+    if (!currentUser) return;
+    var email = currentUser.email;
+    db.collection('chat_threads').doc(email).get().then(function(doc) {
+        if (doc.exists && (doc.data().unreadByUser || 0) > 0) {
+            db.collection('chat_threads').doc(email).update({ unreadByUser: 0 });
+        }
+    });
+    var badge = document.getElementById('chatFabBadge');
+    if (badge) { badge.classList.remove('show'); badge.textContent = '0'; }
+    var fab = document.getElementById('chatFab');
+    if (fab) {
+        fab.classList.remove('admin-chat-attention');
+        var bubble = fab.querySelector('.fab-new-bubble');
+        if (bubble) bubble.classList.remove('show');
+    }
+    var banner = document.getElementById('chatAdminWaitingBanner');
+    if (banner) banner.classList.remove('show');
+
+    var userBadge = document.getElementById('chatUserBadge');
+    if (userBadge) { userBadge.style.display = 'none'; userBadge.textContent = '0'; }
+}
+
+async function sendUserChat() {
+    if (!currentUser) return;
+    var input = document.getElementById('chatInput');
+    var text = input.value.trim();
+    if (!text) return;
+
+    var email = currentUser.email;
+    var name = currentUser.name || email.split('@')[0];
+    var btn = document.getElementById('chatSendBtn');
+    btn.disabled = true;
+
+    try {
+        await db.collection('chat_threads').doc(email).collection('messages').add({
+            from: 'user',
+            fromEmail: email,
+            fromName: name,
+            text: text,
+            read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await db.collection('chat_threads').doc(email).update({
+            userEmail: email,
+            userName: name,
+            lastMessage: text.substring(0, 100),
+            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastMessageFrom: 'user',
+            unreadByAdmin: firebase.firestore.FieldValue.increment(1),
+            unreadByUser: 0
+        });
+
+        var daysLeft = null;
+        try { if (typeof getDaysRemaining === 'function') daysLeft = getDaysRemaining(currentUser); } catch(_e) {}
+
+        queueUserChatForTelegram({
+            email: email,
+            name: name,
+            text: text,
+            zaloPhone: currentUser.zaloPhone || 'Chưa có',
+            tier: window.APP_TIER || 'demo',
+            daysLeft: daysLeft
+        });
+
+        input.value = '';
+        autoResizeChatInput();
+        document.getElementById('chatSendBtn').disabled = true;
+    } catch(e) {
+        alert('❌ Lỗi gửi tin: ' + e.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function autoResizeChatInput() {
+    var inp = document.getElementById('chatInput');
+    if (!inp) return;
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 130) + 'px';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🔔 BADGE WATCHER — Poll 60s
+   ═══════════════════════════════════════════════════════════════ */
+
+function startChatBadgeWatch() {
+    if (!currentUser || !db) return;
+    if (chatBadgePollTimer) clearInterval(chatBadgePollTimer);
+
+    pollChatBadge();
+
+    chatBadgePollTimer = setInterval(function() {
+        if (document.hidden) return;
+        pollChatBadge();
+    }, 60000);
+
+    console.log('💬 Chat badge: bắt đầu poll 60s');
+}
+
+function pollChatBadge() {
+    if (!currentUser || !db) return;
+    var email = currentUser.email;
+
+    db.collection('chat_threads').doc(email).get()
+        .then(function(doc) {
+            if (!doc.exists) {
+                updateChatFABBadge(0, false);
+                return;
+            }
+            var d = doc.data();
+            var unread = d.unreadByUser || 0;
+            var isAdminSent = (d.lastMessageFrom === 'admin');
+            var hasUnreadFromAdmin = (unread > 0 && isAdminSent);
+
+            updateChatFABBadge(unread, hasUnreadFromAdmin);
+
+            if (hasUnreadFromAdmin) {
+                var msgAt = d.lastMessageAt ? d.lastMessageAt.toMillis() : 0;
+                if (msgAt && (Date.now() - msgAt) < 35000 && msgAt !== window.__lastChatToastAt) {
+                    window.__lastChatToastAt = msgAt;
+                    showAdminChatToast(d.lastMessage || 'Bạn có tin nhắn mới');
+                }
+            }
+        })
+        .catch(function(err) {
+            console.warn('Poll chat badge error:', err);
+        });
+}
+
+function updateChatFABBadge(unread, isAdminAlert) {
+    var fab = document.getElementById('chatFab');
+    var badge = document.getElementById('chatFabBadge');
+    var userBadge = document.getElementById('chatUserBadge');
+
+    if (!fab || !badge) return;
+
+    if (unread > 0) {
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.classList.add('show');
+        if (userBadge) {
+            userBadge.textContent = unread > 99 ? '99+' : unread;
+            userBadge.style.display = 'inline-block';
+        }
+    } else {
+        badge.classList.remove('show');
+        if (userBadge) userBadge.style.display = 'none';
+    }
+
+    if (isAdminAlert) {
+        fab.classList.add('admin-chat-attention');
+        var bubble = fab.querySelector('.fab-new-bubble');
+        if (!bubble) {
+            bubble = document.createElement('span');
+            bubble.className = 'fab-new-bubble';
+            bubble.textContent = 'TIN NHẮN MỚI';
+            fab.appendChild(bubble);
+        }
+        bubble.classList.add('show');
+        var icon = fab.querySelector('i');
+        if (icon) icon.className = 'fas fa-comment-dots';
+    } else {
+        fab.classList.remove('admin-chat-attention');
+        var oldBubble = fab.querySelector('.fab-new-bubble');
+        if (oldBubble) oldBubble.classList.remove('show');
+        var icon2 = fab.querySelector('i');
+        if (icon2) icon2.className = 'fas fa-comments';
+    }
+}
+
+function showAdminChatToast(messageText) {
+    var toast = document.getElementById('adminChatToast');
+    var msgEl = document.getElementById('adminChatToastMsg');
+    if (!toast) return;
+
+    var chatModal = document.getElementById('chatModal');
+    if (chatModal && chatModal.classList.contains('show') && !adminCurrentChatEmail) return;
+
+    if (msgEl) msgEl.textContent = messageText || 'Bạn có tin nhắn mới từ admin';
+
+    if (chatToastTimer) clearTimeout(chatToastTimer);
+    toast.classList.add('show');
+
+    chatToastTimer = setTimeout(hideAdminChatToast, 8000);
+    tryPlayChatSound();
+}
+
+function hideAdminChatToast() {
+    var toast = document.getElementById('adminChatToast');
+    if (toast) toast.classList.remove('show');
+    if (chatToastTimer) { clearTimeout(chatToastTimer); chatToastTimer = null; }
+}
+
+function tryPlayChatSound() {
+    try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        var ctx = new AC();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.45);
+    } catch(e) {}
+}
+
+function updateChatWaitingBanner() {
+    if (!currentUser) return;
+    var banner = document.getElementById('chatAdminWaitingBanner');
+    if (!banner) return;
+
+    db.collection('chat_threads').doc(currentUser.email).get()
+        .then(function(doc) {
+            if (!doc.exists) { banner.classList.remove('show'); return; }
+            var d = doc.data();
+            var showBanner = (d.lastMessageFrom === 'admin' && (d.unreadByUser || 0) > 0);
+            banner.classList.toggle('show', showBanner);
+        })
+        .catch(function() { banner.classList.remove('show'); });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   💙 ZALO SUGGEST
+   ═══════════════════════════════════════════════════════════════ */
+
+function updateChatZaloSuggestVisibility() {
+    var el = document.getElementById('chatZaloSuggest');
+    if (!el) return;
+    if (!currentUser) { el.classList.remove('show'); return; }
+    if (currentUser.zaloPhone || chatZaloDismissed) { el.classList.remove('show'); return; }
+    var chatModal = document.getElementById('chatModal');
+    if (chatModal && chatModal.classList.contains('show')) el.classList.add('show');
+    else el.classList.remove('show');
+}
+
+window.openZaloModal = function() {
+    if (!currentUser) { showLoginModal(); return; }
+    document.getElementById('zaloPhoneInput').value = currentUser.zaloPhone || '';
+    document.getElementById('zaloNameInput').value = currentUser.zaloName || '';
+    document.getElementById('zaloModal').classList.add('show');
+    setTimeout(function() {
+        var inp = document.getElementById('zaloPhoneInput');
+        if (inp) inp.focus();
+    }, 100);
+};
+
+window.closeZaloModal = function() {
+    document.getElementById('zaloModal').classList.remove('show');
+};
+
+async function saveZaloPhone() {
+    if (!currentUser) return;
+
+    var phone = document.getElementById('zaloPhoneInput').value.trim().replace(/\s+/g, '');
+    var name = document.getElementById('zaloNameInput').value.trim();
+
+    if (phone && !/^(\+?84|0)\d{9,10}$/.test(phone)) {
+        alert('⚠️ SĐT Zalo không hợp lệ.\n\nVí dụ hợp lệ:\n• 0901234567\n• +84901234567');
+        return;
+    }
+
+    var btn = document.getElementById('zaloSave');
+    var orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang lưu...';
+
+    try {
+        await db.collection('allowed_users').doc(currentUser.email).update({
+            zaloPhone: phone,
+            zaloName: name,
+            zaloUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        currentUser.zaloPhone = phone;
+        currentUser.zaloName = name;
+        try { localStorage.removeItem('user_cache_' + currentUser.email); } catch(e) {}
+        alert('✅ Đã lưu thông tin Zalo!');
+        closeZaloModal();
+        updateChatZaloSuggestVisibility();
+    } catch(e) {
+        alert('❌ Lỗi: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+
+function initZaloUI() {
+    var addBtn = document.getElementById('chatAddZaloBtn');
+    if (addBtn) addBtn.addEventListener('click', function() {
+        closeChatSupport();
+        setTimeout(openZaloModal, 200);
+    });
+
+    var skipBtn = document.getElementById('chatSkipZaloBtn');
+    if (skipBtn) skipBtn.addEventListener('click', function() {
+        chatZaloDismissed = true;
+        try { sessionStorage.setItem('chatZaloDismissed', '1'); } catch(_e) {}
+        updateChatZaloSuggestVisibility();
+    });
+
+    if (document.getElementById('zaloClose')) document.getElementById('zaloClose').addEventListener('click', closeZaloModal);
+    if (document.getElementById('zaloCancel')) document.getElementById('zaloCancel').addEventListener('click', closeZaloModal);
+    if (document.getElementById('zaloModal')) document.getElementById('zaloModal').addEventListener('click', function(e) {
+        if (e.target === this) closeZaloModal();
+    });
+    if (document.getElementById('zaloSave')) document.getElementById('zaloSave').addEventListener('click', saveZaloPhone);
+
+    ['zaloPhoneInput', 'zaloNameInput'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); saveZaloPhone(); }
+        });
+    });
+
+    try {
+        if (sessionStorage.getItem('chatZaloDismissed') === '1') chatZaloDismissed = true;
+    } catch(_e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎯 ADMIN — Danh sách + chat với user
+   ═══════════════════════════════════════════════════════════════ */
+
+function loadAdminChatList() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    var listEl = document.getElementById('adminChatList');
+    if (!listEl) return;
+
+    if (adminChatUnsubscribe) { try { adminChatUnsubscribe(); } catch(e) {} }
+
+    listEl.innerHTML = '<div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>';
+    adminChatListLimit = 30;
+
+    adminChatUnsubscribe = db.collection('chat_threads')
+        .orderBy('lastMessageAt', 'desc')
+        .limit(adminChatListLimit)
+        .onSnapshot(function(snap) {
+            var totalUnread = 0;
+            var html = '';
+            var count = 0;
+            var lastDoc = null;
+
+            if (snap.empty) {
+                listEl.innerHTML = '<div class="no-data">' +
+                    '<i class="fas fa-comments"></i>' +
+                    '<span>Chưa có hội thoại nào</span>' +
+                    '</div>';
+                updateAdminChatBadge(0, 0);
+                var moreBtn0 = document.getElementById('loadMoreChatBtn');
+                if (moreBtn0) moreBtn0.style.display = 'none';
+                return;
+            }
+
+            snap.forEach(function(doc) {
+                lastDoc = doc;
+                var d = doc.data();
+                var email = d.userEmail || doc.id;
+                var name = d.userName || email.split('@')[0];
+                var unread = d.unreadByAdmin || 0;
+                totalUnread += unread;
+                count++;
+
+                var lastAt = d.lastMessageAt ? d.lastMessageAt.toDate() : new Date();
+                var timeStr = formatTimeDiff(Date.now() - lastAt.getTime());
+                var preview = d.lastMessage || '(chưa có tin nhắn)';
+                if (d.lastMessageFrom === 'admin') preview = 'Bạn: ' + preview;
+
+                var initial = (name.charAt(0) || '?').toUpperCase();
+
+                html += '<div class="admin-chat-thread' + (unread > 0 ? ' unread' : '') + '" ' +
+                    'onclick="adminOpenChatWith(\'' + escapeJs(email) + '\')">' +
+                    '<div class="t-avatar">' + escapeHtml(initial) + '</div>' +
+                    '<div class="t-info">' +
+                        '<div class="t-name">' + escapeHtml(name) + '</div>' +
+                        '<div class="t-preview">' + escapeHtml(preview) + '</div>' +
+                    '</div>' +
+                    '<div class="t-time">' + timeStr + '</div>' +
+                    (unread > 0 ? '<div class="t-badge">' + (unread > 99 ? '99+' : unread) + '</div>' : '') +
+                '</div>';
+            });
+
+            listEl.innerHTML = html;
+            adminChatListLastDoc = lastDoc;
+
+            var moreBtn = document.getElementById('loadMoreChatBtn');
+            if (moreBtn) {
+                moreBtn.style.display = (count >= adminChatListLimit) ? 'inline-flex' : 'none';
+            }
+
+            updateAdminChatBadge(count, totalUnread);
+        }, function(err) {
+            console.error('Admin chat list error:', err);
+            listEl.innerHTML = '<div class="no-data" style="color:#dc2626">' +
+                '<i class="fas fa-exclamation-triangle"></i>' +
+                '<span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
+        });
+}
+
+async function loadMoreAdminChat() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    if (!adminChatListLastDoc || adminChatListLoading) return;
+
+    adminChatListLoading = true;
+    var btn = document.getElementById('loadMoreChatBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang tải...';
+    }
+
+    try {
+        var snap = await db.collection('chat_threads')
+            .orderBy('lastMessageAt', 'desc')
+            .startAfter(adminChatListLastDoc)
+            .limit(adminChatListLimit)
+            .get();
+
+        if (snap.empty) {
+            if (btn) btn.style.display = 'none';
+            adminChatListLoading = false;
+            return;
+        }
+
+        var listEl = document.getElementById('adminChatList');
+        var html = '';
+        var lastDoc = null;
+
+        snap.forEach(function(doc) {
+            lastDoc = doc;
+            var d = doc.data();
+            var email = d.userEmail || doc.id;
+            var name = d.userName || email.split('@')[0];
+            var unread = d.unreadByAdmin || 0;
+            var lastAt = d.lastMessageAt ? d.lastMessageAt.toDate() : new Date();
+            var timeStr = formatTimeDiff(Date.now() - lastAt.getTime());
+            var preview = d.lastMessage || '(chưa có tin nhắn)';
+            if (d.lastMessageFrom === 'admin') preview = 'Bạn: ' + preview;
+            var initial = (name.charAt(0) || '?').toUpperCase();
+
+            html += '<div class="admin-chat-thread' + (unread > 0 ? ' unread' : '') + '" ' +
+                'onclick="adminOpenChatWith(\'' + escapeJs(email) + '\')">' +
+                '<div class="t-avatar">' + escapeHtml(initial) + '</div>' +
+                '<div class="t-info">' +
+                    '<div class="t-name">' + escapeHtml(name) + '</div>' +
+                    '<div class="t-preview">' + escapeHtml(preview) + '</div>' +
+                '</div>' +
+                '<div class="t-time">' + timeStr + '</div>' +
+                (unread > 0 ? '<div class="t-badge">' + (unread > 99 ? '99+' : unread) + '</div>' : '') +
+            '</div>';
+        });
+
+        listEl.insertAdjacentHTML('beforeend', html);
+        adminChatListLastDoc = lastDoc;
+
+        if (snap.size < adminChatListLimit && btn) btn.style.display = 'none';
+        else if (btn) btn.style.display = 'inline-flex';
+    } catch(e) {
+        console.error('Load more chat error:', e);
+    } finally {
+        adminChatListLoading = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-chevron-down"></i> Xem thêm hội thoại';
+        }
+    }
+}
+
+function updateAdminChatBadge(count, unread) {
+    var countEl = document.getElementById('adminChatCount');
+    if (countEl) countEl.textContent = count;
+
+    var unreadChip = document.getElementById('adminChatUnreadChip');
+    var unreadEl = document.getElementById('adminChatUnread');
+    if (unreadChip && unreadEl) {
+        if (unread > 0) {
+            unreadEl.textContent = unread;
+            unreadChip.style.display = 'inline-flex';
+        } else {
+            unreadChip.style.display = 'none';
+        }
+    }
+}
+
+window.adminOpenChatWith = function(userEmail) {
+    if (!currentUser || currentUser.role !== 'admin') return;
+
+    adminCurrentChatEmail = userEmail;
+    var threadRef = db.collection('chat_threads').doc(userEmail);
+
+    threadRef.get().then(function(doc) {
+        if (!doc.exists) {
+            var u = (typeof usersCache !== 'undefined')
+                ? usersCache.find(function(x) { return x.email === userEmail; })
+                : null;
+            return threadRef.set({
+                userEmail: userEmail,
+                userName: u ? (u.name || userEmail.split('@')[0]) : userEmail.split('@')[0],
+                lastMessage: '',
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastMessageFrom: 'admin',
+                unreadByAdmin: 0,
+                unreadByUser: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }).then(function() {
+        var modal = document.getElementById('chatModal');
+        var header = document.getElementById('chatHeaderInfo');
+        var avatarIcon = document.getElementById('chatAvatarIcon');
+        var backBtn = document.getElementById('chatBack');
+        var closeBtn = document.getElementById('chatClose');
+
+        if (avatarIcon) avatarIcon.className = 'fas fa-user';
+
+        threadRef.get().then(function(doc) {
+            var name = doc.exists ? (doc.data().userName || userEmail.split('@')[0]) : userEmail.split('@')[0];
+            if (header) {
+                header.innerHTML =
+                    '<div class="name">' + escapeHtml(name) + '</div>' +
+                    '<div class="status">' + escapeHtml(userEmail) + '</div>';
+            }
+        });
+
+        if (backBtn) backBtn.classList.add('show');
+        if (closeBtn) closeBtn.style.display = 'none';
+
+        var qr = document.getElementById('chatQuickReplies');
+        if (qr) qr.classList.remove('hidden');
+
+        var zalo = document.getElementById('chatZaloSuggest');
+        if (zalo) zalo.classList.remove('show');
+
+        var banner = document.getElementById('chatAdminWaitingBanner');
+        if (banner) banner.classList.remove('show');
+
+        modal.classList.add('show');
+
+        if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} }
+        adminOpenChatUnsub = threadRef.collection('messages')
+            .orderBy('createdAt', 'desc')
+            .limit(CHAT_MSG_LIMIT)
+            .onSnapshot(function(snap) {
+                renderAdminChatView(snap);
+                if (!snap.empty) threadRef.update({ unreadByAdmin: 0 });
+            });
+    });
+};
+
+function renderAdminChatView(snap) {
+    var bodyEl = document.getElementById('chatBody');
+    if (!bodyEl) return;
+
+    if (snap.empty) {
+        bodyEl.innerHTML = '<div class="chat-empty">' +
+            '<i class="fas fa-comments"></i>' +
+            '<div class="title">Chưa có tin nhắn</div>' +
+            '<div class="desc">Gửi tin nhắn chào user để bắt đầu.</div>' +
+            '</div>';
+        return;
+    }
+
+    var docs = [];
+    snap.forEach(function(doc) { docs.push(doc); });
+    docs.reverse();
+
+    var html = '';
+    var lastDate = null;
+
+    docs.forEach(function(doc) {
+        var d = doc.data();
+        var created = d.createdAt ? d.createdAt.toDate() : new Date();
+        var dateStr = created.toLocaleDateString('vi-VN');
+        if (dateStr !== lastDate) {
+            html += '<div class="chat-system">' + dateStr + '</div>';
+            lastDate = dateStr;
+        }
+        var timeStr = created.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        var isAdmin = (d.from === 'admin');
+
+        html += '<div class="chat-msg ' + (isAdmin ? 'from-user' : 'from-admin') + '">' +
+            '<div class="bubble">' + escapeHtml(d.text || '').replace(/\n/g, '<br>') + '</div>' +
+            '<span class="msg-time">' + timeStr + '</span>' +
+        '</div>';
+    });
+
+    bodyEl.innerHTML = html;
+    setTimeout(function() { bodyEl.scrollTop = bodyEl.scrollHeight; }, 50);
+}
+
+async function sendAdminChat() {
+    if (!adminCurrentChatEmail || !currentUser) return;
+    var input = document.getElementById('chatInput');
+    var text = input.value.trim();
+    if (!text) return;
+
+    var userEmail = adminCurrentChatEmail;
+    var btn = document.getElementById('chatSendBtn');
+    btn.disabled = true;
+
+    try {
+        await db.collection('chat_threads').doc(userEmail).collection('messages').add({
+            from: 'admin',
+            fromEmail: currentUser.email,
+            fromName: currentUser.name || 'Admin',
+            text: text,
+            read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await db.collection('chat_threads').doc(userEmail).update({
+            lastMessage: text.substring(0, 100),
+            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastMessageFrom: 'admin',
+            unreadByUser: firebase.firestore.FieldValue.increment(1)
+        });
+
+        input.value = '';
+        autoResizeChatInput();
+        btn.disabled = true;
+    } catch(e) {
+        alert('❌ Lỗi gửi: ' + e.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function restoreChatHeaderForUser() {
+    var header = document.getElementById('chatHeaderInfo');
+    var avatarIcon = document.getElementById('chatAvatarIcon');
+    var backBtn = document.getElementById('chatBack');
+    var closeBtn = document.getElementById('chatClose');
+
+    if (avatarIcon) avatarIcon.className = 'fas fa-headset';
+    if (header) {
+        header.innerHTML =
+            '<div class="name">Hỗ trợ Admin <i class="fas fa-check-circle" style="font-size:.7rem;color:#86efac;"></i></div>' +
+            '<div class="status">' +
+                '<i class="fas fa-circle" style="font-size:.5rem;color:#22c55e;"></i>' +
+                '<span>Thường trả lời trong 5-10 phút</span>' +
+            '</div>';
+    }
+    if (backBtn) backBtn.classList.remove('show');
+    if (closeBtn) closeBtn.style.display = 'flex';
+}
+
+function goBackToAdminChatList() {
+    if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
+    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
+    adminCurrentChatEmail = null;
+
+    var qr = document.getElementById('chatQuickReplies');
+    if (qr) qr.classList.add('hidden');
+
+    restoreChatHeaderForUser();
+
+    if (typeof loadAdminChatList === 'function') loadAdminChatList();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🚀 INIT CHAT
+   ═══════════════════════════════════════════════════════════════ */
+
+function initChatSupport() {
+    var chatSupportBtn = document.getElementById('chatSupportBtn');
+    if (chatSupportBtn) chatSupportBtn.addEventListener('click', openChatSupport);
+
+    var fab = document.getElementById('chatFab');
+    if (fab) {
+        fab.addEventListener('click', function() {
+            fab.classList.remove('admin-chat-attention');
+            var bubble = fab.querySelector('.fab-new-bubble');
+            if (bubble) bubble.classList.remove('show');
+            openChatSupport();
+        });
+    }
+
+    var chatClose = document.getElementById('chatClose');
+    if (chatClose) chatClose.addEventListener('click', closeChatSupport);
+
+    var chatBack = document.getElementById('chatBack');
+    if (chatBack) chatBack.addEventListener('click', goBackToAdminChatList);
+
+    var chatModal = document.getElementById('chatModal');
+    if (chatModal) chatModal.addEventListener('click', function(e) {
+        if (e.target === this) closeChatSupport();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && chatModal && chatModal.classList.contains('show')) closeChatSupport();
+    });
+
+    var input = document.getElementById('chatInput');
+    if (input) {
+        input.addEventListener('input', function() {
+            autoResizeChatInput();
+            var sendBtn = document.getElementById('chatSendBtn');
+            if (sendBtn) sendBtn.disabled = !this.value.trim();
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (adminCurrentChatEmail) sendAdminChat();
+                else sendUserChat();
+            }
+        });
+    }
+
+    var sendBtn = document.getElementById('chatSendBtn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function() {
+            if (adminCurrentChatEmail) sendAdminChat();
+            else sendUserChat();
+        });
+    }
+
+    document.querySelectorAll('.chat-quick-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var reply = this.dataset.reply || this.textContent.trim();
+            var inp = document.getElementById('chatInput');
+            if (inp) {
+                inp.value = reply;
+                autoResizeChatInput();
+                var sb = document.getElementById('chatSendBtn');
+                if (sb) sb.disabled = false;
+                inp.focus();
+            }
+        });
+    });
+
+    /* Toast buttons */
+    var toastAction = document.getElementById('adminChatToastAction');
+    if (toastAction) toastAction.addEventListener('click', function(e) {
+        e.stopPropagation();
+        hideAdminChatToast();
+        openChatSupport();
+    });
+
+    var toast = document.getElementById('adminChatToast');
+    if (toast) toast.addEventListener('click', function(e) {
+        if (e.target.closest('.toast-close') || e.target.closest('.toast-action')) return;
+        hideAdminChatToast();
+        openChatSupport();
+    });
+
+    var toastClose = document.getElementById('adminChatToastClose');
+    if (toastClose) toastClose.addEventListener('click', function(e) {
+        e.stopPropagation();
+        hideAdminChatToast();
+    });
+
+    var refreshChatBtn = document.getElementById('refreshChatBtn');
+    if (refreshChatBtn) refreshChatBtn.addEventListener('click', function() { loadAdminChatList(); });
+
+    var loadMoreChatBtn = document.getElementById('loadMoreChatBtn');
+    if (loadMoreChatBtn) loadMoreChatBtn.addEventListener('click', loadMoreAdminChat);
+
+    setupChatQueueBeforeUnload();
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
+            if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
+            if (adminChatUnsubscribe) { try { adminChatUnsubscribe(); } catch(e) {} adminChatUnsubscribe = null; }
+        } else {
+            if (document.getElementById('chatModal') && document.getElementById('chatModal').classList.contains('show')) {
+                if (adminCurrentChatEmail) adminOpenChatWith(adminCurrentChatEmail);
+                else if (currentUser && currentUser.role !== 'admin') loadUserChat();
+            }
+            if (document.getElementById('adminModal') && document.getElementById('adminModal').classList.contains('show')) {
+                if (typeof loadAdminChatList === 'function') loadAdminChatList();
+            }
+        }
+    });
+}
+
+function updateChatFABVisibility() {
+    var fab = document.getElementById('chatFab');
+    if (!fab) return;
+    if (currentUser && !isDemo) fab.classList.remove('hidden');
+    else fab.classList.add('hidden');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🔗 DEEP LINK — #chat=user@email
+   ═══════════════════════════════════════════════════════════════ */
+
+function handleChatDeepLink() {
+    var hash = window.location.hash;
+    if (!hash || hash.indexOf('#chat=') !== 0) return;
+
+    var email = decodeURIComponent(hash.substring(6));
+    if (!email || email.indexOf('@') === -1) return;
+
+    console.log('🔗 Deep link chat:', email);
+
+    var tries = 0;
+    var check = setInterval(function() {
+        tries++;
+        if (currentUser && currentUser.role === 'admin') {
+            clearInterval(check);
+            if (typeof openAdminPanel === 'function') openAdminPanel();
+            setTimeout(function() {
+                if (typeof adminOpenChatWith === 'function') adminOpenChatWith(email);
+                try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(_e) {}
+            }, 1200);
+        }
+        if (tries > 50) clearInterval(check);
+    }, 300);
+}
+
+window.addEventListener('hashchange', function() {
+    if (typeof handleChatDeepLink === 'function') handleChatDeepLink();
+});
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(handleChatDeepLink, 2000); });
+} else {
+    setTimeout(handleChatDeepLink, 2000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   📱 TELEGRAM NOTIFICATION — Renewal
+   ═══════════════════════════════════════════════════════════════ */
+function _telegramSendMessage(text) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
+        console.warn('[Telegram] Chưa cấu hình bot_token / chat_id hợp lệ');
+        return Promise.reject('not_configured');
+    }
+
+    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
+
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.ok) {
+            console.error('[Telegram] ❌ API error:', data.description);
+            throw new Error(data.description || 'Telegram API error');
+        }
+        console.log('[Telegram] ✅ Đã gửi tin nhắn thành công');
+        return data;
+    })
+    .catch(function(err) {
+        console.error('[Telegram] ❌ Lỗi gửi:', err);
+        throw err;
+    });
+}
+
+window.notifyTelegramUserPaid = function(req) {
+    if (!req) return Promise.resolve();
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '💰 <b>USER ĐÃ THANH TOÁN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 <b>' + amountStr + 'đ</b>\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) +
+            (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
+        '🔑 Mã: <code>' + escapeHtml(req.transferCode || '—') + '</code>\n\n' +
+        '⏳ Vui lòng kiểm tra và xác nhận trong trang quản trị.';
+
+    return _telegramSendMessage(text);
+};
+
+window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
+    if (!req) return Promise.resolve();
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 ' + amountStr + 'đ\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) + '\n' +
+        (isPermanent
+            ? '💎 <b>KÍCH HOẠT VĨNH VIỄN</b>'
+            : '📅 Hạn mới: <b>' + escapeHtml(newExpiryStr || '?') + '</b>') + '\n\n' +
+        '🎉 User đã được gia hạn thành công.';
+
+    return _telegramSendMessage(text);
+};
+
+window.testTelegram = function() {
+    console.log('[Telegram] Test started...');
+    console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
+    console.log('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || '❌ MISSING');
+    return _telegramSendMessage('🧪 <b>Test Telegram</b>\n\nBot đang hoạt động tốt! ✅\n\nThời gian: ' + new Date().toLocaleString('vi-VN'))
+        .then(function() { alert('✅ Đã gửi test! Kiểm tra Telegram.'); })
+        .catch(function(err) { alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.'); });
+};
+"""
+
+
 def build_accounts_js(config):
     js = r"""
 /* ============ CONFIG INJECTED ============ */
@@ -4378,1216 +5588,7 @@ setTimeout(function() {
     js = js + build_chat_support_js()
 
     return js
-  # ═══════════════════════════════════════════════════════════════
-# 💬 CHAT SUPPORT JS — Thêm vào cuối build_accounts_js
-# Cách dùng: append chuỗi JS này vào cuối biến `js` trong build_accounts_js
-# ═══════════════════════════════════════════════════════════════
-def build_chat_support_js():
-    """
-    Trả về chuỗi JS cho Chat Support.
-    Gọi hàm này và append vào cuối `js` trong build_accounts_js.
-    """
-    return r"""
-
-/* ═══════════════════════════════════════════════════════════════
-   💬 CHAT SUPPORT — User ↔ Admin
-   Tối ưu Firestore free tier:
-   - Badge watcher: POLL 60s (không onSnapshot liên tục)
-   - Messages: limit 50, load more khi cần
-   - Admin list: limit 30, pagination
-   - Close listener khi tab ẩn
-   - Gộp Telegram notify 30s
-   ═══════════════════════════════════════════════════════════════ */
-
-var chatUnsubscribe = null;
-var adminChatUnsubscribe = null;
-var adminOpenChatUnsub = null;
-var adminCurrentChatEmail = null;
-var chatBadgeWatcher = null;
-var chatBadgePollTimer = null;
-var chatToastTimer = null;
-var chatZaloDismissed = false;
-
-var adminChatListLimit = 30;
-var adminChatListLastDoc = null;
-var adminChatListLoading = false;
-
-var _tgChatQueue = {
-    messages: [],
-    userInfo: null,
-    timer: null,
-    timerStart: 0
-};
-var TG_CHAT_BATCH_DELAY = 30000;
-var CHAT_MSG_LIMIT = 50;
-
-/* ═══════════════════════════════════════════════════════════════
-   📲 TELEGRAM NOTIFY — Gộp 30s
-   ═══════════════════════════════════════════════════════════════ */
-
-function queueUserChatForTelegram(chatData) {
-    if (_tgChatQueue.messages.length === 0) {
-        _tgChatQueue.userInfo = {
-            email: chatData.email,
-            name: chatData.name,
-            zaloPhone: chatData.zaloPhone,
-            tier: chatData.tier,
-            daysLeft: chatData.daysLeft
-        };
-        _tgChatQueue.timerStart = Date.now();
-        console.log('📲 Telegram: bắt đầu gộp tin (chờ 30s)');
-    }
-    _tgChatQueue.messages.push({
-        text: chatData.text,
-        at: Date.now()
-    });
-    if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
-    _tgChatQueue.timer = setTimeout(flushTelegramChatQueue, TG_CHAT_BATCH_DELAY);
-    console.log('📲 Telegram queue: ' + _tgChatQueue.messages.length + ' tin chờ gửi');
-}
-
-function flushTelegramChatQueue() {
-    if (_tgChatQueue.messages.length === 0) return;
-    var userInfo = _tgChatQueue.userInfo;
-    var messages = _tgChatQueue.messages.slice();
-    _tgChatQueue.messages = [];
-    _tgChatQueue.userInfo = null;
-    _tgChatQueue.timer = null;
-    _tgChatQueue.timerStart = 0;
-    sendTelegramChatBatch(userInfo, messages);
-}
-
-function sendTelegramChatBatch(userInfo, messages) {
-    var token = window.TELEGRAM_BOT_TOKEN;
-    var chatId = window.TELEGRAM_CHAT_ID;
-
-    if (!token || !chatId || token.indexOf('__') === 0 || token.length < 20) {
-        console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
-        return;
-    }
-
-    var tierEmoji = {
-        'demo': '👤 Demo',
-        'trial': '🎁 Trial',
-        'active': '💎 Active',
-        'expired': '❌ Hết hạn'
-    };
-
-    var daysInfo = '';
-    if (userInfo.daysLeft !== null && userInfo.daysLeft !== undefined) {
-        if (userInfo.daysLeft <= 0) daysInfo = ' (đã hết hạn)';
-        else if (userInfo.daysLeft <= 7) daysInfo = ' (còn ' + userInfo.daysLeft + ' ngày)';
-    }
-
-    var siteUrl = 'https://hoctiengtrunghsk.github.io';
-    var chatLink = siteUrl + '/#chat=' + encodeURIComponent(userInfo.email);
-
-    var msg = '';
-    if (messages.length === 1) {
-        msg += '💬 <b>TIN NHẮN MỚI TỪ USER</b>\n';
-    } else {
-        msg += '💬 <b>' + messages.length + ' TIN NHẮN MỚI TỪ USER</b>\n';
-    }
-
-    msg += '━━━━━━━━━━━━━━━━━━━━\n';
-    msg += '👤 <b>' + escTg(userInfo.name) + '</b>\n';
-    msg += '📧 <code>' + escTg(userInfo.email) + '</code>\n';
-    msg += '📱 Zalo: ' + escTg(userInfo.zaloPhone) + '\n';
-    msg += '🏷 Tier: ' + (tierEmoji[userInfo.tier] || userInfo.tier) + daysInfo + '\n';
-    msg += '🕐 ' + new Date().toLocaleString('vi-VN') + '\n';
-    msg += '━━━━━━━━━━━━━━━━━━━━\n';
-
-    if (messages.length === 1) {
-        msg += '💬 <b>Nội dung:</b>\n';
-        msg += escTg(messages[0].text) + '\n';
-    } else {
-        msg += '💬 <b>Nội dung (' + messages.length + ' tin):</b>\n';
-        messages.forEach(function(m) {
-            var timeStr = new Date(m.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-            msg += '<b>[' + timeStr + ']</b> ' + escTg(m.text) + '\n';
-        });
-    }
-
-    var buttons = [{ text: '💬 Mở chat trả lời', url: chatLink }];
-
-    if (userInfo.zaloPhone && userInfo.zaloPhone !== 'Chưa có') {
-        var zaloNum = userInfo.zaloPhone.replace(/\D/g, '');
-        if (zaloNum.length >= 9) {
-            buttons.push({
-                text: '📱 Zalo: ' + userInfo.zaloPhone,
-                url: 'https://zalo.me/' + zaloNum
-            });
-        }
-    }
-
-    fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: msg,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true,
-            reply_markup: { inline_keyboard: [buttons] }
-        })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        if (d.ok) console.log('✅ Telegram: đã gửi ' + messages.length + ' tin');
-        else console.warn('⚠️ Telegram error:', d.description);
-    })
-    .catch(function(e) { console.warn('❌ Telegram fetch:', e); });
-}
-
-function escTg(s) {
-    if (s == null) return '';
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function setupChatQueueBeforeUnload() {
-    if (window.__chatUnloadBound) return;
-    window.__chatUnloadBound = true;
-
-    window.addEventListener('beforeunload', function() {
-        if (_tgChatQueue.messages.length > 0) {
-            console.log('🚨 User đóng tab — gửi nốt ' + _tgChatQueue.messages.length + ' tin');
-            if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
-            try { flushTelegramChatQueue(); } catch(_e) {}
-        }
-    });
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden && _tgChatQueue.messages.length > 0) {
-            var elapsed = Date.now() - _tgChatQueue.timerStart;
-            if (elapsed >= 10000) {
-                console.log('👁 User ẩn tab — gửi sớm sau ' + Math.round(elapsed / 1000) + 's');
-                if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
-                flushTelegramChatQueue();
-            }
-        }
-    });
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   💬 USER — Mở chat, gửi tin
-   ═══════════════════════════════════════════════════════════════ */
-
-window.openChatSupport = function() {
-    if (!currentUser) { showLoginModal(); return; }
-    document.getElementById('chatModal').classList.add('show');
-
-    var dd = document.getElementById('userDropdown');
-    if (dd) dd.classList.remove('show');
-    try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
-
-    if (typeof restoreChatHeaderForUser === 'function') restoreChatHeaderForUser();
-
-    var qr = document.getElementById('chatQuickReplies');
-    if (qr) qr.classList.add('hidden');
-
-    adminCurrentChatEmail = null;
-    loadUserChat();
-};
-
-window.closeChatSupport = function() {
-    document.getElementById('chatModal').classList.remove('show');
-    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-    if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
-    adminCurrentChatEmail = null;
-};
-
-function loadUserChat() {
-    if (!currentUser) return;
-    var email = currentUser.email;
-    var bodyEl = document.getElementById('chatBody');
-
-    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-
-    var threadRef = db.collection('chat_threads').doc(email);
-    threadRef.get().then(function(doc) {
-        if (!doc.exists) {
-            threadRef.set({
-                userEmail: email,
-                userName: currentUser.name || email.split('@')[0],
-                lastMessage: '',
-                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastMessageFrom: 'user',
-                unreadByAdmin: 0,
-                unreadByUser: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    });
-
-    chatUnsubscribe = threadRef.collection('messages')
-        .orderBy('createdAt', 'desc')
-        .limit(CHAT_MSG_LIMIT)
-        .onSnapshot(function(snap) {
-            renderUserChat(snap);
-            markUserChatRead();
-            if (typeof updateChatWaitingBanner === 'function') updateChatWaitingBanner();
-            updateChatZaloSuggestVisibility();
-        }, function(err) {
-            console.error('Chat listen error:', err);
-            bodyEl.innerHTML = '<div class="chat-empty">' +
-                '<i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>' +
-                '<div class="title">Không tải được chat</div>' +
-                '<div class="desc">' + escapeHtml(err.message) + '</div>' +
-                '</div>';
-        });
-}
-
-function renderUserChat(snap) {
-    var bodyEl = document.getElementById('chatBody');
-    if (!bodyEl) return;
-
-    if (snap.empty) {
-        bodyEl.innerHTML = '<div class="chat-empty">' +
-            '<i class="fas fa-comments"></i>' +
-            '<div class="title">Bắt đầu cuộc trò chuyện</div>' +
-            '<div class="desc">Gửi tin nhắn cho admin nếu bạn cần hỗ trợ về thanh toán, tài khoản hoặc bất kỳ vấn đề gì khác.</div>' +
-            '</div>';
-        return;
-    }
-
-    var docs = [];
-    snap.forEach(function(doc) { docs.push(doc); });
-    docs.reverse();
-
-    var html = '';
-    var lastDate = null;
-
-    docs.forEach(function(doc) {
-        var d = doc.data();
-        var created = d.createdAt ? d.createdAt.toDate() : new Date();
-        var dateStr = created.toLocaleDateString('vi-VN');
-        if (dateStr !== lastDate) {
-            html += '<div class="chat-system">' + dateStr + '</div>';
-            lastDate = dateStr;
-        }
-        var timeStr = created.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        var isMe = (d.from === 'user');
-
-        html += '<div class="chat-msg ' + (isMe ? 'from-user' : 'from-admin') + '">' +
-            '<div class="bubble">' + escapeHtml(d.text || '').replace(/\n/g, '<br>') + '</div>' +
-            '<span class="msg-time">' + timeStr + '</span>' +
-        '</div>';
-    });
-
-    bodyEl.innerHTML = html;
-    setTimeout(function() { bodyEl.scrollTop = bodyEl.scrollHeight; }, 50);
-}
-
-function markUserChatRead() {
-    if (!currentUser) return;
-    var email = currentUser.email;
-    db.collection('chat_threads').doc(email).get().then(function(doc) {
-        if (doc.exists && (doc.data().unreadByUser || 0) > 0) {
-            db.collection('chat_threads').doc(email).update({ unreadByUser: 0 });
-        }
-    });
-    var badge = document.getElementById('chatFabBadge');
-    if (badge) { badge.classList.remove('show'); badge.textContent = '0'; }
-    var fab = document.getElementById('chatFab');
-    if (fab) {
-        fab.classList.remove('admin-chat-attention');
-        var bubble = fab.querySelector('.fab-new-bubble');
-        if (bubble) bubble.classList.remove('show');
-    }
-    var banner = document.getElementById('chatAdminWaitingBanner');
-    if (banner) banner.classList.remove('show');
-
-    var userBadge = document.getElementById('chatUserBadge');
-    if (userBadge) { userBadge.style.display = 'none'; userBadge.textContent = '0'; }
-}
-
-async function sendUserChat() {
-    if (!currentUser) return;
-    var input = document.getElementById('chatInput');
-    var text = input.value.trim();
-    if (!text) return;
-
-    var email = currentUser.email;
-    var name = currentUser.name || email.split('@')[0];
-    var btn = document.getElementById('chatSendBtn');
-    btn.disabled = true;
-
-    try {
-        await db.collection('chat_threads').doc(email).collection('messages').add({
-            from: 'user',
-            fromEmail: email,
-            fromName: name,
-            text: text,
-            read: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        await db.collection('chat_threads').doc(email).update({
-            userEmail: email,
-            userName: name,
-            lastMessage: text.substring(0, 100),
-            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastMessageFrom: 'user',
-            unreadByAdmin: firebase.firestore.FieldValue.increment(1),
-            unreadByUser: 0
-        });
-
-        var daysLeft = null;
-        try { if (typeof getDaysRemaining === 'function') daysLeft = getDaysRemaining(currentUser); } catch(_e) {}
-
-        queueUserChatForTelegram({
-            email: email,
-            name: name,
-            text: text,
-            zaloPhone: currentUser.zaloPhone || 'Chưa có',
-            tier: window.APP_TIER || 'demo',
-            daysLeft: daysLeft
-        });
-
-        input.value = '';
-        autoResizeChatInput();
-        document.getElementById('chatSendBtn').disabled = true;
-    } catch(e) {
-        alert('❌ Lỗi gửi tin: ' + e.message);
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-function autoResizeChatInput() {
-    var inp = document.getElementById('chatInput');
-    if (!inp) return;
-    inp.style.height = 'auto';
-    inp.style.height = Math.min(inp.scrollHeight, 130) + 'px';
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🔔 BADGE WATCHER — Poll 60s
-   ═══════════════════════════════════════════════════════════════ */
-
-function startChatBadgeWatch() {
-    if (!currentUser || !db) return;
-    if (chatBadgePollTimer) clearInterval(chatBadgePollTimer);
-
-    pollChatBadge();
-
-    chatBadgePollTimer = setInterval(function() {
-        if (document.hidden) return;
-        pollChatBadge();
-    }, 60000);
-
-    console.log('💬 Chat badge: bắt đầu poll 60s');
-}
-
-function pollChatBadge() {
-    if (!currentUser || !db) return;
-    var email = currentUser.email;
-
-    db.collection('chat_threads').doc(email).get()
-        .then(function(doc) {
-            if (!doc.exists) {
-                updateChatFABBadge(0, false);
-                return;
-            }
-            var d = doc.data();
-            var unread = d.unreadByUser || 0;
-            var isAdminSent = (d.lastMessageFrom === 'admin');
-            var hasUnreadFromAdmin = (unread > 0 && isAdminSent);
-
-            updateChatFABBadge(unread, hasUnreadFromAdmin);
-
-            if (hasUnreadFromAdmin) {
-                var msgAt = d.lastMessageAt ? d.lastMessageAt.toMillis() : 0;
-                if (msgAt && (Date.now() - msgAt) < 35000 && msgAt !== window.__lastChatToastAt) {
-                    window.__lastChatToastAt = msgAt;
-                    showAdminChatToast(d.lastMessage || 'Bạn có tin nhắn mới');
-                }
-            }
-        })
-        .catch(function(err) {
-            console.warn('Poll chat badge error:', err);
-        });
-}
-
-function updateChatFABBadge(unread, isAdminAlert) {
-    var fab = document.getElementById('chatFab');
-    var badge = document.getElementById('chatFabBadge');
-    var userBadge = document.getElementById('chatUserBadge');
-
-    if (!fab || !badge) return;
-
-    if (unread > 0) {
-        badge.textContent = unread > 99 ? '99+' : unread;
-        badge.classList.add('show');
-        if (userBadge) {
-            userBadge.textContent = unread > 99 ? '99+' : unread;
-            userBadge.style.display = 'inline-block';
-        }
-    } else {
-        badge.classList.remove('show');
-        if (userBadge) userBadge.style.display = 'none';
-    }
-
-    if (isAdminAlert) {
-        fab.classList.add('admin-chat-attention');
-        var bubble = fab.querySelector('.fab-new-bubble');
-        if (!bubble) {
-            bubble = document.createElement('span');
-            bubble.className = 'fab-new-bubble';
-            bubble.textContent = 'TIN NHẮN MỚI';
-            fab.appendChild(bubble);
-        }
-        bubble.classList.add('show');
-        var icon = fab.querySelector('i');
-        if (icon) icon.className = 'fas fa-comment-dots';
-    } else {
-        fab.classList.remove('admin-chat-attention');
-        var oldBubble = fab.querySelector('.fab-new-bubble');
-        if (oldBubble) oldBubble.classList.remove('show');
-        var icon2 = fab.querySelector('i');
-        if (icon2) icon2.className = 'fas fa-comments';
-    }
-}
-
-function showAdminChatToast(messageText) {
-    var toast = document.getElementById('adminChatToast');
-    var msgEl = document.getElementById('adminChatToastMsg');
-    if (!toast) return;
-
-    var chatModal = document.getElementById('chatModal');
-    if (chatModal && chatModal.classList.contains('show') && !adminCurrentChatEmail) return;
-
-    if (msgEl) msgEl.textContent = messageText || 'Bạn có tin nhắn mới từ admin';
-
-    if (chatToastTimer) clearTimeout(chatToastTimer);
-    toast.classList.add('show');
-
-    chatToastTimer = setTimeout(hideAdminChatToast, 8000);
-    tryPlayChatSound();
-}
-
-function hideAdminChatToast() {
-    var toast = document.getElementById('adminChatToast');
-    if (toast) toast.classList.remove('show');
-    if (chatToastTimer) { clearTimeout(chatToastTimer); chatToastTimer = null; }
-}
-
-function tryPlayChatSound() {
-    try {
-        var AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        var ctx = new AC();
-        var osc = ctx.createOscillator();
-        var gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.45);
-    } catch(e) {}
-}
-
-function updateChatWaitingBanner() {
-    if (!currentUser) return;
-    var banner = document.getElementById('chatAdminWaitingBanner');
-    if (!banner) return;
-
-    db.collection('chat_threads').doc(currentUser.email).get()
-        .then(function(doc) {
-            if (!doc.exists) { banner.classList.remove('show'); return; }
-            var d = doc.data();
-            var showBanner = (d.lastMessageFrom === 'admin' && (d.unreadByUser || 0) > 0);
-            banner.classList.toggle('show', showBanner);
-        })
-        .catch(function() { banner.classList.remove('show'); });
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   💙 ZALO SUGGEST
-   ═══════════════════════════════════════════════════════════════ */
-
-function updateChatZaloSuggestVisibility() {
-    var el = document.getElementById('chatZaloSuggest');
-    if (!el) return;
-    if (!currentUser) { el.classList.remove('show'); return; }
-    if (currentUser.zaloPhone || chatZaloDismissed) { el.classList.remove('show'); return; }
-    var chatModal = document.getElementById('chatModal');
-    if (chatModal && chatModal.classList.contains('show')) el.classList.add('show');
-    else el.classList.remove('show');
-}
-
-window.openZaloModal = function() {
-    if (!currentUser) { showLoginModal(); return; }
-    document.getElementById('zaloPhoneInput').value = currentUser.zaloPhone || '';
-    document.getElementById('zaloNameInput').value = currentUser.zaloName || '';
-    document.getElementById('zaloModal').classList.add('show');
-    setTimeout(function() {
-        var inp = document.getElementById('zaloPhoneInput');
-        if (inp) inp.focus();
-    }, 100);
-};
-
-window.closeZaloModal = function() {
-    document.getElementById('zaloModal').classList.remove('show');
-};
-
-async function saveZaloPhone() {
-    if (!currentUser) return;
-
-    var phone = document.getElementById('zaloPhoneInput').value.trim().replace(/\s+/g, '');
-    var name = document.getElementById('zaloNameInput').value.trim();
-
-    if (phone && !/^(\+?84|0)\d{9,10}$/.test(phone)) {
-        alert('⚠️ SĐT Zalo không hợp lệ.\n\nVí dụ hợp lệ:\n• 0901234567\n• +84901234567');
-        return;
-    }
-
-    var btn = document.getElementById('zaloSave');
-    var orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang lưu...';
-
-    try {
-        await db.collection('allowed_users').doc(currentUser.email).update({
-            zaloPhone: phone,
-            zaloName: name,
-            zaloUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        currentUser.zaloPhone = phone;
-        currentUser.zaloName = name;
-        try { localStorage.removeItem('user_cache_' + currentUser.email); } catch(e) {}
-        alert('✅ Đã lưu thông tin Zalo!');
-        closeZaloModal();
-        updateChatZaloSuggestVisibility();
-    } catch(e) {
-        alert('❌ Lỗi: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = orig;
-    }
-}
-
-function initZaloUI() {
-    var addBtn = document.getElementById('chatAddZaloBtn');
-    if (addBtn) addBtn.addEventListener('click', function() {
-        closeChatSupport();
-        setTimeout(openZaloModal, 200);
-    });
-
-    var skipBtn = document.getElementById('chatSkipZaloBtn');
-    if (skipBtn) skipBtn.addEventListener('click', function() {
-        chatZaloDismissed = true;
-        try { sessionStorage.setItem('chatZaloDismissed', '1'); } catch(_e) {}
-        updateChatZaloSuggestVisibility();
-    });
-
-    if (document.getElementById('zaloClose')) document.getElementById('zaloClose').addEventListener('click', closeZaloModal);
-    if (document.getElementById('zaloCancel')) document.getElementById('zaloCancel').addEventListener('click', closeZaloModal);
-    if (document.getElementById('zaloModal')) document.getElementById('zaloModal').addEventListener('click', function(e) {
-        if (e.target === this) closeZaloModal();
-    });
-    if (document.getElementById('zaloSave')) document.getElementById('zaloSave').addEventListener('click', saveZaloPhone);
-
-    ['zaloPhoneInput', 'zaloNameInput'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); saveZaloPhone(); }
-        });
-    });
-
-    try {
-        if (sessionStorage.getItem('chatZaloDismissed') === '1') chatZaloDismissed = true;
-    } catch(_e) {}
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🎯 ADMIN — Danh sách + chat với user
-   ═══════════════════════════════════════════════════════════════ */
-
-function loadAdminChatList() {
-    if (!currentUser || currentUser.role !== 'admin') return;
-    var listEl = document.getElementById('adminChatList');
-    if (!listEl) return;
-
-    if (adminChatUnsubscribe) { try { adminChatUnsubscribe(); } catch(e) {} }
-
-    listEl.innerHTML = '<div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>';
-    adminChatListLimit = 30;
-
-    adminChatUnsubscribe = db.collection('chat_threads')
-        .orderBy('lastMessageAt', 'desc')
-        .limit(adminChatListLimit)
-        .onSnapshot(function(snap) {
-            var totalUnread = 0;
-            var html = '';
-            var count = 0;
-            var lastDoc = null;
-
-            if (snap.empty) {
-                listEl.innerHTML = '<div class="no-data">' +
-                    '<i class="fas fa-comments"></i>' +
-                    '<span>Chưa có hội thoại nào</span>' +
-                    '</div>';
-                updateAdminChatBadge(0, 0);
-                var moreBtn0 = document.getElementById('loadMoreChatBtn');
-                if (moreBtn0) moreBtn0.style.display = 'none';
-                return;
-            }
-
-            snap.forEach(function(doc) {
-                lastDoc = doc;
-                var d = doc.data();
-                var email = d.userEmail || doc.id;
-                var name = d.userName || email.split('@')[0];
-                var unread = d.unreadByAdmin || 0;
-                totalUnread += unread;
-                count++;
-
-                var lastAt = d.lastMessageAt ? d.lastMessageAt.toDate() : new Date();
-                var timeStr = formatTimeDiff(Date.now() - lastAt.getTime());
-                var preview = d.lastMessage || '(chưa có tin nhắn)';
-                if (d.lastMessageFrom === 'admin') preview = 'Bạn: ' + preview;
-
-                var initial = (name.charAt(0) || '?').toUpperCase();
-
-                html += '<div class="admin-chat-thread' + (unread > 0 ? ' unread' : '') + '" ' +
-                    'onclick="adminOpenChatWith(\'' + escapeJs(email) + '\')">' +
-                    '<div class="t-avatar">' + escapeHtml(initial) + '</div>' +
-                    '<div class="t-info">' +
-                        '<div class="t-name">' + escapeHtml(name) + '</div>' +
-                        '<div class="t-preview">' + escapeHtml(preview) + '</div>' +
-                    '</div>' +
-                    '<div class="t-time">' + timeStr + '</div>' +
-                    (unread > 0 ? '<div class="t-badge">' + (unread > 99 ? '99+' : unread) + '</div>' : '') +
-                '</div>';
-            });
-
-            listEl.innerHTML = html;
-            adminChatListLastDoc = lastDoc;
-
-            var moreBtn = document.getElementById('loadMoreChatBtn');
-            if (moreBtn) {
-                moreBtn.style.display = (count >= adminChatListLimit) ? 'inline-flex' : 'none';
-            }
-
-            updateAdminChatBadge(count, totalUnread);
-        }, function(err) {
-            console.error('Admin chat list error:', err);
-            listEl.innerHTML = '<div class="no-data" style="color:#dc2626">' +
-                '<i class="fas fa-exclamation-triangle"></i>' +
-                '<span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
-        });
-}
-
-async function loadMoreAdminChat() {
-    if (!currentUser || currentUser.role !== 'admin') return;
-    if (!adminChatListLastDoc || adminChatListLoading) return;
-
-    adminChatListLoading = true;
-    var btn = document.getElementById('loadMoreChatBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang tải...';
-    }
-
-    try {
-        var snap = await db.collection('chat_threads')
-            .orderBy('lastMessageAt', 'desc')
-            .startAfter(adminChatListLastDoc)
-            .limit(adminChatListLimit)
-            .get();
-
-        if (snap.empty) {
-            if (btn) btn.style.display = 'none';
-            adminChatListLoading = false;
-            return;
-        }
-
-        var listEl = document.getElementById('adminChatList');
-        var html = '';
-        var lastDoc = null;
-
-        snap.forEach(function(doc) {
-            lastDoc = doc;
-            var d = doc.data();
-            var email = d.userEmail || doc.id;
-            var name = d.userName || email.split('@')[0];
-            var unread = d.unreadByAdmin || 0;
-            var lastAt = d.lastMessageAt ? d.lastMessageAt.toDate() : new Date();
-            var timeStr = formatTimeDiff(Date.now() - lastAt.getTime());
-            var preview = d.lastMessage || '(chưa có tin nhắn)';
-            if (d.lastMessageFrom === 'admin') preview = 'Bạn: ' + preview;
-            var initial = (name.charAt(0) || '?').toUpperCase();
-
-            html += '<div class="admin-chat-thread' + (unread > 0 ? ' unread' : '') + '" ' +
-                'onclick="adminOpenChatWith(\'' + escapeJs(email) + '\')">' +
-                '<div class="t-avatar">' + escapeHtml(initial) + '</div>' +
-                '<div class="t-info">' +
-                    '<div class="t-name">' + escapeHtml(name) + '</div>' +
-                    '<div class="t-preview">' + escapeHtml(preview) + '</div>' +
-                '</div>' +
-                '<div class="t-time">' + timeStr + '</div>' +
-                (unread > 0 ? '<div class="t-badge">' + (unread > 99 ? '99+' : unread) + '</div>' : '') +
-            '</div>';
-        });
-
-        listEl.insertAdjacentHTML('beforeend', html);
-        adminChatListLastDoc = lastDoc;
-
-        if (snap.size < adminChatListLimit && btn) btn.style.display = 'none';
-        else if (btn) btn.style.display = 'inline-flex';
-    } catch(e) {
-        console.error('Load more chat error:', e);
-    } finally {
-        adminChatListLoading = false;
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-chevron-down"></i> Xem thêm hội thoại';
-        }
-    }
-}
-
-function updateAdminChatBadge(count, unread) {
-    var countEl = document.getElementById('adminChatCount');
-    if (countEl) countEl.textContent = count;
-
-    var unreadChip = document.getElementById('adminChatUnreadChip');
-    var unreadEl = document.getElementById('adminChatUnread');
-    if (unreadChip && unreadEl) {
-        if (unread > 0) {
-            unreadEl.textContent = unread;
-            unreadChip.style.display = 'inline-flex';
-        } else {
-            unreadChip.style.display = 'none';
-        }
-    }
-}
-
-window.adminOpenChatWith = function(userEmail) {
-    if (!currentUser || currentUser.role !== 'admin') return;
-
-    adminCurrentChatEmail = userEmail;
-    var threadRef = db.collection('chat_threads').doc(userEmail);
-
-    threadRef.get().then(function(doc) {
-        if (!doc.exists) {
-            var u = (typeof usersCache !== 'undefined')
-                ? usersCache.find(function(x) { return x.email === userEmail; })
-                : null;
-            return threadRef.set({
-                userEmail: userEmail,
-                userName: u ? (u.name || userEmail.split('@')[0]) : userEmail.split('@')[0],
-                lastMessage: '',
-                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastMessageFrom: 'admin',
-                unreadByAdmin: 0,
-                unreadByUser: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    }).then(function() {
-        var modal = document.getElementById('chatModal');
-        var header = document.getElementById('chatHeaderInfo');
-        var avatarIcon = document.getElementById('chatAvatarIcon');
-        var backBtn = document.getElementById('chatBack');
-        var closeBtn = document.getElementById('chatClose');
-
-        if (avatarIcon) avatarIcon.className = 'fas fa-user';
-
-        threadRef.get().then(function(doc) {
-            var name = doc.exists ? (doc.data().userName || userEmail.split('@')[0]) : userEmail.split('@')[0];
-            if (header) {
-                header.innerHTML =
-                    '<div class="name">' + escapeHtml(name) + '</div>' +
-                    '<div class="status">' + escapeHtml(userEmail) + '</div>';
-            }
-        });
-
-        if (backBtn) backBtn.classList.add('show');
-        if (closeBtn) closeBtn.style.display = 'none';
-
-        var qr = document.getElementById('chatQuickReplies');
-        if (qr) qr.classList.remove('hidden');
-
-        var zalo = document.getElementById('chatZaloSuggest');
-        if (zalo) zalo.classList.remove('show');
-
-        var banner = document.getElementById('chatAdminWaitingBanner');
-        if (banner) banner.classList.remove('show');
-
-        modal.classList.add('show');
-
-        if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} }
-        adminOpenChatUnsub = threadRef.collection('messages')
-            .orderBy('createdAt', 'desc')
-            .limit(CHAT_MSG_LIMIT)
-            .onSnapshot(function(snap) {
-                renderAdminChatView(snap);
-                if (!snap.empty) threadRef.update({ unreadByAdmin: 0 });
-            });
-    });
-};
-
-function renderAdminChatView(snap) {
-    var bodyEl = document.getElementById('chatBody');
-    if (!bodyEl) return;
-
-    if (snap.empty) {
-        bodyEl.innerHTML = '<div class="chat-empty">' +
-            '<i class="fas fa-comments"></i>' +
-            '<div class="title">Chưa có tin nhắn</div>' +
-            '<div class="desc">Gửi tin nhắn chào user để bắt đầu.</div>' +
-            '</div>';
-        return;
-    }
-
-    var docs = [];
-    snap.forEach(function(doc) { docs.push(doc); });
-    docs.reverse();
-
-    var html = '';
-    var lastDate = null;
-
-    docs.forEach(function(doc) {
-        var d = doc.data();
-        var created = d.createdAt ? d.createdAt.toDate() : new Date();
-        var dateStr = created.toLocaleDateString('vi-VN');
-        if (dateStr !== lastDate) {
-            html += '<div class="chat-system">' + dateStr + '</div>';
-            lastDate = dateStr;
-        }
-        var timeStr = created.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        var isAdmin = (d.from === 'admin');
-
-        html += '<div class="chat-msg ' + (isAdmin ? 'from-user' : 'from-admin') + '">' +
-            '<div class="bubble">' + escapeHtml(d.text || '').replace(/\n/g, '<br>') + '</div>' +
-            '<span class="msg-time">' + timeStr + '</span>' +
-        '</div>';
-    });
-
-    bodyEl.innerHTML = html;
-    setTimeout(function() { bodyEl.scrollTop = bodyEl.scrollHeight; }, 50);
-}
-
-async function sendAdminChat() {
-    if (!adminCurrentChatEmail || !currentUser) return;
-    var input = document.getElementById('chatInput');
-    var text = input.value.trim();
-    if (!text) return;
-
-    var userEmail = adminCurrentChatEmail;
-    var btn = document.getElementById('chatSendBtn');
-    btn.disabled = true;
-
-    try {
-        await db.collection('chat_threads').doc(userEmail).collection('messages').add({
-            from: 'admin',
-            fromEmail: currentUser.email,
-            fromName: currentUser.name || 'Admin',
-            text: text,
-            read: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        await db.collection('chat_threads').doc(userEmail).update({
-            lastMessage: text.substring(0, 100),
-            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastMessageFrom: 'admin',
-            unreadByUser: firebase.firestore.FieldValue.increment(1)
-        });
-
-        input.value = '';
-        autoResizeChatInput();
-        btn.disabled = true;
-    } catch(e) {
-        alert('❌ Lỗi gửi: ' + e.message);
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-function restoreChatHeaderForUser() {
-    var header = document.getElementById('chatHeaderInfo');
-    var avatarIcon = document.getElementById('chatAvatarIcon');
-    var backBtn = document.getElementById('chatBack');
-    var closeBtn = document.getElementById('chatClose');
-
-    if (avatarIcon) avatarIcon.className = 'fas fa-headset';
-    if (header) {
-        header.innerHTML =
-            '<div class="name">Hỗ trợ Admin <i class="fas fa-check-circle" style="font-size:.7rem;color:#86efac;"></i></div>' +
-            '<div class="status">' +
-                '<i class="fas fa-circle" style="font-size:.5rem;color:#22c55e;"></i>' +
-                '<span>Thường trả lời trong 5-10 phút</span>' +
-            '</div>';
-    }
-    if (backBtn) backBtn.classList.remove('show');
-    if (closeBtn) closeBtn.style.display = 'flex';
-}
-
-function goBackToAdminChatList() {
-    if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
-    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-    adminCurrentChatEmail = null;
-
-    var qr = document.getElementById('chatQuickReplies');
-    if (qr) qr.classList.add('hidden');
-
-    restoreChatHeaderForUser();
-
-    if (typeof loadAdminChatList === 'function') loadAdminChatList();
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🚀 INIT CHAT
-   ═══════════════════════════════════════════════════════════════ */
-
-function initChatSupport() {
-    var chatSupportBtn = document.getElementById('chatSupportBtn');
-    if (chatSupportBtn) chatSupportBtn.addEventListener('click', openChatSupport);
-
-    var fab = document.getElementById('chatFab');
-    if (fab) {
-        fab.addEventListener('click', function() {
-            fab.classList.remove('admin-chat-attention');
-            var bubble = fab.querySelector('.fab-new-bubble');
-            if (bubble) bubble.classList.remove('show');
-            openChatSupport();
-        });
-    }
-
-    var chatClose = document.getElementById('chatClose');
-    if (chatClose) chatClose.addEventListener('click', closeChatSupport);
-
-    var chatBack = document.getElementById('chatBack');
-    if (chatBack) chatBack.addEventListener('click', goBackToAdminChatList);
-
-    var chatModal = document.getElementById('chatModal');
-    if (chatModal) chatModal.addEventListener('click', function(e) {
-        if (e.target === this) closeChatSupport();
-    });
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && chatModal && chatModal.classList.contains('show')) closeChatSupport();
-    });
-
-    var input = document.getElementById('chatInput');
-    if (input) {
-        input.addEventListener('input', function() {
-            autoResizeChatInput();
-            var sendBtn = document.getElementById('chatSendBtn');
-            if (sendBtn) sendBtn.disabled = !this.value.trim();
-        });
-
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (adminCurrentChatEmail) sendAdminChat();
-                else sendUserChat();
-            }
-        });
-    }
-
-    var sendBtn = document.getElementById('chatSendBtn');
-    if (sendBtn) {
-        sendBtn.addEventListener('click', function() {
-            if (adminCurrentChatEmail) sendAdminChat();
-            else sendUserChat();
-        });
-    }
-
-    document.querySelectorAll('.chat-quick-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var reply = this.dataset.reply || this.textContent.trim();
-            var inp = document.getElementById('chatInput');
-            if (inp) {
-                inp.value = reply;
-                autoResizeChatInput();
-                var sb = document.getElementById('chatSendBtn');
-                if (sb) sb.disabled = false;
-                inp.focus();
-            }
-        });
-    });
-
-    /* Toast buttons */
-    var toastAction = document.getElementById('adminChatToastAction');
-    if (toastAction) toastAction.addEventListener('click', function(e) {
-        e.stopPropagation();
-        hideAdminChatToast();
-        openChatSupport();
-    });
-
-    var toast = document.getElementById('adminChatToast');
-    if (toast) toast.addEventListener('click', function(e) {
-        if (e.target.closest('.toast-close') || e.target.closest('.toast-action')) return;
-        hideAdminChatToast();
-        openChatSupport();
-    });
-
-    var toastClose = document.getElementById('adminChatToastClose');
-    if (toastClose) toastClose.addEventListener('click', function(e) {
-        e.stopPropagation();
-        hideAdminChatToast();
-    });
-
-    var refreshChatBtn = document.getElementById('refreshChatBtn');
-    if (refreshChatBtn) refreshChatBtn.addEventListener('click', function() { loadAdminChatList(); });
-
-    var loadMoreChatBtn = document.getElementById('loadMoreChatBtn');
-    if (loadMoreChatBtn) loadMoreChatBtn.addEventListener('click', loadMoreAdminChat);
-
-    setupChatQueueBeforeUnload();
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-            if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
-            if (adminChatUnsubscribe) { try { adminChatUnsubscribe(); } catch(e) {} adminChatUnsubscribe = null; }
-        } else {
-            if (document.getElementById('chatModal') && document.getElementById('chatModal').classList.contains('show')) {
-                if (adminCurrentChatEmail) adminOpenChatWith(adminCurrentChatEmail);
-                else if (currentUser && currentUser.role !== 'admin') loadUserChat();
-            }
-            if (document.getElementById('adminModal') && document.getElementById('adminModal').classList.contains('show')) {
-                if (typeof loadAdminChatList === 'function') loadAdminChatList();
-            }
-        }
-    });
-}
-
-function updateChatFABVisibility() {
-    var fab = document.getElementById('chatFab');
-    if (!fab) return;
-    if (currentUser && !isDemo) fab.classList.remove('hidden');
-    else fab.classList.add('hidden');
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🔗 DEEP LINK — #chat=user@email
-   ═══════════════════════════════════════════════════════════════ */
-
-function handleChatDeepLink() {
-    var hash = window.location.hash;
-    if (!hash || hash.indexOf('#chat=') !== 0) return;
-
-    var email = decodeURIComponent(hash.substring(6));
-    if (!email || email.indexOf('@') === -1) return;
-
-    console.log('🔗 Deep link chat:', email);
-
-    var tries = 0;
-    var check = setInterval(function() {
-        tries++;
-        if (currentUser && currentUser.role === 'admin') {
-            clearInterval(check);
-            if (typeof openAdminPanel === 'function') openAdminPanel();
-            setTimeout(function() {
-                if (typeof adminOpenChatWith === 'function') adminOpenChatWith(email);
-                try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(_e) {}
-            }, 1200);
-        }
-        if (tries > 50) clearInterval(check);
-    }, 300);
-}
-
-window.addEventListener('hashchange', function() {
-    if (typeof handleChatDeepLink === 'function') handleChatDeepLink();
-});
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { setTimeout(handleChatDeepLink, 2000); });
-} else {
-    setTimeout(handleChatDeepLink, 2000);
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   📱 TELEGRAM NOTIFICATION — Renewal
-   ═══════════════════════════════════════════════════════════════ */
-function _telegramSendMessage(text) {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
-        console.warn('[Telegram] Chưa cấu hình bot_token / chat_id hợp lệ');
-        return Promise.reject('not_configured');
-    }
-
-    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
-
-    return fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: text,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true
-        })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (!data.ok) {
-            console.error('[Telegram] ❌ API error:', data.description);
-            throw new Error(data.description || 'Telegram API error');
-        }
-        console.log('[Telegram] ✅ Đã gửi tin nhắn thành công');
-        return data;
-    })
-    .catch(function(err) {
-        console.error('[Telegram] ❌ Lỗi gửi:', err);
-        throw err;
-    });
-}
-
-window.notifyTelegramUserPaid = function(req) {
-    if (!req) return Promise.resolve();
-    var isPermanent = req.isPermanent || false;
-    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-    var text = '💰 <b>USER ĐÃ THANH TOÁN</b>\n\n' +
-        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
-        '📧 ' + escapeHtml(req.email) + '\n' +
-        '💵 <b>' + amountStr + 'đ</b>\n' +
-        '📦 ' + escapeHtml(req.packageLabel || req.package) +
-            (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
-        '🔑 Mã: <code>' + escapeHtml(req.transferCode || '—') + '</code>\n\n' +
-        '⏳ Vui lòng kiểm tra và xác nhận trong trang quản trị.';
-
-    return _telegramSendMessage(text);
-};
-
-window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
-    if (!req) return Promise.resolve();
-    var isPermanent = req.isPermanent || false;
-    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-    var text = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n\n' +
-        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
-        '📧 ' + escapeHtml(req.email) + '\n' +
-        '💵 ' + amountStr + 'đ\n' +
-        '📦 ' + escapeHtml(req.packageLabel || req.package) + '\n' +
-        (isPermanent
-            ? '💎 <b>KÍCH HOẠT VĨNH VIỄN</b>'
-            : '📅 Hạn mới: <b>' + escapeHtml(newExpiryStr || '?') + '</b>') + '\n\n' +
-        '🎉 User đã được gia hạn thành công.';
-
-    return _telegramSendMessage(text);
-};
-
-window.testTelegram = function() {
-    console.log('[Telegram] Test started...');
-    console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
-    console.log('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || '❌ MISSING');
-    return _telegramSendMessage('🧪 <b>Test Telegram</b>\n\nBot đang hoạt động tốt! ✅\n\nThời gian: ' + new Date().toLocaleString('vi-VN'))
-        .then(function() { alert('✅ Đã gửi test! Kiểm tra Telegram.'); })
-        .catch(function(err) { alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.'); });
-};
-"""
-
-
+ 
 # ═══════════════════════════════════════════════════════════════
 # HELPER: build_all_auth
 # ═══════════════════════════════════════════════════════════════
