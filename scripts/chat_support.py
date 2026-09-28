@@ -16,12 +16,6 @@ QUOTA:
 • Wrap Firestore methods tự động
 • Dashboard trong Admin Panel
 • Cảnh báo khi >70% / >90% quota
-
-FIX (2026-09):
-• Nút chat không còn chớp tắt — dùng MutationObserver
-  tự động chèn lại nút khi floatingLeftGroup bị re-render
-• Thay watchAuth() setInterval bằng __chatRefreshAuth() callback
-• Bổ sung 3 hàm: build_quota_html / build_quota_js / build_quota_init_js
 ════════════════════════════════════════════════════════════════
 """
 
@@ -256,6 +250,94 @@ def build_chat_html():
 """
 
 
+def build_quota_html():
+    """HTML cho section Quota trong Admin Panel. Chèn vào build_accounts_html()."""
+    return r"""
+<div class="admin-section collapsed" id="adminQuotaSection">
+    <div class="admin-section-head">
+        <div class="ash-left">
+            <div class="ash-icon violet"><i class="fas fa-chart-line"></i></div>
+            <div class="ash-text">
+                <div class="ash-title"><span>Quota Firestore</span></div>
+                <div class="ash-subtitle">
+                    <span class="chip primary"><i class="fas fa-database"></i> <span id="quotaStatusChip">Đang tải...</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="ash-actions">
+            <button class="btn" id="refreshQuotaBtn" style="padding:.4rem .7rem;font-size:.75rem" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
+            <button class="admin-toggle-btn" id="toggleQuotaBtn" title="Hiện Quota"><i class="fas fa-eye-slash"></i></button>
+        </div>
+    </div>
+    <div class="admin-section-body">
+        <div class="admin-section-inner">
+            <div class="quota-actions">
+                <button class="btn primary" id="quotaResetBtn"><i class="fas fa-redo"></i> Reset đếm hôm nay</button>
+                <button class="btn" id="quotaExportBtn"><i class="fas fa-file-export"></i> Xuất CSV</button>
+                <button class="btn" id="quotaSimBtn"><i class="fas fa-flask"></i> Test cảnh báo</button>
+            </div>
+            <div class="quota-grid" id="quotaGrid">
+                <div class="quota-card">
+                    <i class="fas fa-eye qc-icon"></i>
+                    <div class="qc-label"><i class="fas fa-book-reader"></i> Reads hôm nay</div>
+                    <div class="qc-value" id="quotaReads">0</div>
+                    <div class="qc-sub">Giới hạn: 50.000</div>
+                    <div class="qc-bar"><div class="qc-bar-fill" id="quotaReadsBar" style="width:0%"></div></div>
+                </div>
+                <div class="quota-card">
+                    <i class="fas fa-pen qc-icon"></i>
+                    <div class="qc-label"><i class="fas fa-pen"></i> Writes hôm nay</div>
+                    <div class="qc-value" id="quotaWrites">0</div>
+                    <div class="qc-sub">Giới hạn: 20.000</div>
+                    <div class="qc-bar"><div class="qc-bar-fill" id="quotaWritesBar" style="width:0%"></div></div>
+                </div>
+                <div class="quota-card">
+                    <i class="fas fa-trash qc-icon"></i>
+                    <div class="qc-label"><i class="fas fa-trash"></i> Deletes hôm nay</div>
+                    <div class="qc-value" id="quotaDeletes">0</div>
+                    <div class="qc-sub">Giới hạn: 20.000</div>
+                    <div class="qc-bar"><div class="qc-bar-fill" id="quotaDeletesBar" style="width:0%"></div></div>
+                </div>
+                <div class="quota-card">
+                    <i class="fas fa-users qc-icon"></i>
+                    <div class="qc-label"><i class="fas fa-users"></i> User đang hoạt động</div>
+                    <div class="qc-value" id="quotaOnlineUsers">0</div>
+                    <div class="qc-sub">Tab đang mở (localStorage)</div>
+                </div>
+                <div class="quota-card">
+                    <i class="fas fa-clock qc-icon"></i>
+                    <div class="qc-label"><i class="fas fa-clock"></i> Reset sau</div>
+                    <div class="qc-value" id="quotaResetTime">--:--:--</div>
+                    <div class="qc-sub">Giờ UTC (Firebase)</div>
+                </div>
+                <div class="quota-card">
+                    <i class="fas fa-tachometer-alt qc-icon"></i>
+                    <div class="qc-label"><i class="fas fa-tachometer-alt"></i> Reads/phút</div>
+                    <div class="qc-value" id="quotaReadRate">0</div>
+                    <div class="qc-sub">Tốc độ hiện tại</div>
+                </div>
+            </div>
+            <div class="quota-info">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <b>Lưu ý:</b> Số liệu đếm từ client (localStorage), KHÔNG phải số liệu chính thức từ Firebase.
+                    Để xem quota chính thức, vào <b>Firebase Console → Usage</b>.
+                    <br>Reset tự động vào <b>00:00 UTC</b> (07:00 giờ VN).
+                </div>
+            </div>
+            <div style="margin-top:1rem;">
+                <div style="padding:.5rem 0;"><strong style="font-size:.82rem;"><i class="fas fa-history"></i> Lịch sử 7 ngày</strong></div>
+                <table class="quota-history-table">
+                    <thead><tr><th>Ngày</th><th>Reads</th><th>Writes</th><th>Deletes</th><th>Trạng thái</th></tr></thead>
+                    <tbody id="quotaHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:1rem;">Chưa có dữ liệu</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+"""
+
+
 def build_chat_js():
     return r"""
 (function() {
@@ -274,9 +356,7 @@ def build_chat_js():
         isOpen: false,
         lastThreadData: null,
         lastSeenAt: 0,
-        typingTimer: null,
-        _lastEmail: null,
-        _observer: null
+        typingTimer: null
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -373,12 +453,10 @@ def build_chat_js():
         updateCounterUI();
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       FIX: MOUNT + OBSERVE floatingLeftGroup
-       - Tạo nút chat + tự động chèn lại khi group bị re-render
-       - MutationObserver theo dõi DOM, KHÔNG dùng retry vô hạn
-       ═══════════════════════════════════════════════════════════ */
-    function createChatButton() {
+    function mountChatButton() {
+        var group = document.getElementById('floatingLeftGroup');
+        if (!group) { setTimeout(mountChatButton, 500); return; }
+        if (document.getElementById('chatFloatBtn')) return;
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'chat-float-btn hidden';
@@ -387,66 +465,9 @@ def build_chat_js():
         btn.innerHTML = '<i class="fas fa-comments"></i>' +
             '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
             '<span class="chat-badge" id="chatFabBadge">0</span>';
-        btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
-        return btn;
-    }
-
-    function ensureChatButton() {
-        var group = document.getElementById('floatingLeftGroup');
-        if (!group) return false;
-        if (group.querySelector('#chatFloatBtn')) {
-            updateFabVisibility();
-            return true;
-        }
-        var btn = createChatButton();
         group.insertBefore(btn, group.firstChild);
-        console.log('✅ Đã mount chat FAB vào floatingLeftGroup');
-        updateFabVisibility();
-        // Restore badge nếu có unread
-        if (CHAT.lastThreadData) {
-            var unread = (CHAT.lastThreadData.unreadByUser || 0);
-            if (!isAdmin()) setFabBadge(unread);
-        }
-        return true;
+        btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
     }
-
-    function observeFloatingGroup() {
-        if (CHAT._observer) return;
-        var target = document.body || document.documentElement;
-        if (!target) return;
-
-        CHAT._observer = new MutationObserver(function(mutations) {
-            var needCheck = false;
-            for (var i = 0; i < mutations.length; i++) {
-                var m = mutations[i];
-                if (m.addedNodes && m.addedNodes.length > 0) {
-                    for (var j = 0; j < m.addedNodes.length; j++) {
-                        var n = m.addedNodes[j];
-                        if (n.nodeType !== 1) continue;
-                        if (n.id === 'floatingLeftGroup' ||
-                            (n.querySelector && n.querySelector('#floatingLeftGroup'))) {
-                            needCheck = true;
-                            break;
-                        }
-                    }
-                }
-                if (needCheck) break;
-            }
-            if (needCheck) {
-                setTimeout(ensureChatButton, 50);
-            } else {
-                // Check xem nút chat có tồn tại không (phòng khi bị xóa lẻ)
-                if (!document.getElementById('chatFloatBtn') &&
-                    document.getElementById('floatingLeftGroup')) {
-                    setTimeout(ensureChatButton, 50);
-                }
-            }
-        });
-
-        CHAT._observer.observe(target, { childList: true, subtree: true });
-        console.log('👁 Chat FAB observer started');
-    }
-
     function updateFabVisibility() {
         var fab = $id('chatFloatBtn');
         if (!fab) return;
@@ -804,51 +825,10 @@ def build_chat_js():
         CHAT.typingTimer = setTimeout(function() { CHAT.typingTimer = null; }, 3000);
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       FIX: REFRESH AUTH — gọi từ accounts_template.py
-       Không dùng setInterval, thay bằng callback từ applyUserUI()
-       ═══════════════════════════════════════════════════════════ */
-    function refreshAuth() {
-        var u = getCu();
-        var email = (u && u.email) ? u.email : null;
-
-        // Luôn đảm bảo FAB được mount (đề phòng bị xóa)
-        ensureChatButton();
-
-        if (email === CHAT._lastEmail) {
-            updateFabVisibility();
-            return;
-        }
-        CHAT._lastEmail = email;
-
-        updateFabVisibility();
-        stopUserThreadWatch();
-        stopAdminListWatch();
-        stopAdminThreadWatch();
-
-        if (email) {
-            if (isAdmin()) startAdminListWatch();
-            else { startUserThreadWatch(); updateCounterUI(); }
-        } else {
-            setFabBadge(0);
-            if (CHAT.isOpen) closeChat();
-        }
-    }
-    window.__chatRefreshAuth = refreshAuth;
-
     function init() {
         if (CHAT.inited) return;
         CHAT.inited = true;
-
-        // Mount + observer
-        ensureChatButton();
-        observeFloatingGroup();
-
-        // Fallback retry (chỉ vài lần, không lặp vô hạn)
-        setTimeout(ensureChatButton, 200);
-        setTimeout(ensureChatButton, 1000);
-        setTimeout(ensureChatButton, 3000);
-
+        mountChatButton();
         initLimitBanner();
         var closeBtn = $id('chatClose');
         if (closeBtn) closeBtn.addEventListener('click', closeChat);
@@ -887,122 +867,35 @@ def build_chat_js():
         });
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
+    }
 
-        // Gọi lần đầu
-        refreshAuth();
-
-        // Fallback poll mỗi 3s — chỉ update visibility + đảm bảo FAB tồn tại
+    var _lastEmail = null;
+    function watchAuth() {
         setInterval(function() {
             var u = getCu();
-            var email = (u && u.email) ? u.email : null;
-            if (email !== CHAT._lastEmail) {
-                refreshAuth();
+            var email = u ? u.email : null;
+            if (email === _lastEmail) return;
+            _lastEmail = email;
+            updateFabVisibility();
+            stopUserThreadWatch();
+            stopAdminListWatch();
+            stopAdminThreadWatch();
+            if (email) {
+                if (isAdmin()) startAdminListWatch();
+                else { startUserThreadWatch(); updateCounterUI(); }
             } else {
-                if (!document.getElementById('chatFloatBtn')) {
-                    ensureChatButton();
-                }
-                updateFabVisibility();
+                setFabBadge(0);
+                if (CHAT.isOpen) closeChat();
             }
-        }, 3000);
+        }, 2000);
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { init(); });
+        document.addEventListener('DOMContentLoaded', function() { init(); updateFabVisibility(); watchAuth(); });
     } else {
-        init();
+        init(); updateFabVisibility(); watchAuth();
     }
 })();
-"""
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  📊 QUOTA DASHBOARD
-# ═══════════════════════════════════════════════════════════════════
-def build_quota_html():
-    """HTML cho section Quota trong Admin Panel. Chèn vào build_accounts_html()."""
-    return r"""
-<div class="admin-section collapsed" id="adminQuotaSection">
-    <div class="admin-section-head">
-        <div class="ash-left">
-            <div class="ash-icon violet"><i class="fas fa-chart-line"></i></div>
-            <div class="ash-text">
-                <div class="ash-title"><span>Quota Firestore</span></div>
-                <div class="ash-subtitle">
-                    <span class="chip primary"><i class="fas fa-database"></i> <span id="quotaStatusChip">Đang tải...</span></span>
-                </div>
-            </div>
-        </div>
-        <div class="ash-actions">
-            <button class="btn" id="refreshQuotaBtn" style="padding:.4rem .7rem;font-size:.75rem" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
-            <button class="admin-toggle-btn" id="toggleQuotaBtn" title="Hiện Quota"><i class="fas fa-eye-slash"></i></button>
-        </div>
-    </div>
-    <div class="admin-section-body">
-        <div class="admin-section-inner">
-            <div class="quota-actions">
-                <button class="btn primary" id="quotaResetBtn"><i class="fas fa-redo"></i> Reset đếm hôm nay</button>
-                <button class="btn" id="quotaExportBtn"><i class="fas fa-file-export"></i> Xuất CSV</button>
-                <button class="btn" id="quotaSimBtn"><i class="fas fa-flask"></i> Test cảnh báo</button>
-            </div>
-            <div class="quota-grid" id="quotaGrid">
-                <div class="quota-card">
-                    <i class="fas fa-eye qc-icon"></i>
-                    <div class="qc-label"><i class="fas fa-book-reader"></i> Reads hôm nay</div>
-                    <div class="qc-value" id="quotaReads">0</div>
-                    <div class="qc-sub">Giới hạn: 50.000</div>
-                    <div class="qc-bar"><div class="qc-bar-fill" id="quotaReadsBar" style="width:0%"></div></div>
-                </div>
-                <div class="quota-card">
-                    <i class="fas fa-pen qc-icon"></i>
-                    <div class="qc-label"><i class="fas fa-pen"></i> Writes hôm nay</div>
-                    <div class="qc-value" id="quotaWrites">0</div>
-                    <div class="qc-sub">Giới hạn: 20.000</div>
-                    <div class="qc-bar"><div class="qc-bar-fill" id="quotaWritesBar" style="width:0%"></div></div>
-                </div>
-                <div class="quota-card">
-                    <i class="fas fa-trash qc-icon"></i>
-                    <div class="qc-label"><i class="fas fa-trash"></i> Deletes hôm nay</div>
-                    <div class="qc-value" id="quotaDeletes">0</div>
-                    <div class="qc-sub">Giới hạn: 20.000</div>
-                    <div class="qc-bar"><div class="qc-bar-fill" id="quotaDeletesBar" style="width:0%"></div></div>
-                </div>
-                <div class="quota-card">
-                    <i class="fas fa-users qc-icon"></i>
-                    <div class="qc-label"><i class="fas fa-users"></i> User đang hoạt động</div>
-                    <div class="qc-value" id="quotaOnlineUsers">0</div>
-                    <div class="qc-sub">Tab đang mở (localStorage)</div>
-                </div>
-                <div class="quota-card">
-                    <i class="fas fa-clock qc-icon"></i>
-                    <div class="qc-label"><i class="fas fa-clock"></i> Reset sau</div>
-                    <div class="qc-value" id="quotaResetTime">--:--:--</div>
-                    <div class="qc-sub">Giờ UTC (Firebase)</div>
-                </div>
-                <div class="quota-card">
-                    <i class="fas fa-tachometer-alt qc-icon"></i>
-                    <div class="qc-label"><i class="fas fa-tachometer-alt"></i> Reads/phút</div>
-                    <div class="qc-value" id="quotaReadRate">0</div>
-                    <div class="qc-sub">Tốc độ hiện tại</div>
-                </div>
-            </div>
-            <div class="quota-info">
-                <i class="fas fa-info-circle"></i>
-                <div>
-                    <b>Lưu ý:</b> Số liệu đếm từ client (localStorage), KHÔNG phải số liệu chính thức từ Firebase.
-                    Để xem quota chính thức, vào <b>Firebase Console → Usage</b>.
-                    <br>Reset tự động vào <b>00:00 UTC</b> (07:00 giờ VN).
-                </div>
-            </div>
-            <div style="margin-top:1rem;">
-                <div style="padding:.5rem 0;"><strong style="font-size:.82rem;"><i class="fas fa-history"></i> Lịch sử 7 ngày</strong></div>
-                <table class="quota-history-table">
-                    <thead><tr><th>Ngày</th><th>Reads</th><th>Writes</th><th>Deletes</th><th>Trạng thái</th></tr></thead>
-                    <tbody id="quotaHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:1rem;">Chưa có dữ liệu</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 """
 
 
@@ -1075,9 +968,11 @@ def build_quota_js():
         if (window.__quotaWrapped) return true;
         window.__quotaWrapped = true;
 
+        var proto = firebase.firestore.Firestore.prototype;
         var docProto = firebase.firestore.DocumentReference.prototype;
         var colProto = firebase.firestore.CollectionReference.prototype;
 
+        // get() doc → 1 read
         var origDocGet = docProto.get;
         docProto.get = function() {
             return origDocGet.apply(this, arguments).then(function(r) {
@@ -1086,6 +981,7 @@ def build_quota_js():
             });
         };
 
+        // get() collection → snap.size reads
         var origColGet = colProto.get;
         colProto.get = function() {
             return origColGet.apply(this, arguments).then(function(snap) {
@@ -1094,24 +990,28 @@ def build_quota_js():
             });
         };
 
+        // set() → 1 write
         var origSet = docProto.set;
         docProto.set = function() {
             window.__quotaTrack('write', 1);
             return origSet.apply(this, arguments);
         };
 
+        // update() → 1 write
         var origUpdate = docProto.update;
         docProto.update = function() {
             window.__quotaTrack('write', 1);
             return origUpdate.apply(this, arguments);
         };
 
+        // delete() → 1 delete
         var origDelete = docProto.delete;
         docProto.delete = function() {
             window.__quotaTrack('delete', 1);
             return origDelete.apply(this, arguments);
         };
 
+        // add() → 1 write
         var origAdd = colProto.add;
         colProto.add = function() {
             window.__quotaTrack('write', 1);
@@ -1328,11 +1228,12 @@ def build_quota_init_js():
             refBtn._bound = true;
             refBtn.addEventListener('click', function() {
                 window.dispatchEvent(new Event('quota-refresh'));
-                if (window.__quotaTrack) window.__quotaTrack('read', 0);
+                if (window.__quotaTrack) window.__quotaTrack('read', 0); // trigger update
             });
         }
     }
 
+    // Bind ngay + retry (vì section có thể render sau)
     bindQuotaButtons();
     setTimeout(bindQuotaButtons, 1000);
     setTimeout(bindQuotaButtons, 3000);
