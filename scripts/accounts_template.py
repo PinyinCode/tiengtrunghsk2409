@@ -4,21 +4,18 @@ Module GỘP: Auth + Firebase + Admin panel + Trial + Renewal (QR ngân hàng).
 Hỗ trợ 3 tier: demo / trial / active (bao gồm gói vĩnh viễn).
 Đọc config từ file JSON bên ngoài (config.json).
 
-UI Admin Panel tối ưu:
-- Nút mắt tách khỏi body section → luôn bấm được
-- Lịch sử gia hạn mặc định ẩn
-- Card header với icon + chip trạng thái
-- Animation grid-template-rows mượt
+✅ RTDB PRESENCE (2026-09):
+   - Track user online qua Firebase Realtime Database (KHÔNG tốn Firestore quota)
+   - onDisconnect tự động xóa khi tắt tab
+   - Heartbeat 2 phút/lần
+   - Admin xem được danh sách user online realtime
 
 FIX (2026-09):
 - Sửa lỗi dropdown user menu không bấm được trên desktop
-  do .header-inner có overflow:hidden trong @media (min-width:769px).
-- Đổi overflow:hidden → overflow:visible và nâng z-index cho
-  .header-actions / .user-menu / .user-dropdown.
-- Thêm banner cảnh báo gia hạn 3 mức: warning (≤7 ngày) / urgent (≤3 ngày)
-  / expired (đã hết hạn) — với icon + text + nút điều hướng đầy đủ.
-- Dropdown user menu MẶC ĐỊNH MỞ khi vào trang, chỉ nhớ trạng thái
-  đóng trong sessionStorage (reset khi F5 / mở tab mới).
+- Thêm banner cảnh báo gia hạn 3 mức
+- Dropdown mặc định mở, nhớ trạng thái đóng trong sessionStorage
+- Chèn User Online section vào Admin Panel
+- Fix typo HTML trong dropdown (stylerop, downfas, renew-b|adge)
 """
 
 import json
@@ -50,8 +47,6 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════════
    MŨI TÊN TAM GIÁC — Chỉ lên avatar (nút mở dropdown)
-   - ::before: tạo mũi tên (border-color)
-   - ::after:  tạo khoảng trắng giữa mũi tên và dropdown
    ═══════════════════════════════════════════════════════════════ */
 .user-dropdown::before{
     content:'';
@@ -252,8 +247,7 @@ def build_accounts_css():
 .admin-filter-btn.active .count{background:rgba(255,255,255,.35);}
 
 /* ═══════════════════════════════════════════════════════════
-   COLLAPSIBLE SECTIONS — UI THÔNG MINH
-   Dùng grid-template-rows để animate mượt (không giật như max-height)
+   COLLAPSIBLE SECTIONS
    ═══════════════════════════════════════════════════════════ */
 .admin-section{
     margin-top:1.5rem;
@@ -271,8 +265,6 @@ def build_accounts_css():
     border-color:rgba(96,165,250,.35);
     box-shadow:0 4px 16px rgba(0,0,0,.35);
 }
-
-/* Header — luôn hiển thị, chứa nút mắt */
 .admin-section-head{
     display:flex;
     align-items:center;
@@ -291,7 +283,6 @@ def build_accounts_css():
 .admin-section.collapsed .admin-section-head{
     border-bottom-color:transparent;
 }
-
 .admin-section-head .ash-left{
     display:flex;
     align-items:center;
@@ -315,7 +306,6 @@ def build_accounts_css():
 .admin-section-head .ash-icon.amber{background:var(--amber-light);color:#92400e;}
 .admin-section-head .ash-icon.violet{background:rgba(124,58,237,.12);color:#7c3aed;}
 .admin-section-head .ash-icon.slate{background:var(--surface-2);color:var(--text-2);}
-
 .admin-section-head .ash-text{
     display:flex;
     flex-direction:column;
@@ -356,15 +346,12 @@ def build_accounts_css():
 .admin-section-head .ash-subtitle .chip.warn{background:var(--amber-light);color:#92400e;}
 .admin-section-head .ash-subtitle .chip.danger{background:var(--danger-light);color:var(--danger);}
 .admin-section-head .ash-subtitle .chip.ok{background:rgba(22,163,74,.12);color:var(--success);}
-
 .admin-section-head .ash-actions{
     display:flex;
     align-items:center;
     gap:.35rem;
     flex-shrink:0;
 }
-
-/* Nút mắt — UI thông minh */
 .admin-toggle-btn{
     width:34px;
     height:34px;
@@ -409,8 +396,6 @@ def build_accounts_css():
     color:var(--danger);
     border-color:var(--danger);
 }
-
-/* Body — dùng grid-rows để animate mượt */
 .admin-section-body{
     display:grid;
     grid-template-rows:1fr;
@@ -431,8 +416,6 @@ def build_accounts_css():
     padding-top:0;
     padding-bottom:0;
 }
-
-/* Highlight khi có pending */
 .admin-section.has-pending .admin-section-head{
     background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(251,191,36,.06));
     border-bottom-color:rgba(245,158,11,.4);
@@ -448,7 +431,6 @@ def build_accounts_css():
     20%,40%{transform:rotate(12deg);}
     50%{transform:rotate(0);}
 }
-
 #pendingRenewalsBadge.pulse,
 .chip.pulse{
     display:inline-block;padding:.05rem .5rem;
@@ -463,8 +445,6 @@ def build_accounts_css():
     0%,100%{transform:scale(1);box-shadow:0 2px 8px rgba(220,38,38,.5);}
     50%{transform:scale(1.15);box-shadow:0 4px 14px rgba(220,38,38,.8);}
 }
-
-/* No data state */
 .admin-section-body .no-data{
     padding:2rem 1rem;
     text-align:center;
@@ -494,8 +474,6 @@ def build_accounts_css():
 .btn:disabled{opacity:.5;cursor:not-allowed;}
 .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .btn.primary:hover{background:var(--primary-dark)}
-
-/* Add user button */
 .btn-add{padding:.45rem .85rem;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;transition:.15s;font-family:inherit;}
 .btn-add:hover{background:var(--primary-dark)}
 
@@ -604,9 +582,6 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════════
    ⏰ EXPIRY BANNER — Cảnh báo gia hạn 3 mức
-   • .expiry-banner              → Vàng (còn ≤7 ngày)
-   • .expiry-banner.urgent       → Cam đậm (còn ≤3 ngày)
-   • .expiry-banner.expired      → Đỏ (đã hết hạn)
    ═══════════════════════════════════════════════════════════════ */
 .expiry-banner{
     display:flex;
@@ -631,7 +606,6 @@ def build_accounts_css():
     from{opacity:0;transform:translateY(-12px);}
     to{opacity:1;transform:translateY(0);}
 }
-
 .expiry-banner.urgent{
     background:linear-gradient(135deg,#fed7aa,#fdba74);
     border-color:#ea580c;
@@ -646,7 +620,6 @@ def build_accounts_css():
     0%,100%{box-shadow:0 6px 20px rgba(234,88,12,.25);}
     50%{box-shadow:0 6px 28px rgba(234,88,12,.55);}
 }
-
 .expiry-banner.expired{
     background:linear-gradient(135deg,#fecaca,#fca5a5);
     border-color:#dc2626;
@@ -661,7 +634,6 @@ def build_accounts_css():
     0%,100%{box-shadow:0 6px 20px rgba(220,38,38,.3);}
     50%{box-shadow:0 6px 28px rgba(220,38,38,.6);}
 }
-
 .expiry-banner-icon{
     width:40px;
     height:40px;
@@ -688,7 +660,6 @@ def build_accounts_css():
     background:linear-gradient(135deg,#dc2626,#991b1b);
     animation:expiryIconShake 1.5s ease-in-out infinite;
 }
-
 .expiry-banner-text{
     flex:1 1 200px;
     min-width:0;
@@ -705,7 +676,6 @@ def build_accounts_css():
 [data-theme="dark"] .expiry-banner-text .title{color:#fcd34d;}
 [data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .title{color:#fdba74;}
 [data-theme="dark"] .expiry-banner.expired .expiry-banner-text .title{color:#fca5a5;}
-
 .expiry-banner-text .desc{
     font-size:clamp(.72rem,.88vw,.82rem);
     color:#78350f;
@@ -716,14 +686,12 @@ def build_accounts_css():
 [data-theme="dark"] .expiry-banner-text .desc{color:#fde68a;}
 [data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .desc{color:#fed7aa;}
 [data-theme="dark"] .expiry-banner.expired .expiry-banner-text .desc{color:#fecaca;}
-
 .expiry-banner-text b{
     font-weight:900;
     font-size:1.08em;
     color:#dc2626;
 }
 [data-theme="dark"] .expiry-banner-text b{color:#fef08a;}
-
 .expiry-banner-btn{
     padding:clamp(.5rem,.9vw,.62rem) clamp(.85rem,1.3vw,1.1rem);
     border-radius:50px;
@@ -753,18 +721,11 @@ def build_accounts_css():
     box-shadow:0 4px 14px rgba(234,88,12,.5);
     animation:renewUrgent 1.2s infinite;
 }
-.expiry-banner.urgent .expiry-banner-btn:hover{
-    box-shadow:0 6px 20px rgba(234,88,12,.7);
-}
 .expiry-banner.expired .expiry-banner-btn{
     background:linear-gradient(135deg,#7f1d1d,#b91c1c);
     box-shadow:0 4px 14px rgba(220,38,38,.5);
     animation:renewUrgent 1.2s infinite;
 }
-.expiry-banner.expired .expiry-banner-btn:hover{
-    box-shadow:0 6px 20px rgba(220,38,38,.8);
-}
-
 @media (max-width:600px){
     .expiry-banner{
         padding:.65rem .75rem;
@@ -834,7 +795,6 @@ def build_accounts_css():
     0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 4px 12px rgba(124,58,237,.5);}
     50%{transform:translateX(-50%) scale(1.08);box-shadow:0 6px 18px rgba(124,58,237,.8);}
 }
-
 .qr-wrap{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem;background:linear-gradient(135deg,#f0f4f8,#e2e8f0);border-radius:14px;border:1.5px dashed var(--border);}
 .qr-img{width:220px;height:220px;background:#fff;padding:.5rem;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15);}
 .qr-wrap .qr-hint{font-size:.75rem;color:var(--text-2);text-align:center;line-height:1.5;max-width:300px;}
@@ -863,7 +823,6 @@ def build_accounts_css():
 .renewal-success h3{font-size:1.15rem;font-weight:800;color:var(--text);margin:0;}
 .renewal-success p{font-size:.85rem;color:var(--text-2);line-height:1.6;max-width:340px;margin:0;}
 .renewal-success .info-box{padding:.65rem 1rem;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);font-size:.78rem;color:var(--text-2);display:flex;align-items:center;gap:.5rem;text-align:left;}
-
 .renewal-admin-row{display:flex;flex-direction:column;gap:.5rem;padding:.85rem;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:.5rem;}
 .renewal-admin-row .rar-head{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:flex-start;}
 .renewal-admin-row .rar-email{font-weight:800;font-size:.88rem;color:var(--text);word-break:break-all;}
@@ -894,16 +853,12 @@ def build_accounts_css():
 .renewal-history-item .rh-status.cancelled{background:rgba(148,163,184,.15);color:var(--text-3);}
 .renewal-history-item .rh-status.rejected{background:rgba(220,38,38,.15);color:var(--danger);}
 .renewal-history-item .rh-foot{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding-top:.4rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--text-3);}
-
 .renewal-history-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;padding:.75rem;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);margin-bottom:1rem;}
 .renewal-history-stats .rhs-item{text-align:center;}
 .renewal-history-stats .rhs-label{font-size:.7rem;color:var(--text-3);text-transform:uppercase;font-weight:700;letter-spacing:.3px;}
 .renewal-history-stats .rhs-value{font-size:1.1rem;font-weight:900;color:var(--primary);line-height:1.2;margin-top:.15rem;}
 .renewal-history-stats .rhs-value.amount{color:var(--success);}
-
 .admin-renewal-history-list{max-height:480px;overflow-y:auto;padding-right:.25rem;}
-
-/* Renewals tabs */
 .admin-renewals-tabs{display:flex;gap:.4rem;margin-bottom:.75rem;flex-wrap:wrap;}
 
 /* ============ ADMIN PERMISSIONS ============ */
@@ -939,9 +894,6 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════════
    FIX: Dropdown user menu không bấm được trên desktop
-   Nguyên nhân: .header-inner có overflow:hidden trong @media (min-width:769px)
-   → dropdown bị CLIP khi tràn ra ngoài header.
-   Giải pháp: overflow:visible + nâng z-index cho các lớp liên quan.
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width:769px){
     .header-inner{
@@ -961,8 +913,9 @@ def build_accounts_css():
         z-index:1000 !important;
     }
 }
+
 /* ═══════════════════════════════════════════════════════════════
-   🆕 USER DATA CHANGED TOAST — Thông báo khi admin duyệt
+   🆕 USER DATA CHANGED TOAST
    ═══════════════════════════════════════════════════════════════ */
 .user-changed-toast {
     position: fixed;
@@ -1343,6 +1296,9 @@ def build_accounts_html():
                 </div>
             </div>
 
+            <!-- 👥 USER ONLINE — main.py tự chèn qua placeholder -->
+            <!-- __ADMIN_ONLINE_SECTION__ -->
+
             <!-- 📊 QUOTA DASHBOARD — main.py tự chèn qua placeholder -->
             <!-- __ADMIN_QUOTA_SECTION__ -->
 
@@ -1409,10 +1365,10 @@ def build_user_dropdown_html():
         <span>Gia hạn tài khoản</span>
         <span class="renew-badge">VIP</span>
     </button>
-    <button class="dropdown-renew dropdown-forever" id="dropdownForeverBtn" stylerop="display:none">
-        <i class="downfas fa-crown"></i>
-        <span>Sở hữu_html vĩnh viễn()`</span>
-        <span class="renew-b |adge" style="background:linear-gradient Kh(135deg,#dc2626,#b91c1c)">HOT</span>
+    <button class="dropdown-renew dropdown-forever" id="dropdownForeverBtn" style="display:none">
+        <i class="fas fa-crown"></i>
+        <span>Sở hữu vĩnh viễn</span>
+        <span class="renew-badge" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">HOT</span>
     </button>
     <button class="dropdown-item danger" id="logoutBtn">
         <i class="fas fa-sign-out-alt"></i> Đăng xuất
@@ -1420,13 +1376,11 @@ def build_user_dropdown_html():
 </div>
 """
 
+
 def build_renewal_html():
     return ""
 
 
-# ═══════════════════════════════════════════════════════════════
-# JS
-# ═══════════════════════════════════════════════════════════════
 # ═══════════════════════════════════════════════════════════════
 # JS
 # ═══════════════════════════════════════════════════════════════
@@ -1444,6 +1398,7 @@ var RENEWAL_SUPPORT_ZALO = "__RENEWAL_SUPPORT_ZALO__";
 /* ⭐ TELEGRAM CONFIG */
 var TELEGRAM_BOT_TOKEN = "__TELEGRAM_BOT_TOKEN__";
 var TELEGRAM_CHAT_ID   = "__TELEGRAM_CHAT_ID__";
+
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -1525,9 +1480,7 @@ function hasPermission(permKey) {
     }
     return perms[permKey] === true;
 }
-/* ═══════════════════════════════════════════════════════════════
-   🔔 TOAST THÔNG BÁO USER DATA CHANGED
-   ═══════════════════════════════════════════════════════════════ */
+
 function showUserChangedToast(message, type) {
     var old = document.getElementById('userChangedToast');
     if (old) old.remove();
@@ -1550,6 +1503,7 @@ function showUserChangedToast(message, type) {
         setTimeout(function() { if (toast.parentNode) toast.remove(); }, 400);
     }, 4000);
 }
+
 /* ============ TIER STATE ============ */
 function publishTierState() {
     if (!currentUser) {
@@ -1624,11 +1578,70 @@ try {
     enterDemoMode();
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   👥 RTDB PRESENCE — Track user online MIỄN PHÍ
+   ═══════════════════════════════════════════════════════════════ */
+function startRTDBPresence() {
+    if (!currentUser || !currentUser.email) return;
+    if (typeof firebase === 'undefined' || typeof firebase.database !== 'function') {
+        console.warn('⚠️ RTDB chưa bật — bỏ qua presence');
+        return;
+    }
+
+    try {
+        var emailKey = encodeURIComponent(currentUser.email.toLowerCase());
+        var ref = firebase.database().ref('presence/' + emailKey);
+
+        ref.onDisconnect().remove();
+
+        ref.set({
+            at: Date.now(),
+            email: currentUser.email,
+            name: currentUser.name || currentUser.email.split('@')[0],
+            role: currentUser.role || 'user'
+        }).catch(function(e) { console.warn('RTDB presence set:', e); });
+
+        if (window.__presenceTimer) clearInterval(window.__presenceTimer);
+        window.__presenceTimer = setInterval(function() {
+            if (document.hidden) return;
+            if (!currentUser) return;
+            ref.update({ at: Date.now() }).catch(function(){});
+        }, 120000);
+
+        if (!window.__presenceFocusHandler) {
+            window.__presenceFocusHandler = function() {
+                if (!document.hidden && currentUser && window.__presenceRef) {
+                    window.__presenceRef.update({ at: Date.now() }).catch(function(){});
+                }
+            };
+            window.addEventListener('focus', window.__presenceFocusHandler);
+        }
+
+        window.__presenceRef = ref;
+        console.log('👥 RTDB presence started for:', currentUser.email);
+    } catch(e) {
+        console.warn('startRTDBPresence error:', e);
+    }
+}
+
+function stopRTDBPresence() {
+    if (window.__presenceRef) {
+        try { window.__presenceRef.remove(); } catch(e) {}
+        window.__presenceRef = null;
+    }
+    if (window.__presenceTimer) {
+        clearInterval(window.__presenceTimer);
+        window.__presenceTimer = null;
+    }
+    console.log('👥 RTDB presence stopped');
+}
+
 /* ============ AUTH STATE ============ */
 async function handleAuthChange(user) {
     if (!user) {
-        // Logout → hủy watcher
+        // Logout → hủy watcher + presence
         if (userWatcher) { try { userWatcher(); } catch(e) {} userWatcher = null; }
+        stopRTDBPresence();
         currentUser = null; isDemo = true;
         publishTierState();
         applyUserUI(); enterDemoMode();
@@ -1649,7 +1662,7 @@ async function handleAuthChange(user) {
         if (!appInitialized) { initApp(); appInitialized = true; }
         else { if (typeof refreshApp === 'function') refreshApp(); }
         watchCurrentUser();
-        // Background verify sau 2s để phát hiện thay đổi từ admin
+        startRTDBPresence();
         setTimeout(function() { verifyCurrentUserBackground(); }, 2000);
         return;
     }
@@ -1735,13 +1748,15 @@ async function handleAuthChange(user) {
         if (!appInitialized) { initApp(); appInitialized = true; }
         else { if (typeof refreshApp === 'function') refreshApp(); }
         watchCurrentUser();
+        startRTDBPresence();
     } catch(e) {
         console.error('Auth check error:', e);
         isDemo = true; enterDemoMode();
     }
 }
+
 /* ═══════════════════════════════════════════════════════════════
-   🔄 REALTIME WATCHER — Tự động cập nhật khi admin duyệt gia hạn
+   🔄 REALTIME WATCHER
    ═══════════════════════════════════════════════════════════════ */
 function watchCurrentUser() {
     if (!currentUser || !db) return;
@@ -1825,7 +1840,6 @@ function watchCurrentUser() {
         applyUserUI();
         if (typeof refreshApp === 'function') refreshApp();
 
-        /* ❤️ Cập nhật Yêu thích khi tier đổi (VD: trial → active sau khi admin duyệt) */
         if (typeof window.favRefreshUI === 'function') window.favRefreshUI();
 
         if (newPermanent && !oldPermanent) {
@@ -1846,8 +1860,7 @@ function watchCurrentUser() {
     });
 }
 
-/* ═════════════════════════════════════ {}
-══════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    🔍 VERIFY BACKGROUND — Fetch server sau 2s
    ═══════════════════════════════════════════════════════════════ */
 function verifyCurrentUserBackground() {
@@ -1972,11 +1985,6 @@ function enterDemoMode() {
 
 /* ═══════════════════════════════════════════════════════════════
    ⏰ RENDER BANNER CẢNH BÁO GIA HẠN
-   Hiện 3 mức:
-     • Warning (vàng)   : còn ≤ 7 ngày
-     • Urgent  (cam đậm): còn ≤ 3 ngày
-     • Expired (đỏ)     : đã hết hạn (daysLeft ≤ 0)
-   Ẩn khi: chưa đăng nhập / admin / vĩnh viễn / còn > 7 ngày
    ═══════════════════════════════════════════════════════════════ */
 function renderExpiryBanner() {
     var banner = $('expiryBanner');
@@ -2189,7 +2197,6 @@ function applyUserUI() {
     if (toggleFocusBtn) toggleFocusBtn.style.display = isDemo ? 'none' : 'flex';
     if (isDemo) document.body.classList.remove('hide-floating');
 
-    /* ❤️ Cập nhật trạng thái Yêu thích khi tier thay đổi */
     if (typeof window.favUpdateLockState === 'function') window.favUpdateLockState();
 }
 function updateUserDetails() {
@@ -2294,6 +2301,7 @@ function logLogin(u) {
         }).then(function() { try { localStorage.setItem(logKey, today); } catch(e) {} }).catch(function(){});
     } catch(e) {}
 }
+
 /* ============ ADMIN SEARCH & FILTER ============ */
 function filterUsers(items) {
     var query = adminSearchQuery.toLowerCase().trim();
@@ -2411,16 +2419,13 @@ window.setAdminFilter = function(filter) {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   🔒 OPEN RENEWAL MODAL — CHẶN 2 LỆNH CÙNG LÚC
-   • Nếu user đã có lệnh pending/user_paid → hỏi hủy để tạo mới
-   • Chỉ cho phép 1 lệnh tại 1 thời điểm
+   🔒 OPEN RENEWAL MODAL
    ═══════════════════════════════════════════════════════════════ */
 window.openRenewalModal = async function() {
     if (!currentUser) { showLoginModal(); return; }
     if (currentUser.role === 'admin') { alert('Admin có hạn vĩnh viễn, không cần gia hạn!'); return; }
     if (currentUser.isPermanent) { alert('💎 Bạn đã sở hữu gói VĨNH VIỄN!\n\nKhông cần gia hạn thêm.'); return; }
 
-    /* ═══ CHECK LỆNH CŨ — Chỉ cho phép 1 lệnh pending ═══ */
     try {
         var existingSnap = await db.collection('renewal_requests')
             .where('email', '==', currentUser.email)
@@ -2449,7 +2454,6 @@ window.openRenewalModal = async function() {
                 return;
             }
 
-            /* Hủy lệnh cũ */
             await db.collection('renewal_requests').doc(oldReq.id).update({
                 status: 'cancelled',
                 cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2461,7 +2465,6 @@ window.openRenewalModal = async function() {
         }
     } catch(e) {
         console.error('Check existing renewal error:', e);
-        /* Không block user nếu query lỗi */
     }
 
     renewalSelectedPkg = null;
@@ -2537,13 +2540,9 @@ window.selectPackage = function(pkgId) {
     if (btn) btn.disabled = false;
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   🔒 GO TO PAYMENT — DOUBLE-CHECK TRƯỚC KHI TẠO LỆNH
-   ═══════════════════════════════════════════════════════════════ */
 async function goToPayment() {
     if (!renewalSelectedPkg) return;
 
-    /* ═══ CHECK LẦN 2 — Đảm bảo không có lệnh pending ═══ */
     try {
         var checkSnap = await db.collection('renewal_requests')
             .where('email', '==', currentUser.email)
@@ -2794,8 +2793,7 @@ async function refreshCurrentUser() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ⏰ AUTO-EXPIRE: Tự động hủy lệnh gia hạn sau 24H
-   Chạy khi load trang + mỗi 1 giờ
+   ⏰ AUTO-EXPIRE
    ═══════════════════════════════════════════════════════════════ */
 async function autoExpireOldRenewals() {
     if (!db) return;
@@ -2828,9 +2826,7 @@ async function autoExpireOldRenewals() {
 }
 
 function scheduleAutoExpire() {
-    /* Chạy lần đầu sau 10s để không block app load */
     setTimeout(autoExpireOldRenewals, 10000);
-    /* Chạy lại mỗi 1 giờ */
     setInterval(autoExpireOldRenewals, 60 * 60 * 1000);
 }
 
@@ -3663,7 +3659,6 @@ window.approveRenewal = async function(reqId) {
         if (!reqDoc.exists) return alert('Không tìm thấy yêu cầu!');
         var req = reqDoc.data();
 
-        /* ═══ CHECK LỆNH CHƯA QUÁ 24H ═══ */
         if (req.status === 'expired') {
             alert('⚠️ Lệnh này đã hết hạn (quá 24h). Không thể xác nhận.');
             loadRenewals();
@@ -4107,7 +4102,7 @@ function initAuthUI() {
     }
 
     /* ═══════════════════════════════════════════════════════════
-       🔥 LOGOUT — XÓA TOÀN BỘ CACHE
+       🔥 LOGOUT — XÓA TOÀN BỘ CACHE + STOP PRESENCE
        ═══════════════════════════════════════════════════════════ */
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
@@ -4118,6 +4113,7 @@ function initAuthUI() {
                     try { userWatcher(); } catch(e) {}
                     userWatcher = null;
                 }
+                stopRTDBPresence();
 
                 if (currentUser && currentUser.email) {
                     localStorage.removeItem('user_cache_' + currentUser.email);
@@ -4222,6 +4218,7 @@ function initAuthUI() {
     initAdminPanel();
     scheduleAutoExpire();
 }
+
 /* ============ TIMEOUT FALLBACK ============ */
 setTimeout(function() {
     if (!appInitialized) {
@@ -4231,9 +4228,7 @@ setTimeout(function() {
 }, 5000);
 
 /* ═══════════════════════════════════════════════════════════════
-   📱 TELEGRAM NOTIFICATION — Gửi tin nhắn khi có sự kiện
-   - notifyTelegramUserPaid: khi user bấm "Tôi đã thanh toán"
-   - notifyTelegramAdminConfirmed: khi admin duyệt đơn
+   📱 TELEGRAM NOTIFICATION
    ═══════════════════════════════════════════════════════════════ */
 function _telegramSendMessage(text) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
@@ -4309,7 +4304,6 @@ window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
     return _telegramSendMessage(text);
 };
 
-/* ═══ DEBUG: Test gửi tin nhắn ═══ */
 window.testTelegram = function() {
     console.log('[Telegram] Test started...');
     console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
@@ -4334,7 +4328,6 @@ window.testTelegram = function() {
     js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii=False))
     js = js.replace("__RENEWAL_SUPPORT_ZALO__", config.get("renewal_support_zalo", ""))
 
-    # ⭐ TELEGRAM CONFIG — inject vào JS
     telegram_token = config.get("telegram_bot_token", "") or ""
     telegram_chat_id = config.get("telegram_chat_id", "") or ""
     telegram_token_escaped = telegram_token.replace("\\", "\\\\").replace('"', '\\"')
@@ -4353,9 +4346,6 @@ def build_renewal_css():
     return ""
 
 
-# ═══════════════════════════════════════════════════════════════
-# HELPER: build_all_auth
-# ═══════════════════════════════════════════════════════════════
 def build_all_auth(config):
     """
     config: dict đã load từ JSON.
