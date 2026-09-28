@@ -934,6 +934,17 @@ full_js = (
 )
 
 # ═══════════════════════════════════════════════════════════════════
+#  ⭐ FIX (2026-09-28): ESCAPE </script> TRONG full_js
+#  Lý do: favorites_module.py (và có thể các module khác) chứa chuỗi
+#         '</span>' / '</div>' trong JS string → nếu gặp '</script>'
+#         trình duyệt sẽ ĐÓNG THẺ SCRIPT SỚM → trang trắng, code rò rỉ.
+#  Giải pháp: escape '</script>' → '<\/script>' trước khi nhúng vào HTML.
+# ═══════════════════════════════════════════════════════════════════
+full_js = full_js.replace('</script>', '<\\/script>')
+full_js = full_js.replace('</SCRIPT>', '<\\/SCRIPT>')
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  HTML SHELL
 # ═══════════════════════════════════════════════════════════════════
 HTML_SHELL = r'''<!DOCTYPE html>
