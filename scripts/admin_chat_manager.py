@@ -7,6 +7,7 @@ Admin Chat Manager — Trình quản lý chat riêng cho admin.
 - Search: tìm theo tên / email
 - Click user → xem lịch sử hoạt động HOẶC chat
 - ⭐ MỚI: Xem lịch sử hoạt động của user (login, chat, renewal, ...)
+- ⭐ MỚI: Hiển thị thời gian hoạt động gần nhất (từ login_logs)
 """
 
 
@@ -234,6 +235,24 @@ def build_admin_chat_css():
 .acm-user-time{
     font-size:.68rem;color:#94a3b8;white-space:nowrap;
 }
+
+/* ⭐ Thời gian hoạt động — Online / Recent login */
+.acm-user-time.online-now{
+    color:#16a34a;
+    font-weight:800;
+    animation:acmOnlinePulse 2s ease-in-out infinite;
+}
+@keyframes acmOnlinePulse{
+    0%,100%{opacity:1;}
+    50%{opacity:.6;}
+}
+.acm-user-time.recent-login{
+    color:#4f46e5;
+    font-weight:700;
+}
+[data-theme="dark"] .acm-user-time.online-now{color:#22c55e;}
+[data-theme="dark"] .acm-user-time.recent-login{color:#a5b4fc;}
+
 .acm-user-badge{
     min-width:22px;height:22px;padding:0 .4rem;
     border-radius:50px;
@@ -616,14 +635,16 @@ def build_admin_chat_js():
         view: 'list',           // 'list' | 'history'
         usersUnsub: null,
         threadsUnsub: null,
-        presenceUnsub: null,    // ⭐ RTDB presence
-        historyUnsub: null,     // ⭐ Firestore activity logs
+        presenceUnsub: null,    // RTDB presence
+        historyUnsub: null,     // Firestore activity logs
+        loginLogsUnsub: null,   // ⭐ MỚI: watch login_logs
         currentHistoryEmail: null,
         allUsers: [],
         usersMap: {},
         threadsMap: {},
-        onlineMap: {},          // ⭐ { email: true }
-        activityMap: {},        // ⭐ { email: [activities] }
+        onlineMap: {},          // { email: true } — RTDB
+        loginLogsMap: {},       // ⭐ MỚI: { email: timestamp } — login_logs
+        activityMap: {},
         filter: 'all',
         searchTerm: '',
         renderTimer: null
@@ -686,6 +707,7 @@ def build_admin_chat_js():
         // 1. Từ allowed_users
         Object.keys(ACM.usersMap).forEach(function(email) {
             var u = ACM.usersMap[email];
+            var emailLower = (email || '').toLowerCase();
             map[email] = {
                 email: email,
                 name: u.name || u.displayName || email.split('@')[0],
@@ -695,7 +717,8 @@ def build_admin_chat_js():
                 unread: 0,
                 lastMessage: '',
                 lastMessageAt: 0,
-                lastMessageFrom: ''
+                lastMessageFrom: '',
+                lastLoginAt: ACM.loginLogsMap[emailLower] || 0   // ⭐ MỚI
             };
         });
 
@@ -712,7 +735,8 @@ def build_admin_chat_js():
                     unread: 0,
                     lastMessage: '',
                     lastMessageAt: 0,
-                    lastMessageFrom: ''
+                    lastMessageFrom: '',
+                    lastLoginAt: 0
                 };
             }
             map[email].thread = t;
@@ -723,24 +747,38 @@ def build_admin_chat_js():
                 : 0;
             map[email].lastMessageFrom = t.lastMessageFrom || '';
             if (t.userName && !map[email].name) map[email].name = t.userName;
+
+            // ⭐ Fallback: nếu chưa có login log → dùng last message time
+            if (!map[email].lastLoginAt && map[email].lastMessageAt) {
+                map[email].lastLoginAt = map[email].lastMessageAt;
+            }
         });
 
         // 3. Array
         ACM.allUsers = Object.keys(map).map(function(k) { return map[k]; });
 
-        // 4. Sort: unread > online > có tin gần đây > alphabet
+        // 4. Sort: unread > online > login gần đây > có tin gần đây > alphabet
         ACM.allUsers.sort(function(a, b) {
+            // Ưu tiên 1: unread
             if (a.unread > 0 && b.unread === 0) return -1;
             if (a.unread === 0 && b.unread > 0) return 1;
 
+            // Ưu tiên 2: đang online (RTDB presence)
             var aOn = ACM.onlineMap[a.email] ? 1 : 0;
             var bOn = ACM.onlineMap[b.email] ? 1 : 0;
             if (aOn !== bOn) return bOn - aOn;
 
+            // ⭐ Ưu tiên 3: login gần đây (login_logs)
+            if (a.lastLoginAt !== b.lastLoginAt) {
+                return b.lastLoginAt - a.lastLoginAt;
+            }
+
+            // Ưu tiên 4: có tin nhắn gần đây
             if (a.lastMessageAt > 0 && b.lastMessageAt === 0) return -1;
             if (a.lastMessageAt === 0 && b.lastMessageAt > 0) return 1;
             if (a.lastMessageAt !== b.lastMessageAt) return b.lastMessageAt - a.lastMessageAt;
 
+            // Cuối: alphabet
             return (a.name || '').localeCompare(b.name || '');
         });
 
@@ -842,9 +880,18 @@ def build_admin_chat_js():
                 preview = '<i>Chưa nhắn tin</i>';
             }
 
-            var timeText = u.lastMessageAt > 0
-                ? timeAgo(Date.now() - u.lastMessageAt)
-                : '';
+            // ⭐ Thời gian hoạt động gần nhất — Ưu tiên: Online > Login > Chat
+            var timeText = '';
+            var timeClass = '';
+            if (isOnline) {
+                timeText = '🟢 Online';
+                timeClass = 'online-now';
+            } else if (u.lastLoginAt > 0) {
+                timeText = '🕐 ' + timeAgo(Date.now() - u.lastLoginAt);
+                timeClass = 'recent-login';
+            } else if (u.lastMessageAt > 0) {
+                timeText = '💬 ' + timeAgo(Date.now() - u.lastMessageAt);
+            }
 
             html += '<div class="acm-user' +
                         (hasUnread ? ' has-unread' : '') +
@@ -866,7 +913,7 @@ def build_admin_chat_js():
                     '<div class="acm-user-preview">' + preview + '</div>' +
                 '</div>' +
                 '<div class="acm-user-meta">' +
-                    (timeText ? '<span class="acm-user-time">' + timeText + '</span>' : '') +
+                    (timeText ? '<span class="acm-user-time ' + timeClass + '">' + timeText + '</span>' : '') +
                     (hasUnread ? '<span class="acm-user-badge">' +
                         (u.unread > 99 ? '99+' : u.unread) + '</span>' : '') +
                 '</div>' +
@@ -899,7 +946,6 @@ def build_admin_chat_js():
         ACM.view = 'history';
         ACM.currentHistoryEmail = email;
 
-        // Ẩn list, hiện history
         $id('acmHeaderList').style.display = 'none';
         $id('acmStats').style.display = 'none';
         $id('acmSearchBar').style.display = 'none';
@@ -908,20 +954,17 @@ def build_admin_chat_js():
         $id('acmHeaderHistory').style.display = 'flex';
         $id('acmHistory').classList.add('show');
 
-        // Loading
         $id('acmHistory').innerHTML =
             '<div class="acm-loading">' +
                 '<i class="fas fa-spinner fa-pulse"></i>' +
                 '<span>Đang tải lịch sử...</span>' +
             '</div>';
 
-        // Hủy watch cũ
         if (ACM.historyUnsub) {
             try { ACM.historyUnsub(); } catch(e) {}
             ACM.historyUnsub = null;
         }
 
-        // ⭐ Watch activity_logs collection cho user này
         var logsRef = db.collection('activity_logs')
             .where('email', '==', email)
             .orderBy('at', 'desc')
@@ -943,7 +986,6 @@ def build_admin_chat_js():
             renderHistory(email, activities);
         }, function(err) {
             console.error('History watch error:', err);
-            // Fallback: hiện empty
             renderHistory(email, []);
         });
     }
@@ -962,7 +1004,10 @@ def build_admin_chat_js():
         var tierLabel = getTierLabel(role === 'admin' ? 'admin' : tier);
         var isOnline = !!ACM.onlineMap[email];
 
-        // Đếm activities theo type
+        // ⭐ Thời gian login gần nhất
+        var lastLoginMs = ACM.loginLogsMap[(email || '').toLowerCase()] || 0;
+        var lastLoginText = lastLoginMs > 0 ? formatDateTime(lastLoginMs) : '';
+
         var counts = { login: 0, chat: 0, renewal: 0, favorite: 0, practice: 0, other: 0 };
         activities.forEach(function(a) {
             var t = a.type || 'other';
@@ -970,7 +1015,6 @@ def build_admin_chat_js():
             else counts.other++;
         });
 
-        // Header
         var html =
             '<div class="acm-hist-header">' +
                 '<div class="acm-hist-avatar">' +
@@ -987,6 +1031,8 @@ def build_admin_chat_js():
                     '<div class="acm-hist-meta">' +
                         '<span><i class="fas fa-list"></i> ' + activities.length + ' hoạt động</span>' +
                         (threadInfo.userEmail ? '<span><i class="fas fa-comments"></i> Có tin nhắn</span>' : '') +
+                        // ⭐ Hiển thị lần login cuối
+                        (lastLoginText ? '<span><i class="fas fa-sign-in-alt"></i> Login cuối: ' + esc(lastLoginText) + '</span>' : '') +
                     '</div>' +
                 '</div>' +
                 '<button class="acm-user-btn chat" type="button" ' +
@@ -996,7 +1042,6 @@ def build_admin_chat_js():
                 '</button>' +
             '</div>';
 
-        // Filters
         html +=
             '<div class="acm-hist-filters">' +
                 '<button class="acm-hist-filter active" data-type="all">' +
@@ -1019,7 +1064,6 @@ def build_admin_chat_js():
                 '</button>' +
             '</div>';
 
-        // Timeline
         if (activities.length === 0) {
             html +=
                 '<div class="acm-empty">' +
@@ -1039,7 +1083,6 @@ def build_admin_chat_js():
 
         el.innerHTML = html;
 
-        // Gắn sự kiện filter
         el.querySelectorAll('.acm-hist-filter').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 el.querySelectorAll('.acm-hist-filter').forEach(function(b) {
@@ -1173,7 +1216,7 @@ def build_admin_chat_js():
                 console.error('ACM threads watch error:', err);
             });
 
-        // 3. ⭐ Watch RTDB presence
+        // 3. Watch RTDB presence
         if (typeof firebase !== 'undefined' && firebase.database) {
             try {
                 var presenceRef = firebase.database().ref('presence');
@@ -1205,6 +1248,29 @@ def build_admin_chat_js():
                 console.warn('ACM: Không thể watch presence:', e);
             }
         }
+
+        // ⭐ 4. Watch login_logs — lần đăng nhập cuối
+        ACM.loginLogsUnsub = db.collection('login_logs')
+            .orderBy('time', 'desc')
+            .limit(500)
+            .onSnapshot(function(snap) {
+                ACM.loginLogsMap = {};
+                snap.forEach(function(doc) {
+                    var d = doc.data() || {};
+                    var email = (d.email || '').toLowerCase();
+                    if (!email) return;
+                    // Chỉ lấy log mới nhất của mỗi user
+                    if (!ACM.loginLogsMap[email] && d.time) {
+                        var ts = d.time.toMillis ? d.time.toMillis() : 
+                                 (d.time.seconds ? d.time.seconds * 1000 : 0);
+                        ACM.loginLogsMap[email] = ts;
+                    }
+                });
+                console.log('✅ ACM: Loaded', Object.keys(ACM.loginLogsMap).length, 'login logs');
+                rebuildList();
+            }, function(err) {
+                console.error('ACM login_logs watch error:', err);
+            });
     }
 
     function stopWatchers() {
@@ -1212,6 +1278,7 @@ def build_admin_chat_js():
         if (ACM.threadsUnsub) { try { ACM.threadsUnsub(); } catch(e){} ACM.threadsUnsub = null; }
         if (ACM.presenceUnsub) { try { ACM.presenceUnsub(); } catch(e){} ACM.presenceUnsub = null; }
         if (ACM.historyUnsub) { try { ACM.historyUnsub(); } catch(e){} ACM.historyUnsub = null; }
+        if (ACM.loginLogsUnsub) { try { ACM.loginLogsUnsub(); } catch(e){} ACM.loginLogsUnsub = null; }
     }
 
     /* ═══════════════════════════════════════════════════════════
