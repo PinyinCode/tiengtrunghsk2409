@@ -23,6 +23,13 @@ CHAT:
    - Đã xóa JS xử lý expand/collapse
    - Chat modal chỉ còn chế độ MINI (~30vh)
 
+🛡️ ANTI-SPAM (2026-09-28): 5 LỚP CHỐNG SPAM
+   • Lớp 1: Cooldown 3s giữa 2 tin liên tiếp
+   • Lớp 2: Debounce nút Send (chặn double-click)
+   • Lớp 3: Rate limit 10 tin/phút
+   • Lớp 4: Chống gửi trùng nội dung (30s)
+   • Lớp 5: Chặn nội dung rác + giới hạn độ dài
+
 QUOTA:
 • Đếm reads/writes/deletes client-side (localStorage)
 • Wrap Firestore methods tự động
@@ -268,6 +275,19 @@ body.has-floating-group #chatFloatWrap{
 .chat-footer textarea{flex:1;min-width:0;min-height:42px;max-height:130px;padding:.65rem .9rem;border-radius:22px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#0f172a;font-size:.85rem;font-family:inherit;outline:none;resize:none;overflow-y:hidden;line-height:1.4;}
 [data-theme="dark"] .chat-footer textarea{background:#0f172a;color:#f1f5f9;border-color:#334155;}
 .chat-footer textarea:focus{border-color:#4f46e5;}
+
+/* ⭐ Anti-spam: input bị disable */
+.chat-footer textarea:disabled{
+    opacity:.6;
+    cursor:not-allowed;
+    background:#f1f5f9;
+    border-color:#cbd5e1;
+}
+[data-theme="dark"] .chat-footer textarea:disabled{
+    background:#0f172a;
+    border-color:#475569;
+}
+
 .chat-send-btn{width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
 .chat-send-btn:disabled{opacity:.4;cursor:not-allowed;}
 .chat-quick-replies{display:flex;gap:.35rem;flex-wrap:wrap;padding:.5rem 0;border-bottom:1px dashed #e2e8f0;margin-bottom:.1rem;}
@@ -366,6 +386,40 @@ body.has-floating-group #chatFloatWrap{
 .ou-sub{font-size:.7rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ou-chat-btn{width:32px;height:32px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
 .ou-chat-btn:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(124,58,237,.4);}
+
+/* ═══ CHAT TOAST — Thông báo anti-spam ═══ */
+.chat-toast{
+    position:fixed;
+    bottom:120px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:linear-gradient(135deg,#dc2626,#b91c1c);
+    color:#fff;
+    padding:.85rem 1.3rem;
+    border-radius:12px;
+    font-size:.85rem;
+    font-weight:700;
+    z-index:99999;
+    opacity:0;
+    transition:opacity .3s, transform .3s;
+    pointer-events:none;
+    box-shadow:0 12px 32px rgba(220,38,38,.4);
+    max-width:80vw;
+    text-align:center;
+    line-height:1.4;
+}
+.chat-toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
+@media (max-width:768px){
+    .chat-toast{
+        bottom:100px;
+        font-size:.8rem;
+        padding:.75rem 1.1rem;
+        max-width:90vw;
+    }
+}
 """
 
 
@@ -590,8 +644,6 @@ def build_telegram_notify_js():
 
     /**
      * Escape ký tự đặc biệt của Markdown để tránh lỗi parse Telegram.
-     * Telegram MarkdownV1 cần escape: _ * ` [ ]
-     * Nhưng để an toàn, escape luôn các ký tự MarkdownV2.
      */
     function escapeMarkdown(s) {
         if (s == null) return '';
@@ -600,27 +652,20 @@ def build_telegram_notify_js():
 
     /**
      * Gửi thông báo về Telegram admin.
-     * @param {string} userEmail   - Email user (chủ cuộc chat)
-     * @param {string} userName    - Tên người gửi tin
-     * @param {string} messageText - Nội dung tin nhắn
-     * @param {string} from        - 'user' | 'admin' (ai gửi)
      */
     window.__sendTelegramNotify = function(userEmail, userName, messageText, from) {
         var token  = window.TELEGRAM_BOT_TOKEN;
         var chatId = window.TELEGRAM_CHAT_ID;
 
-        // ─── Validate config ───
         if (!token) {
             console.warn('[Telegram] ❌ Chưa cấu hình TELEGRAM_BOT_TOKEN');
             return;
         }
         if (!chatId || chatId === '-0' || chatId === '0') {
             console.warn('[Telegram] ❌ TELEGRAM_CHAT_ID chưa hợp lệ:', chatId);
-            console.warn('[Telegram] 👉 Xem hướng dẫn lấy chat_id tại: https://api.telegram.org/bot<TOKEN>/getUpdates');
             return;
         }
 
-        // ─── Rate-limit client-side ───
         var now = Date.now();
         if (now - _tgLastSent < TG_MIN_INTERVAL) {
             console.log('[Telegram] ⏸ Skip (rate-limit < 2s)');
@@ -628,7 +673,6 @@ def build_telegram_notify_js():
         }
         _tgLastSent = now;
 
-        // ─── Format nội dung ───
         var siteName = window.SITE_NAME || document.title || 'Website';
         var isAdmin  = (from === 'admin');
         var header   = isAdmin ? '📤 *Admin vừa trả lời*' : '💬 *Tin nhắn mới từ*';
@@ -642,7 +686,6 @@ def build_telegram_notify_js():
             '─────────────────\n' +
             '⏰ ' + new Date().toLocaleString('vi-VN');
 
-        // ─── Gửi request ───
         var url = 'https://api.telegram.org/bot' + token + '/sendMessage';
         var payload = {
             chat_id: chatId,
@@ -650,8 +693,6 @@ def build_telegram_notify_js():
             parse_mode: 'Markdown',
             disable_web_page_preview: true
         };
-
-        console.log('[Telegram] 📤 Sending...', { to: chatId, from: from });
 
         fetch(url, {
             method: 'POST',
@@ -668,9 +709,6 @@ def build_telegram_notify_js():
                 console.log('[Telegram] ✅ Sent successfully');
             } else {
                 console.error('[Telegram] ❌ API error:', result.data);
-                if (result.data && result.data.description) {
-                    console.error('[Telegram] Reason:', result.data.description);
-                }
             }
         })
         .catch(function(err) {
@@ -678,12 +716,13 @@ def build_telegram_notify_js():
         });
     };
 
-    // Log trạng thái config khi load
     console.log('[Telegram] Module loaded. Token:',
         window.TELEGRAM_BOT_TOKEN ? '✅' : '❌',
         '| Chat ID:', window.TELEGRAM_CHAT_ID || '❌');
 })();
 """
+
+
 # ═══════════════════════════════════════════════════════════════
 #  JS
 # ═══════════════════════════════════════════════════════════════
@@ -696,6 +735,13 @@ def build_chat_js():
     var LIMIT_WARN_AT = 40;
     var MAX_MESSAGES = 100;
 
+    // ⭐ ANTI-SPAM CONFIG
+    var COOLDOWN_MS = 3000;          // 3 giây giữa 2 tin
+    var RATE_LIMIT_PER_MIN = 10;     // Tối đa 10 tin/phút
+    var DUPLICATE_WINDOW = 30000;    // 30 giây chống gửi trùng
+    var MIN_MESSAGE_LENGTH = 1;      // Độ dài tối thiểu
+    var MAX_MESSAGE_LENGTH = 1000;   // Độ dài tối đa
+
     var CHAT = {
         inited: false,
         threadUnsub: null,
@@ -707,6 +753,15 @@ def build_chat_js():
         lastSeenAt: 0,
         typingTimer: null,
         onlineUnsub: null
+    };
+
+    // ⭐ ANTI-SPAM STATE
+    var SPAM = {
+        lastSentAt: 0,
+        minuteLog: [],
+        lastText: '',
+        lastTextAt: 0,
+        isSending: false
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -804,7 +859,139 @@ def build_chat_js():
     }
 
     /* ═══════════════════════════════════════════════════════════
-       ⭐ MOUNT CHAT BUTTON — ĐỘC LẬP với floatingLeftGroup
+       ⭐ ANTI-SPAM
+       ═══════════════════════════════════════════════════════════ */
+    function checkSpam(text) {
+        var now = Date.now();
+
+        if (isAdmin()) return { allowed: true };
+
+        // Check 1: COOLDOWN
+        if (SPAM.lastSentAt > 0) {
+            var elapsed = now - SPAM.lastSentAt;
+            if (elapsed < COOLDOWN_MS) {
+                var wait = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
+                return {
+                    allowed: false,
+                    reason: '⏱ Vui lòng đợi ' + wait + ' giây trước khi gửi tin tiếp theo.',
+                    waitMs: COOLDOWN_MS - elapsed
+                };
+            }
+        }
+
+        // Check 2: đang gửi (double-click)
+        if (SPAM.isSending) {
+            return {
+                allowed: false,
+                reason: '⏳ Đang gửi tin nhắn, vui lòng đợi...',
+                waitMs: 500
+            };
+        }
+
+        // Check 3: RATE LIMIT
+        SPAM.minuteLog = SPAM.minuteLog.filter(function(t) {
+            return now - t < 60000;
+        });
+        if (SPAM.minuteLog.length >= RATE_LIMIT_PER_MIN) {
+            var oldest = SPAM.minuteLog[0];
+            var waitMs = 60000 - (now - oldest);
+            return {
+                allowed: false,
+                reason: '🚫 Bạn đã gửi quá ' + RATE_LIMIT_PER_MIN + ' tin/phút. Đợi ' +
+                        Math.ceil(waitMs / 1000) + ' giây.',
+                waitMs: waitMs
+            };
+        }
+
+        // Check 4: DUPLICATE
+        var normalized = text.trim().toLowerCase();
+        if (normalized === SPAM.lastText &&
+            now - SPAM.lastTextAt < DUPLICATE_WINDOW) {
+            return {
+                allowed: false,
+                reason: '🔁 Bạn vừa gửi tin nhắn giống hệt. Vui lòng thay đổi nội dung.',
+                waitMs: 2000
+            };
+        }
+
+        // Check 5: độ dài
+        if (text.trim().length < MIN_MESSAGE_LENGTH) {
+            return { allowed: false, reason: '✏️ Tin nhắn quá ngắn.', waitMs: 0 };
+        }
+        if (text.length > MAX_MESSAGE_LENGTH) {
+            return { allowed: false, reason: '✏️ Tin nhắn quá dài (tối đa ' + MAX_MESSAGE_LENGTH + ' ký tự).', waitMs: 0 };
+        }
+
+        // Check 6: nội dung rác (không có chữ/số)
+        var cleanText = text.replace(/[^a-zA-Z0-9À-ỹ\u4e00-\u9fff]/g, '');
+        if (cleanText.length < 1 && text.length > 5) {
+            return { allowed: false, reason: '🚫 Tin nhắn không hợp lệ (toàn ký tự đặc biệt).', waitMs: 0 };
+        }
+
+        return { allowed: true };
+    }
+
+    function updateSpamState(text) {
+        var now = Date.now();
+        SPAM.lastSentAt = now;
+        SPAM.lastText = text.trim().toLowerCase();
+        SPAM.lastTextAt = now;
+        SPAM.minuteLog.push(now);
+        SPAM.isSending = false;
+    }
+
+    function resetSpamState() {
+        SPAM.isSending = false;
+    }
+
+    function showSpamError(reason, waitMs) {
+        var input = $id('chatInput');
+        if (!input) return;
+
+        input.style.animation = 'chatBellShake 0.5s';
+        setTimeout(function() { input.style.animation = ''; }, 600);
+
+        if (waitMs && waitMs > 1000) {
+            input.disabled = true;
+            var btn = $id('chatSendBtn');
+            var originalPlaceholder = input.placeholder;
+            var remaining = Math.ceil(waitMs / 1000);
+            input.placeholder = '⏳ Vui lòng đợi ' + remaining + ' giây...';
+
+            var timer = setInterval(function() {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    input.disabled = false;
+                    input.placeholder = originalPlaceholder;
+                    if (btn) btn.disabled = !input.value.trim();
+                } else {
+                    input.placeholder = '⏳ Vui lòng đợi ' + remaining + ' giây...';
+                }
+            }, 1000);
+        }
+
+        showToast(reason);
+    }
+
+    function showToast(msg) {
+        var toast = document.getElementById('chatToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'chatToast';
+            toast.className = 'chat-toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(function() {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ MOUNT CHAT BUTTON
        ═══════════════════════════════════════════════════════════ */
     function mountChatButton(retries) {
         retries = retries || 0;
@@ -852,7 +1039,7 @@ def build_chat_js():
             }
         }, 800);
 
-        console.log('✅ Chat FAB mounted (độc lập với Zalo/TikTok, không expand)');
+        console.log('✅ Chat FAB mounted');
     }
 
     function updateFabVisibility() {
@@ -884,8 +1071,6 @@ def build_chat_js():
 
     /* ═══════════════════════════════════════════════════════════
        ⭐ NEO CHAT BOX VÀO NÚT FAB
-       Đo vị trí nút FAB thực tế → set left/bottom cho .chat-box
-       để box LUÔN nằm ngay phía trên nút, mũi tên chỉ đúng nút.
        ═══════════════════════════════════════════════════════════ */
     function positionChatBox() {
         var fab = $id('chatFloatBtn');
@@ -896,7 +1081,6 @@ def build_chat_js():
         var boxRect = box.getBoundingClientRect();
         var isMobile = window.innerWidth <= 600;
 
-        // ─── Chiều ngang: canh trái box trùng trái nút FAB ───
         var boxWidth = boxRect.width || (isMobile ? (window.innerWidth - 24) : 360);
         var left = fabRect.left;
 
@@ -905,7 +1089,6 @@ def build_chat_js():
         }
         if (left < 8) left = 8;
 
-        // ─── Chiều dọc: box nằm TRÊN nút FAB ───
         var gap = 16;
         var bottom = window.innerHeight - fabRect.top + gap;
 
@@ -915,15 +1098,12 @@ def build_chat_js():
         box.style.left = left + 'px';
         box.style.bottom = bottom + 'px';
 
-        // ─── Canh mũi tên chỉ vào giữa nút FAB ───
         var fabCenterX = fabRect.left + fabRect.width / 2;
         var arrowLeft = fabCenterX - left - 14;
         arrowLeft = Math.max(16, Math.min(arrowLeft, boxWidth - 32));
         box.style.setProperty('--arrow-left', arrowLeft + 'px');
     }
 
-    /* ⭐ Detect cụm floating group đang hiển thị → đẩy chat FAB xuống
-       + reposition chat box nếu đang mở */
     function syncFloatingGroupState() {
         var group = document.getElementById('floatingLeftGroup');
         var isVisible = false;
@@ -1064,7 +1244,7 @@ def build_chat_js():
     }
 
     /* ═══════════════════════════════════════════════════════════
-       👥 RTDB ONLINE WATCH — chỉ chạy khi admin mở modal chat
+       👥 RTDB ONLINE WATCH
        ═══════════════════════════════════════════════════════════ */
     function startOnlineWatch() {
         if (!isAdmin()) return;
@@ -1261,7 +1441,7 @@ def build_chat_js():
         if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
         CHAT.isOpen = true;
         $id('chatModal').classList.add('show');
-        document.body.classList.add('chat-is-open');   // ⭐ hạ z-index FAB
+        document.body.classList.add('chat-is-open');
         positionChatBox();
         var dd = $id('userDropdown');
         if (dd) dd.classList.remove('show');
@@ -1279,13 +1459,14 @@ def build_chat_js():
     function closeChat() {
         CHAT.isOpen = false;
         $id('chatModal').classList.remove('show');
-        document.body.classList.remove('chat-is-open');   // ⭐ khôi phục z-index FAB
+        document.body.classList.remove('chat-is-open');
         var box = document.querySelector('.chat-box');
-        if (box) box.classList.remove('admin-thread-open');  // ⭐ thu nhỏ box
+        if (box) box.classList.remove('admin-thread-open');
         stopAdminThreadWatch();
         stopOnlineWatch();
         CHAT.adminCurrentEmail = null;
         CHAT.lastSeenAt = Date.now();
+        resetSpamState();   // ⭐ Reset spam state
     }
 
     function openUserView() {
@@ -1294,7 +1475,7 @@ def build_chat_js():
         $id('chatClose').style.display = 'flex';
         $id('chatQuickReplies').classList.add('hidden');
         var box = document.querySelector('.chat-box');
-        if (box) box.classList.remove('admin-thread-open');  // ⭐ box nhỏ lại
+        if (box) box.classList.remove('admin-thread-open');
         if (CHAT.lastThreadData) renderUserMessages(CHAT.lastThreadData);
         setTimeout(positionChatBox, 30);
         setTimeout(positionChatBox, 320);
@@ -1306,7 +1487,7 @@ def build_chat_js():
         $id('chatClose').style.display = 'flex';
         $id('chatQuickReplies').classList.add('hidden');
         var box = document.querySelector('.chat-box');
-        if (box) box.classList.remove('admin-thread-open');  // ⭐ box nhỏ lại
+        if (box) box.classList.remove('admin-thread-open');
         stopAdminThreadWatch();
         CHAT.adminCurrentEmail = null;
         startAdminListWatch();
@@ -1322,84 +1503,112 @@ def build_chat_js():
         $id('chatClose').style.display = 'none';
         $id('chatQuickReplies').classList.remove('hidden');
         var box = document.querySelector('.chat-box');
-        if (box) box.classList.add('admin-thread-open');  // ⭐ box mở rộng 55vh
+        if (box) box.classList.add('admin-thread-open');
         startAdminThreadWatch(email);
         setTimeout(positionChatBox, 30);
         setTimeout(positionChatBox, 320);
     }
 
     function sendMessage() {
-    var input = $id('chatInput');
-    var text = input.value.trim();
-    if (!text) return;
-    var u = getCu(), db = getDb();
-    if (!u || !db) return;
-    var targetEmail, from;
-    if (CHAT.adminCurrentEmail) { targetEmail = CHAT.adminCurrentEmail; from = 'admin'; }
-    else if (!isAdmin()) {
-        targetEmail = u.email; from = 'user';
-        if (!canSend()) {
-            var banner = $id('chatLimitBanner');
-            if (banner) banner.classList.add('show', 'danger');
-            input.style.animation = 'chatBellShake 0.4s';
-            setTimeout(function() { input.style.animation = ''; }, 500);
-            return;
-        }
-    } else return;
+        var input = $id('chatInput');
+        var text = input.value.trim();
+        if (!text) return;
+        var u = getCu(), db = getDb();
+        if (!u || !db) return;
+        var targetEmail, from;
+        if (CHAT.adminCurrentEmail) { targetEmail = CHAT.adminCurrentEmail; from = 'admin'; }
+        else if (!isAdmin()) {
+            targetEmail = u.email; from = 'user';
 
-    var btn = $id('chatSendBtn');
-    btn.disabled = true;
-    input.value = '';
-    autoResize();
-    var threadRef = db.collection('chat_threads').doc(targetEmail);
-    var newMsg = {
-        from: from, fromEmail: u.email, fromName: u.name || 'User',
-        text: text, at: firebase.firestore.Timestamp.now()
-    };
-    threadRef.get().then(function(doc) {
-        var data = doc.exists ? doc.data() : {};
-        var msgs = data.messages || [];
-        msgs.push(newMsg);
-        if (msgs.length > MAX_MESSAGES) msgs = msgs.slice(-MAX_MESSAGES);
-        var update = {
-            messages: msgs, lastMessage: text.substring(0, 100),
-            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastMessageFrom: from,
-            userEmail: targetEmail,
-            userName: data.userName || u.name || targetEmail.split('@')[0]
-        };
-        if (from === 'user') {
-            update.unreadByAdmin = (data.unreadByAdmin || 0) + 1;
-            update.unreadByUser = 0;
-            update.userTypingAt = null;
-        } else {
-            update.unreadByUser = (data.unreadByUser || 0) + 1;
-            update.unreadByAdmin = 0;
-            update.adminTypingAt = null;
-        }
-        return threadRef.set(update, { merge: true });
-    }).then(function() {
-        // ⭐ Chỉ xử lý khi USER gửi tin
-        if (from === 'user') {
-            incDailyCount();
-            updateCounterUI();
-
-            // ═══════════════════════════════════════════════════════
-            // 📨 GỬI THÔNG BÁO TELEGRAM — CHỈ KHI USER NHẮN
-            // ═══════════════════════════════════════════════════════
-            if (typeof window.__sendTelegramNotify === 'function') {
-                window.__sendTelegramNotify(
-                    targetEmail,                       // email user
-                    u.name || u.email.split('@')[0],   // tên user
-                    text,                              // nội dung
-                    'user'                             // from = 'user'
-                );
+            // ⭐ CHECK 1: Daily limit
+            if (!canSend()) {
+                var banner = $id('chatLimitBanner');
+                if (banner) banner.classList.add('show', 'danger');
+                input.style.animation = 'chatBellShake 0.4s';
+                setTimeout(function() { input.style.animation = ''; }, 500);
+                return;
             }
-        }
-        // ⭐ Nếu from === 'admin' → KHÔNG gửi Telegram
-    }).catch(function(err) { alert('❌ Lỗi gửi tin: ' + err.message); })
-    .finally(function() { btn.disabled = !input.value.trim(); });
-}
+
+            // ⭐ CHECK 2: Anti-spam
+            var spamCheck = checkSpam(text);
+            if (!spamCheck.allowed) {
+                showSpamError(spamCheck.reason, spamCheck.waitMs);
+                return;
+            }
+        } else return;
+
+        // ⭐ Đánh dấu đang gửi → chặn double-click
+        SPAM.isSending = true;
+
+        var btn = $id('chatSendBtn');
+        btn.disabled = true;
+        input.value = '';
+        autoResize();
+        var threadRef = db.collection('chat_threads').doc(targetEmail);
+        var newMsg = {
+            from: from, fromEmail: u.email, fromName: u.name || 'User',
+            text: text, at: firebase.firestore.Timestamp.now()
+        };
+        threadRef.get().then(function(doc) {
+            var data = doc.exists ? doc.data() : {};
+            var msgs = data.messages || [];
+            msgs.push(newMsg);
+            if (msgs.length > MAX_MESSAGES) msgs = msgs.slice(-MAX_MESSAGES);
+            var update = {
+                messages: msgs, lastMessage: text.substring(0, 100),
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastMessageFrom: from,
+                userEmail: targetEmail,
+                userName: data.userName || u.name || targetEmail.split('@')[0]
+            };
+            if (from === 'user') {
+                update.unreadByAdmin = (data.unreadByAdmin || 0) + 1;
+                update.unreadByUser = 0;
+                update.userTypingAt = null;
+            } else {
+                update.unreadByUser = (data.unreadByUser || 0) + 1;
+                update.unreadByAdmin = 0;
+                update.adminTypingAt = null;
+            }
+            return threadRef.set(update, { merge: true });
+        }).then(function() {
+            if (from === 'user') {
+                incDailyCount();
+                updateCounterUI();
+
+                // ⭐ Cập nhật anti-spam state
+                updateSpamState(text);
+
+                // ⭐ GỬI TELEGRAM
+                if (typeof window.__sendTelegramNotify === 'function') {
+                    window.__sendTelegramNotify(
+                        targetEmail,
+                        u.name || u.email.split('@')[0],
+                        text,
+                        'user'
+                    );
+                }
+
+                // ⭐ Ghi log hoạt động
+                try {
+                    db.collection('activity_logs').add({
+                        email: u.email,
+                        type: 'chat',
+                        title: 'Gửi tin nhắn cho Admin',
+                        detail: text.substring(0, 100),
+                        at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch(e) {}
+            } else {
+                SPAM.isSending = false;
+            }
+        }).catch(function(err) {
+            alert('❌ Lỗi gửi tin: ' + err.message);
+            SPAM.isSending = false;
+        }).finally(function() {
+            btn.disabled = !input.value.trim();
+        });
+    }
     function autoResize() {
         var inp = $id('chatInput');
         if (!inp) return;
@@ -1460,7 +1669,6 @@ def build_chat_js():
             });
         });
 
-        /* Toggle Online section */
         var toggleOnlineBtn = $id('toggleOnlineBtn');
         var onlineSection = $id('adminOnlineSection');
         if (toggleOnlineBtn && onlineSection) {
@@ -1474,16 +1682,13 @@ def build_chat_js():
             });
         }
 
-        /* ⭐ Sync vị trí chat FAB khi cụm floating group mở/đóng */
         syncFloatingGroupState();
         setInterval(syncFloatingGroupState, 1000);
 
-        /* ⭐ Reposition khi resize window */
         window.addEventListener('resize', function() {
             if (CHAT.isOpen) positionChatBox();
         });
 
-        /* ⭐ Reposition khi scroll */
         window.addEventListener('scroll', function() {
             if (CHAT.isOpen) positionChatBox();
         }, { passive: true });
