@@ -110,7 +110,7 @@ def build_chat_css():
 
 /* Khi cụm floating group đang mở → đẩy chat lên vừa đủ, có khoảng cách với TikTok */
 body.has-floating-group #chatFloatWrap{
-    bottom:calc(150px + env(safe-area-inset-bottom));
+    bottom:calc(180px + env(safe-area-inset-bottom));
 }
 
 @media (max-width:768px){
@@ -119,7 +119,7 @@ body.has-floating-group #chatFloatWrap{
         bottom:calc(12px + env(safe-area-inset-bottom));
     }
     body.has-floating-group #chatFloatWrap{
-        bottom:calc(150px + env(safe-area-inset-bottom));
+        bottom:calc(180px + env(safe-area-inset-bottom));
     }
 }
 @media (max-width:400px){
