@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Chat Support + Quota Dashboard + User Online — TỐI ƯU CHO 200+ USER
-════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════════
 
 CHAT:
 • onSnapshot thay vì poll → giảm 97% reads
@@ -11,6 +11,11 @@ CHAT:
 • Nút chat FAB + intro-glow 1 lần khi mount (không nhấp nháy)
 • Icon rung + đỏ khi có tin chưa đọc
 • Modal góc trái-dưới + mũi tên chỉ về nút chat
+
+✅ FIX (2026-09): NÚT CHAT TÁCH KHỎI CỤM ZALO/TIKTOK
+   - Wrapper riêng #chatFloatWrap, position:fixed, không phụ thuộc floatingLeftGroup
+   - Không còn bị ẩn khi user thu gọn cụm Zalo/TikTok
+   - Tự đẩy xuống khi cụm floating group đang mở (syncFloatingGroupState)
 
 QUOTA:
 • Đếm reads/writes/deletes client-side (localStorage)
@@ -26,11 +31,6 @@ USER ONLINE (RTDB):
 """
 
 import json
-
-
-DAILY_LIMIT = 50
-LIMIT_WARN_AT = 40
-MAX_MESSAGES = 100
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -81,6 +81,52 @@ def build_chat_css():
 @media (max-width:400px){
     .chat-float-btn{width:42px;height:42px;}
     .chat-float-btn i.fa-comments{font-size:1.1rem;}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ WRAPPER ĐỘC LẬP CHO NÚT CHAT — KHÔNG bị ẩn theo cụm Zalo/TikTok
+   ═══════════════════════════════════════════════════════════════ */
+#chatFloatWrap{
+    position:fixed;
+    left:20px;
+    bottom:calc(20px + env(safe-area-inset-bottom));
+    z-index:9998;                        /* dưới modal (4000) nhưng trên content */
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:.5rem;
+    pointer-events:none;                 /* chỉ con nhận click */
+    transition:opacity .3s ease, transform .3s ease, bottom .35s cubic-bezier(.34,1.56,.64,1);
+    opacity:1;
+    transform:translateY(0);
+}
+#chatFloatWrap > *{ pointer-events:auto; }
+#chatFloatWrap.hidden{
+    display:flex;
+    opacity:0;
+    transform:translateY(12px);
+    pointer-events:none;
+}
+
+/* Khi cụm floating group đang mở → đẩy chat xuống dưới 1 chút để không đè */
+body.has-floating-group #chatFloatWrap{
+    bottom:calc(90px + env(safe-area-inset-bottom));
+}
+
+@media (max-width:768px){
+    #chatFloatWrap{
+        left:12px;
+        bottom:calc(12px + env(safe-area-inset-bottom));
+    }
+    body.has-floating-group #chatFloatWrap{
+        bottom:calc(70px + env(safe-area-inset-bottom));
+    }
+}
+@media (max-width:400px){
+    #chatFloatWrap{
+        left:10px;
+        bottom:calc(10px + env(safe-area-inset-bottom));
+    }
 }
 
 /* ═══ CHAT MODAL ═══ */
@@ -532,20 +578,46 @@ def build_chat_js():
         updateCounterUI();
     }
 
-    function mountChatButton() {
-        var group = document.getElementById('floatingLeftGroup');
-        if (!group) { setTimeout(mountChatButton, 500); return; }
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ MOUNT CHAT BUTTON — ĐỘC LẬP với floatingLeftGroup
+       ═══════════════════════════════════════════════════════════ */
+    function mountChatButton(retries) {
+        retries = retries || 0;
         if (document.getElementById('chatFloatBtn')) return;
+        if (retries > 20) {
+            console.warn('mountChatButton: bỏ qua sau 20 lần thử');
+            return;
+        }
+        if (!document.body) {
+            setTimeout(function(){ mountChatButton(retries + 1); }, 300);
+            return;
+        }
+
+        var wrap = document.getElementById('chatFloatWrap');
+        if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.id = 'chatFloatWrap';
+            wrap.className = 'hidden';
+            document.body.appendChild(wrap);
+        }
+
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'chat-float-btn hidden';
         btn.id = 'chatFloatBtn';
         btn.title = 'Chat với Admin';
         btn.innerHTML = '<i class="fas fa-comments"></i>' +
-            '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
+            '<div class="chat-text">' +
+                '<span class="chat-label">Chat với Admin</span>' +
+                '<span class="chat-name">Hỗ trợ 24/7</span>' +
+            '</div>' +
             '<span class="chat-badge" id="chatFabBadge">0</span>';
-        group.insertBefore(btn, group.firstChild);
-        btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
+
+        wrap.appendChild(btn);
+        btn.addEventListener('click', function() {
+            btn.classList.remove('has-unread');
+            openChat();
+        });
 
         /* ✨ Lóe sáng nhẹ 1 lần khi icon mount */
         setTimeout(function() {
@@ -554,13 +626,22 @@ def build_chat_js():
                 setTimeout(function() { btn.classList.remove('intro-glow'); }, 2000);
             }
         }, 800);
+
+        console.log('✅ Chat FAB mounted (độc lập với Zalo/TikTok)');
     }
+
     function updateFabVisibility() {
         var fab = $id('chatFloatBtn');
-        if (!fab) return;
+        var wrap = $id('chatFloatWrap');
+        if (!fab || !wrap) return;
         var u = getCu();
-        if (u && u.email) fab.classList.remove('hidden');
-        else fab.classList.add('hidden');
+        if (u && u.email) {
+            wrap.classList.remove('hidden');
+            fab.classList.remove('hidden');
+        } else {
+            wrap.classList.add('hidden');
+            fab.classList.add('hidden');
+        }
     }
     function setFabBadge(n) {
         var el = $id('chatFabBadge');
@@ -574,6 +655,19 @@ def build_chat_js():
             el.classList.remove('show');
             if (btn) btn.classList.remove('has-unread');
         }
+    }
+
+    /* ⭐ Detect cụm floating group đang hiển thị → đẩy chat FAB xuống */
+    function syncFloatingGroupState() {
+        var group = document.getElementById('floatingLeftGroup');
+        var isVisible = false;
+        if (group) {
+            var style = window.getComputedStyle(group);
+            isVisible = (style.display !== 'none') &&
+                        (style.visibility !== 'hidden') &&
+                        (parseFloat(style.opacity || '1') > 0.05);
+        }
+        document.body.classList.toggle('has-floating-group', isVisible);
     }
 
     function startUserThreadWatch() {
@@ -1059,6 +1153,10 @@ def build_chat_js():
                 this.title = isVisible ? 'Ẩn' : 'Hiện';
             });
         }
+
+        /* ⭐ Sync vị trí chat FAB khi cụm floating group mở/đóng */
+        syncFloatingGroupState();
+        setInterval(syncFloatingGroupState, 1000);
 
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
