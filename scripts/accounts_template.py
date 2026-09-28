@@ -5565,8 +5565,7 @@ setTimeout(function() {
     }
 }, 5000);
 """
-
-  # Inject config
+# Inject config
     js = js.replace("__TRIAL_DAYS__", str(config.get("trial_days", 3)))
     js = js.replace("__TRIAL_MAX_QUESTIONS__", str(config.get("trial_max_questions", 50)))
     js = js.replace("__TRIAL_MAX_HSK__", str(config.get("trial_max_hsk", 5)))
