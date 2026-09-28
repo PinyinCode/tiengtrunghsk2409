@@ -3542,7 +3542,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .user-dropdown.show{display:block}
 
 /* ═══════════════════════════════════════════════════════════════
-   MŨI TÊN TAM GIÁC — Chỉ lên avatar
+   MŨI TÊN TAM GIÁC — Chỉ lên avatar (nút mở dropdown)
    ═══════════════════════════════════════════════════════════════ */
 .user-dropdown::before{
     content:'';
@@ -3703,7 +3703,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-header-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 .admin-body{padding:1.25rem 1.5rem;overflow-y:auto;flex:1}
 
-/* ============ SUMMARY BAR ============ */
+/* ============ SUMMARY BAR (TỔNG USER/ADMIN) ============ */
 .admin-summary-bar{
     display:flex;align-items:center;gap:1.25rem;
     padding:.75rem 1rem;margin-bottom:1rem;
@@ -4077,7 +4077,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .import-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end;align-items:center;background:var(--surface);}
 
 /* ═══════════════════════════════════════════════════════════════
-   ⏰ EXPIRY BANNER
+   ⏰ EXPIRY BANNER — Cảnh báo gia hạn 3 mức
    ═══════════════════════════════════════════════════════════════ */
 .expiry-banner{
     display:flex;
@@ -12862,14 +12862,17 @@ var renewalListener = null;
 
 var userWatcher = null;
 
+/* Search & Filter state */
 var adminSearchQuery = '';
 var adminCurrentFilter = 'all';
 var editingPermissionEmail = null;
 
+/* Renewals tab state */
 var renewalTab = 'pending';
 var pendingRenewalsData = [];
 var confirmedRenewalsData = [];
 
+/* Admin permissions definition */
 var ADMIN_PERMISSIONS = [
     { key: 'canViewUsers',      name: 'Xem danh sách user',   desc: 'Xem thông tin tất cả tài khoản user' },
     { key: 'canEditExpiry',     name: 'Chỉnh hạn sử dụng',    desc: 'Thay đổi ngày hết hạn của user' },
@@ -13083,6 +13086,7 @@ function stopRTDBPresence() {
 /* ============ AUTH STATE ============ */
 async function handleAuthChange(user) {
     if (!user) {
+        // Logout → hủy watcher + presence
         if (userWatcher) { try { userWatcher(); } catch(e) {} userWatcher = null; }
         stopRTDBPresence();
         currentUser = null; isDemo = true;
@@ -13303,6 +13307,9 @@ function watchCurrentUser() {
     });
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   🔍 VERIFY BACKGROUND — Fetch server sau 2s
+   ═══════════════════════════════════════════════════════════════ */
 function verifyCurrentUserBackground() {
     if (!currentUser || !db) return;
     var email = currentUser.email;
@@ -14270,7 +14277,7 @@ function scheduleAutoExpire() {
     setInterval(autoExpireOldRenewals, 60 * 60 * 1000);
 }
 
-/* ============ LỊCH SỬ GIA HẠN ============ */
+/* ============ LỊCH SỬ GIA HẠN (USER) ============ */
 window.openRenewalHistory = async function() {
     if (!currentUser) { showLoginModal(); return; }
     var titleEl = document.querySelector('#renewalHistoryModal h2');
@@ -15542,7 +15549,7 @@ function initAuthUI() {
     }
 
     /* ═══════════════════════════════════════════════════════════
-       🔥 LOGOUT — XÓA CACHE + STOP PRESENCE
+       🔥 LOGOUT — XÓA TOÀN BỘ CACHE + STOP PRESENCE
        ═══════════════════════════════════════════════════════════ */
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
@@ -15592,7 +15599,7 @@ function initAuthUI() {
             e.stopPropagation();
             var dd = $('userDropdown');
             if (!dd) return;
-renewalHistoryModal            var willOpen = !dd.classList.contains('show');
+            var willOpen = !dd.classList.contains('show');
             dd.classList.toggle('show');
             try { sessionStorage.setItem('userDropdownClosed', willOpen ? '0' : '1'); } catch(_e) {}
         });
@@ -15645,7 +15652,7 @@ renewalHistoryModal            var willOpen = !dd.classList.contains('show');
         });
     }
 
-    if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('').classList.remove('show'); });
+    if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('renewalHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target === this) $('renewalHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryBtn')) {
         $('renewalHistoryBtn').addEventListener('click', function() {
@@ -15673,6 +15680,8 @@ setTimeout(function() {
 function _telegramSendMessage(text) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
         console.warn('[Telegram] Chưa cấu hình bot_token / chat_id hợp lệ');
+        console.warn('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? 'OK' : 'MISSING');
+        console.warn('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || 'MISSING');
         return Promise.reject('not_configured');
     }
 
@@ -15688,7 +15697,9 @@ function _telegramSendMessage(text) {
             disable_web_page_preview: true
         })
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+        return r.json();
+    })
     .then(function(data) {
         if (!data.ok) {
             console.error('[Telegram] ❌ API error:', data.description);
@@ -15705,8 +15716,10 @@ function _telegramSendMessage(text) {
 
 window.notifyTelegramUserPaid = function(req) {
     if (!req) return Promise.resolve();
+
     var isPermanent = req.isPermanent || false;
     var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
     var text = '💰 <b>USER ĐÃ THANH TOÁN</b>\n\n' +
         '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
         '📧 ' + escapeHtml(req.email) + '\n' +
@@ -15715,13 +15728,16 @@ window.notifyTelegramUserPaid = function(req) {
             (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
         '🔑 Mã: <code>' + escapeHtml(req.transferCode || '—') + '</code>\n\n' +
         '⏳ Vui lòng kiểm tra và xác nhận trong trang quản trị.';
+
     return _telegramSendMessage(text);
 };
 
 window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
     if (!req) return Promise.resolve();
+
     var isPermanent = req.isPermanent || false;
     var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
     var text = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n\n' +
         '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
         '📧 ' + escapeHtml(req.email) + '\n' +
@@ -15731,14 +15747,21 @@ window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
             ? '💎 <b>KÍCH HOẠT VĨNH VIỄN</b>'
             : '📅 Hạn mới: <b>' + escapeHtml(newExpiryStr || '?') + '</b>') + '\n\n' +
         '🎉 User đã được gia hạn thành công.';
+
     return _telegramSendMessage(text);
 };
 
 window.testTelegram = function() {
     console.log('[Telegram] Test started...');
+    console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
+    console.log('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || '❌ MISSING');
     return _telegramSendMessage('🧪 <b>Test Telegram</b>\n\nBot đang hoạt động tốt! ✅\n\nThời gian: ' + new Date().toLocaleString('vi-VN'))
-        .then(function() { alert('✅ Đã gửi test! Kiểm tra Telegram.'); })
-        .catch(function(err) { alert('❌ Lỗi gửi test: ' + err.message); });
+        .then(function() {
+            alert('✅ Đã gửi test! Kiểm tra Telegram.');
+        })
+        .catch(function(err) {
+            alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.');
+        });
 };
 
 /* ==== INTRO JS ==== */
