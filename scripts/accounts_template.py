@@ -5586,3 +5586,27 @@ window.testTelegram = function() {
         .catch(function(err) { alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.'); });
 };
 """
+
+
+# ═══════════════════════════════════════════════════════════════
+# HELPER: build_all_auth
+# ═══════════════════════════════════════════════════════════════
+def build_all_auth(config):
+    """
+    config: dict đã load từ JSON.
+    Trả về tuple (css, html, js) hoàn chỉnh:
+    - Auth + Firebase
+    - Admin panel + Trial + Renewal
+    - Telegram notification
+    - Chat Support (user ↔ admin)
+    """
+    css = build_accounts_css()
+    html = build_accounts_html()
+    js = build_accounts_js(config)
+
+    trial_days = config.get("trial_days", 3)
+    html = html.replace(
+        '<span id="trialDaysText">3</span>',
+        '<span id="trialDaysText">' + str(trial_days) + '</span>'
+    )
+    return css, html, js
