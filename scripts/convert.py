@@ -29,8 +29,15 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
    - FAB + badge poll 60s
    - Admin panel có tab "Chat hỗ trợ"
 
+✅ RTDB PRESENCE (2026-09):
+   - User online tracking qua Firebase Realtime Database
+   - KHÔNG tốn Firestore quota
+   - onDisconnect tự động xóa khi user tắt tab
+   - Admin xem được danh sách user online realtime
+
 ✅ FIX (2026-09):
    - Chèn QUOTA DASHBOARD vào Admin Panel (trước đây bị thiếu)
+   - Chèn USER ONLINE section vào Admin Panel
    - Escape "</" cho TẤT CẢ JSON blobs
 """
 import json
@@ -68,14 +75,15 @@ from favorites_module import (
     build_favorites_js,
 )
 
-# ⬇️⬇️⬇️ Module Chat Support (độc lập) + Quota
+# ⬇️⬇️⬇️ Module Chat Support (độc lập) + Quota + Online
 from chat_support import (
     build_chat_css,
     build_chat_html,
     build_chat_js,
-    build_quota_html,       # ⬅️ THÊM
-    build_quota_js,         # ⬅️ THÊM
-    build_quota_init_js,    # ⬅️ THÊM
+    build_quota_html,
+    build_quota_js,
+    build_quota_init_js,
+    build_online_section_html,   # ⬅️ THÊM: Section User Online (RTDB)
 )
 
 
@@ -300,11 +308,23 @@ telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  BUILD AUTH + CHÈN QUOTA SECTION  ⬅️ ĐÂY LÀ FIX #2
+#  BUILD AUTH + CHÈN QUOTA + ONLINE SECTIONS
 # ═══════════════════════════════════════════════════════════════════
 auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
-# ⬇️⬇️⬇️ THÊM: Chèn Quota Dashboard vào Admin Panel
+# ⬇️⬇️⬇️ THÊM: Chèn User Online section (RTDB) vào Admin Panel
+if '<!-- __ADMIN_ONLINE_SECTION__ -->' in auth_html:
+    auth_html = auth_html.replace(
+        '<!-- __ADMIN_ONLINE_SECTION__ -->',
+        build_online_section_html()
+    )
+    print("✅ Đã chèn User Online section vào Admin Panel")
+else:
+    print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_ONLINE_SECTION__ -->")
+    print("   → Thêm vào accounts_template.py → build_accounts_html()")
+    print("   → TRƯỚC dòng <!-- __ADMIN_QUOTA_SECTION__ -->")
+
+# ⬇️⬇️⬇️ Chèn Quota Dashboard vào Admin Panel (như cũ)
 if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
     auth_html = auth_html.replace(
         '<!-- __ADMIN_QUOTA_SECTION__ -->',
@@ -903,8 +923,8 @@ full_js = (
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
     + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
-    + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()          # ⬅️ THÊM
-    + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()   # ⬅️ THÊM
+    + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
+    + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
 
 
@@ -923,6 +943,7 @@ HTML_SHELL = r'''<!DOCTYPE html>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5.0/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -1110,7 +1131,8 @@ print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
 print(f"💬 Chat Support: đã thêm (user ↔ admin)")
-print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")   # ⬅️ THÊM log
+print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")
+print(f"👥 User Online (RTDB): đã thêm section vào Admin Panel")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
