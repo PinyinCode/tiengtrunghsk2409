@@ -8761,6 +8761,127 @@ var ONBOARDING_CONFIG = {"demo":{"enabled":true,"max_questions":80,"hsk_allowed"
 
 var $ = function(id) { return document.getElementById(id); };
 
+<script>
+  window.ZALO_PHONE = "0922331886";
+  window.TELEGRAM_BOT_TOKEN = "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU";
+  window.TELEGRAM_CHAT_ID = "-0";
+  window.SITE_NAME = "Thảo nói 中文";
+  console.log("[Config] Loaded:", {
+    zalo: window.ZALO_PHONE,
+    tg_token: window.TELEGRAM_BOT_TOKEN ? "✅ set" : "❌ empty",
+    tg_chat: window.TELEGRAM_CHAT_ID
+  });
+</script>
+
+/* ==== 📨 TELEGRAM NOTIFY ==== */
+
+/* ═══════════════════════════════════════════════════════════════
+   📨 TELEGRAM NOTIFY — Gửi thông báo về Telegram
+   Cung cấp: window.__sendTelegramNotify(email, name, text, from)
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+
+    var _tgLastSent = 0;
+    var TG_MIN_INTERVAL = 2000;   // 2 giây — tránh spam Telegram API
+
+    /**
+     * Escape ký tự đặc biệt của Markdown để tránh lỗi parse Telegram.
+     * Telegram MarkdownV1 cần escape: _ * ` [ ]
+     * Nhưng để an toàn, escape luôn các ký tự MarkdownV2.
+     */
+    function escapeMarkdown(s) {
+        if (s == null) return '';
+        return String(s).replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+    }
+
+    /**
+     * Gửi thông báo về Telegram admin.
+     * @param {string} userEmail   - Email user (chủ cuộc chat)
+     * @param {string} userName    - Tên người gửi tin
+     * @param {string} messageText - Nội dung tin nhắn
+     * @param {string} from        - 'user' | 'admin' (ai gửi)
+     */
+    window.__sendTelegramNotify = function(userEmail, userName, messageText, from) {
+        var token  = window.TELEGRAM_BOT_TOKEN;
+        var chatId = window.TELEGRAM_CHAT_ID;
+
+        // ─── Validate config ───
+        if (!token) {
+            console.warn('[Telegram] ❌ Chưa cấu hình TELEGRAM_BOT_TOKEN');
+            return;
+        }
+        if (!chatId || chatId === '-0' || chatId === '0') {
+            console.warn('[Telegram] ❌ TELEGRAM_CHAT_ID chưa hợp lệ:', chatId);
+            console.warn('[Telegram] 👉 Xem hướng dẫn lấy chat_id tại: https://api.telegram.org/bot<TOKEN>/getUpdates');
+            return;
+        }
+
+        // ─── Rate-limit client-side ───
+        var now = Date.now();
+        if (now - _tgLastSent < TG_MIN_INTERVAL) {
+            console.log('[Telegram] ⏸ Skip (rate-limit < 2s)');
+            return;
+        }
+        _tgLastSent = now;
+
+        // ─── Format nội dung ───
+        var siteName = window.SITE_NAME || document.title || 'Website';
+        var isAdmin  = (from === 'admin');
+        var header   = isAdmin ? '📤 *Admin vừa trả lời*' : '💬 *Tin nhắn mới từ*';
+
+        var text =
+            header + ' ' + escapeMarkdown(siteName) + '\n' +
+            '👤 *Tên:* ' + escapeMarkdown(userName || 'User') + '\n' +
+            '📧 *Email:* `' + escapeMarkdown(userEmail || '') + '`\n' +
+            '─────────────────\n' +
+            escapeMarkdown(messageText || '') + '\n' +
+            '─────────────────\n' +
+            '⏰ ' + new Date().toLocaleString('vi-VN');
+
+        // ─── Gửi request ───
+        var url = 'https://api.telegram.org/bot' + token + '/sendMessage';
+        var payload = {
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
+        };
+
+        console.log('[Telegram] 📤 Sending...', { to: chatId, from: from });
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) {
+            return r.json().then(function(data) {
+                return { ok: r.ok, status: r.status, data: data };
+            });
+        })
+        .then(function(result) {
+            if (result.ok && result.data && result.data.ok) {
+                console.log('[Telegram] ✅ Sent successfully');
+            } else {
+                console.error('[Telegram] ❌ API error:', result.data);
+                if (result.data && result.data.description) {
+                    console.error('[Telegram] Reason:', result.data.description);
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error('[Telegram] ❌ Network error:', err);
+        });
+    };
+
+    // Log trạng thái config khi load
+    console.log('[Telegram] Module loaded. Token:',
+        window.TELEGRAM_BOT_TOKEN ? '✅' : '❌',
+        '| Chat ID:', window.TELEGRAM_CHAT_ID || '❌');
+})();
+
+/* ==== UI JS ==== */
 
 var filtered = [];
 var state = { search:'', hsk:'', subject:'' };
@@ -21198,7 +21319,56 @@ window.__switchRawData = function(datasetId) {
             } catch(e) { console.warn('notifyTelegramAdminConfirmed:', e); }
         };
 
-        console.log('✅ Telegram module loaded');
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ THÊM MỚI — Alias cho chat_support module
+           Chat module gọi window.__sendTelegramNotify(email, name, text, from)
+           Hàm này format rồi gọi lại sendTelegramMessage ở trên.
+           ═══════════════════════════════════════════════════════════ */
+        var _chatTgLastSent = 0;
+        var _CHAT_TG_MIN_INTERVAL = 2000;   // 2s tránh spam
+
+        function _escapeTelegramHtml(s) {
+            if (s == null) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        window.__sendTelegramNotify = function(userEmail, userName, messageText, from) {
+            try {
+                // Nếu chat_support module đã tự định nghĩa → không ghi đè
+                // (kiểm tra bằng cờ __chatNotifyReady)
+                if (window.__chatNotifyReady) return;
+
+                // Rate-limit client-side
+                var now = Date.now();
+                if (now - _chatTgLastSent < _CHAT_TG_MIN_INTERVAL) {
+                    console.log('[ChatTelegram] ⏸ Skip (rate-limit)');
+                    return;
+                }
+                _chatTgLastSent = now;
+
+                var siteName = window.SITE_NAME || document.title || 'Website';
+                var isAdmin = (from === 'admin');
+                var header = isAdmin ? '📤 <b>Admin vừa trả lời</b>'
+                                     : '💬 <b>Tin nhắn mới từ</b>';
+
+                var msg =
+                    header + ' ' + _escapeTelegramHtml(siteName) + '\n' +
+                    '👤 <b>Tên:</b> ' + _escapeTelegramHtml(userName || 'User') + '\n' +
+                    '📧 <b>Email:</b> <code>' + _escapeTelegramHtml(userEmail || '') + '</code>\n' +
+                    '─────────────────\n' +
+                    _escapeTelegramHtml(messageText || '') + '\n' +
+                    '─────────────────\n' +
+                    '⏰ ' + new Date().toLocaleString('vi-VN');
+
+                console.log('[ChatTelegram] 📤 Sending...', { to: _TG_CHAT, from: from });
+                window.sendTelegramMessage(msg);
+            } catch(e) { console.warn('__sendTelegramNotify:', e); }
+        };
+
+        console.log('✅ Telegram module loaded (chat alias ready)');
     } catch(e) {
         console.error('❌ Telegram module failed (KHÔNG ảnh hưởng app):', e);
     }
