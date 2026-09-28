@@ -364,7 +364,7 @@ def build_draggable_fab_js():
         var storageKey = getUserKey('chat');
 
         // Nếu user đổi → reset
-       ấ if (el.__draggable && el.__storageKey !== storageKey) {
+        if (el.__draggable && el.__storageKey !== storageKey) {
             el.__draggable = false;
             el.__storageKey = null;
             el.style.left = '';
@@ -436,7 +436,7 @@ def build_draggable_fab_js():
                 .then(function(doc) {
                     if (doc.exists) {
                         var data = doc.data();
-                        var pos = data[FIRESTORE_FIELD];
+                        var pos = data['fab_pos_chat'];
                         if (pos && typeof pos.x === 'number') {
                             applyPosition(pos.x, pos.y);
                             try {
@@ -470,7 +470,7 @@ def build_draggable_fab_js():
             var db = window.db;
             if (email && db) {
                 var update = {};
-                update[FIRESTORE_FIELD] = pos;
+                update['fab_pos_chat'] = pos;
                 db.collection(FIRESTORE_COLLECTION).doc(email)
                     .set(update, { merge: true })
                     .catch(function(e) {
@@ -552,7 +552,7 @@ def build_draggable_fab_js():
             }
         }, true);
 
-        // ⭐ Bắt sự kiện từ BUTTON (để user nhn vào nút kéo)
+        // ⭐ Bắt sự kiện từ BUTTON (để user nhấn vào nút kéo)
         btn.addEventListener('mousedown', onPointerDown);
         btn.addEventListener('touchstart', onPointerDown, { passive: true });
 
