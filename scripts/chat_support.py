@@ -356,7 +356,9 @@ def build_chat_js():
         isOpen: false,
         lastThreadData: null,
         lastSeenAt: 0,
-        typingTimer: null
+        typingTimer: null,
+        _lastEmail: null,
+        _observer: null
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -453,10 +455,13 @@ def build_chat_js():
         updateCounterUI();
     }
 
-    function mountChatButton() {
-        var group = document.getElementById('floatingLeftGroup');
-        if (!group) { setTimeout(mountChatButton, 500); return; }
-        if (document.getElementById('chatFloatBtn')) return;
+    /* ═══════════════════════════════════════════════════════════
+       🔧 FIX: MOUNT + OBSERVE floatingLeftGroup
+       - Không retry vô hạn nữa
+       - Dùng MutationObserver để TỰ ĐỘNG chèn lại nút khi group
+         bị ui_template re-render
+       ═══════════════════════════════════════════════════════════ */
+    function createChatButton() {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'chat-float-btn hidden';
@@ -465,9 +470,62 @@ def build_chat_js():
         btn.innerHTML = '<i class="fas fa-comments"></i>' +
             '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
             '<span class="chat-badge" id="chatFabBadge">0</span>';
-        group.insertBefore(btn, group.firstChild);
         btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
+        return btn;
     }
+
+    function ensureChatButton() {
+        var group = document.getElementById('floatingLeftGroup');
+        if (!group) return false;
+        // Nếu group có nút chat → OK
+        if (group.querySelector('#chatFloatBtn')) {
+            // Vẫn update visibility phòng trường hợp user đã đổi
+            updateFabVisibility();
+            return true;
+        }
+        // Nút chat CHƯA có → tạo mới
+        var btn = createChatButton();
+        group.insertBefore(btn, group.firstChild);
+        console.log('✅ Đã mount chat FAB vào floatingLeftGroup');
+        updateFabVisibility();
+        return true;
+    }
+
+    function observeFloatingGroup() {
+        // Nếu đã có observer → không tạo nữa
+        if (CHAT._observer) return;
+
+        var target = document.body;
+        if (!target) return;
+
+        CHAT._observer = new MutationObserver(function(mutations) {
+            var needCheck = false;
+            for (var i = 0; i < mutations.length; i++) {
+                var m = mutations[i];
+                // Có node mới được thêm vào DOM
+                if (m.addedNodes && m.addedNodes.length > 0) {
+                    for (var j = 0; j < m.addedNodes.length; j++) {
+                        var n = m.addedNodes[j];
+                        if (n.nodeType !== 1) continue;
+                        if (n.id === 'floatingLeftGroup' || 
+                            (n.querySelector && n.querySelector('#floatingLeftGroup'))) {
+                            needCheck = true;
+                            break;
+                        }
+                    }
+                }
+                if (needCheck) break;
+            }
+            if (needCheck) {
+                // Đợi 1 nhịp cho DOM ổn định
+                setTimeout(ensureChatButton, 50);
+            }
+        });
+
+        CHAT._observer.observe(target, { childList: true, subtree: true });
+        console.log('👁 Chat FAB observer started');
+    }
+
     function updateFabVisibility() {
         var fab = $id('chatFloatBtn');
         if (!fab) return;
@@ -825,10 +883,53 @@ def build_chat_js():
         CHAT.typingTimer = setTimeout(function() { CHAT.typingTimer = null; }, 3000);
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       🔧 FIX: REFRESH AUTH — gọi từ accounts_template.py
+       Không dùng setInterval nữa, thay bằng callback
+       ═══════════════════════════════════════════════════════════ */
+    function refreshAuth() {
+        var u = getCu();
+        var email = (u && u.email) ? u.email : null;
+
+        // Luôn đảm bảo FAB được mount
+        ensureChatButton();
+
+        if (email === CHAT._lastEmail) {
+            // Email không đổi — chỉ update visibility
+            updateFabVisibility();
+            return;
+        }
+        CHAT._lastEmail = email;
+
+        updateFabVisibility();
+        stopUserThreadWatch();
+        stopAdminListWatch();
+        stopAdminThreadWatch();
+
+        if (email) {
+            if (isAdmin()) startAdminListWatch();
+            else { startUserThreadWatch(); updateCounterUI(); }
+        } else {
+            setFabBadge(0);
+            if (CHAT.isOpen) closeChat();
+        }
+    }
+    window.__chatRefreshAuth = refreshAuth;
+
     function init() {
         if (CHAT.inited) return;
         CHAT.inited = true;
-        mountChatButton();
+
+        // Mount button + observer
+        ensureChatButton();
+        // Nếu chưa có group → observer sẽ tự bắt khi group xuất hiện
+        observeFloatingGroup();
+
+        // Retry 1 vài lần phòng trường hợp group render muộn (fallback)
+        setTimeout(ensureChatButton, 200);
+        setTimeout(ensureChatButton, 1000);
+        setTimeout(ensureChatButton, 3000);
+
         initLimitBanner();
         var closeBtn = $id('chatClose');
         if (closeBtn) closeBtn.addEventListener('click', closeChat);
@@ -867,326 +968,28 @@ def build_chat_js():
         });
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
-    }
 
-    var _lastEmail = null;
-    function watchAuth() {
+        // Gọi lần đầu
+        refreshAuth();
+
+        // Fallback: vẫn poll 3s nhưng CHỈ update visibility nếu cần
+        // (không restart watchers nữa)
         setInterval(function() {
             var u = getCu();
-            var email = u ? u.email : null;
-            if (email === _lastEmail) return;
-            _lastEmail = email;
-            updateFabVisibility();
-            stopUserThreadWatch();
-            stopAdminListWatch();
-            stopAdminThreadWatch();
-            if (email) {
-                if (isAdmin()) startAdminListWatch();
-                else { startUserThreadWatch(); updateCounterUI(); }
+            var email = (u && u.email) ? u.email : null;
+            if (email !== CHAT._lastEmail) {
+                refreshAuth();
             } else {
-                setFabBadge(0);
-                if (CHAT.isOpen) closeChat();
-            }
-        }, 2000);
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { init(); updateFabVisibility(); watchAuth(); });
-    } else {
-        init(); updateFabVisibility(); watchAuth();
-    }
-})();
-"""
-
-
-def build_quota_js():
-    return r"""
-/* ═══════════════════════════════════════════════════════════════
-   📊 QUOTA TRACKER — Đếm reads/writes/deletes client-side
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    'use strict';
-
-    var QUOTA = {
-        inited: false,
-        reads: 0, writes: 0, deletes: 0,
-        lastMinuteReads: 0,
-        lastMinuteTs: Date.now(),
-        history: {}
-    };
-
-    var LIMIT_READS = 50000;
-    var LIMIT_WRITES = 20000;
-    var LIMIT_DELETES = 20000;
-    var WARN_PCT = 70;
-    var DANGER_PCT = 90;
-
-    function $id(id) { return document.getElementById(id); }
-    function todayKey() {
-        var d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    }
-    function getQuotaKey() { return 'quota_' + todayKey(); }
-
-    function loadQuota() {
-        try {
-            var raw = localStorage.getItem(getQuotaKey());
-            if (raw) {
-                var q = JSON.parse(raw);
-                QUOTA.reads = q.reads || 0;
-                QUOTA.writes = q.writes || 0;
-                QUOTA.deletes = q.deletes || 0;
-            }
-            var h = localStorage.getItem('quota_history');
-            if (h) QUOTA.history = JSON.parse(h);
-        } catch(e) {}
-    }
-    function saveQuota() {
-        try {
-            localStorage.setItem(getQuotaKey(), JSON.stringify({
-                reads: QUOTA.reads, writes: QUOTA.writes, deletes: QUOTA.deletes
-            }));
-            var keys = Object.keys(QUOTA.history).sort().slice(-7);
-            var newH = {};
-            keys.forEach(function(k) { newH[k] = QUOTA.history[k]; });
-            QUOTA.history = newH;
-            localStorage.setItem('quota_history', JSON.stringify(QUOTA.history));
-        } catch(e) {}
-    }
-
-    window.__quotaTrack = function(type, n) {
-        n = n || 1;
-        if (type === 'read') QUOTA.reads += n;
-        else if (type === 'write') QUOTA.writes += n;
-        else if (type === 'delete') QUOTA.deletes += n;
-        saveQuota();
-        updateQuotaUI();
-    };
-
-    function wrapFirestore() {
-        if (!window.firebase || !window.firebase.firestore) return false;
-        if (window.__quotaWrapped) return true;
-        window.__quotaWrapped = true;
-
-        var proto = firebase.firestore.Firestore.prototype;
-        var docProto = firebase.firestore.DocumentReference.prototype;
-        var colProto = firebase.firestore.CollectionReference.prototype;
-
-        // get() doc → 1 read
-        var origDocGet = docProto.get;
-        docProto.get = function() {
-            return origDocGet.apply(this, arguments).then(function(r) {
-                window.__quotaTrack('read', 1);
-                return r;
-            });
-        };
-
-        // get() collection → snap.size reads
-        var origColGet = colProto.get;
-        colProto.get = function() {
-            return origColGet.apply(this, arguments).then(function(snap) {
-                window.__quotaTrack('read', snap.size || 1);
-                return snap;
-            });
-        };
-
-        // set() → 1 write
-        var origSet = docProto.set;
-        docProto.set = function() {
-            window.__quotaTrack('write', 1);
-            return origSet.apply(this, arguments);
-        };
-
-        // update() → 1 write
-        var origUpdate = docProto.update;
-        docProto.update = function() {
-            window.__quotaTrack('write', 1);
-            return origUpdate.apply(this, arguments);
-        };
-
-        // delete() → 1 delete
-        var origDelete = docProto.delete;
-        docProto.delete = function() {
-            window.__quotaTrack('delete', 1);
-            return origDelete.apply(this, arguments);
-        };
-
-        // add() → 1 write
-        var origAdd = colProto.add;
-        colProto.add = function() {
-            window.__quotaTrack('write', 1);
-            return origAdd.apply(this, arguments);
-        };
-
-        console.log('✅ Firestore methods wrapped for quota tracking');
-        return true;
-    }
-
-    function pct(v, max) { return Math.min(100, (v / max) * 100); }
-    function setCardStatus(card, p) {
-        if (!card) return;
-        card.classList.remove('warn', 'danger');
-        if (p >= DANGER_PCT) card.classList.add('danger');
-        else if (p >= WARN_PCT) card.classList.add('warn');
-    }
-
-    function updateQuotaUI() {
-        // Reads
-        var elR = $id('quotaReads');
-        var barR = $id('quotaReadsBar');
-        var pR = pct(QUOTA.reads, LIMIT_READS);
-        if (elR) elR.textContent = QUOTA.reads.toLocaleString('vi-VN');
-        if (barR) barR.style.width = pR + '%';
-        if (elR) setCardStatus(elR.closest('.quota-card'), pR);
-
-        // Writes
-        var elW = $id('quotaWrites');
-        var barW = $id('quotaWritesBar');
-        var pW = pct(QUOTA.writes, LIMIT_WRITES);
-        if (elW) elW.textContent = QUOTA.writes.toLocaleString('vi-VN');
-        if (barW) barW.style.width = pW + '%';
-        if (elW) setCardStatus(elW.closest('.quota-card'), pW);
-
-        // Deletes
-        var elD = $id('quotaDeletes');
-        var barD = $id('quotaDeletesBar');
-        var pD = pct(QUOTA.deletes, LIMIT_DELETES);
-        if (elD) elD.textContent = QUOTA.deletes.toLocaleString('vi-VN');
-        if (barD) barD.style.width = pD + '%';
-        if (elD) setCardStatus(elD.closest('.quota-card'), pD);
-
-        // Status chip
-        var chip = $id('quotaStatusChip');
-        if (chip) {
-            var maxPct = Math.max(pR, pW, pD);
-            if (maxPct >= DANGER_PCT) { chip.textContent = 'Nguy hiểm (' + Math.round(maxPct) + '%)'; chip.style.color = '#dc2626'; }
-            else if (maxPct >= WARN_PCT) { chip.textContent = 'Cảnh báo (' + Math.round(maxPct) + '%)'; chip.style.color = '#d97706'; }
-            else { chip.textContent = 'OK (' + Math.round(maxPct) + '%)'; chip.style.color = ''; }
-        }
-
-        // Reset time (00:00 UTC)
-        var elTime = $id('quotaResetTime');
-        if (elTime) {
-            var now = new Date();
-            var utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
-            var tomorrow = new Date(Date.UTC(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate() + 1));
-            var diff = tomorrow.getTime() - now.getTime();
-            var h = Math.floor(diff / 3600000);
-            var m = Math.floor((diff % 3600000) / 60000);
-            var s = Math.floor((diff % 60000) / 1000);
-            elTime.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-        }
-
-        // Read rate
-        var now2 = Date.now();
-        if (now2 - QUOTA.lastMinuteTs >= 60000) {
-            QUOTA.lastMinuteReads = QUOTA.reads;
-            QUOTA.lastMinuteTs = now2;
-        }
-        var elRate = $id('quotaReadRate');
-        if (elRate) elRate.textContent = QUOTA.lastMinuteReads.toLocaleString('vi-VN');
-
-        // Online users (đếm từ localStorage — chỉ là ước lượng)
-        var elOnline = $id('quotaOnlineUsers');
-        if (elOnline) {
-            var count = 0;
-            try {
-                for (var i = 0; i < localStorage.length; i++) {
-                    var k = localStorage.key(i);
-                    if (k && k.indexOf('chat_init_') === 0) count++;
+                // Chỉ đảm bảo FAB tồn tại
+                if (!document.getElementById('chatFloatBtn')) {
+                    ensureChatButton();
                 }
-            } catch(e) {}
-            elOnline.textContent = count.toLocaleString('vi-VN');
-        }
-
-        // History
-        var histBody = $id('quotaHistoryBody');
-        if (histBody) {
-            var keys = Object.keys(QUOTA.history).sort().reverse();
-            if (keys.length === 0) {
-                histBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:1rem;">Chưa có dữ liệu</td></tr>';
-            } else {
-                var html = '';
-                keys.forEach(function(k) {
-                    var h = QUOTA.history[k];
-                    var pR2 = pct(h.reads || 0, LIMIT_READS);
-                    var pW2 = pct(h.writes || 0, LIMIT_WRITES);
-                    var maxP = Math.max(pR2, pW2);
-                    var cls = 'qht-ok', txt = '🟢 OK';
-                    if (maxP >= DANGER_PCT) { cls = 'qht-danger'; txt = '🔴 Nguy hiểm'; }
-                    else if (maxP >= WARN_PCT) { cls = 'qht-warn'; txt = '🟡 Cảnh báo'; }
-                    html += '<tr>' +
-                        '<td>' + k + '</td>' +
-                        '<td>' + (h.reads || 0).toLocaleString('vi-VN') + '</td>' +
-                        '<td>' + (h.writes || 0).toLocaleString('vi-VN') + '</td>' +
-                        '<td>' + (h.deletes || 0).toLocaleString('vi-VN') + '</td>' +
-                        '<td class="' + cls + '">' + txt + '</td>' +
-                    '</tr>';
-                });
-                histBody.innerHTML = html;
             }
-        }
+        }, 3000);
     }
-
-    // Lưu vào history mỗi phút
-    function saveToHistory() {
-        var k = todayKey();
-        QUOTA.history[k] = {
-            reads: QUOTA.reads,
-            writes: QUOTA.writes,
-            deletes: QUOTA.deletes
-        };
-        saveQuota();
-    }
-    setInterval(saveToHistory, 60000);
-
-    function init() {
-        if (QUOTA.inited) return;
-        QUOTA.inited = true;
-        loadQuota();
-        // Thử wrap Firestore — retry cho đến khi firebase sẵn sàng
-        var tries = 0;
-        var timer = setInterval(function() {
-            tries++;
-            if (wrapFirestore() || tries > 20) clearInterval(timer);
-        }, 500);
-        updateQuotaUI();
-        setInterval(updateQuotaUI, 5000);
-        setTimeout(saveToHistory, 3000);
-    }
-
-    // Public functions
-    window.__quotaReset = function() {
-        if (!confirm('Reset đếm quota hôm nay?')) return;
-        QUOTA.reads = 0; QUOTA.writes = 0; QUOTA.deletes = 0;
-        saveQuota();
-        updateQuotaUI();
-    };
-    window.__quotaExport = function() {
-        var rows = [['Date', 'Reads', 'Writes', 'Deletes']];
-        Object.keys(QUOTA.history).sort().forEach(function(k) {
-            var h = QUOTA.history[k];
-            rows.push([k, h.reads || 0, h.writes || 0, h.deletes || 0]);
-        });
-        var csv = rows.map(function(r) { return r.join(','); }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'quota_' + todayKey() + '.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-    window.__quotaSimulate = function() {
-        QUOTA.reads += 5000;
-        QUOTA.writes += 2000;
-        saveQuota();
-        updateQuotaUI();
-        alert('Đã thêm 5.000 reads + 2.000 writes để test cảnh báo.\n\nReload để reset.');
-    };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() { init(); });
     } else {
         init();
     }
