@@ -46,10 +46,8 @@ def build_chat_css():
 .chat-float-btn .chat-label{font-size:.65rem;opacity:.85;font-weight:500;white-space:nowrap}
 .chat-float-btn .chat-name{font-size:.85rem;font-weight:700;white-space:nowrap}
 
-/* Pulse ring: ẩn mặc định — chỉ bật khi có tin chưa đọc */
 .chat-float-btn::before{content:'';position:absolute;inset:0;border-radius:50px;background:linear-gradient(135deg, #4f46e5, #a855f7);opacity:0;z-index:1;pointer-events:none;transition:opacity .3s ease;}
 
-/* ✨ Lóe sáng nhẹ 1 lần khi icon mount — không loop */
 .chat-float-btn.intro-glow{animation:chatIntroGlow 1.8s cubic-bezier(.4,0,.2,1) 1;}
 @keyframes chatIntroGlow{
     0%{box-shadow:0 8px 24px rgba(124,58,237,.45),0 0 0 0 rgba(139,92,246,.6);}
@@ -57,7 +55,6 @@ def build_chat_css():
     100%{box-shadow:0 8px 24px rgba(124,58,237,.45),0 0 0 0 rgba(139,92,246,0);}
 }
 
-/* ═══ KHI CÓ TIN CHƯA ĐỌC — đỏ + rung + pulse ═══ */
 .chat-float-btn.has-unread{background:linear-gradient(135deg, #dc2626, #b91c1c, #7f1d1d);animation:chatUrgentPulse 1.2s infinite;box-shadow:0 8px 24px rgba(220,38,38,.6);}
 .chat-float-btn.has-unread::before{opacity:.5;background:linear-gradient(135deg, #dc2626, #7f1d1d);animation:chatUrgentPulse 1.2s infinite;}
 .chat-float-btn.has-unread i.fa-comments{animation:chatBellShake 0.6s infinite;color:#fde68a;text-shadow:0 0 8px rgba(253,230,138,.9);}
@@ -83,9 +80,7 @@ def build_chat_css():
     .chat-float-btn i.fa-comments{font-size:1.1rem;}
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ WRAPPER ĐỘC LẬP CHO NÚT CHAT — KHÔNG bị ẩn theo cụm Zalo/TikTok
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ WRAPPER NÚT CHAT — ĐỘC LẬP ═══ */
 #chatFloatWrap{
     position:fixed;
     left:20px;
@@ -108,7 +103,6 @@ def build_chat_css():
     pointer-events:none;
 }
 
-/* Khi cụm floating group đang mở → đẩy chat lên vừa đủ, có khoảng cách với TikTok */
 body.has-floating-group #chatFloatWrap{
     bottom:calc(180px + env(safe-area-inset-bottom));
 }
@@ -132,22 +126,84 @@ body.has-floating-group #chatFloatWrap{
     }
 }
 
-/* ═══ CHAT MODAL ═══ */
-.chat-modal{position:fixed;inset:0;background:rgba(15,23,42,.75);backdrop-filter:blur(6px);z-index:4000;display:none;align-items:flex-end;justify-content:flex-start;padding:1rem;padding-bottom:calc(85px + env(safe-area-inset-bottom));padding-left:20px;}
-.chat-modal.show{display:flex}
+/* ═══════════════════════════════════════════════════════════════
+   CHAT MODAL — 2 CHẾ ĐỘ: MINI (~30vh) & EXPANDED (~75vh)
+   ═══════════════════════════════════════════════════════════════ */
+.chat-modal{position:fixed;inset:0;background:transparent;z-index:4000;display:none;align-items:flex-end;justify-content:flex-start;padding:0;pointer-events:none;}
+.chat-modal.show{display:flex;pointer-events:auto;}
 
-.chat-box{background:#fff;border-radius:20px;width:100%;max-width:420px;height:min(75vh,600px);box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;position:relative;transform-origin:bottom left;animation:chatPopIn .3s cubic-bezier(.34,1.56,.64,1);}
+.chat-box{
+    background:#fff;
+    border-radius:18px;
+    width:360px;
+    height:30vh;
+    min-height:260px;
+    max-height:calc(100vh - 120px);
+    box-shadow:0 16px 48px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.05);
+    display:flex;flex-direction:column;overflow:hidden;
+    position:relative;
+    margin-left:20px;
+    margin-bottom:calc(80px + env(safe-area-inset-bottom));
+    transform-origin:bottom left;
+    animation:chatPopIn .28s cubic-bezier(.34,1.56,.64,1);
+    transition:width .3s cubic-bezier(.4,0,.2,1), height .3s cubic-bezier(.4,0,.2,1), margin-bottom .3s cubic-bezier(.4,0,.2,1), border-radius .3s;
+    pointer-events:auto;
+}
 @keyframes chatPopIn{from{opacity:0;transform:scale(.85) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
-[data-theme="dark"] .chat-box{background:#1e293b;}
+[data-theme="dark"] .chat-box{background:#1e293b;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08);}
 
-.chat-box::before{content:'';position:absolute;bottom:-16px;left:26px;width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:16px solid #fff;pointer-events:none;z-index:1;}
+/* ─── EXPANDED ─── */
+.chat-box.expanded{
+    width:540px;
+    height:75vh;
+    max-height:calc(100vh - 80px);
+    border-radius:20px;
+    margin-bottom:calc(20px + env(safe-area-inset-bottom));
+}
+.chat-box.expanded::before,
+.chat-box.expanded::after{opacity:0;pointer-events:none;}
+
+.chat-box::before{content:'';position:absolute;bottom:-14px;left:22px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid #fff;filter:drop-shadow(0 2px 3px rgba(0,0,0,.08));pointer-events:none;z-index:1;transition:opacity .25s ease;}
 [data-theme="dark"] .chat-box::before{border-top-color:#1e293b;}
-.chat-box::after{content:'';position:absolute;bottom:-12px;left:28px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid #4f46e5;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(79,70,229,.35));z-index:2;}
+.chat-box::after{content:'';position:absolute;bottom:-10px;left:24px;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:12px solid #4f46e5;pointer-events:none;z-index:2;transition:opacity .25s ease;}
 
+/* Nút phóng to/thu nhỏ trên header */
+.chat-expand-btn{width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;transition:.15s;}
+.chat-expand-btn:hover{background:rgba(255,255,255,.35);}
+
+/* ─── MOBILE: mini 30vh, expanded 75vh, không full màn hình ─── */
 @media (max-width:600px){
-    .chat-modal{padding:0;align-items:stretch;justify-content:stretch;padding-bottom:0;padding-left:0;}
-    .chat-box{max-width:100%;height:100vh;max-height:100vh;border-radius:0;transform-origin:center center;}
+    .chat-modal{align-items:flex-end;justify-content:flex-start;}
+    .chat-box{
+        width:calc(100vw - 24px);
+        height:30vh;
+        min-height:240px;
+        max-height:calc(100vh - 90px);
+        border-radius:18px;
+        margin-left:12px;
+        margin-right:12px;
+        margin-bottom:calc(80px + env(safe-area-inset-bottom));
+    }
+    .chat-box.expanded{
+        width:calc(100vw - 24px);
+        height:75vh;
+        max-height:calc(100vh - 80px);
+        margin-bottom:calc(20px + env(safe-area-inset-bottom));
+    }
     .chat-box::before,.chat-box::after{display:none;}
+}
+
+@media (max-width:400px){
+    .chat-box{
+        width:calc(100vw - 16px);
+        margin-left:8px;margin-right:8px;
+        height:30vh;
+        min-height:220px;
+    }
+    .chat-box.expanded{
+        width:calc(100vw - 16px);
+        height:75vh;
+    }
 }
 
 /* ═══ HEADER ═══ */
@@ -206,10 +262,10 @@ body.has-floating-group #chatFloatWrap{
 .chat-limit-banner .clb-text b{color:#dc2626;font-weight:900;}
 .chat-limit-banner .clb-actions{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem;}
 .chat-limit-banner .clb-btn{padding:.35rem .7rem;border-radius:50px;border:none;font-size:.72rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;transition:.15s;white-space:nowrap;}
-.chat-limit-banner .clb-btn.zalo{background:linear-gradient(135deg,#0068ff,#0052cc);color:#fff;clbox-shadow:0 3pxb 10px rgba(0-btn,104,255,.35);.d}
-.chat-limit-bismissanner .clb-btn.zalo:hover:hover{transform:translateY(-{1px);box-shadow:0background 5px 14px rgba:rgba(0,(104,255,.5120);color:#fff;}
-.ch,at-limit-banner .53clb-btn.dismiss{background:rgba,(120,53,15,.15,.2515);color:#78350f;}
-.chat-limit-banner .);}
+.chat-limit-banner .clb-btn.zalo{background:linear-gradient(135deg,#0068ff,#0052cc);color:#fff;box-shadow:0 3px 10px rgba(0,104,255,.35);}
+.chat-limit-banner .clb-btn.zalo:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,104,255,.5);color:#fff;}
+.chat-limit-banner .clb-btn.dismiss{background:rgba(120,53,15,.15);color:#78350f;}
+.chat-limit-banner .clb-btn.dismiss:hover{background:rgba(120,53,15,.25);}
 @keyframes chatLimitSlide{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 
 /* ═══ ADMIN LIST ═══ */
@@ -287,7 +343,6 @@ body.has-floating-group #chatFloatWrap{
 .ou-chat-btn{width:32px;height:32px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
 .ou-chat-btn:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(124,58,237,.4);}
 """
-
 # ═══════════════════════════════════════════════════════════════
 #  HTML
 # ═══════════════════════════════════════════════════════════════
