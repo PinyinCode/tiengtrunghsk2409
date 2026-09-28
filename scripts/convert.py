@@ -1,14 +1,33 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Chuyển file Excel → HTML tự chứa dữ liệu.
-Ghép 7 template: ui + social + accounts + intro + favorites + chat + quota.
+Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + data.
 
-✅ HEADER: Subtitle "Văn phòng & Công xưởng" dạng PILL nổi bật với icon ✦.
-✅ ĐA DATASET: Tự động quét thư mục `data/`, mỗi file Excel → 1 chuyên ngành.
-✅ ONBOARDING: Demo + Trial hỏi chọn chủ đề → filter + chia đều theo HSK.
-✅ INTRO: Banner + Modal 6 slide.
-✅ FAVORITES: 3 tab cùng hàng + nút tim float + toggle "chỉ câu yêu thích".
-✅ CHAT SUPPORT + QUOTA: Nút chat + Zalo + TikTok ở góc trái-dưới.
+✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
+   thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
+
+✅ ĐA DATASET: Tự động quét thư mục `data/`, mỗi file Excel
+   → 1 mục "Chuyên ngành" trong dropdown. Thêm file mới = copy
+   vào `data/` + chạy lại `python main.py`, không cần sửa code.
+
+✅ ONBOARDING: Demo + Trial được hỏi chọn chủ đề quan tâm
+   → tự động filter + chia đều theo HSK.
+
+✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
+
+✅ FAVORITES:
+   - Tab Yêu thích — 3 tab cùng hàng trên PC (Tổng hợp + Chuyên ngành + Yêu thích)
+   - Item Yêu thích trong dropdown bộ dữ liệu
+   - Nút tim trên card (đổi màu theo trạng thái)
+   - Nút tim FLOAT góc phải (Practice Full)
+   - ★ Nút toggle "Chỉ câu yêu thích" góc trái (Practice Full)
+     → Khi bật: dropdown "CÂU:" chỉ liệt kê câu yêu thích
+   - Chỉ tier ACTIVE/ADMIN dùng được, tier khác hiển thị 🔒
+
+✅ CHAT SUPPORT: Module độc lập (chat_support.py)
+   - User ↔ Admin realtime qua Firestore
+   - FAB + badge poll 60s
+   - Admin panel có tab "Chat hỗ trợ"
 """
 import json
 import os
@@ -17,8 +36,7 @@ import glob
 import re
 import unicodedata
 
-# Cho phép import từ thư mục cha (scripts/ → root)
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config_loader import load_config, print_banner, CONFIG_FILE
 from data_reader import read_excel
@@ -39,21 +57,18 @@ from intro_template import (
     build_intro_js,
 )
 
-# ⬇️ Module Favorites
+# ⬇️⬇️⬇️ Module Favorites
 from favorites_module import (
     build_favorites_css,
     build_favorites_html,
     build_favorites_js,
 )
 
-# ⬇️ Module Chat Support + Quota (độc lập)
+# ⬇️⬇️⬇️ Module Chat Support (độc lập)
 from chat_support import (
     build_chat_css,
     build_chat_html,
     build_chat_js,
-    build_quota_html,
-    build_quota_js,
-    build_quota_init_js,
 )
 
 
@@ -89,11 +104,18 @@ data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
 # ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
+# ═══════════════════════════════════════════════════════════════════
+#  ICON MAP — MỖI NGÀNH 1 ICON RIÊNG
+#  Màu đồng nhất cho TẤT CẢ = UNIFIED_COLOR (tím giống IT)
+# ═══════════════════════════════════════════════════════════════════
 ICON_MAP = {
+    # ─── Nhân sự / Hành chính ───
     "nhân sự":              "fa-users",
     "hành chính":           "fa-briefcase",
     "hành chính - nhân sự": "fa-briefcase",
     "hành chính nhân sự":   "fa-briefcase",
+
+    # ─── Mua bán / Kho vận ───
     "thu mua":              "fa-shopping-cart",
     "xuất nhập khẩu":       "fa-ship",
     "logistics":            "fa-truck",
@@ -104,9 +126,13 @@ ICON_MAP = {
     "marketing":            "fa-bullhorn",
     "dịch vụ khách hàng":   "fa-headset",
     "chăm sóc khách hàng":  "fa-headset",
+
+    # ─── Kế toán / Tài chính ───
     "kế toán":              "fa-calculator",
     "tài chính":            "fa-coins",
     "hành chính kế toán":   "fa-file-invoice-dollar",
+
+    # ─── Sản xuất / Kỹ thuật ───
     "sản xuất":             "fa-industry",
     "kế hoạch sản xuất":    "fa-calendar-alt",
     "kỹ thuật":             "fa-tools",
@@ -116,33 +142,52 @@ ICON_MAP = {
     "qc":                   "fa-award",
     "r&d":                  "fa-flask",
     "nghiên cứu":           "fa-flask",
+
+    # ─── Ngành đặc thù ───
     "giày da":              "fa-shoe-prints",
     "may mặc":              "fa-tshirt",
     "dệt may":              "fa-tshirt",
     "thực phẩm":            "fa-utensils",
     "nông nghiệp":          "fa-seedling",
+
+    # ─── IT / Công nghệ ───
     "máy tính & it":        "fa-laptop-code",
     "máy tính":             "fa-laptop-code",
     "công nghệ thông tin":  "fa-laptop-code",
     "it":                   "fa-laptop-code",
 }
 
+# Icon mặc định nếu không match ngành nào
 DEFAULT_ICON_NAME = "fa-folder"
-UNIFIED_COLOR = "#7c3aed"
+
+# ═══════════════════════════════════════════════════════════════════
+#  MÀU ĐỒNG NHẤT — TẤT CẢ NÚT DÙNG CÙNG MÀU NÀY
+#  (Tím giống IT hiện tại)
+# ═══════════════════════════════════════════════════════════════════
+UNIFIED_COLOR = "#7c3aed"     # ← Đổi màu ở đây nếu muốn (VD: "#6366f1", "#0ea5e9")
 
 
 def auto_detect_icon_color(display_name):
-    """Trả về tuple (icon, color) — icon riêng ngành, color đồng nhất."""
+    """
+    Trả về tuple (icon, color).
+    - Icon: RIÊNG cho từng ngành (match theo nhiều cấp)
+    - Color: LUÔN = UNIFIED_COLOR → đồng bộ style
+    """
     key = display_name.strip().lower()
 
+    # ─── 1. Match CHÍNH XÁC tên ───
     if key in ICON_MAP:
         return (ICON_MAP[key], UNIFIED_COLOR)
 
+    # ─── 2. Match theo TỪ riêng (tránh "it" match bừa trong "unity") ───
+    #     VD: "máy tính & it" → ["máy", "tính", "&", "it"] → key "it" có trong list
     words = re.split(r'[\s&\-_/,\.]+', key)
+    # Ưu tiên key DÀI match trước (tránh "it" match trước "máy tính & it")
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if k in words:
             return (ICON_MAP[k], UNIFIED_COLOR)
 
+    # ─── 3. Match substring (CHỈ key >= 3 ký tự, tránh "it"/"qa"/"qc") ───
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if len(k) >= 3 and k in key:
             return (ICON_MAP[k], UNIFIED_COLOR)
@@ -230,8 +275,10 @@ if os.path.isdir(DATA_DIR):
 
     if _chuyen_nganh_count == 0:
         print(f"ℹ️  Không có file chuyên ngành nào trong '{DATA_DIR}/'")
+        print(f"   (chỉ dùng dataset tổng hợp).")
 else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
+    print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
 # ─── 5. Serialize DATASET_REGISTRY ───
 dataset_registry_json = json.dumps(
@@ -412,20 +459,25 @@ FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
    ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
+   PC: [Tổng hợp] [Chuyên ngành] [Yêu thích] — 3 cột đều
+   Mobile: Yêu thích tự xuống hàng riêng
    ═══════════════════════════════════════════════════════════════════ */
 
+/* PC: ds-main-row chia 3 cột */
 @media (min-width: 769px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr 1fr !important;
     }
 }
 
+/* Mobile: 2 cột (Yêu thích xuống hàng) */
 @media (max-width: 768px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr !important;
     }
 }
 
+/* Mobile rất nhỏ: 1 cột dọc */
 @media (max-width: 500px) {
     .ds-main-row {
         grid-template-columns: 1fr !important;
@@ -765,7 +817,7 @@ full_css = (
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
     + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
     + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
-    + "\n/* ==== 💬 CHAT SUPPORT + 📊 QUOTA CSS ==== */\n" + build_chat_css()
+    + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
@@ -777,10 +829,13 @@ ui_html = build_ui_html()
 ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
 ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 
-# ⬇️ Chèn snippet Favorites vào HTML
+# ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
-# ═══ 1. Tab Yêu thích ═══
+# ═══════════════════════════════════════════════════════════════════
+# ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
+# 3 tab cùng hàng trên PC, mobile tự xuống hàng
+# ═══════════════════════════════════════════════════════════════════
 ui_html = ui_html.replace(
     '<!-- __FAV_DATASET_TAB__ -->',
     _fav_html["dataset_tab"]
@@ -791,7 +846,12 @@ if 'data-dataset-group="favorites"' not in ui_html:
 else:
     print("✅ Đã chèn tab Yêu thích vào ds-main-row")
 
-# ═══ 2. HAI NÚT FLOAT trong Practice Full ═══
+# ═══════════════════════════════════════════════════════════════════
+# ═══ 2. ★ HAI NÚT FLOAT trong Practice Full ═══
+#     - Nút tim (pf_float_btn) — góc phải
+#     - Nút toggle "Chỉ câu yêu thích" (pf_fav_only_btn) — góc trái
+#     Cả 2 chèn ngay trước TikTok float
+# ═══════════════════════════════════════════════════════════════════
 _pf_buttons = _fav_html["pf_float_btn"] + '\n' + _fav_html["pf_fav_only_btn"]
 
 ui_html = ui_html.replace(
@@ -799,10 +859,14 @@ ui_html = ui_html.replace(
     _pf_buttons + '\n<a class="pf-tiktok-float" id="pfTiktokFloat"'
 )
 
-# ═══ 3. Dropdown item Yêu thích ═══
+# ═══ 3. Dropdown item Yêu thích — chèn SAU item Chuyên ngành trong DROPDOWN ═══
+# Tìm item Chuyên ngành trong dropdown (không phải tab) và chèn Yêu thích sau nó
 _dd_patterns = [
+    # Pattern chính: dropdown item với class ds-dropdown-item + data-dataset-group
     r'(<button[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</button>)',
+    # Fallback: dropdown item có id riêng
     r'(<button[^>]*id="dsChuyenNganhDropdownItem"[^>]*>.*?</button>)',
+    # Fallback: <a> tag thay vì <button>
     r'(<a[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</a>)',
 ]
 
@@ -824,30 +888,15 @@ for _pat in _dd_patterns:
 
 if not _dd_inserted:
     print("⚠️  Chưa tìm thấy item Chuyên ngành trong dropdown.")
+    print("   → Kiểm tra lại class/id của dropdown item trong ui_template.py")
+    print("   → Hoặc chèn thủ công snippet 'dataset_dropdown_item' vào đúng vị trí")
 
-# ═══ 4. Social HTML (Zalo + TikTok) — LUÔN CHÈN ĐƯỢC ═══
 social_html = build_social_html()
-if '<div class="writer-modal" id="writerModal">' in ui_html:
-    ui_html = ui_html.replace(
-        '<div class="writer-modal" id="writerModal">',
-        social_html + '\n<div class="writer-modal" id="writerModal">'
-    )
-    print("✅ Đã chèn Social HTML (Zalo + TikTok) vào trước writerModal")
-else:
-    # Fallback: append vào cuối ui_html — LUÔN HOẠT ĐỘNG
-    ui_html = ui_html + '\n' + social_html
-    print("✅ Đã chèn Social HTML (Zalo + TikTok) vào cuối ui_html (fallback)")
+ui_html = ui_html.replace(
+    '<div class="writer-modal" id="writerModal">',
+    social_html + '\n<div class="writer-modal" id="writerModal">'
+)
 
-# ═══ 5. Auth HTML — chèn Quota Section ═══
-_quota_html = build_quota_html()
-
-if "<!-- __ADMIN_QUOTA_SECTION__ -->" in auth_html:
-    auth_html = auth_html.replace("<!-- __ADMIN_QUOTA_SECTION__ -->", _quota_html)
-    print("✅ Đã chèn Quota Section vào Admin Panel (qua placeholder)")
-else:
-    print("⚠️  Không tìm thấy placeholder Quota — bỏ qua (không ảnh hưởng chat)")
-
-# ═══ 6. Full body ═══
 full_body = (
     '<div class="page-wrap">\n'
     + ui_html
@@ -867,8 +916,6 @@ full_js = (
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
     + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
-    + "\n/* ==== 📊 QUOTA TRACKER JS ==== */\n" + build_quota_js()
-    + "\n/* ==== 📊 QUOTA INIT JS ==== */\n" + build_quota_init_js()
 )
 
 
@@ -989,7 +1036,7 @@ window.__switchRawData = function(datasetId) {
                 if (reqData.isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
                 msg += '\n';
                 msg += '⏱ ' + (reqData.isPermanent ? 'Mãi mãi' : (reqData.days || 0) + ' ngày') + '\n';
-                msg += '🔑 <code>' +O (reqData.transferCode || '')_L + '</code>\n';
+                msg += '🔑 <code>' + (reqData.transferCode || '') + '</code>\n';
                 msg += '⚡ <b>Vào Admin Panel xác nhận!</b>';
                 window.sendTelegramMessage(msg);
             } catch(e) { console.warn('notifyTelegramUserPaid:', e); }
@@ -1023,16 +1070,21 @@ window.__switchRawData = function(datasetId) {
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
 html_output = (HTML_SHELL
+    # 1. Nhúng khối lớn
     .replace("__CSS__",  full_css)
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
+
+    # 2. Data blobs
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
     .replace("__SYNONYMS__",          synonyms_json)
     .replace("__FILLER_WORDS__",      fillers_json)
     .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
-    .replace("__DEMIMIT__",            str(int(CONFIG["demo_limit"])))
+
+    # 3. Numeric configs
+    .replace("__DEMO_LIMIT__",            str(int(CONFIG["demo_limit"])))
     .replace("__DEMO_DAILY_LIMIT__",      str(int(CONFIG["demo_daily_limit"])))
     .replace("__DEMO_HSK_MAX__",          str(int(CONFIG["demo_hsk_max"])))
     .replace("__TRIAL_MAX_QUESTIONS__",   str(int(CONFIG.get("trial_max_questions", 50))))
@@ -1040,6 +1092,8 @@ html_output = (HTML_SHELL
     .replace("__TRIAL_UNLIMITED_WRITING__",
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
+
+    # 4. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
@@ -1066,8 +1120,7 @@ print(f"❤️  Yêu thích: 3 tab cùng hàng (PC) + dropdown + 2 nút float")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
-print(f"💬 Chat Support: onSnapshot + array (tối ưu 200+ user)")
-print(f"📊 Quota Dashboard: có trong Admin Panel")
+print(f"💬 Chat Support: đã thêm (user ↔ admin)")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
