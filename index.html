@@ -20624,7 +20624,7 @@ window.favFilterCount = favFilterCount;
     }
 })();
 
-/* ==== 📊 QUOTA INIT JS (bind buttons) ==== */
+/* ==== 📊 QUOTA INIT (bind buttons) ==== */
 
 (function() {
     'use strict';
@@ -20676,39 +20676,6 @@ window.__switchRawData = function(datasetId) {
     CURRENT_DATASET = datasetId;
     return true;
 };
-
-/* ============ SHIM: Đảm bảo window.db / window.currentUser LUÔN đồng bộ ============
-   - accounts_template.py khai báo `var db` và `var currentUser` ở top-level
-   - Chat Support (chat_support.py) đọc `window.db` / `window.currentUser`
-   - Ở browser, `var` top-level = window.X → OK
-   - Nhưng để CHẮC CHẮN, ta định nghĩa getter fallback ở đây.
-*/
-(function() {
-    try {
-        // Nếu window.db chưa có, tạo alias lazy cho biến `db` toàn cục
-        if (typeof window.db === 'undefined') {
-            Object.defineProperty(window, 'db', {
-                configurable: true,
-                get: function() {
-                    // `db` là biến var top-level trong accounts_js
-                    try { return (typeof db !== 'undefined') ? db : null; }
-                    catch(e) { return null; }
-                }
-            });
-        }
-        if (typeof window.currentUser === 'undefined') {
-            Object.defineProperty(window, 'currentUser', {
-                configurable: true,
-                get: function() {
-                    try { return (typeof currentUser !== 'undefined') ? currentUser : null; }
-                    catch(e) { return null; }
-                }
-            });
-        }
-    } catch(e) {
-        console.warn('[Shim] Không thể tạo alias window.db / window.currentUser:', e);
-    }
-})();
 </script>
 
 <script>
