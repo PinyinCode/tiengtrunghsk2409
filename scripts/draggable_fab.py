@@ -1,8 +1,69 @@
 # -*- coding: utf-8 -*-
 """
 Draggable FAB — Cho phép kéo thả nút FAB tự do.
-Hỗ trợ: chuột (PC) + touch (mobile).
-Lưu vị trí vào localStorage → nhớ sau khi reload.
+- Mặc định: cả 2 nút giữ nguyên vị trí như hiện tại (CSS)
+- USER thường: chỉ kéo được 1 nút (FAB chat tím)
+- ADMIN: kéo được cả 2 nút (chat tím + admin manager xanh)
+- Mỗi user/admin có vị trí RIÊNG (theo email)
+- Sync Firestore → đa máy
+- Fallback localStorage nếu chưa login / offline
+"""
+
+
+def build_draggable_fab_css():
+    """CSS bổ trợ cho draggable FAB."""
+    return r"""
+/* ═══════════════════════════════════════════════════════════════
+   🎯 DRAGGABLE FAB — CSS bổ trợ
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Khi FAB đang được kéo → tắt transition để mượt */
+.acm-fab.dragging,
+.chat-float-btn.dragging{
+    transition:none !important;
+    cursor:grabbing !important;
+}
+
+/* FAB có thể kéo → đổi cursor thành grab */
+.acm-fab[data-draggable="1"],
+.chat-float-btn[data-draggable="1"]{
+    cursor:grab;
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+}
+
+/* Đang kéo → cursor grabbing */
+.acm-fab[data-draggable="1"]:active,
+.chat-float-btn[data-draggable="1"]:active{
+    cursor:grabbing;
+}
+
+/* Toast thông báo */
+.fab-toast{
+    position:fixed;
+    bottom:120px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:rgba(15,23,42,.95);
+    color:#fff;
+    padding:.7rem 1.2rem;
+    border-radius:50px;
+    font-size:.85rem;
+    font-weight:600;
+    z-index:99999;
+    opacity:0;
+    transition:opacity .3s, transform .3s;
+    pointer-events:none;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);
+    max-width:80vw;
+    text-align:center;
+}
+.fab-toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
 """
 
 
@@ -10,57 +71,78 @@ def build_draggable_fab_js():
     return r"""
 /* ═══════════════════════════════════════════════════════════════
    🎯 DRAGGABLE FAB — Kéo thả nút FAB tự do
-   Dùng cho: #chatFloatBtn (FAB chat) + #acmFab (FAB admin manager)
+   - USER: chỉ FAB chat (tím)
+   - ADMIN: cả FAB chat + FAB admin manager (xanh)
+   - Mặc định giữ nguyên vị trí CSS
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
 
-    var DRAG(_THRESHOLD = 5;  STOR // ⭐ Ngưỡng phân biệt clickAGE vs drag (px)
-    var ST_PREFIXORAGE_PREFIX = 'fab_pos_';   // localStorage key prefix
+    var DRAG_THRESHOLD = 5;
+    var STORAGE_PREFIX = 'fab_pos_';
+    var FIRESTORE_COLLECTION = 'user_prefs';
+    var FIRESTORE_FIELD_PREFIX = 'fab_pos_';
 
-    /**
-     * Làm cho 1 element có thể kéo thả.
-     * @param {string} elementId  - ID của FAB
-     * @param {string} storageKey - Key lưu vị trí (unique cho mỗi FAB)
-     */
-    window.__makeDraggable = function(elementId, storageKey) {
+    function getUser() {
+        try { return window.currentUser || null; }
+        catch(e) { return null; }
+    }
+    function getUserEmail() {
+        var u = getUser();
+        return (u && u.email) ? u.email : null;
+    }
+    function isAdmin() {
+        var u = getUser();
+        return u && u.role === 'admin';
+    }
+    function getUserKey(baseKey) {
+        var email = getUserEmail();
+        return baseKey + '_' + (email || 'guest');
+    }
+
+    function showToast(msg) {
+        var t = document.getElementById('fabToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'fabToast';
+            t.className = 'fab-toast';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(t._timer);
+        t._timer = setTimeout(function() { t.classList.remove('show'); }, 2000);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // MAIN — Làm cho 1 FAB kéo thả được
+    // ═══════════════════════════════════════════════════════════
+    window.__makeDraggable = function(elementId, baseStorageKey) {
         var el = document.getElementById(elementId);
         if (!el) {
             console.warn('__makeDraggable: không tìm thấy #' + elementId);
             return;
         }
-        if (el.__draggable) return;   // đã kích hoạt rồi
+        if (el.__draggable) return;
         el.__draggable = true;
+        el.__baseKey = baseStorageKey;
+        el.setAttribute('data-draggable', '1');
 
-        // ═══ State ═══
         var isDragging = false;
         var hasMoved = false;
         var startX = 0, startY = 0;
         var elStartX = 0, elStartY = 0;
-        var pointerId = null;
+        var storageKey = getUserKey(baseStorageKey);
 
-        // ═══ Load vị trí đã lưu ═══
-        function loadPosition() {
-            try {
-                var saved = localStorage.getItem(STORAGE_PREFIX + storageKey);
-                if (!saved) return false;
-                var pos = JSON.parse(saved);
-                if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
-                    applyPosition(pos.x, pos.y);
-                    return true;
-                }
-            } catch(e) { console.warn('Load FAB pos:', e); }
-            return false;
-        }
-
-        // ═══ Áp dụng vị trí ═══
+        // ─────────────────────────────────────────────────────
+        // Vị trí
+        // ─────────────────────────────────────────────────────
         function applyPosition(x, y) {
-            // Đảm bảo không ra khỏi màn hình
             var rect = el.getBoundingClientRect();
-            var maxX = window.innerWidth - rect.width;
-            var maxY = window.innerHeight - rect.height;
-            x = Math.max(0, Math.min(x, maxX));
-            y = Math.max(0, Math.min(y, maxY));
+            var maxX = window.innerWidth - rect.width - 4;
+            var maxY = window.innerHeight - rect.height - 4;
+            x = Math.max(4, Math.min(x, maxX));
+            y = Math.max(4, Math.min(y, maxY));
 
             el.style.left = x + 'px';
             el.style.top = y + 'px';
@@ -68,23 +150,102 @@ def build_draggable_fab_js():
             el.style.bottom = 'auto';
         }
 
-        // ═══ Lấy vị trí hiện tại dạng { x, y } ═══
         function getCurrentPosition() {
             var rect = el.getBoundingClientRect();
-            return { x: rect.left, y: rect.top };
+            return { x: Math.round(rect.left), y: Math.round(rect.top) };
         }
 
-        // ═══ Lưu vị trí ═══
-        function savePosition() {
+        function fromLocalStorage() {
             try {
-                var pos = getCurrentPosition();
-                localStorage.setItem + storageKey, JSON.stringify(pos));
-            } catch(e) { console.warn('Save FAB pos:', e); }
+                var saved = localStorage.getItem(STORAGE_PREFIX + storageKey);
+                if (saved) {
+                    var pos = JSON.parse(saved);
+                    if (pos && typeof pos.x === 'number') {
+                        applyPosition(pos.x, pos.y);
+                        return true;
+                    }
+                }
+            } catch(e) {}
+            return false;
         }
 
-        // ═══ Bắt đầu kéo ═══
+        function loadPosition() {
+            var email = getUserEmail();
+            var db = window.db;
+
+            // ⭐ Nếu chưa login hoặc chưa có db → chỉ dùng localStorage
+            if (!email || !db) {
+                fromLocalStorage();
+                return;
+            }
+
+            // ⭐ Load Firestore trước
+            var fieldName = FIRESTORE_FIELD_PREFIX + baseStorageKey;
+            db.collection(FIRESTORE_COLLECTION).doc(email).get()
+                .then(function(doc) {
+                    if (doc.exists) {
+                        var data = doc.data();
+                        var pos = data[fieldName];
+                        if (pos && typeof pos.x === 'number') {
+                            applyPosition(pos.x, pos.y);
+                            try {
+                                localStorage.setItem(
+                                    STORAGE_PREFIX + storageKey,
+                                    JSON.stringify({ x: pos.x, y: pos.y })
+                                );
+                            } catch(e) {}
+                            return;
+                        }
+                    }
+                    // Không có trong Firestore → localStorage
+                    fromLocalStorage();
+                })
+                .catch(function(e) {
+                    console.warn('FAB load Firestore error:', e);
+                    fromLocalStorage();
+                });
+        }
+
+        function savePosition() {
+            var pos = getCurrentPosition();
+
+            // 1. localStorage
+            try {
+                localStorage.setItem(
+                    STORAGE_PREFIX + storageKey,
+                    JSON.stringify(pos)
+                );
+            } catch(e) {}
+
+            // 2. Firestore
+            var email = getUserEmail();
+            var db = window.db;
+            if (email && db) {
+                var fieldName = FIRESTORE_FIELD_PREFIX + baseStorageKey;
+                var update = {};
+                update[fieldName] = pos;
+                db.collection(FIRESTORE_COLLECTION).doc(email)
+                    .set(update, { merge: true })
+                    .catch(function(e) {
+                        console.warn('FAB save Firestore error:', e);
+                    });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────
+        // Pointer events
+        // ─────────────────────────────────────────────────────
+        function getPoint(e) {
+            if (e.touches && e.touches.length) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+            if (e.changedTouches && e.changedTouches.length) {
+                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
+        }
+
         function onPointerDown(e) {
-            // Chỉ kéo khi chuột trái
             if (e.type === 'mousedown' && e.button !== 0) return;
 
             var point = getPoint(e);
@@ -98,17 +259,11 @@ def build_draggable_fab_js():
             isDragging = true;
             hasMoved = false;
 
-            // Đổi cursor + tắt transition để kéo mượt
             el.style.transition = 'none';
-            el.style.cursor = 'grabbing';
+            el.classList.add('dragging');
             el.style.zIndex = '99999';
-
-            if (e.type === 'touchstart') {
-                pointerId = e.touches[0].identifier;
-            }
         }
 
-        // ═══ Kéo di chuyển ═══
         function onPointerMove(e) {
             if (!isDragging) return;
 
@@ -116,127 +271,175 @@ def build_draggable_fab_js():
             var dx = point.x - startX;
             var dy = point.y - startY;
 
-            // ⭐ Nếu di chuyển > ngưỡng → đánh dấu đã di chuyển
             if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
                 hasMoved = true;
             }
 
-            // Nếu chưa vượt ngưỡng → không di chuyển FAB
             if (!hasMoved) return;
 
             var newX = elStartX + dx;
             var newY = elStartY + dy;
-
-            // Giới hạn trong màn hình
-            var rect = el.getBoundingClientRect();
-            var maxX = window.innerWidth - rect.width;
-            var maxY = window.innerHeight - rect.height;
-            newX = Math.max(0, Math.min(newX, maxX));
-            newY = Math.max(0, Math.min(newY, maxY));
-
             applyPosition(newX, newY);
 
-            // Chặn scroll trên mobile
-            if (e.type === 'touchmove') e.preventDefault();
+            if (e.cancelable) e.preventDefault();
         }
 
-        // ═══ Kết thúc kéo ═══
         function onPointerUp(e) {
             if (!isDragging) return;
             isDragging = false;
 
-            // Khôi phục transition
             el.style.transition = '';
-            el.style.cursor = '';
+            el.classList.remove('dragging');
             el.style.zIndex = '';
 
-            // Nếu có di chuyển → lưu vị trí + chặn click
             if (hasMoved) {
                 savePosition();
-                // ⭐ Ngăn chặn sự kiện click tiếp theo
                 el.__suppressClick = true;
-                setTimeout(function() {
-                    el.__suppressClick = false;
-                }, 100);
+                setTimeout(function() { el.__suppressClick = false; }, 150);
             }
         }
 
-        // ═══ Lấy toạ độ từ event ═══
-        function getPoint(e) {
-            if (e.type === 'touchstart' || e.type === 'touchmove' || e.type === 'touchend') {
-                var t = e.touches[0] || e.changedTouches[0];
-                return { x: t.clientX, y: t.clientY };
-            }
-            return { x: e.clientX, y: e.clientY };
-        }
-
-        // ═══ Ngăn chặn click khi đang drag ═══
+        // Chặn click sau khi drag
         el.addEventListener('click', function(e) {
             if (el.__suppressClick) {
                 e.preventDefault();
                 e.stopPropagation();
                 return false;
             }
-        }, true);   // ⭐ capture phase
+        }, true);
 
-        // ═══ Gắn sự kiện ═══
-        // Mouse events
         el.addEventListener('mousedown', onPointerDown);
-
-        // Touch events
         el.addEventListener('touchstart', onPointerDown, { passive: true });
 
-        // Document-level (để kéo nhanh không bị mất)
         document.addEventListener('mousemove', onPointerMove);
         document.addEventListener('mouseup', onPointerUp);
         document.addEventListener('touchmove', onPointerMove, { passive: false });
         document.addEventListener('touchend', onPointerUp);
         document.addEventListener('touchcancel', onPointerUp);
 
-        // ═══ Khôi phục vị trí cũ nếu có ═══
+        // Load vị trí
         loadPosition();
 
-        // ═══ Khi resize window → giữ FAB trong màn hình ═══
+        // Resize
         window.addEventListener('resize', function() {
             var pos = getCurrentPosition();
             applyPosition(pos.x, pos.y);
         });
 
-        // ═══ Cursor mặc định ═══
-        el.style.cursor = 'grab';
-        el.style.touchAction = 'none';   // ⭐ Chặn scroll khi chạm vào FAB
-
-        console.log('✅ Draggable FAB:', elementId);
+        console.log('✅ Draggable FAB:', elementId, '| key:', storageKey);
     };
 
     // ═══════════════════════════════════════════════════════════
-    // ⭐ RESET vị trí FAB (dùng khi cần về mặc định)
+    // RESET vị trí
     // ═══════════════════════════════════════════════════════════
-    window.__resetFabPosition = function(storageKey) {
-        try {
-            localStorage.removeItem(STORAGE_PREFIX + storageKey);
-            console.log('✅ Đã xóa vị trí FAB:', storageKey);
-        } catch(e) {}
-    };
+    window.__resetFabPosition = function(baseKey) {
+        var email = getUserEmail();
+        var storageKey = getUserKey(baseKey);
 
-    // ═══════════════════════════════════════════════════════════
-    // ⭐ AUTO INIT — Tự động tìm và kéo thả mọi FAB có data-draggable
-    // ═══════════════════════════════════════════════════════════
-    function autoInit() {
-        // FAB chat
-        var chatBtn = document.getElementById('chatFloatBtn');
-        if (chatBtn && !chatBtn.__draggable) {
-            window.__makeDraggable('chatFloatBtn', 'chat');
+        try { localStorage.removeItem(STORAGE_PREFIX + storageKey); } catch(e) {}
+
+        if (email && window.db) {
+            var fieldName = FIRESTORE_FIELD_PREFIX + baseKey;
+            var update = {};
+            update[fieldName] = firebase.firestore.FieldValue.delete();
+            window.db.collection(FIRESTORE_COLLECTION).doc(email)
+                .update(update).catch(function() {});
         }
 
-        // FAB admin chat manager
-        var acmFab = document.getElementById('acmFab');
-        if (acmFab && !acmFab.__draggable) {
-            window.__makeDraggable('acmFab', 'admin_chat');
+        showToast('✅ Đã reset vị trí nút');
+        setTimeout(function() { location.reload(); }, 600);
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // AUTO INIT — Quyết định FAB nào được kéo
+    // ═══════════════════════════════════════════════════════════
+    function initChatFab() {
+        var chatBtn = document.getElementById('chatFloatBtn');
+        if (!chatBtn) return;
+
+        var chatKey = getUserKey('chat');
+
+        // Nếu user đổi → reset
+        if (chatBtn.__draggable && chatBtn.__storageKey !== chatKey) {
+            chatBtn.__draggable = false;
+            chatBtn.__storageKey = null;
+            chatBtn.style.left = '';
+            chatBtn.style.top = '';
+            chatBtn.style.right = '';
+            chatBtn.style.bottom = '';
+        }
+
+        if (!chatBtn.__draggable) {
+            window.__makeDraggable('chatFloatBtn', 'chat');
+            chatBtn.__storageKey = chatKey;
         }
     }
 
-    // Chạy autoInit nhiều lần vì FAB có thể được mount sau
+    function initAcmFab() {
+        // ⭐ CHỈ ADMIN mới được kéo FAB xanh lá
+        if (!isAdmin()) return;
+
+        var acmFab = document.getElementById('acmFab');
+        if (!acmFab) return;
+
+        var acmKey = getUserKey('admin_chat');
+
+        if (acmFab.__draggable && acmFab.__storageKey !== acmKey) {
+            acmFab.__draggable = false;
+            acmFab.__storageKey = null;
+            acmFab.style.left = '';
+            acmFab.style.top = '';
+            acmFab.style.right = '';
+            acmFab.style.bottom = '';
+        }
+
+        if (!acmFab.__draggable) {
+            window.__makeDraggable('acmFab', 'admin_chat');
+            acmFab.__storageKey = acmKey;
+        }
+    }
+
+    function autoInit() {
+        initChatFab();   // ⭐ Mọi user đều kéo được FAB chat
+        initAcmFab();    // ⭐ Chỉ admin kéo được FAB admin manager
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // WATCH user change → re-init
+    // ═══════════════════════════════════════════════════════════
+    var _lastEmail = null;
+    var _lastRole = null;
+    setInterval(function() {
+        try {
+            var u = getUser();
+            var email = u ? u.email : null;
+            var role = u ? (u.role || 'user') : null;
+
+            if (email === _lastEmail && role === _lastRole) return;
+            _lastEmail = email;
+            _lastRole = role;
+
+            // Reset
+            ['chatFloatBtn', 'acmFab'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.__draggable = false;
+                    el.__storageKey = null;
+                    el.style.left = '';
+                    el.style.top = '';
+                    el.style.right = '';
+                    el.style.bottom = '';
+                }
+            });
+
+            setTimeout(autoInit, 300);
+            console.log('🎯 FAB re-init cho:', email || 'guest', '| role:', role || '-');
+        } catch(e) {}
+    }, 2000);
+
+    // ═══════════════════════════════════════════════════════════
+    // KHỞI ĐỘNG
+    // ═══════════════════════════════════════════════════════════
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', autoInit);
     } else {
