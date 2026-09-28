@@ -133,16 +133,12 @@ body.has-floating-group #chatFloatWrap{
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CHAT MODAL — NEO VÀO NÚT FAB (JS set left/bottom động)
+   CHAT MODAL — CHỈ CÒN CHẾ ĐỘ MINI (~30vh)
    ═══════════════════════════════════════════════════════════════ */
-.chat-modal{position:fixed;inset:0;background:transparent;z-index:4000;display:none;padding:0;pointer-events:none;}
-.chat-modal.show{display:block;pointer-events:auto;}
+.chat-modal{position:fixed;inset:0;background:transparent;z-index:4000;display:none;align-items:flex-end;justify-content:flex-start;padding:0;pointer-events:none;}
+.chat-modal.show{display:flex;pointer-events:auto;}
 
-/* ⭐ .chat-box dùng position:fixed — left/bottom do JS set động theo nút FAB */
 .chat-box{
-    position:fixed;
-    left:20px;
-    bottom:80px;
     background:#fff;
     border-radius:18px;
     width:360px;
@@ -151,52 +147,33 @@ body.has-floating-group #chatFloatWrap{
     max-height:calc(100vh - 120px);
     box-shadow:0 16px 48px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.05);
     display:flex;flex-direction:column;overflow:hidden;
+    position:relative;
+    margin-left:20px;
+    margin-bottom:calc(80px + env(safe-area-inset-bottom));
     transform-origin:bottom left;
     animation:chatPopIn .28s cubic-bezier(.34,1.56,.64,1);
-    transition:width .3s cubic-bezier(.4,0,.2,1),
-               height .3s cubic-bezier(.4,0,.2,1),
-               left .35s cubic-bezier(.34,1.56,.64,1),
-               bottom .35s cubic-bezier(.34,1.56,.64,1),
-               border-radius .3s;
+    transition:width .3s cubic-bezier(.4,0,.2,1), height .3s cubic-bezier(.4,0,.2,1), margin-bottom .3s cubic-bezier(.4,0,.2,1), border-radius .3s;
     pointer-events:auto;
-    z-index:4001;
 }
 @keyframes chatPopIn{from{opacity:0;transform:scale(.85) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
 [data-theme="dark"] .chat-box{background:#1e293b;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08);}
 
-/* ⭐ Mũi tên chỉ xuống nút FAB — vị trí set bằng biến --arrow-left do JS */
-.chat-box::before{
-    content:'';position:absolute;bottom:-14px;
-    left:var(--arrow-left,22px);
-    width:0;height:0;
-    border-left:14px solid transparent;
-    border-right:14px solid transparent;
-    border-top:14px solid #fff;
-    filter:drop-shadow(0 2px 3px rgba(0,0,0,.08));
-    pointer-events:none;z-index:1;
-    transition:left .35s cubic-bezier(.34,1.56,.64,1);
-}
+.chat-box::before{content:'';position:absolute;bottom:-14px;left:22px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid #fff;filter:drop-shadow(0 2px 3px rgba(0,0,0,.08));pointer-events:none;z-index:1;transition:opacity .25s ease;}
 [data-theme="dark"] .chat-box::before{border-top-color:#1e293b;}
-.chat-box::after{
-    content:'';position:absolute;bottom:-10px;
-    left:calc(var(--arrow-left,22px) + 2px);
-    width:0;height:0;
-    border-left:12px solid transparent;
-    border-right:12px solid transparent;
-    border-top:12px solid #4f46e5;
-    pointer-events:none;z-index:2;
-    transition:left .35s cubic-bezier(.34,1.56,.64,1);
-}
+.chat-box::after{content:'';position:absolute;bottom:-10px;left:24px;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:12px solid #4f46e5;pointer-events:none;z-index:2;transition:opacity .25s ease;}
 
 /* ─── MOBILE ─── */
 @media (max-width:600px){
+    .chat-modal{align-items:flex-end;justify-content:flex-start;}
     .chat-box{
         width:calc(100vw - 24px);
         height:30vh;
         min-height:240px;
         max-height:calc(100vh - 90px);
         border-radius:18px;
-        /* left/bottom do JS set động */
+        margin-left:12px;
+        margin-right:12px;
+        margin-bottom:calc(80px + env(safe-area-inset-bottom));
     }
     .chat-box::before,.chat-box::after{display:none;}
 }
@@ -204,6 +181,7 @@ body.has-floating-group #chatFloatWrap{
 @media (max-width:400px){
     .chat-box{
         width:calc(100vw - 16px);
+        margin-left:8px;margin-right:8px;
         height:30vh;
         min-height:220px;
     }
@@ -298,12 +276,12 @@ body.has-floating-group #chatFloatWrap{
 .dropdown-chat-preview{display:none;margin:.4rem .5rem;padding:.65rem .75rem;background:linear-gradient(135deg, rgba(79,70,229,.06), rgba(124,58,237,.06));border:1px solid rgba(124,58,237,.2);border-radius:10px;cursor:pointer;transition:.15s;}
 .dropdown-chat-preview:hover{border-color:#7c3aed;background:linear-gradient(135deg, rgba(79,70,229,.12), rgba(124,58,237,.12));}
 .dropdown-chat-preview.show{display:block}
-.dropdown-chat-preview .dcp-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin;-bottom:.25rem;}
-.dropdownfont-chat-preview .dcp-title-size{font-size:.68rem;font-weight::.800;color:#7c3aed58;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:.3rem;}
+.dropdown-chat-preview .dcp-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-bottom:.25rem;}
+.dropdown-chat-preview .dcp-title{font-size:.68rem;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:.3rem;}
 .dropdown-chat-preview .dcp-time{font-size:.62rem;color:#94a3b8;font-weight:600;}
 .dropdown-chat-preview .dcp-msg{font-size:.78rem;color:#0f172a;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
 .dropdown-chat-preview .dcp-msg b{color:#4f46e5;}
-.dropdown-chat-preview .dcp-badge{display:inline-block;background:#dc2626;color:#fffrem;font-weight:900;padding:.1rem .35rem;border-radius:50px;margin-left:.35rem;vertical-align:middle;}
+.dropdown-chat-preview .dcp-badge{display:inline-block;background:#dc2626;color:#fff;font-size:.58rem;font-weight:900;padding:.1rem .35rem;border-radius:50px;margin-left:.35rem;vertical-align:middle;}
 [data-theme="dark"] .dropdown-chat-preview{background:linear-gradient(135deg, rgba(79,70,229,.15), rgba(124,58,237,.15));border-color:rgba(165,180,252,.35);}
 [data-theme="dark"] .dropdown-chat-preview .dcp-msg{color:#f1f5f9;}
 [data-theme="dark"] .dropdown-chat-preview .dcp-msg b{color:#a5b4fc;}
@@ -533,17 +511,17 @@ def build_chat_js():
     var MAX_MESSAGES = 100;
 
     var CHAT = {
-        inited: false,
-        threadUnsub: null,
-        adminListUnsub: null,
-        adminThreadUnsub: null,
-        adminCurrentEmail: null,
-        isOpen: false,
-        lastThreadData: null,
-        lastSeenAt: 0,
-        typingTimer: null,
-        onlineUnsub: null
-    };
+    inited: false,
+    threadUnsub: null,
+    adminListUnsub: null,
+    adminThreadUnsub: null,
+    adminCurrentEmail: null,
+    isOpen: false,
+    lastThreadData: null,
+    lastSeenAt: 0,
+    typingTimer: null,
+    onlineUnsub: null
+};
 
     function $id(id) { return document.getElementById(id); }
     function esc(s) {
@@ -720,52 +698,6 @@ def build_chat_js():
         }
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ NEO CHAT BOX VÀO NÚT FAB
-       Đo vị trí nút FAB thực tế → set left/bottom cho .chat-box
-       để box LUÔN nằm ngay phía trên nút, mũi tên chỉ đúng nút.
-       ═══════════════════════════════════════════════════════════ */
-    function positionChatBox() {
-        var fab = $id('chatFloatBtn');
-        var box = document.querySelector('.chat-box');
-        if (!fab || !box) return;
-
-        var fabRect = fab.getBoundingClientRect();
-        var boxRect = box.getBoundingClientRect();
-        var isMobile = window.innerWidth <= 600;
-
-        // ─── Chiều ngang: canh trái box trùng trái nút FAB ───
-        var boxWidth = boxRect.width || (isMobile ? (window.innerWidth - 24) : 360);
-        var left = fabRect.left;
-
-        // Nếu box tràn phải màn hình → đẩy vào
-        if (left + boxWidth > window.innerWidth - 8) {
-            left = Math.max(8, window.innerWidth - boxWidth - 8);
-        }
-        // Nếu box tràn trái màn hình
-        if (left < 8) left = 8;
-
-        // ─── Chiều dọc: box nằm TRÊN nút FAB ───
-        // gap = 16px để chừa chỗ cho mũi tên chỉ xuống
-        var gap = 16;
-        var bottom = window.innerHeight - fabRect.top + gap;
-
-        // Nếu box vượt quá đỉnh màn hình → giới hạn lại
-        var maxBottom = window.innerHeight - (boxRect.height || 260) - 8;
-        if (bottom > maxBottom) bottom = Math.max(8, maxBottom);
-
-        // ─── Set vị trí ───
-        box.style.left = left + 'px';
-        box.style.bottom = bottom + 'px';
-
-        // ─── Canh mũi tên chỉ vào giữa nút FAB ───
-        var fabCenterX = fabRect.left + fabRect.width / 2;
-        var arrowLeft = fabCenterX - left - 14; // 14 = nửa chiều rộng mũi tên
-        // Giới hạn mũi tên trong khoảng [16, boxWidth - 32]
-        arrowLeft = Math.max(16, Math.min(arrowLeft, boxWidth - 32));
-        box.style.setProperty('--arrow-left', arrowLeft + 'px');
-    }
-
     /* ⭐ Detect cụm floating group đang hiển thị → đẩy chat FAB xuống */
     function syncFloatingGroupState() {
         var group = document.getElementById('floatingLeftGroup');
@@ -776,14 +708,7 @@ def build_chat_js():
                         (style.visibility !== 'hidden') &&
                         (parseFloat(style.opacity || '1') > 0.05);
         }
-        var changed = document.body.classList.contains('has-floating-group') !== isVisible;
         document.body.classList.toggle('has-floating-group', isVisible);
-        // ⭐ Nếu cụm floating group thay đổi VÀ chat đang mở → reposition
-        if (changed && CHAT.isOpen) {
-            // Chờ transition CSS của #chatFloatWrap (0.35s) chạy xong
-            setTimeout(positionChatBox, 60);
-            setTimeout(positionChatBox, 380);
-        }
     }
 
     function startUserThreadWatch() {
@@ -887,10 +812,6 @@ def build_chat_js():
                 '<div class="title">Bắt đầu cuộc trò chuyện</div>' +
                 '<div class="desc">Gửi tin nhắn cho admin nếu bạn cần hỗ trợ.</div></div>' +
                 '<div class="chat-typing" id="chatTypingIndicator"><span>Đang trả lời</span><span class="dots"><span></span><span></span><span></span></span></div>';
-            if (CHAT.isOpen) {
-                setTimeout(positionChatBox, 30);
-                setTimeout(positionChatBox, 300);
-            }
             return;
         }
         var html = '', lastDate = null;
@@ -908,10 +829,6 @@ def build_chat_js():
         body.innerHTML = html;
         var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 150;
         if (nearBottom) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
-        if (CHAT.isOpen) {
-            setTimeout(positionChatBox, 30);
-            setTimeout(positionChatBox, 300);
-        }
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -1013,7 +930,6 @@ def build_chat_js():
                 if (snap.empty) {
                     if (body) body.innerHTML = '<div class="chat-empty"><i class="fas fa-comments"></i><div class="title">Chưa có hội thoại</div></div>';
                     setFabBadge(0);
-                    if (CHAT.isOpen) setTimeout(positionChatBox, 30);
                     return;
                 }
                 var html = '', totalUnread = 0;
@@ -1037,10 +953,6 @@ def build_chat_js():
                 });
                 if (body) body.innerHTML = html;
                 setFabBadge(totalUnread);
-                if (CHAT.isOpen) {
-                    setTimeout(positionChatBox, 30);
-                    setTimeout(positionChatBox, 300);
-                }
             }, function(err) { console.error('Admin list watch error:', err); });
     }
     function stopAdminListWatch() {
@@ -1086,10 +998,6 @@ def build_chat_js():
                 '<div class="title">Chưa có tin nhắn</div>' +
                 '<div class="desc">Gửi tin nhắn chào user để bắt đầu.</div></div>' +
                 '<div class="chat-typing" id="chatTypingIndicator"><span>Đang trả lời</span><span class="dots"><span></span><span></span><span></span></span></div>';
-            if (CHAT.isOpen) {
-                setTimeout(positionChatBox, 30);
-                setTimeout(positionChatBox, 300);
-            }
             return;
         }
         var html = '', lastDate = null;
@@ -1107,19 +1015,14 @@ def build_chat_js():
         body.innerHTML = html;
         var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 150;
         if (nearBottom) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
-        if (CHAT.isOpen) {
-            setTimeout(positionChatBox, 30);
-            setTimeout(positionChatBox, 300);
-        }
     }
+    /* ⭐ FIX: đã XÓA hoàn toàn updateExpandIcon() và toggleExpand() */
 
     function openChat() {
         var u = getCu();
         if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
         CHAT.isOpen = true;
         $id('chatModal').classList.add('show');
-        // ⭐ Neo box vào nút FAB NGAY khi mở
-        positionChatBox();
         var dd = $id('userDropdown');
         if (dd) dd.classList.remove('show');
         if (isAdmin()) {
@@ -1129,9 +1032,6 @@ def build_chat_js():
             openUserView();
             updateCounterUI();
         }
-        // Re-position sau khi animation/transition hoàn tất
-        setTimeout(positionChatBox, 30);
-        setTimeout(positionChatBox, 320);
     }
     function closeChat() {
         CHAT.isOpen = false;
@@ -1300,19 +1200,8 @@ def build_chat_js():
         syncFloatingGroupState();
         setInterval(syncFloatingGroupState, 1000);
 
-        /* ⭐ Reposition chat box khi resize window */
-        window.addEventListener('resize', function() {
-            if (CHAT.isOpen) positionChatBox();
-        });
-
-        /* ⭐ Reposition chat box khi scroll (phòng trường hợp page scroll) */
-        window.addEventListener('scroll', function() {
-            if (CHAT.isOpen) positionChatBox();
-        }, { passive: true });
-
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
-        window.__chatPosition = positionChatBox;
     }
 
     var _lastEmail = null;
@@ -1333,8 +1222,6 @@ def build_chat_js():
                 setFabBadge(0);
                 if (CHAT.isOpen) closeChat();
             }
-            // Sau khi user đổi → nếu chat đang mở thì reposition
-            if (CHAT.isOpen) setTimeout(positionChatBox, 100);
         }, 2000);
     }
 
@@ -1343,5 +1230,342 @@ def build_chat_js():
     } else {
         init(); updateFabVisibility(); watchAuth();
     }
+})();
+"""
+
+
+def build_quota_js():
+    return r"""
+/* ═══════════════════════════════════════════════════════════════
+   📊 QUOTA TRACKER — Đếm reads/writes/deletes client-side
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+
+    var QUOTA = {
+        inited: false,
+        reads: 0, writes: 0, deletes: 0,
+        lastMinuteReads: 0,
+        lastMinuteTs: Date.now(),
+        history: {}
+    };
+
+    var LIMIT_READS = 50000;
+    var LIMIT_WRITES = 20000;
+    var LIMIT_DELETES = 20000;
+    var WARN_PCT = 70;
+    var DANGER_PCT = 90;
+
+    function $id(id) { return document.getElementById(id); }
+    function todayKey() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    function getQuotaKey() { return 'quota_' + todayKey(); }
+
+    function loadQuota() {
+        try {
+            var raw = localStorage.getItem(getQuotaKey());
+            if (raw) {
+                var q = JSON.parse(raw);
+                QUOTA.reads = q.reads || 0;
+                QUOTA.writes = q.writes || 0;
+                QUOTA.deletes = q.deletes || 0;
+            }
+            var h = localStorage.getItem('quota_history');
+            if (h) QUOTA.history = JSON.parse(h);
+        } catch(e) {}
+    }
+    function saveQuota() {
+        try {
+            localStorage.setItem(getQuotaKey(), JSON.stringify({
+                reads: QUOTA.reads, writes: QUOTA.writes, deletes: QUOTA.deletes
+            }));
+            var keys = Object.keys(QUOTA.history).sort().slice(-7);
+            var newH = {};
+            keys.forEach(function(k) { newH[k] = QUOTA.history[k]; });
+            QUOTA.history = newH;
+            localStorage.setItem('quota_history', JSON.stringify(QUOTA.history));
+        } catch(e) {}
+    }
+
+    window.__quotaTrack = function(type, n) {
+        n = n || 1;
+        if (type === 'read') QUOTA.reads += n;
+        else if (type === 'write') QUOTA.writes += n;
+        else if (type === 'delete') QUOTA.deletes += n;
+        saveQuota();
+        updateQuotaUI();
+    };
+
+    function wrapFirestore() {
+        if (!window.firebase || !window.firebase.firestore) return false;
+        if (window.__quotaWrapped) return true;
+        window.__quotaWrapped = true;
+
+        var proto = firebase.firestore.Firestore.prototype;
+        var docProto = firebase.firestore.DocumentReference.prototype;
+        var colProto = firebase.firestore.CollectionReference.prototype;
+
+        var origDocGet = docProto.get;
+        docProto.get = function() {
+            return origDocGet.apply(this, arguments).then(function(r) {
+                window.__quotaTrack('read', 1);
+                return r;
+            });
+        };
+
+        var origColGet = colProto.get;
+        colProto.get = function() {
+            return origColGet.apply(this, arguments).then(function(snap) {
+                window.__quotaTrack('read', snap.size || 1);
+                return snap;
+            });
+        };
+
+        var origSet = docProto.set;
+        docProto.set = function() {
+            window.__quotaTrack('write', 1);
+            return origSet.apply(this, arguments);
+        };
+
+        var origUpdate = docProto.update;
+        docProto.update = function() {
+            window.__quotaTrack('write', 1);
+            return origUpdate.apply(this, arguments);
+        };
+
+        var origDelete = docProto.delete;
+        docProto.delete = function() {
+            window.__quotaTrack('delete', 1);
+            return origDelete.apply(this, arguments);
+        };
+
+        var origAdd = colProto.add;
+        colProto.add = function() {
+            window.__quotaTrack('write', 1);
+            return origAdd.apply(this, arguments);
+        };
+
+        console.log('✅ Firestore methods wrapped for quota tracking');
+        return true;
+    }
+
+    function pct(v, max) { return Math.min(100, (v / max) * 100); }
+    function setCardStatus(card, p) {
+        if (!card) return;
+        card.classList.remove('warn', 'danger');
+        if (p >= DANGER_PCT) card.classList.add('danger');
+        else if (p >= WARN_PCT) card.classList.add('warn');
+    }
+
+    function updateQuotaUI() {
+        var elR = $id('quotaReads');
+        var barR = $id('quotaReadsBar');
+        var pR = pct(QUOTA.reads, LIMIT_READS);
+        if (elR) elR.textContent = QUOTA.reads.toLocaleString('vi-VN');
+        if (barR) barR.style.width = pR + '%';
+        if (elR) setCardStatus(elR.closest('.quota-card'), pR);
+
+        var elW = $id('quotaWrites');
+        var barW = $id('quotaWritesBar');
+        var pW = pct(QUOTA.writes, LIMIT_WRITES);
+        if (elW) elW.textContent = QUOTA.writes.toLocaleString('vi-VN');
+        if (barW) barW.style.width = pW + '%';
+        if (elW) setCardStatus(elW.closest('.quota-card'), pW);
+
+        var elD = $id('quotaDeletes');
+        var barD = $id('quotaDeletesBar');
+        var pD = pct(QUOTA.deletes, LIMIT_DELETES);
+        if (elD) elD.textContent = QUOTA.deletes.toLocaleString('vi-VN');
+        if (barD) barD.style.width = pD + '%';
+        if (elD) setCardStatus(elD.closest('.quota-card'), pD);
+
+        var chip = $id('quotaStatusChip');
+        if (chip) {
+            var maxPct = Math.max(pR, pW, pD);
+            if (maxPct >= DANGER_PCT) { chip.textContent = 'Nguy hiểm (' + Math.round(maxPct) + '%)'; chip.style.color = '#dc2626'; }
+            else if (maxPct >= WARN_PCT) { chip.textContent = 'Cảnh báo (' + Math.round(maxPct) + '%)'; chip.style.color = '#d97706'; }
+            else { chip.textContent = 'OK (' + Math.round(maxPct) + '%)'; chip.style.color = ''; }
+        }
+
+        var elTime = $id('quotaResetTime');
+        if (elTime) {
+            var now = new Date();
+            var utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+            var tomorrow = new Date(Date.UTC(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate() + 1));
+            var diff = tomorrow.getTime() - now.getTime();
+            var h = Math.floor(diff / 3600000);
+            var m = Math.floor((diff % 3600000) / 60000);
+            var s = Math.floor((diff % 60000) / 1000);
+            elTime.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        }
+
+        var now2 = Date.now();
+        if (now2 - QUOTA.lastMinuteTs >= 60000) {
+            QUOTA.lastMinuteReads = QUOTA.reads;
+            QUOTA.lastMinuteTs = now2;
+        }
+        var elRate = $id('quotaReadRate');
+        if (elRate) elRate.textContent = QUOTA.lastMinuteReads.toLocaleString('vi-VN');
+
+        var elOnline = $id('quotaOnlineUsers');
+        if (elOnline) {
+            var count = 0;
+            try {
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (k && k.indexOf('chat_init_') === 0) count++;
+                }
+            } catch(e) {}
+            elOnline.textContent = count.toLocaleString('vi-VN');
+        }
+
+        var histBody = $id('quotaHistoryBody');
+        if (histBody) {
+            var keys = Object.keys(QUOTA.history).sort().reverse();
+            if (keys.length === 0) {
+                histBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:1rem;">Chưa có dữ liệu</td></tr>';
+            } else {
+                var html = '';
+                keys.forEach(function(k) {
+                    var h = QUOTA.history[k];
+                    var pR2 = pct(h.reads || 0, LIMIT_READS);
+                    var pW2 = pct(h.writes || 0, LIMIT_WRITES);
+                    var maxP = Math.max(pR2, pW2);
+                    var cls = 'qht-ok', txt = '🟢 OK';
+                    if (maxP >= DANGER_PCT) { cls = 'qht-danger'; txt = '🔴 Nguy hiểm'; }
+                    else if (maxP >= WARN_PCT) { cls = 'qht-warn'; txt = '🟡 Cảnh báo'; }
+                    html += '<tr>' +
+                        '<td>' + k + '</td>' +
+                        '<td>' + (h.reads || 0).toLocaleString('vi-VN') + '</td>' +
+                        '<td>' + (h.writes || 0).toLocaleString('vi-VN') + '</td>' +
+                        '<td>' + (h.deletes || 0).toLocaleString('vi-VN') + '</td>' +
+                        '<td class="' + cls + '">' + txt + '</td>' +
+                    '</tr>';
+                });
+                histBody.innerHTML = html;
+            }
+        }
+    }
+
+    function saveToHistory() {
+        var k = todayKey();
+        QUOTA.history[k] = {
+            reads: QUOTA.reads,
+            writes: QUOTA.writes,
+            deletes: QUOTA.deletes
+        };
+        saveQuota();
+    }
+    setInterval(saveToHistory, 60000);
+
+    function init() {
+        if (QUOTA.inited) return;
+        QUOTA.inited = true;
+        loadQuota();
+        var tries = 0;
+        var timer = setInterval(function() {
+            tries++;
+            if (wrapFirestore() || tries > 20) clearInterval(timer);
+        }, 500);
+        updateQuotaUI();
+        setInterval(updateQuotaUI, 5000);
+        setTimeout(saveToHistory, 3000);
+    }
+
+    window.__quotaReset = function() {
+        if (!confirm('Reset đếm quota hôm nay?')) return;
+        QUOTA.reads = 0; QUOTA.writes = 0; QUOTA.deletes = 0;
+        saveQuota();
+        updateQuotaUI();
+    };
+    window.__quotaExport = function() {
+        var rows = [['Date', 'Reads', 'Writes', 'Deletes']];
+        Object.keys(QUOTA.history).sort().forEach(function(k) {
+            var h = QUOTA.history[k];
+            rows.push([k, h.reads || 0, h.writes || 0, h.deletes || 0]);
+        });
+        var csv = rows.map(function(r) { return r.join(','); }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'quota_' + todayKey() + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+    window.__quotaSimulate = function() {
+        QUOTA.reads += 5000;
+        QUOTA.writes += 2000;
+        saveQuota();
+        updateQuotaUI();
+        alert('Đã thêm 5.000 reads + 2.000 writes để test cảnh báo.\n\nReload để reset.');
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+"""
+
+
+def build_quota_init_js():
+    """JS bind các nút trong Quota section."""
+    return r"""
+(function() {
+    'use strict';
+    function $id(id) { return document.getElementById(id); }
+
+    function bindQuotaButtons() {
+        var resetBtn = $id('quotaResetBtn');
+        if (resetBtn && !resetBtn._bound) {
+            resetBtn._bound = true;
+            resetBtn.addEventListener('click', function() {
+                if (typeof window.__quotaReset === 'function') window.__quotaReset();
+            });
+        }
+        var expBtn = $id('quotaExportBtn');
+        if (expBtn && !expBtn._bound) {
+            expBtn._bound = true;
+            expBtn.addEventListener('click', function() {
+                if (typeof window.__quotaExport === 'function') window.__quotaExport();
+            });
+        }
+        var simBtn = $id('quotaSimBtn');
+        if (simBtn && !simBtn._bound) {
+            simBtn._bound = true;
+            simBtn.addEventListener('click', function() {
+                if (typeof window.__quotaSimulate === 'function') window.__quotaSimulate();
+            });
+        }
+        var refBtn = $id('refreshQuotaBtn');
+        if (refBtn && !refBtn._bound) {
+            refBtn._bound = true;
+            refBtn.addEventListener('click', function() {
+                window.dispatchEvent(new Event('quota-refresh'));
+                if (window.__quotaTrack) window.__quotaTrack('read', 0);
+            });
+        }
+        var toggleQuotaBtn = $id('toggleQuotaBtn');
+        var quotaSection = $id('adminQuotaSection');
+        if (toggleQuotaBtn && quotaSection && !toggleQuotaBtn._bound) {
+            toggleQuotaBtn._bound = true;
+            toggleQuotaBtn.addEventListener('click', function() {
+                quotaSection.classList.toggle('collapsed');
+                var isVisible = !quotaSection.classList.contains('collapsed');
+                var icon = this.querySelector('i');
+                if (icon) icon.className = isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
+                this.classList.toggle('active', isVisible);
+                this.title = isVisible ? 'Ẩn' : 'Hiện';
+            });
+        }
+    }
+
+    bindQuotaButtons();
+    setTimeout(bindQuotaButtons, 1000);
+    setTimeout(bindQuotaButtons, 3000);
 })();
 """
