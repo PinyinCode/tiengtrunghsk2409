@@ -19790,9 +19790,7 @@ window.favFilterCount = favFilterCount;
         isOpen: false,
         lastThreadData: null,
         lastSeenAt: 0,
-        typingTimer: null,
-        _lastEmail: null,
-        _observer: null
+        typingTimer: null
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -19889,12 +19887,10 @@ window.favFilterCount = favFilterCount;
         updateCounterUI();
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       FIX: MOUNT + OBSERVE floatingLeftGroup
-       - Tạo nút chat + tự động chèn lại khi group bị re-render
-       - MutationObserver theo dõi DOM, KHÔNG dùng retry vô hạn
-       ═══════════════════════════════════════════════════════════ */
-    function createChatButton() {
+    function mountChatButton() {
+        var group = document.getElementById('floatingLeftGroup');
+        if (!group) { setTimeout(mountChatButton, 500); return; }
+        if (document.getElementById('chatFloatBtn')) return;
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'chat-float-btn hidden';
@@ -19903,66 +19899,9 @@ window.favFilterCount = favFilterCount;
         btn.innerHTML = '<i class="fas fa-comments"></i>' +
             '<div class="chat-text"><span class="chat-label">Chat với Admin</span><span class="chat-name">Hỗ trợ 24/7</span></div>' +
             '<span class="chat-badge" id="chatFabBadge">0</span>';
-        btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
-        return btn;
-    }
-
-    function ensureChatButton() {
-        var group = document.getElementById('floatingLeftGroup');
-        if (!group) return false;
-        if (group.querySelector('#chatFloatBtn')) {
-            updateFabVisibility();
-            return true;
-        }
-        var btn = createChatButton();
         group.insertBefore(btn, group.firstChild);
-        console.log('✅ Đã mount chat FAB vào floatingLeftGroup');
-        updateFabVisibility();
-        // Restore badge nếu có unread
-        if (CHAT.lastThreadData) {
-            var unread = (CHAT.lastThreadData.unreadByUser || 0);
-            if (!isAdmin()) setFabBadge(unread);
-        }
-        return true;
+        btn.addEventListener('click', function() { btn.classList.remove('has-unread'); openChat(); });
     }
-
-    function observeFloatingGroup() {
-        if (CHAT._observer) return;
-        var target = document.body || document.documentElement;
-        if (!target) return;
-
-        CHAT._observer = new MutationObserver(function(mutations) {
-            var needCheck = false;
-            for (var i = 0; i < mutations.length; i++) {
-                var m = mutations[i];
-                if (m.addedNodes && m.addedNodes.length > 0) {
-                    for (var j = 0; j < m.addedNodes.length; j++) {
-                        var n = m.addedNodes[j];
-                        if (n.nodeType !== 1) continue;
-                        if (n.id === 'floatingLeftGroup' ||
-                            (n.querySelector && n.querySelector('#floatingLeftGroup'))) {
-                            needCheck = true;
-                            break;
-                        }
-                    }
-                }
-                if (needCheck) break;
-            }
-            if (needCheck) {
-                setTimeout(ensureChatButton, 50);
-            } else {
-                // Check xem nút chat có tồn tại không (phòng khi bị xóa lẻ)
-                if (!document.getElementById('chatFloatBtn') &&
-                    document.getElementById('floatingLeftGroup')) {
-                    setTimeout(ensureChatButton, 50);
-                }
-            }
-        });
-
-        CHAT._observer.observe(target, { childList: true, subtree: true });
-        console.log('👁 Chat FAB observer started');
-    }
-
     function updateFabVisibility() {
         var fab = $id('chatFloatBtn');
         if (!fab) return;
@@ -20320,51 +20259,10 @@ window.favFilterCount = favFilterCount;
         CHAT.typingTimer = setTimeout(function() { CHAT.typingTimer = null; }, 3000);
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       FIX: REFRESH AUTH — gọi từ accounts_template.py
-       Không dùng setInterval, thay bằng callback từ applyUserUI()
-       ═══════════════════════════════════════════════════════════ */
-    function refreshAuth() {
-        var u = getCu();
-        var email = (u && u.email) ? u.email : null;
-
-        // Luôn đảm bảo FAB được mount (đề phòng bị xóa)
-        ensureChatButton();
-
-        if (email === CHAT._lastEmail) {
-            updateFabVisibility();
-            return;
-        }
-        CHAT._lastEmail = email;
-
-        updateFabVisibility();
-        stopUserThreadWatch();
-        stopAdminListWatch();
-        stopAdminThreadWatch();
-
-        if (email) {
-            if (isAdmin()) startAdminListWatch();
-            else { startUserThreadWatch(); updateCounterUI(); }
-        } else {
-            setFabBadge(0);
-            if (CHAT.isOpen) closeChat();
-        }
-    }
-    window.__chatRefreshAuth = refreshAuth;
-
     function init() {
         if (CHAT.inited) return;
         CHAT.inited = true;
-
-        // Mount + observer
-        ensureChatButton();
-        observeFloatingGroup();
-
-        // Fallback retry (chỉ vài lần, không lặp vô hạn)
-        setTimeout(ensureChatButton, 200);
-        setTimeout(ensureChatButton, 1000);
-        setTimeout(ensureChatButton, 3000);
-
+        mountChatButton();
         initLimitBanner();
         var closeBtn = $id('chatClose');
         if (closeBtn) closeBtn.addEventListener('click', closeChat);
@@ -20403,29 +20301,33 @@ window.favFilterCount = favFilterCount;
         });
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
+    }
 
-        // Gọi lần đầu
-        refreshAuth();
-
-        // Fallback poll mỗi 3s — chỉ update visibility + đảm bảo FAB tồn tại
+    var _lastEmail = null;
+    function watchAuth() {
         setInterval(function() {
             var u = getCu();
-            var email = (u && u.email) ? u.email : null;
-            if (email !== CHAT._lastEmail) {
-                refreshAuth();
+            var email = u ? u.email : null;
+            if (email === _lastEmail) return;
+            _lastEmail = email;
+            updateFabVisibility();
+            stopUserThreadWatch();
+            stopAdminListWatch();
+            stopAdminThreadWatch();
+            if (email) {
+                if (isAdmin()) startAdminListWatch();
+                else { startUserThreadWatch(); updateCounterUI(); }
             } else {
-                if (!document.getElementById('chatFloatBtn')) {
-                    ensureChatButton();
-                }
-                updateFabVisibility();
+                setFabBadge(0);
+                if (CHAT.isOpen) closeChat();
             }
-        }, 3000);
+        }, 2000);
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { init(); });
+        document.addEventListener('DOMContentLoaded', function() { init(); updateFabVisibility(); watchAuth(); });
     } else {
-        init();
+        init(); updateFabVisibility(); watchAuth();
     }
 })();
 
@@ -20498,9 +20400,11 @@ window.favFilterCount = favFilterCount;
         if (window.__quotaWrapped) return true;
         window.__quotaWrapped = true;
 
+        var proto = firebase.firestore.Firestore.prototype;
         var docProto = firebase.firestore.DocumentReference.prototype;
         var colProto = firebase.firestore.CollectionReference.prototype;
 
+        // get() doc → 1 read
         var origDocGet = docProto.get;
         docProto.get = function() {
             return origDocGet.apply(this, arguments).then(function(r) {
@@ -20509,6 +20413,7 @@ window.favFilterCount = favFilterCount;
             });
         };
 
+        // get() collection → snap.size reads
         var origColGet = colProto.get;
         colProto.get = function() {
             return origColGet.apply(this, arguments).then(function(snap) {
@@ -20517,24 +20422,28 @@ window.favFilterCount = favFilterCount;
             });
         };
 
+        // set() → 1 write
         var origSet = docProto.set;
         docProto.set = function() {
             window.__quotaTrack('write', 1);
             return origSet.apply(this, arguments);
         };
 
+        // update() → 1 write
         var origUpdate = docProto.update;
         docProto.update = function() {
             window.__quotaTrack('write', 1);
             return origUpdate.apply(this, arguments);
         };
 
+        // delete() → 1 delete
         var origDelete = docProto.delete;
         docProto.delete = function() {
             window.__quotaTrack('delete', 1);
             return origDelete.apply(this, arguments);
         };
 
+        // add() → 1 write
         var origAdd = colProto.add;
         colProto.add = function() {
             window.__quotaTrack('write', 1);
@@ -20748,11 +20657,12 @@ window.favFilterCount = favFilterCount;
             refBtn._bound = true;
             refBtn.addEventListener('click', function() {
                 window.dispatchEvent(new Event('quota-refresh'));
-                if (window.__quotaTrack) window.__quotaTrack('read', 0);
+                if (window.__quotaTrack) window.__quotaTrack('read', 0); // trigger update
             });
         }
     }
 
+    // Bind ngay + retry (vì section có thể render sau)
     bindQuotaButtons();
     setTimeout(bindQuotaButtons, 1000);
     setTimeout(bindQuotaButtons, 3000);
