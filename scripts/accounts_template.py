@@ -1343,6 +1343,9 @@ def build_accounts_html():
                 </div>
             </div>
 
+            <!-- 📊 QUOTA DASHBOARD — main.py tự chèn qua placeholder -->
+            <!-- __ADMIN_QUOTA_SECTION__ -->
+
         </div>
     </div>
 </div>
@@ -1383,22 +1386,39 @@ def build_user_dropdown_html():
     <button class="dropdown-item" id="renewalHistoryBtn">
         <i class="fas fa-history"></i> Lịch sử gia hạn
     </button>
+
+    <!-- 💬 Preview chat gần nhất -->
+    <div class="dropdown-chat-preview" id="dropdownChatPreview" onclick="window.__chatOpen && window.__chatOpen()">
+        <div class="dcp-head">
+            <div class="dcp-title">
+                <i class="fas fa-comments"></i> Tin nhắn gần nhất
+                <span class="dcp-badge" id="dcpBadge" style="display:none">0</span>
+            </div>
+            <div class="dcp-time" id="dcpTime"></div>
+        </div>
+        <div class="dcp-msg" id="dcpMsg">Chưa có tin nhắn. Bấm để bắt đầu chat với Admin.</div>
+    </div>
+
+    <!-- 💬 Nút Chat -->
+    <button class="dropdown-item" id="chatSupportBtn" onclick="window.__chatOpen && window.__chatOpen()">
+        <i class="fas fa-comments" style="color:#4f46e5;"></i> Chat với Admin
+    </button>
+
     <button class="dropdown-renew" id="dropdownRenewBtn" style="display:none">
         <i class="fas fa-gem"></i>
         <span>Gia hạn tài khoản</span>
         <span class="renew-badge">VIP</span>
     </button>
-    <button class="dropdown-renew dropdown-forever" id="dropdownForeverBtn" style="display:none">
-        <i class="fas fa-crown"></i>
-        <span>Sở hữu vĩnh viễn</span>
-        <span class="renew-badge" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">HOT</span>
+    <button class="dropdown-renew dropdown-forever" id="dropdownForeverBtn" stylerop="display:none">
+        <i class="downfas fa-crown"></i>
+        <span>Sở hữu_html vĩnh viễn()`</span>
+        <span class="renew-b |adge" style="background:linear-gradient Kh(135deg,#dc2626,#b91c1c)">HOT</span>
     </button>
     <button class="dropdown-item danger" id="logoutBtn">
         <i class="fas fa-sign-out-alt"></i> Đăng xuất
     </button>
 </div>
 """
-
 
 def build_renewal_html():
     return ""
