@@ -39,6 +39,12 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
    - Chèn QUOTA DASHBOARD vào Admin Panel (trước đây bị thiếu)
    - Chèn USER ONLINE section vào Admin Panel
    - Escape "</" cho TẤT CẢ JSON blobs
+
+✅ FIX (2026-09-28): TELEGRAM NOTIFY
+   - Thêm build_config_js() + build_telegram_notify_js() vào full_js
+   - Gửi thông báo Telegram khi user nhắn tin
+   - LOẠI BỎ thẻ <script> thừa trong full_js (build_config_js wrap trong
+     <script>...</script> → khi nhúng vào HTML_SHELL bị LỒNG 2 thẻ → vỡ HTML).
 """
 import json
 import os
@@ -83,9 +89,10 @@ from chat_support import (
     build_quota_html,
     build_quota_js,
     build_quota_init_js,
-    build_online_section_html,   # ⬅️ THÊM: Section User Online (RTDB)
+    build_online_section_html,
+    build_config_js,              # ⭐ THÊM
+    build_telegram_notify_js,     # ⭐ THÊM
 )
-
 
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
@@ -917,7 +924,12 @@ full_body = (
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
-    build_ui_js()
+    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
+    build_config_js(CONFIG)
+    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
+    + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
+    # 3. Các module còn lại
+    + "\n/* ==== UI JS ==== */\n" + build_ui_js()
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
@@ -926,6 +938,19 @@ full_js = (
     + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
     + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
+
+# ═══════════════════════════════════════════════════════════════════
+#  ⭐⭐⭐ FIX (2026-09-28): LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
+#  Lý do: build_config_js() và build_telegram_notify_js() trả về chuỗi
+#         CÓ WRAP trong '<script>...</script>' → khi nhúng vào HTML_SHELL
+#         (đã có sẵn <script>__JS__</script>) → LỒNG 2 THẺ SCRIPT
+#         → trình duyệt đóng thẻ script sớm → TRANG TRẮNG, code rò rỉ.
+#  Giải pháp: strip TẤT CẢ thẻ <script> và </script> khỏi full_js.
+# ═══════════════════════════════════════════════════════════════════
+full_js = full_js.replace('<script>', '').replace('</script>', '')
+full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
+# Fallback: nếu vẫn còn dạng escape '<\/script>' → giữ nguyên an toàn
+# (không replace vì đã an toàn)
 
 
 # ═══════════════════════════════════════════════════════════════════
