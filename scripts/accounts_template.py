@@ -4356,12 +4356,13 @@ setTimeout(function() {
 }, 5000);
 """
 
-    # Inject config
+  # Inject config
     js = js.replace("__TRIAL_DAYS__", str(config.get("trial_days", 3)))
     js = js.replace("__TRIAL_MAX_QUESTIONS__", str(config.get("trial_max_questions", 50)))
     js = js.replace("__TRIAL_MAX_HSK__", str(config.get("trial_max_hsk", 5)))
     js = js.replace("__TRIAL_UNLIMITED_WRITING__",
-                    "true" if config.get("trial_unlimited_writing", True) else "js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
+                    "true" if config.get("trial_unlimited_writing", True) else "false")
+    js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
     js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii=False))
     js = js.replace("__RENEWAL_SUPPORT_ZALO__", config.get("renewal_support_zalo", ""))
 
