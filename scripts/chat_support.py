@@ -17,6 +17,13 @@ CHAT:
    - Không còn bị ẩn khi user thu gọn cụm Zalo/TikTok
    - Tự đẩy xuống khi cụm floating group đang mở (syncFloatingGroupState)
 
+✅ FIX (2026-09-v3): CYCLE 3 TRẠNG THÁI + FAB TỰ NÉ MODAL
+   - Nút FAB: click 1 → mini, click 2 → expanded, click 3 → đóng
+   - KHÔNG có nút phóng to trên header (đã bỏ)
+   - Nút FAB LUÔN hiển thị, nhưng tự đẩy xuống dưới modal khi chat mở
+   - Tránh FAB đè lên cửa sổ chat
+   - BỎ phần gợi ý trả lời nhanh (quick replies)
+
 QUOTA:
 • Đếm reads/writes/deletes client-side (localStorage)
 • Wrap Firestore methods tự động
@@ -29,8 +36,6 @@ USER ONLINE (RTDB):
 • onDisconnect tự động xóa khi user tắt tab
 • Admin xem danh sách user online realtime
 """
-
-import json
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -103,8 +108,17 @@ def build_chat_css():
     pointer-events:none;
 }
 
+/* ⭐ FAB tự đẩy xuống khi cụm floating group (Zalo/TikTok) mở */
 body.has-floating-group #chatFloatWrap{
     bottom:calc(180px + env(safe-area-inset-bottom));
+}
+
+/* ⭐ FAB tự đẩy xuống dưới modal chat khi chat mở (KHÔNG ẩn FAB) */
+body.chat-open-mini #chatFloatWrap{
+    bottom:calc(30vh + 100px + env(safe-area-inset-bottom));
+}
+body.chat-open-expanded #chatFloatWrap{
+    bottom:calc(75vh + 30px + env(safe-area-inset-bottom));
 }
 
 @media (max-width:768px){
@@ -115,6 +129,12 @@ body.has-floating-group #chatFloatWrap{
     body.has-floating-group #chatFloatWrap{
         bottom:calc(180px + env(safe-area-inset-bottom));
     }
+    body.chat-open-mini #chatFloatWrap{
+        bottom:calc(30vh + 90px + env(safe-area-inset-bottom));
+    }
+    body.chat-open-expanded #chatFloatWrap{
+        bottom:calc(75vh + 24px + env(safe-area-inset-bottom));
+    }
 }
 @media (max-width:400px){
     #chatFloatWrap{
@@ -123,6 +143,12 @@ body.has-floating-group #chatFloatWrap{
     }
     body.has-floating-group #chatFloatWrap{
         bottom:calc(144px + env(safe-area-inset-bottom));
+    }
+    body.chat-open-mini #chatFloatWrap{
+        bottom:calc(30vh + 80px + env(safe-area-inset-bottom));
+    }
+    body.chat-open-expanded #chatFloatWrap{
+        bottom:calc(75vh + 20px + env(safe-area-inset-bottom));
     }
 }
 
@@ -167,11 +193,7 @@ body.has-floating-group #chatFloatWrap{
 [data-theme="dark"] .chat-box::before{border-top-color:#1e293b;}
 .chat-box::after{content:'';position:absolute;bottom:-10px;left:24px;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:12px solid #4f46e5;pointer-events:none;z-index:2;transition:opacity .25s ease;}
 
-/* Nút phóng to/thu nhỏ trên header */
-.chat-expand-btn{width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;transition:.15s;}
-.chat-expand-btn:hover{background:rgba(255,255,255,.35);}
-
-/* ─── MOBILE: mini 30vh, expanded 75vh, không full màn hình ─── */
+/* ─── MOBILE: mini 30vh, expanded 75vh ─── */
 @media (max-width:600px){
     .chat-modal{align-items:flex-end;justify-content:flex-start;}
     .chat-box{
@@ -246,10 +268,6 @@ body.has-floating-group #chatFloatWrap{
 .chat-footer textarea:focus{border-color:#4f46e5;}
 .chat-send-btn{width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
 .chat-send-btn:disabled{opacity:.4;cursor:not-allowed;}
-.chat-quick-replies{display:flex;gap:.35rem;flex-wrap:wrap;padding:.5rem 0;border-bottom:1px dashed #e2e8f0;margin-bottom:.1rem;}
-.chat-quick-replies.hidden{display:none}
-.chat-quick-btn{padding:.3rem .7rem;border-radius:50px;border:1.5px solid rgba(37,99,235,.3);background:rgba(37,99,235,.08);color:#1e40af;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;}
-.chat-quick-btn:hover{background:#2563eb;color:#fff;}
 
 /* ═══ LIMIT BANNER ═══ */
 .chat-limit-banner{display:none;margin:0 0 .5rem;padding:.65rem .85rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:10px;font-size:.78rem;color:#78350f;line-height:1.45;animation:chatLimitSlide .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;align-items:flex-start;gap:.5rem;}
@@ -343,6 +361,8 @@ body.has-floating-group #chatFloatWrap{
 .ou-chat-btn{width:32px;height:32px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
 .ou-chat-btn:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(124,58,237,.4);}
 """
+
+
 # ═══════════════════════════════════════════════════════════════
 #  HTML
 # ═══════════════════════════════════════════════════════════════
@@ -357,7 +377,6 @@ def build_chat_html():
                 <div class="status">Thường trả lời trong 5-10 phút</div>
             </div>
             <span class="chat-counter" id="chatCounter">0/50</span>
-            <button class="chat-expand-btn" id="chatExpand" type="button" title="Phóng to"><i class="fas fa-expand"></i></button>
             <button class="chat-header-close" id="chatClose" type="button"><i class="fas fa-times"></i></button>
         </div>
         <div class="chat-body" id="chatBody">
@@ -374,12 +393,6 @@ def build_chat_html():
                     </div>
                 </div>
             </div>
-            <div class="chat-quick-replies hidden" id="chatQuickReplies">
-                <button class="chat-quick-btn" type="button" data-reply="Đã nhận được, em đợi admin 1-2 phút nhé!">Đã nhận, chờ 1-2 phút</button>
-                <button class="chat-quick-btn" type="button" data-reply="Admin đã xác nhận thanh toán. Tài khoản được gia hạn rồi em nhé!">Đã xác nhận thanh toán</button>
-                <button class="chat-quick-btn" type="button" data-reply="Em gửi giúp admin ảnh chụp biên lai chuyển khoản nhé.">Xin ảnh biên lai</button>
-                <button class="chat-quick-btn" type="button" data-reply="Cảm ơn em đã ủng hộ. Chúc em học tốt! 🎓">Cảm ơn</button>
-            </div>
             <div class="chat-footer-row">
                 <textarea id="chatInput" placeholder="Nhập tin nhắn..." rows="1" maxlength="1000"></textarea>
                 <button class="chat-send-btn" id="chatSendBtn" type="button" disabled><i class="fas fa-paper-plane"></i></button>
@@ -388,6 +401,7 @@ def build_chat_html():
     </div>
 </div>
 """
+
 
 def build_quota_html():
     """HTML cho section Quota trong Admin Panel."""
@@ -529,19 +543,19 @@ def build_chat_js():
     var MAX_MESSAGES = 100;
 
     var CHAT = {
-    inited: false,
-    threadUnsub: null,
-    adminListUnsub: null,
-    adminThreadUnsub: null,
-    adminCurrentEmail: null,
-    isOpen: false,
-    isExpanded: false,
-    state: 'closed',
-    lastThreadData: null,
-    lastSeenAt: 0,
-    typingTimer: null,
-    onlineUnsub: null
-};
+        inited: false,
+        threadUnsub: null,
+        adminListUnsub: null,
+        adminThreadUnsub: null,
+        adminCurrentEmail: null,
+        isOpen: false,
+        isExpanded: false,
+        state: 'closed',       // 'closed' | 'mini' | 'expanded'
+        lastThreadData: null,
+        lastSeenAt: 0,
+        typingTimer: null,
+        onlineUnsub: null
+    };
 
     function $id(id) { return document.getElementById(id); }
     function esc(s) {
@@ -674,9 +688,9 @@ def build_chat_js():
 
         wrap.appendChild(btn);
         btn.addEventListener('click', function() {
-    btn.classList.remove('has-unread');
-    cycleChat();   // mini → expanded → closed → mini
-});
+            btn.classList.remove('has-unread');
+            cycleChat();   // ⭐ đóng → mini → expanded → đóng → ...
+        });
 
         /* ✨ Lóe sáng nhẹ 1 lần khi icon mount */
         setTimeout(function() {
@@ -1034,90 +1048,96 @@ def build_chat_js():
         var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 150;
         if (nearBottom) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
     }
-    function updateExpandIcon(expanded) {
-    var icon = $id('chatExpand');
-    if (!icon) return;
-    var i = icon.querySelector('i');
-    if (i) i.className = expanded ? 'fas fa-compress' : 'fas fa-expand';
-    icon.title = expanded ? 'Thu nhỏ' : 'Phóng to';
-}
 
-function toggleExpand() {
-    var box = document.querySelector('.chat-box');
-    if (!box) return;
-    CHAT.isExpanded = !CHAT.isExpanded;
-    CHAT.state = CHAT.isExpanded ? 'expanded' : 'mini';
-    box.classList.toggle('expanded', CHAT.isExpanded);
-    updateExpandIcon(CHAT.isExpanded);
-    setTimeout(function() {
-        var body = $id('chatBody');
-        if (body) body.scrollTop = body.scrollHeight;
-    }, 320);
-}
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ CYCLE CHAT: đóng → mini → expanded → đóng
+       ═══════════════════════════════════════════════════════════ */
+    function cycleChat() {
+        var box = document.querySelector('.chat-box');
+        if (!box) return;
 
-function cycleChat() {
-    var box = document.querySelector('.chat-box');
-    if (!box) return;
-    if (CHAT.state === 'closed') { openChat(); return; }
-    if (CHAT.state === 'mini') {
-        CHAT.state = 'expanded';
-        CHAT.isExpanded = true;
-        box.classList.add('expanded');
-        updateExpandIcon(true);
-        setTimeout(function() {
-            var body = $id('chatBody');
-            if (body) body.scrollTop = body.scrollHeight;
-        }, 320);
-        return;
+        // Trạng thái 0: đang đóng → mở mini
+        if (!CHAT.isOpen) {
+            openChat();
+            return;
+        }
+
+        // Trạng thái 1: đang mini → expanded
+        if (!CHAT.isExpanded) {
+            CHAT.isExpanded = true;
+            CHAT.state = 'expanded';
+            box.classList.add('expanded');
+            document.body.classList.remove('chat-open-mini');
+            document.body.classList.add('chat-open-expanded');
+            setTimeout(function() {
+                var body = $id('chatBody');
+                if (body) body.scrollTop = body.scrollHeight;
+            }, 320);
+            return;
+        }
+
+        // Trạng thái 2: đang expanded → đóng
+        closeChat();
     }
-    if (CHAT.state === 'expanded') { closeChat(); return; }
-}
 
     function openChat() {
-    var u = getCu();
-    if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
-    CHAT.isOpen = true;
-    CHAT.state = 'mini';
-    CHAT.isExpanded = false;
-    $id('chatModal').classList.add('show');
-    var box = document.querySelector('.chat-box');
-    if (box) box.classList.remove('expanded');
-    updateExpandIcon(false);
-    var dd = $id('userDropdown');
-    if (dd) dd.classList.remove('show');
-    if (isAdmin()) {
-        openAdminListView();
-        startOnlineWatch();
-    } else {
-        openUserView();
-        updateCounterUI();
+        var u = getCu();
+        if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
+
+        CHAT.isOpen = true;
+        CHAT.isExpanded = false;
+        CHAT.state = 'mini';
+
+        $id('chatModal').classList.add('show');
+
+        var box = document.querySelector('.chat-box');
+        if (box) box.classList.remove('expanded');
+
+        // ⭐ Đặt class body để FAB nhảy xuống dưới modal (KHÔNG ẩn FAB)
+        document.body.classList.remove('chat-open-expanded');
+        document.body.classList.add('chat-open-mini');
+
+        var dd = $id('userDropdown');
+        if (dd) dd.classList.remove('show');
+
+        if (isAdmin()) {
+            openAdminListView();
+            startOnlineWatch();
+        } else {
+            openUserView();
+            updateCounterUI();
+        }
     }
-}
+
     function closeChat() {
-    CHAT.isOpen = false;
-    CHAT.state = 'closed';
-    CHAT.isExpanded = false;
-    $id('chatModal').classList.remove('show');
-    stopAdminThreadWatch();
-    stopOnlineWatch();
-    CHAT.adminCurrentEmail = null;
-    CHAT.lastSeenAt = Date.now();
-    var box = document.querySelector('.chat-box');
-    if (box) box.classList.remove('expanded');
-    updateExpandIcon(false);
-}
+        CHAT.isOpen = false;
+        CHAT.isExpanded = false;
+        CHAT.state = 'closed';
+
+        $id('chatModal').classList.remove('show');
+
+        // ⭐ Xóa class body → FAB trở về vị trí gốc
+        document.body.classList.remove('chat-open-mini', 'chat-open-expanded');
+
+        stopAdminThreadWatch();
+        stopOnlineWatch();
+        CHAT.adminCurrentEmail = null;
+        CHAT.lastSeenAt = Date.now();
+
+        var box = document.querySelector('.chat-box');
+        if (box) box.classList.remove('expanded');
+    }
+
     function openUserView() {
         $id('chatHeaderInfo').innerHTML = '<div class="name">Hỗ trợ Admin</div><div class="status">Thường trả lời trong 5-10 phút</div>';
         $id('chatBack').classList.remove('show');
         $id('chatClose').style.display = 'flex';
-        $id('chatQuickReplies').classList.add('hidden');
         if (CHAT.lastThreadData) renderUserMessages(CHAT.lastThreadData);
     }
     function openAdminListView() {
         $id('chatHeaderInfo').innerHTML = '<div class="name">Chat hỗ trợ</div><div class="status">Chọn user để trả lời</div>';
         $id('chatBack').classList.remove('show');
         $id('chatClose').style.display = 'flex';
-        $id('chatQuickReplies').classList.add('hidden');
         stopAdminThreadWatch();
         CHAT.adminCurrentEmail = null;
         startAdminListWatch();
@@ -1128,7 +1148,6 @@ function cycleChat() {
         $id('chatHeaderInfo').innerHTML = '<div class="name">Đang tải...</div><div class="status">' + esc(email) + '</div>';
         $id('chatBack').classList.add('show');
         $id('chatClose').style.display = 'none';
-        $id('chatQuickReplies').classList.remove('hidden');
         startAdminThreadWatch(email);
     }
 
@@ -1173,11 +1192,11 @@ function cycleChat() {
                 userName: data.userName || u.name || targetEmail.split('@')[0]
             };
             if (from === 'user') {
-                update.unreadByAdmin = (data.unreadByAdmin || 0) + 1;
-                update.unreadByUser = 0;
-                update.userTypingAt = null;
+                update.unreadByAdmin = (data.unread lastByAdmin || 0) + 1;
+Min                update.unreadByUser =ute 0;
+                update.userTypReadingAt = null;
             } else {
-                update.unreadByUser = (data.unreadByUser || 0) + 1;
+s                update.unreadByUser = (data.unreadBy:User || 0) + 1;
                 update.unreadByAdmin = 0;
                 update.adminTypingAt = null;
             }
@@ -1237,15 +1256,6 @@ function cycleChat() {
         }
         var sendBtn = $id('chatSendBtn');
         if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-        document.querySelectorAll('.chat-quick-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var inp = $id('chatInput');
-                inp.value = this.dataset.reply || this.textContent.trim();
-                autoResize();
-                $id('chatSendBtn').disabled = false;
-                inp.focus();
-            });
-        });
 
         /* Toggle Online section */
         var toggleOnlineBtn = $id('toggleOnlineBtn');
@@ -1310,7 +1320,7 @@ def build_quota_js():
     var QUOTA = {
         inited: false,
         reads: 0, writes: 0, deletes: 0,
-        lastMinuteReads: 0,
+        0,
         lastMinuteTs: Date.now(),
         history: {}
     };
