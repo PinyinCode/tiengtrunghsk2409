@@ -45,6 +45,15 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
    - Gửi thông báo Telegram khi user nhắn tin
    - LOẠI BỎ thẻ <script> thừa trong full_js (build_config_js wrap trong
      <script>...</script> → khi nhúng vào HTML_SHELL bị LỒNG 2 thẻ → vỡ HTML).
+
+✅ THÊM MỚI (2026-09-28): ADMIN CHAT MANAGER
+   - Trình quản lý chat riêng cho admin (admin_chat_manager.py)
+   - Hiển thị TOÀN BỘ user (merge users + chat_threads)
+   - Filter: Tất cả / Chưa đọc / Có tin nhắn / Chưa nhắn
+   - Search theo tên / email
+   - FAB xanh lá riêng cho admin
+   - Click user → mở chat trực tiếp
+   - KHÔNG ĐỤNG logic cũ (chỉ thêm mới)
 """
 import json
 import os
@@ -90,9 +99,17 @@ from chat_support import (
     build_quota_js,
     build_quota_init_js,
     build_online_section_html,
-    build_config_js,              # ⭐ THÊM
-    build_telegram_notify_js,     # ⭐ THÊM
+    build_config_js,
+    build_telegram_notify_js,
 )
+
+# ⬇️⬇️⬇️ ⭐ THÊM MỚI: Module Admin Chat Manager
+from admin_chat_manager import (
+    build_admin_chat_css,
+    build_admin_chat_html,
+    build_admin_chat_js,
+)
+
 
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
@@ -139,13 +156,10 @@ print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
 # ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
 ICON_MAP = {
-    # ─── Nhân sự / Hành chính ───
     "nhân sự":              "fa-users",
     "hành chính":           "fa-briefcase",
     "hành chính - nhân sự": "fa-briefcase",
     "hành chính nhân sự":   "fa-briefcase",
-
-    # ─── Mua bán / Kho vận ───
     "thu mua":              "fa-shopping-cart",
     "xuất nhập khẩu":       "fa-ship",
     "logistics":            "fa-truck",
@@ -156,13 +170,9 @@ ICON_MAP = {
     "marketing":            "fa-bullhorn",
     "dịch vụ khách hàng":   "fa-headset",
     "chăm sóc khách hàng":  "fa-headset",
-
-    # ─── Kế toán / Tài chính ───
     "kế toán":              "fa-calculator",
     "tài chính":            "fa-coins",
     "hành chính kế toán":   "fa-file-invoice-dollar",
-
-    # ─── Sản xuất / Kỹ thuật ───
     "sản xuất":             "fa-industry",
     "kế hoạch sản xuất":    "fa-calendar-alt",
     "kỹ thuật":             "fa-tools",
@@ -172,15 +182,11 @@ ICON_MAP = {
     "qc":                   "fa-award",
     "r&d":                  "fa-flask",
     "nghiên cứu":           "fa-flask",
-
-    # ─── Ngành đặc thù ───
     "giày da":              "fa-shoe-prints",
     "may mặc":              "fa-tshirt",
     "dệt may":              "fa-tshirt",
     "thực phẩm":            "fa-utensils",
     "nông nghiệp":          "fa-seedling",
-
-    # ─── IT / Công nghệ ───
     "máy tính & it":        "fa-laptop-code",
     "máy tính":             "fa-laptop-code",
     "công nghệ thông tin":  "fa-laptop-code",
@@ -192,33 +198,20 @@ UNIFIED_COLOR = "#7c3aed"
 
 
 def auto_detect_icon_color(display_name):
-    """
-    Trả về tuple (icon, color).
-    - Icon: RIÊNG cho từng ngành (match theo nhiều cấp)
-    - Color: LUÔN = UNIFIED_COLOR → đồng bộ style
-    """
     key = display_name.strip().lower()
-
-    # ─── 1. Match CHÍNH XÁC tên ───
     if key in ICON_MAP:
         return (ICON_MAP[key], UNIFIED_COLOR)
-
-    # ─── 2. Match theo TỪ riêng ───
     words = re.split(r'[\s&\-_/,\.]+', key)
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if k in words:
             return (ICON_MAP[k], UNIFIED_COLOR)
-
-    # ─── 3. Match substring (CHỈ key >= 3 ký tự) ───
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if len(k) >= 3 and k in key:
             return (ICON_MAP[k], UNIFIED_COLOR)
-
     return (DEFAULT_ICON_NAME, UNIFIED_COLOR)
 
 
 def slugify_dataset_id(filename):
-    """Tạo id slug từ tên file: 'Nhân_sự.xlsx' → 'nhan-su'."""
     base = filename.rsplit(".", 1)[0]
     base = unicodedata.normalize("NFD", base)
     base = "".join(c for c in base if unicodedata.category(c) != "Mn")
@@ -380,7 +373,6 @@ FULLWIDTH_CSS = r"""
     max-width: 100% !important;
 }
 
-/* ═══ SEARCH + FILTER ═══ */
 .search-bar { width: 100% !important; max-width: 100% !important; }
 .search-bar input { width: 100% !important; max-width: 100% !important; }
 
@@ -400,7 +392,6 @@ FULLWIDTH_CSS = r"""
 
 .result-count { margin-top: .5rem !important; }
 
-/* ═══ GRID CARDS ═══ */
 .mobile-view {
     display: grid !important;
     width: 100% !important;
@@ -431,7 +422,6 @@ FULLWIDTH_CSS = r"""
     }
 }
 
-/* ═══ Banner full width ═══ */
 .demo-banner,
 .expiry-banner {
     width: 100% !important;
@@ -441,7 +431,6 @@ FULLWIDTH_CSS = r"""
     margin-bottom: 1rem !important;
 }
 
-/* ═══ Container padding co giãn ═══ */
 @media (min-width: 1000px) {
     .container { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 }
@@ -452,13 +441,11 @@ FULLWIDTH_CSS = r"""
     .container { padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
 }
 
-/* ═══ MOBILE: thu gọn padding ═══ */
 @media (max-width: 768px) {
     .container { padding-left: .7rem !important; padding-right: .7rem !important; }
     .mobile-view { gap: .8rem !important; }
 }
 
-/* ═══ CHẾ ĐỘ FULL ═══ */
 .practice-full-modal {
     position: fixed !important;
     inset: 0 !important;
@@ -487,11 +474,6 @@ FULLWIDTH_CSS = r"""
     font-size: clamp(1.15rem, 2.2vw, 1.6rem) !important;
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════
-   ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
-   ═══════════════════════════════════════════════════════════════════ */
-
 @media (min-width: 769px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr 1fr !important;
@@ -509,11 +491,6 @@ FULLWIDTH_CSS = r"""
         grid-template-columns: 1fr !important;
     }
 }
-
-
-/* ═══════════════════════════════════════════════════════════════════
-   ★★★ HEADER DESIGN ★★★
-   ═══════════════════════════════════════════════════════════════════ */
 
 .header {
     position: relative;
@@ -844,6 +821,8 @@ full_css = (
     + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
     + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
     + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
+    # ⭐ THÊM MỚI: Admin Chat Manager CSS
+    + "\n/* ==== 📋 ADMIN CHAT MANAGER CSS ==== */\n" + build_admin_chat_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
@@ -916,6 +895,8 @@ full_body = (
     + ui_html
     + "\n" + auth_html
     + "\n" + build_chat_html()
+    # ⭐ THÊM MỚI: Admin Chat Manager HTML
+    + "\n" + build_admin_chat_html()
     + '\n</div>'
 )
 
@@ -923,10 +904,10 @@ full_body = (
 # ═══════════════════════════════════════════════════════════════════
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
-full_js = (
-    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
-    build_config_js(CONFIG)
-    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
+ ''full_js = (
+    # ⭐ 1).. Config — PHẢI CHÈN ĐreplaceẦU TIÊN
+('    build_config_js(CONFIG)
+</    # ⭐ 2. TelegramSCRIPT notify module
     + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
     # 3. Các module còn lại
     + "\n/* ==== UI JS ==== */\n" + build_ui_js()
@@ -935,22 +916,17 @@ full_js = (
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
     + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
+    # ⭐ THÊM MỚI: Admin Chat Manager JS (đặt sau chat để dùng được __chatOpen + __chatOpenThread)
+    + "\n/* ==== 📋 ADMIN CHAT MANAGER JS ==== */\n" + build_admin_chat_js()
     + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
     + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
 
 # ═══════════════════════════════════════════════════════════════════
-#  ⭐⭐⭐ FIX (2026-09-28): LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
-#  Lý do: build_config_js() và build_telegram_notify_js() trả về chuỗi
-#         CÓ WRAP trong '<script>...</script>' → khi nhúng vào HTML_SHELL
-#         (đã có sẵn <script>__JS__</script>) → LỒNG 2 THẺ SCRIPT
-#         → trình duyệt đóng thẻ script sớm → TRANG TRẮNG, code rò rỉ.
-#  Giải pháp: strip TẤT CẢ thẻ <script> và </script> khỏi full_js.
+#  ⭐ FIX: LOẠI BỎ THẺ <script> THỪA TRONG full_js
 # ═══════════════════════════════════════════════════════════════════
 full_js = full_js.replace('<script>', '').replace('</script>', '')
-full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
-# Fallback: nếu vẫn còn dạng escape '<\/script>' → giữ nguyên an toàn
-# (không replace vì đã an toàn)
+full_js = full_js.replace('<SCRIPT>',>', '')
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1004,7 +980,7 @@ var TIKTOK_NICKNAME = "__TIKTOK_NICKNAME__";
 var TIKTOK_AVATAR = "__TIKTOK_AVATAR__";
 var TIKTOK_URL = "__TIKTOK_URL__";
 var SYNONYMS = __SYNONYMS__;
-var FILLER_WORDS = __FILLER_WORDS__;
+var FILLER_WORDS = __FILL NHER_WORDS__;
 var ONBOARDING_CONFIG = __ONBOARDING_CONFIG__;
 
 var $ = function(id) { return document.getElementById(id); };
@@ -1015,13 +991,13 @@ __JS__
 window.__switchRawData = function(datasetId) {
     if (!DATASET_REGISTRY || !DATASET_REGISTRY[datasetId]) return false;
     RAW_DATA = DATASET_REGISTRY[datasetId].data || [];
-    CURRENT_DATASET = datasetId;
-    return true;
+    CURRENT_DATASẬET = datasetId;
+    returnN true;
 };
 </script>
 
 <script>
-(function() {
+(function G() {
     'use strict';
     try {
         var _TG_TOKEN = "__TELEGRAM_BOT_TOKEN__";
@@ -1079,7 +1055,7 @@ window.__switchRawData = function(datasetId) {
 
         window.notifyTelegramAdminConfirmed = function(reqData, newExpiry) {
             try {
-                var msg = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n';
+                var msg = '✅ <b>ĐÃ XÁCIA HẠN</b>\n';
                 msg += '━━━━━━━━━━━━━━━━━━━━\n';
                 msg += '👤 <b>' + (reqData.name || reqData.email) + '</b>\n';
                 msg += '📧 <code>' + reqData.email + '</code>\n';
@@ -1105,20 +1081,15 @@ window.__switchRawData = function(datasetId) {
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
 html_output = (HTML_SHELL
-    # 1. Nhúng khối lớn
     .replace("__CSS__",  full_css)
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
-
-    # 2. Data blobs (đã escape "</" qua _json_blob)
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
     .replace("__SYNONYMS__",          synonyms_json)
     .replace("__FILLER_WORDS__",      fillers_json)
     .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
-
-    # 3. Numeric configs
     .replace("__DEMO_LIMIT__",            str(int(CONFIG["demo_limit"])))
     .replace("__DEMO_DAILY_LIMIT__",      str(int(CONFIG["demo_daily_limit"])))
     .replace("__DEMO_HSK_MAX__",          str(int(CONFIG["demo_hsk_max"])))
@@ -1127,8 +1098,6 @@ html_output = (HTML_SHELL
     .replace("__TRIAL_UNLIMITED_WRITING__",
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
-
-    # 4. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
@@ -1156,10 +1125,10 @@ print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
 print(f"💬 Chat Support: đã thêm (user ↔ admin)")
+print(f"📋 Admin Chat Manager: đã thêm (quản lý toàn bộ user)")
 print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")
 print(f"👥 User Online (RTDB): đã thêm section vào Admin Panel")
 
-# ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
 if _onb.get("demo", {}).get("enabled"):
     _d = _onb["demo"]
