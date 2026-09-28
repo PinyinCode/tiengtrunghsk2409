@@ -3526,22 +3526,48 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .user-avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);cursor:pointer;object-fit:cover;transition:.15s;display:block;}
 .user-avatar:hover{border-color:var(--primary);transform:scale(1.05)}
 .user-dropdown{
-    position:absolute;top:calc(100% + .5rem);right:0;
-    background:var(--surface);border:1px solid var(--border);
+    position:absolute;
+    top:calc(100% + .5rem);
+    right:0;
+    background:var(--surface);
+    border:1px solid var(--border);
     border-radius:var(--radius);
     box-shadow:0 10px 30px rgba(0,0,0,.15);
-    padding:.5rem;min-width:290px;display:none;z-index:200;
+    padding:.5rem;
+    min-width:290px;
+    display:none;
+    z-index:200;
 }
 .user-dropdown.show{display:block}
+
+/* ═══════════════════════════════════════════════════════════════
+   MŨI TÊN TAM GIÁC — Chỉ lên avatar (nút mở dropdown)
+   - ::before: tạo mũi tên (border-color)
+   - ::after:  tạo khoảng trắng giữa mũi tên và dropdown
+   ═══════════════════════════════════════════════════════════════ */
 .user-dropdown::before{
-    content:'';position:absolute;top:-9px;right:20px;width:0;height:0;
-    border-left:9px solid transparent;border-right:9px solid transparent;
-    border-bottom:9px solid var(--border);pointer-events:none;
+    content:'';
+    position:absolute;
+    top:-9px;
+    right:20px;
+    width:0;
+    height:0;
+    border-left:9px solid transparent;
+    border-right:9px solid transparent;
+    border-bottom:9px solid var(--border);
+    pointer-events:none;
 }
 .user-dropdown::after{
-    content:'';position:absolute;top:-7px;right:22px;width:0;height:0;
-    border-left:7px solid transparent;border-right:7px solid transparent;
-    border-bottom:7px solid var(--surface);pointer-events:none;
+    content:'';
+    position:absolute;
+    top:-7px;
+    right:22px;
+    width:0;
+    height:0;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-bottom:7px solid var(--surface);
+    pointer-events:none;
 }
 .user-info{padding:.75rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
 .user-info .name{font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:.2rem}
@@ -3568,7 +3594,8 @@ body.hide-floating .tiktok-bar { display: none !important; }
     animation:renewPulse 2.5s infinite;
 }
 .dropdown-renew::before{
-    content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+    content:'';position:absolute;top:0;left:-100%;
+    width:100%;height:100%;
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
     animation:renewShine 3s infinite;
 }
@@ -3584,14 +3611,17 @@ body.hide-floating .tiktok-bar { display: none !important; }
     50%{box-shadow:0 4px 18px rgba(139,92,246,.55), 0 0 0 6px rgba(139,92,246,0);}
 }
 @keyframes renewShine{0%{left:-100%;}50%,100%{left:100%;}}
+
 .dropdown-renew .renew-badge{
     position:absolute;top:-6px;right:-4px;
     background:linear-gradient(135deg,#fbbf24,#f59e0b);
     color:#1e1b4b;font-size:.55rem;font-weight:900;
-    padding:.15rem .45rem;border-radius:50px;letter-spacing:.5px;
+    padding:.15rem .45rem;border-radius:50px;
+    letter-spacing:.5px;
     box-shadow:0 2px 8px rgba(251,191,36,.6);
     animation:renewBadgeBlink 1.5s infinite;
-    border:1.5px solid #fef3c7;z-index:3;
+    border:1.5px solid #fef3c7;
+    z-index:3;
 }
 @keyframes renewBadgeBlink{
     0%,100%{transform:scale(1);opacity:1;}
@@ -3674,6 +3704,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-header-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 .admin-body{padding:1.25rem 1.5rem;overflow-y:auto;flex:1}
 
+/* ============ SUMMARY BAR (TỔNG USER/ADMIN) ============ */
 .admin-summary-bar{
     display:flex;align-items:center;gap:1.25rem;
     padding:.75rem 1rem;margin-bottom:1rem;
@@ -3684,8 +3715,10 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-summary-bar .summary-item i{font-size:1.1rem;}
 .admin-summary-bar .summary-label{color:var(--text-2);font-weight:700;text-transform:uppercase;font-size:.72rem;letter-spacing:.4px;}
 .admin-summary-bar .summary-value{
-    font-weight:900;font-size:1.15rem;background:var(--surface);
-    padding:.15rem .65rem;border-radius:8px;border:1px solid var(--border);
+    font-weight:900;font-size:1.15rem;
+    background:var(--surface);
+    padding:.15rem .65rem;border-radius:8px;
+    border:1px solid var(--border);
     min-width:38px;text-align:center;line-height:1.2;
 }
 .admin-summary-bar #summaryTotalUsers{color:#2563eb;}
@@ -3693,6 +3726,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-summary-bar #summaryTotalAdmins{color:#d97706;}
 [data-theme="dark"] .admin-summary-bar #summaryTotalAdmins{color:#fcd34d;}
 
+/* Search box */
 .admin-search-wrap{position:relative;margin-bottom:1rem;}
 .admin-search-wrap i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.9rem;pointer-events:none;}
 .admin-search{width:100%;padding:.7rem .85rem .7rem 2.4rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.88rem;outline:none;transition:.15s;font-family:inherit;}
@@ -3701,6 +3735,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-search-clear.show{display:flex}
 .admin-search-clear:hover{background:var(--danger-light);color:var(--danger)}
 
+/* Filter buttons */
 .admin-filter-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;}
 .admin-filter-btn{padding:.35rem .75rem;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;}
 .admin-filter-btn:hover{border-color:var(--primary);color:var(--primary);}
@@ -3708,65 +3743,210 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-filter-btn .count{background:rgba(0,0,0,.08);padding:.05rem .4rem;border-radius:50px;font-size:.68rem;font-weight:700;min-width:18px;text-align:center;}
 .admin-filter-btn.active .count{background:rgba(255,255,255,.35);}
 
-/* ============ COLLAPSIBLE SECTIONS ============ */
+/* ═══════════════════════════════════════════════════════════
+   COLLAPSIBLE SECTIONS — UI THÔNG MINH
+   Dùng grid-template-rows để animate mượt (không giật như max-height)
+   ═══════════════════════════════════════════════════════════ */
 .admin-section{
-    margin-top:1.5rem;border:1px solid var(--border);border-radius:14px;
-    background:var(--surface);overflow:hidden;
+    margin-top:1.5rem;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--surface);
+    overflow:hidden;
     transition:box-shadow .25s ease, border-color .25s ease;
 }
-.admin-section:hover{border-color:rgba(37,99,235,.35);box-shadow:0 4px 16px rgba(15,23,42,.06);}
-[data-theme="dark"] .admin-section:hover{border-color:rgba(96,165,250,.35);box-shadow:0 4px 16px rgba(0,0,0,.35);}
+.admin-section:hover{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 4px 16px rgba(15,23,42,.06);
+}
+[data-theme="dark"] .admin-section:hover{
+    border-color:rgba(96,165,250,.35);
+    box-shadow:0 4px 16px rgba(0,0,0,.35);
+}
+
+/* Header — luôn hiển thị, chứa nút mắt */
 .admin-section-head{
-    display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
     padding:.85rem 1rem;
     background:linear-gradient(135deg, rgba(37,99,235,.04), rgba(124,58,237,.03));
-    border-bottom:1px solid var(--border);flex-wrap:wrap;
-    transition:background .25s ease, border-color .25s ease;user-select:none;
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+    transition:background .25s ease, border-color .25s ease;
+    user-select:none;
 }
-[data-theme="dark"] .admin-section-head{background:linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.06));}
-.admin-section.collapsed .admin-section-head{border-bottom-color:transparent;}
-.admin-section-head .ash-left{display:flex;align-items:center;gap:.6rem;min-width:0;flex:1;}
-.admin-section-head .ash-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;background:var(--primary-light);color:var(--primary-dark);transition:.2s;}
+[data-theme="dark"] .admin-section-head{
+    background:linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.06));
+}
+.admin-section.collapsed .admin-section-head{
+    border-bottom-color:transparent;
+}
+
+.admin-section-head .ash-left{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    min-width:0;
+    flex:1;
+}
+.admin-section-head .ash-icon{
+    width:32px;
+    height:32px;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.85rem;
+    flex-shrink:0;
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    transition:.2s;
+}
 .admin-section-head .ash-icon.amber{background:var(--amber-light);color:#92400e;}
 .admin-section-head .ash-icon.violet{background:rgba(124,58,237,.12);color:#7c3aed;}
 .admin-section-head .ash-icon.slate{background:var(--surface-2);color:var(--text-2);}
-.admin-section-head .ash-text{display:flex;flex-direction:column;gap:.15rem;min-width:0;}
-.admin-section-head .ash-title{font-weight:800;font-size:.9rem;color:var(--text);line-height:1.2;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
-.admin-section-head .ash-subtitle{font-size:.72rem;color:var(--text-3);line-height:1.3;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
-.admin-section-head .ash-subtitle .chip{display:inline-flex;align-items:center;gap:.25rem;padding:.1rem .45rem;border-radius:50px;font-size:.68rem;font-weight:700;background:var(--surface-2);color:var(--text-2);}
+
+.admin-section-head .ash-text{
+    display:flex;
+    flex-direction:column;
+    gap:.15rem;
+    min-width:0;
+}
+.admin-section-head .ash-title{
+    font-weight:800;
+    font-size:.9rem;
+    color:var(--text);
+    line-height:1.2;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    flex-wrap:wrap;
+}
+.admin-section-head .ash-subtitle{
+    font-size:.72rem;
+    color:var(--text-3);
+    line-height:1.3;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    flex-wrap:wrap;
+}
+.admin-section-head .ash-subtitle .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    padding:.1rem .45rem;
+    border-radius:50px;
+    font-size:.68rem;
+    font-weight:700;
+    background:var(--surface-2);
+    color:var(--text-2);
+}
 .admin-section-head .ash-subtitle .chip.primary{background:var(--primary-light);color:var(--primary-dark);}
 .admin-section-head .ash-subtitle .chip.warn{background:var(--amber-light);color:#92400e;}
 .admin-section-head .ash-subtitle .chip.danger{background:var(--danger-light);color:var(--danger);}
 .admin-section-head .ash-subtitle .chip.ok{background:rgba(22,163,74,.12);color:var(--success);}
-.admin-section-head .ash-actions{display:flex;align-items:center;gap:.35rem;flex-shrink:0;}
 
-.admin-toggle-btn{
-    width:34px;height:34px;border-radius:9px;border:1.5px solid var(--border);
-    background:var(--surface);color:var(--text-2);cursor:pointer;
-    display:inline-flex;align-items:center;justify-content:center;
-    font-size:.85rem;transition:all .2s ease;font-family:inherit;padding:0;position:relative;
+.admin-section-head .ash-actions{
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+    flex-shrink:0;
 }
-.admin-toggle-btn:hover{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);transform:translateY(-1px);}
-.admin-toggle-btn:active{transform:translateY(0) scale(.96);}
-.admin-toggle-btn i{transition:transform .25s ease;display:inline-block;}
-.admin-toggle-btn.active{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);}
-.admin-toggle-btn:not(.active){background:var(--surface-2);color:var(--text-3);}
-.admin-toggle-btn:not(.active):hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger);}
 
-.admin-section-body{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease, opacity .25s ease;opacity:1;}
-.admin-section.collapsed .admin-section-body{grid-template-rows:0fr;opacity:0;}
-.admin-section-body > .admin-section-inner{overflow:hidden;padding:1rem;min-height:0;transition:padding .3s ease;}
-.admin-section.collapsed .admin-section-body > .admin-section-inner{padding-top:0;padding-bottom:0;}
+/* Nút mắt — UI thông minh */
+.admin-toggle-btn{
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    border:1.5px solid var(--border);
+    background:var(--surface);
+    color:var(--text-2);
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.85rem;
+    transition:all .2s ease;
+    font-family:inherit;
+    padding:0;
+    position:relative;
+}
+.admin-toggle-btn:hover{
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    border-color:var(--primary);
+    transform:translateY(-1px);
+}
+.admin-toggle-btn:active{
+    transform:translateY(0) scale(.96);
+}
+.admin-toggle-btn i{
+    transition:transform .25s ease;
+    display:inline-block;
+}
+.admin-toggle-btn.active{
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    border-color:var(--primary);
+}
+.admin-toggle-btn:not(.active){
+    background:var(--surface-2);
+    color:var(--text-3);
+}
+.admin-toggle-btn:not(.active):hover{
+    background:var(--danger-light);
+    color:var(--danger);
+    border-color:var(--danger);
+}
 
-.admin-section.has-pending .admin-section-head{background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(251,191,36,.06));border-bottom-color:rgba(245,158,11,.4);}
-.admin-section.has-pending .ash-icon.amber{animation:bellRing 1.5s infinite;color:#dc2626;background:rgba(220,38,38,.12);}
-@keyframes bellRing{0%,100%{transform:rotate(0);}10%,30%{transform:rotate(-12deg);}20%,40%{transform:rotate(12deg);}50%{transform:rotate(0);}}
+/* Body — dùng grid-rows để animate mượt */
+.admin-section-body{
+    display:grid;
+    grid-template-rows:1fr;
+    transition:grid-template-rows .3s ease, opacity .25s ease;
+    opacity:1;
+}
+.admin-section.collapsed .admin-section-body{
+    grid-template-rows:0fr;
+    opacity:0;
+}
+.admin-section-body > .admin-section-inner{
+    overflow:hidden;
+    padding:1rem;
+    min-height:0;
+    transition:padding .3s ease;
+}
+.admin-section.collapsed .admin-section-body > .admin-section-inner{
+    padding-top:0;
+    padding-bottom:0;
+}
+
+/* Highlight khi có pending */
+.admin-section.has-pending .admin-section-head{
+    background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(251,191,36,.06));
+    border-bottom-color:rgba(245,158,11,.4);
+}
+.admin-section.has-pending .ash-icon.amber{
+    animation:bellRing 1.5s infinite;
+    color:#dc2626;
+    background:rgba(220,38,38,.12);
+}
+@keyframes bellRing{
+    0%,100%{transform:rotate(0);}
+    10%,30%{transform:rotate(-12deg);}
+    20%,40%{transform:rotate(12deg);}
+    50%{transform:rotate(0);}
+}
 
 #pendingRenewalsBadge.pulse,
 .chip.pulse{
     display:inline-block;padding:.05rem .5rem;
     background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;border-radius:50px;font-weight:900;font-size:.72rem;
+    color:#fff;border-radius:50px;
+    font-weight:900;font-size:.72rem;
     animation:pendingPulse 1.5s infinite;
     box-shadow:0 2px 8px rgba(220,38,38,.5);
     min-width:22px;text-align:center;
@@ -3776,9 +3956,23 @@ body.hide-floating .tiktok-bar { display: none !important; }
     50%{transform:scale(1.15);box-shadow:0 4px 14px rgba(220,38,38,.8);}
 }
 
-.admin-section-body .no-data{padding:2rem 1rem;text-align:center;color:var(--text-3);font-size:.85rem;display:flex;flex-direction:column;align-items:center;gap:.5rem;}
-.admin-section-body .no-data i{font-size:1.75rem;opacity:.4;}
+/* No data state */
+.admin-section-body .no-data{
+    padding:2rem 1rem;
+    text-align:center;
+    color:var(--text-3);
+    font-size:.85rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:.5rem;
+}
+.admin-section-body .no-data i{
+    font-size:1.75rem;
+    opacity:.4;
+}
 
+/* ============ ADD USER FORM ============ */
 .add-user-form{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;display:none;}
 .add-user-form.show{display:block}
 .add-user-form h3{font-size:.85rem;color:var(--text);margin-bottom:.75rem;font-weight:700}
@@ -3792,6 +3986,8 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .btn:disabled{opacity:.5;cursor:not-allowed;}
 .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .btn.primary:hover{background:var(--primary-dark)}
+
+/* Add user button */
 .btn-add{padding:.45rem .85rem;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;transition:.15s;font-family:inherit;}
 .btn-add:hover{background:var(--primary-dark)}
 
@@ -3818,14 +4014,13 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .u-btn.expiry{background:rgba(245,158,11,.1);color:#d97706;border-color:rgba(245,158,11,.4);}
 .u-btn.expiry:hover{background:var(--amber);color:#fff;border-color:var(--amber);transform:scale(1.08);}
 .u-btn.expiry.urgent{background:rgba(220,38,38,.15);color:var(--danger);border-color:rgba(220,38,38,.5);animation:expiryPulse 2s infinite;}
-.u-btn.chat{background:rgba(79,70,229,.1);color:#4f46e5;border-color:rgba(79,70,229,.4);}
-.u-btn.chat:hover{background:#4f46e5;color:#fff;border-color:#4f46e5;transform:scale(1.08);}
 .u-btn:disabled{opacity:.35;cursor:not-allowed}
 @keyframes expiryPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);}50%{box-shadow:0 0 0 6px rgba(220,38,38,0);}}
 
 .admin-close{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.15s;}
 .admin-close:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
 
+/* ============ LOGS ============ */
 .logs-list{max-height:280px;overflow-y:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem;}
 .log-item{display:flex;gap:.5rem;padding:.4rem .5rem;font-size:.75rem;color:var(--text-2);border-bottom:1px solid var(--border);}
 .log-item:last-child{border-bottom:none}
@@ -3843,6 +4038,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .u-expiry.urgent{background:rgba(220,38,38,.15);color:var(--danger);}
 .u-expiry.expired{background:rgba(220,38,38,.25);color:#fff;text-decoration:line-through;}
 
+/* ============ EDIT MODALS ============ */
 .edit-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
 .edit-modal.show{display:flex}
 .edit-box{background:var(--surface);border-radius:20px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:1.5rem;position:relative;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
@@ -3858,6 +4054,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .quick-expiry-btn:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark);transform:translateY(-1px);}
 .quick-expiry-btn.danger:hover{background:var(--danger-light);border-color:var(--danger);color:var(--danger);}
 
+/* ============ IMPORT MODAL ============ */
 .import-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);z-index:3500;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
 .import-modal.show{display:flex}
 .import-box{background:var(--surface);border-radius:20px;width:100%;max-width:900px;max-height:calc(100vh - 2rem);box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;}
@@ -3897,68 +4094,183 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .import-info i{margin-top:.15rem;flex-shrink:0;}
 .import-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end;align-items:center;background:var(--surface);}
 
-/* ============ EXPIRY BANNER ============ */
+/* ═══════════════════════════════════════════════════════════════
+   ⏰ EXPIRY BANNER — Cảnh báo gia hạn 3 mức
+   • .expiry-banner              → Vàng (còn ≤7 ngày)
+   • .expiry-banner.urgent       → Cam đậm (còn ≤3 ngày)
+   • .expiry-banner.expired      → Đỏ (đã hết hạn)
+   ═══════════════════════════════════════════════════════════════ */
 .expiry-banner{
-    display:flex;align-items:center;gap:clamp(.6rem,1.2vw,1rem);
+    display:flex;
+    align-items:center;
+    gap:clamp(.6rem,1.2vw,1rem);
     padding:clamp(.7rem,1.4vw,1rem) clamp(.8rem,1.5vw,1.15rem);
-    margin-bottom:1rem;border-radius:var(--radius);flex-wrap:wrap;
-    position:relative;overflow:hidden;
+    margin-bottom:1rem;
+    border-radius:var(--radius);
+    flex-wrap:wrap;
+    position:relative;
+    overflow:hidden;
     animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1);
     box-shadow:0 6px 20px rgba(0,0,0,.08);
     background:linear-gradient(135deg,#fef3c7,#fde68a);
     border:1.5px solid #f59e0b;
 }
-[data-theme="dark"] .expiry-banner{background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.3));border-color:#f59e0b;}
-@keyframes expirySlideDown{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);}}
+[data-theme="dark"] .expiry-banner{
+    background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.3));
+    border-color:#f59e0b;
+}
+@keyframes expirySlideDown{
+    from{opacity:0;transform:translateY(-12px);}
+    to{opacity:1;transform:translateY(0);}
+}
+
 .expiry-banner.urgent{
-    background:linear-gradient(135deg,#fed7aa,#fdba74);border-color:#ea580c;
-    animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1), pulseUrgent 2.5s ease-in-out infinite;
+    background:linear-gradient(135deg,#fed7aa,#fdba74);
+    border-color:#ea580c;
+    animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1),
+              pulseUrgent 2.5s ease-in-out infinite;
 }
-[data-theme="dark"] .expiry-banner.urgent{background:linear-gradient(135deg,rgba(234,88,12,.25),rgba(234,88,12,.35));border-color:#ea580c;}
-@keyframes pulseUrgent{0%,100%{box-shadow:0 6px 20px rgba(234,88,12,.25);}50%{box-shadow:0 6px 28px rgba(234,88,12,.55);}}
+[data-theme="dark"] .expiry-banner.urgent{
+    background:linear-gradient(135deg,rgba(234,88,12,.25),rgba(234,88,12,.35));
+    border-color:#ea580c;
+}
+@keyframes pulseUrgent{
+    0%,100%{box-shadow:0 6px 20px rgba(234,88,12,.25);}
+    50%{box-shadow:0 6px 28px rgba(234,88,12,.55);}
+}
+
 .expiry-banner.expired{
-    background:linear-gradient(135deg,#fecaca,#fca5a5);border-color:#dc2626;
-    animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1), pulseExpired 1.8s ease-in-out infinite;
+    background:linear-gradient(135deg,#fecaca,#fca5a5);
+    border-color:#dc2626;
+    animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1),
+              pulseExpired 1.8s ease-in-out infinite;
 }
-[data-theme="dark"] .expiry-banner.expired{background:linear-gradient(135deg,rgba(220,38,38,.3),rgba(220,38,38,.4));border-color:#dc2626;}
-@keyframes pulseExpired{0%,100%{box-shadow:0 6px 20px rgba(220,38,38,.3);}50%{box-shadow:0 6px 28px rgba(220,38,38,.6);}}
-.expiry-banner-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);background:linear-gradient(135deg,#f59e0b,#d97706);}
-.expiry-banner.urgent .expiry-banner-icon{background:linear-gradient(135deg,#ea580c,#c2410c);animation:expiryIconShake 2s ease-in-out infinite;}
-@keyframes expiryIconShake{0%,100%{transform:rotate(0deg);}25%{transform:rotate(-8deg);}75%{transform:rotate(8deg);}}
-.expiry-banner.expired .expiry-banner-icon{background:linear-gradient(135deg,#dc2626,#991b1b);animation:expiryIconShake 1.5s ease-in-out infinite;}
-.expiry-banner-text{flex:1 1 200px;min-width:0;}
-.expiry-banner-text .title{font-weight:800;font-size:clamp(.86rem,1vw,.96rem);color:#92400e;margin-bottom:.15rem;line-height:1.3;}
+[data-theme="dark"] .expiry-banner.expired{
+    background:linear-gradient(135deg,rgba(220,38,38,.3),rgba(220,38,38,.4));
+    border-color:#dc2626;
+}
+@keyframes pulseExpired{
+    0%,100%{box-shadow:0 6px 20px rgba(220,38,38,.3);}
+    50%{box-shadow:0 6px 28px rgba(220,38,38,.6);}
+}
+
+.expiry-banner-icon{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:1.1rem;
+    color:#fff;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+}
+.expiry-banner.urgent .expiry-banner-icon{
+    background:linear-gradient(135deg,#ea580c,#c2410c);
+    animation:expiryIconShake 2s ease-in-out infinite;
+}
+@keyframes expiryIconShake{
+    0%,100%{transform:rotate(0deg);}
+    25%{transform:rotate(-8deg);}
+    75%{transform:rotate(8deg);}
+}
+.expiry-banner.expired .expiry-banner-icon{
+    background:linear-gradient(135deg,#dc2626,#991b1b);
+    animation:expiryIconShake 1.5s ease-in-out infinite;
+}
+
+.expiry-banner-text{
+    flex:1 1 200px;
+    min-width:0;
+}
+.expiry-banner-text .title{
+    font-weight:800;
+    font-size:clamp(.86rem,1vw,.96rem);
+    color:#92400e;
+    margin-bottom:.15rem;
+    line-height:1.3;
+}
 .expiry-banner.urgent .expiry-banner-text .title{color:#9a3412;}
 .expiry-banner.expired .expiry-banner-text .title{color:#7f1d1d;}
 [data-theme="dark"] .expiry-banner-text .title{color:#fcd34d;}
 [data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .title{color:#fdba74;}
 [data-theme="dark"] .expiry-banner.expired .expiry-banner-text .title{color:#fca5a5;}
-.expiry-banner-text .desc{font-size:clamp(.72rem,.88vw,.82rem);color:#78350f;line-height:1.5;}
+
+.expiry-banner-text .desc{
+    font-size:clamp(.72rem,.88vw,.82rem);
+    color:#78350f;
+    line-height:1.5;
+}
 .expiry-banner.urgent .expiry-banner-text .desc{color:#7c2d12;}
 .expiry-banner.expired .expiry-banner-text .desc{color:#7f1d1d;}
 [data-theme="dark"] .expiry-banner-text .desc{color:#fde68a;}
 [data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .desc{color:#fed7aa;}
 [data-theme="dark"] .expiry-banner.expired .expiry-banner-text .desc{color:#fecaca;}
-.expiry-banner-text b{font-weight:900;font-size:1.08em;color:#dc2626;}
+
+.expiry-banner-text b{
+    font-weight:900;
+    font-size:1.08em;
+    color:#dc2626;
+}
 [data-theme="dark"] .expiry-banner-text b{color:#fef08a;}
+
 .expiry-banner-btn{
     padding:clamp(.5rem,.9vw,.62rem) clamp(.85rem,1.3vw,1.1rem);
-    border-radius:50px;border:none;
+    border-radius:50px;
+    border:none;
     background:linear-gradient(135deg,#f59e0b,#d97706);
-    color:#fff;font-size:clamp(.74rem,.88vw,.84rem);font-weight:800;
-    cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;
-    gap:.4rem;white-space:nowrap;transition:transform .15s,box-shadow .2s,background .2s;
+    color:#fff;
+    font-size:clamp(.74rem,.88vw,.84rem);
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.4rem;
+    white-space:nowrap;
+    transition:transform .15s,box-shadow .2s,background .2s;
     box-shadow:0 4px 14px rgba(245,158,11,.45);
-    text-transform:uppercase;letter-spacing:.3px;
+    text-transform:uppercase;
+    letter-spacing:.3px;
 }
-.expiry-banner-btn:hover{transform:translateY(-1px) scale(1.03);box-shadow:0 6px 20px rgba(245,158,11,.65);}
-.expiry-banner.urgent .expiry-banner-btn{background:linear-gradient(135deg,#ea580c,#c2410c);box-shadow:0 4px 14px rgba(234,88,12,.5);animation:renewUrgent 1.2s infinite;}
-.expiry-banner.expired .expiry-banner-btn{background:linear-gradient(135deg,#7f1d1d,#b91c1c);box-shadow:0 4px 14px rgba(220,38,38,.5);animation:renewUrgent 1.2s infinite;}
+.expiry-banner-btn:hover{
+    transform:translateY(-1px) scale(1.03);
+    box-shadow:0 6px 20px rgba(245,158,11,.65);
+}
+.expiry-banner.urgent .expiry-banner-btn{
+    background:linear-gradient(135deg,#ea580c,#c2410c);
+    box-shadow:0 4px 14px rgba(234,88,12,.5);
+    animation:renewUrgent 1.2s infinite;
+}
+.expiry-banner.urgent .expiry-banner-btn:hover{
+    box-shadow:0 6px 20px rgba(234,88,12,.7);
+}
+.expiry-banner.expired .expiry-banner-btn{
+    background:linear-gradient(135deg,#7f1d1d,#b91c1c);
+    box-shadow:0 4px 14px rgba(220,38,38,.5);
+    animation:renewUrgent 1.2s infinite;
+}
+.expiry-banner.expired .expiry-banner-btn:hover{
+    box-shadow:0 6px 20px rgba(220,38,38,.8);
+}
 
 @media (max-width:600px){
-    .expiry-banner{padding:.65rem .75rem;gap:.55rem;}
-    .expiry-banner-icon{width:34px;height:34px;font-size:.95rem;}
-    .expiry-banner-btn{width:100%;margin-top:.2rem;}
+    .expiry-banner{
+        padding:.65rem .75rem;
+        gap:.55rem;
+    }
+    .expiry-banner-icon{
+        width:34px;
+        height:34px;
+        font-size:.95rem;
+    }
+    .expiry-banner-btn{
+        width:100%;
+        margin-top:.2rem;
+    }
 }
 
 /* ============ RENEWAL MODAL ============ */
@@ -4001,9 +4313,12 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .package-card[data-pkg="forever"].selected .pkg-unit{color:#fff;}
 .package-card[data-pkg="forever"].selected .pkg-price{-webkit-text-fill-color:#fff;background:none;color:#fff;}
 .package-card[data-pkg="forever"]::before{
-    content:'💎 VĨNH VIỄN';position:absolute;top:-10px;left:50%;transform:translateX(-50%);
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:.6rem;font-weight:900;
-    padding:.2rem .6rem;border-radius:50px;letter-spacing:.5px;white-space:nowrap;
+    content:'💎 VĨNH VIỄN';
+    position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;font-size:.6rem;font-weight:900;
+    padding:.2rem .6rem;border-radius:50px;
+    letter-spacing:.5px;white-space:nowrap;
     box-shadow:0 4px 12px rgba(124,58,237,.5);
     animation:foreverPulse 1.8s infinite;z-index:3;
 }
@@ -4011,6 +4326,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 4px 12px rgba(124,58,237,.5);}
     50%{transform:translateX(-50%) scale(1.08);box-shadow:0 6px 18px rgba(124,58,237,.8);}
 }
+
 .qr-wrap{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem;background:linear-gradient(135deg,#f0f4f8,#e2e8f0);border-radius:14px;border:1.5px dashed var(--border);}
 .qr-img{width:220px;height:220px;background:#fff;padding:.5rem;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15);}
 .qr-wrap .qr-hint{font-size:.75rem;color:var(--text-2);text-align:center;line-height:1.5;max-width:300px;}
@@ -4055,6 +4371,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .renewal-admin-row .rar-status.confirmed{background:rgba(22,163,74,.15);color:#16a34a;}
 .renewal-admin-row .rar-actions{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;}
 
+/* ============ RENEWAL HISTORY ============ */
 .renewal-history-item{display:flex;flex-direction:column;gap:.4rem;padding:.85rem;margin-bottom:.5rem;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;transition:.15s;}
 .renewal-history-item:hover{border-color:#7c3aed}
 .renewal-history-item .rh-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;flex-wrap:wrap;}
@@ -4069,12 +4386,16 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .renewal-history-item .rh-status.cancelled{background:rgba(148,163,184,.15);color:var(--text-3);}
 .renewal-history-item .rh-status.rejected{background:rgba(220,38,38,.15);color:var(--danger);}
 .renewal-history-item .rh-foot{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding-top:.4rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--text-3);}
+
 .renewal-history-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;padding:.75rem;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);margin-bottom:1rem;}
 .renewal-history-stats .rhs-item{text-align:center;}
 .renewal-history-stats .rhs-label{font-size:.7rem;color:var(--text-3);text-transform:uppercase;font-weight:700;letter-spacing:.3px;}
 .renewal-history-stats .rhs-value{font-size:1.1rem;font-weight:900;color:var(--primary);line-height:1.2;margin-top:.15rem;}
 .renewal-history-stats .rhs-value.amount{color:var(--success);}
+
 .admin-renewal-history-list{max-height:480px;overflow-y:auto;padding-right:.25rem;}
+
+/* Renewals tabs */
 .admin-renewals-tabs{display:flex;gap:.4rem;margin-bottom:.75rem;flex-wrap:wrap;}
 
 /* ============ ADMIN PERMISSIONS ============ */
@@ -4099,6 +4420,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .permission-note{padding:.65rem .85rem;border-radius:10px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);font-size:.78rem;color:var(--text-2);line-height:1.5;display:flex;align-items:flex-start;gap:.5rem;margin-bottom:1rem;}
 .permission-note i{color:#06b6d4;margin-top:.1rem;flex-shrink:0;}
 
+/* ============ RESPONSIVE ============ */
 @media (max-width:600px){
     .admin-section-head{padding:.75rem .85rem;}
     .admin-section-head .ash-title{font-size:.85rem;}
@@ -4107,501 +4429,74 @@ body.hide-floating .tiktok-bar { display: none !important; }
     .admin-toggle-btn{width:32px;height:32px;}
 }
 
-/* ============ FIX DROPDOWN DESKTOP ============ */
+/* ═══════════════════════════════════════════════════════════════
+   FIX: Dropdown user menu không bấm được trên desktop
+   Nguyên nhân: .header-inner có overflow:hidden trong @media (min-width:769px)
+   → dropdown bị CLIP khi tràn ra ngoài header.
+   Giải pháp: overflow:visible + nâng z-index cho các lớp liên quan.
+   ═══════════════════════════════════════════════════════════════ */
 @media (min-width:769px){
-    .header-inner{overflow:visible !important;}
-    .sticky-top{overflow:visible !important;}
-    .header-actions{z-index:500 !important;}
-    .user-menu{position:relative;z-index:501 !important;}
-    .user-dropdown{z-index:1000 !important;}
-}
-
-/* ============ USER DATA CHANGED TOAST ============ */
-.user-changed-toast{
-    position:fixed;top:20px;left:50%;
-    transform:translateX(-50%) translateY(-100px);
-    padding:.9rem 1.5rem;
-    background:linear-gradient(135deg, #16a34a, #22c55e);
-    color:#fff;border-radius:50px;
-    font-size:.9rem;font-weight:800;font-family:inherit;
-    box-shadow:0 12px 40px rgba(22,163,74,.5), 0 4px 12px rgba(0,0,0,.15);
-    z-index:10000;opacity:0;
-    transition:opacity .3s ease, transform .4s cubic-bezier(.34,1.56,.64,1);
-    pointer-events:none;display:flex;align-items:center;gap:.6rem;
-    max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.user-changed-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.user-changed-toast i{font-size:1.2rem;animation:successPop .5s cubic-bezier(.34,1.56,.64,1);}
-.user-changed-toast.expired{background:linear-gradient(135deg, #dc2626, #b91c1c);box-shadow:0 12px 40px rgba(220,38,38,.5), 0 4px 12px rgba(0,0,0,.15);}
-.user-changed-toast.info{background:linear-gradient(135deg, #4f46e5, #7c3aed);box-shadow:0 12px 40px rgba(124,58,237,.5), 0 4px 12px rgba(0,0,0,.15);}
-
-/* ═══════════════════════════════════════════════════════════════
-   💬 CHAT SUPPORT — Optimized for Firestore free tier
-   ═══════════════════════════════════════════════════════════════ */
-
-.chat-fab{
-    position:fixed;right:20px;
-    bottom:calc(95px + env(safe-area-inset-bottom));
-    width:56px;height:56px;border-radius:50%;border:none;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.35rem;
-    box-shadow:0 8px 24px rgba(124,58,237,.45),0 2px 8px rgba(0,0,0,.15);
-    z-index:999;
-    transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
-    animation:chatFabPulse 3s infinite;
-}
-.chat-fab:hover{transform:scale(1.1);box-shadow:0 12px 32px rgba(124,58,237,.65),0 4px 12px rgba(0,0,0,.2);}
-.chat-fab.active{background:linear-gradient(135deg,#dc2626,#b91c1c);animation:none;}
-.chat-fab.hidden{display:none}
-.chat-fab.admin-chat-attention{
-    background:linear-gradient(135deg,#dc2626,#b91c1c)!important;
-    animation:chatFabAdminAlert 1s infinite!important;
-    transform:scale(1.08);
-}
-@keyframes chatFabPulse{
-    0%,100%{box-shadow:0 8px 24px rgba(124,58,237,.45),0 2px 8px rgba(0,0,0,.15),0 0 0 0 rgba(124,58,237,.6);}
-    50%{box-shadow:0 8px 24px rgba(124,58,237,.6),0 2px 8px rgba(0,0,0,.15),0 0 0 12px rgba(124,58,237,0);}
-}
-@keyframes chatFabAdminAlert{
-    0%,100%{transform:scale(1.08);box-shadow:0 8px 24px rgba(220,38,38,.7),0 2px 8px rgba(0,0,0,.15),0 0 0 0 rgba(220,38,38,.8);}
-    50%{transform:scale(1.15);box-shadow:0 12px 32px rgba(220,38,38,1),0 4px 12px rgba(0,0,0,.2),0 0 0 16px rgba(220,38,38,0);}
-}
-.chat-fab.admin-chat-attention i{animation:chatFabIconShake .6s infinite;}
-@keyframes chatFabIconShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-12deg);}75%{transform:rotate(12deg);}}
-.chat-fab .fab-badge{
-    position:absolute;top:-2px;right:-2px;min-width:22px;height:22px;padding:0 .4rem;
-    border-radius:50px;
-    background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;font-size:.7rem;font-weight:900;
-    display:none;align-items:center;justify-content:center;
-    border:2px solid var(--surface);
-    box-shadow:0 2px 6px rgba(220,38,38,.6);
-    animation:pendingPulse 1.5s infinite;
-    line-height:1;z-index:2;
-}
-.chat-fab .fab-badge.show{display:flex}
-.chat-fab .fab-new-bubble{
-    position:absolute;top:-14px;right:-14px;
-    padding:.25rem .6rem;
-    background:linear-gradient(135deg,#fbbf24,#f59e0b);
-    color:#1e1b4b;font-size:.62rem;font-weight:900;
-    border-radius:50px;letter-spacing:.5px;text-transform:uppercase;
-    white-space:nowrap;display:none;
-    box-shadow:0 4px 12px rgba(251,191,36,.7), 0 0 0 2px #fff;
-    animation:chatNewBubble 1.2s infinite;
-    z-index:3;pointer-events:none;
-}
-.chat-fab .fab-new-bubble.show{display:block}
-@keyframes chatNewBubble{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
-body.practice-full-open .chat-fab{display:none!important}
-
-.chat-modal{
-    position:fixed;inset:0;background:rgba(15,23,42,.85);
-    backdrop-filter:blur(6px);z-index:4000;display:none;
-    align-items:center;justify-content:center;padding:1rem;
-    animation:fadeIn .2s;
-}
-.chat-modal.show{display:flex}
-.chat-box{
-    background:var(--surface);border-radius:20px;
-    width:100%;max-width:540px;height:min(85vh,720px);
-    box-shadow:0 20px 60px rgba(0,0,0,.4);
-    display:flex;flex-direction:column;overflow:hidden;
-    animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);
-    position:relative;
-}
-.chat-header{
-    padding:1rem 1.25rem;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;display:flex;align-items:center;gap:.75rem;
-    flex-shrink:0;position:relative;
-}
-.chat-header-back{
-    width:34px;height:34px;border-radius:50%;border:none;
-    background:rgba(255,255,255,.15);color:#fff;cursor:pointer;
-    display:none;align-items:center;justify-content:center;
-    font-size:.95rem;flex-shrink:0;transition:.15s;
-}
-.chat-header-back:hover{background:rgba(255,255,255,.3)}
-.chat-header-back.show{display:flex}
-.chat-header .chat-avatar{
-    width:42px;height:42px;border-radius:50%;
-    background:rgba(255,255,255,.2);
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.15rem;flex-shrink:0;position:relative;
-}
-.chat-header .chat-avatar::after{
-    content:'';position:absolute;bottom:2px;right:2px;
-    width:11px;height:11px;border-radius:50%;
-    background:#22c55e;border:2px solid #fff;
-    box-shadow:0 0 0 1px rgba(0,0,0,.1);
-}
-.chat-header-info{flex:1;min-width:0}
-.chat-header-info .name{
-    font-weight:800;font-size:.95rem;
-    display:flex;align-items:center;gap:.4rem;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-.chat-header-info .status{
-    font-size:.72rem;opacity:.9;
-    display:flex;align-items:center;gap:.3rem;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-.chat-header-close{
-    width:34px;height:34px;border-radius:50%;border:none;
-    background:rgba(255,255,255,.2);color:#fff;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    font-size:1rem;flex-shrink:0;transition:.15s;
-}
-.chat-header-close:hover{background:rgba(255,255,255,.35)}
-
-.chat-admin-waiting-banner{
-    padding:.7rem 1rem;
-    background:linear-gradient(135deg,#fef3c7,#fde68a);
-    border-bottom:1.5px solid #f59e0b;
-    display:none;align-items:center;gap:.65rem;
-    font-size:.8rem;font-weight:700;color:#78350f;
-    animation:chatBannerSlide .35s cubic-bezier(.34,1.56,.64,1);
-    flex-shrink:0;
-}
-.chat-admin-waiting-banner.show{display:flex}
-.chat-admin-waiting-banner .banner-icon{
-    width:32px;height:32px;border-radius:50%;
-    background:linear-gradient(135deg,#f59e0b,#d97706);
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    font-size:.9rem;flex-shrink:0;
-    animation:expiryIconShake 1.5s infinite;
-}
-.chat-admin-waiting-banner .banner-text{flex:1;min-width:0;line-height:1.35;}
-.chat-admin-waiting-banner .banner-text b{color:#dc2626;font-weight:900;}
-@keyframes chatBannerSlide{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
-[data-theme="dark"] .chat-admin-waiting-banner{background:linear-gradient(135deg,rgba(245,158,11,.25),rgba(245,158,11,.15));border-bottom-color:#f59e0b;color:#fcd34d;}
-[data-theme="dark"] .chat-admin-waiting-banner .banner-text b{color:#fef08a;}
-
-.chat-zalo-suggest{
-    display:none;
-    margin:1rem 1.25rem .5rem;
-    padding:.9rem 1rem;
-    background:linear-gradient(135deg,rgba(0,104,255,.08),rgba(0,104,255,.03));
-    border:1.5px solid rgba(0,104,255,.3);
-    border-radius:14px;
-    gap:.75rem;
-    align-items:flex-start;
-    animation:chatBannerSlide .35s cubic-bezier(.34,1.56,.64,1);
-}
-.chat-zalo-suggest.show{display:flex}
-.chat-zalo-suggest .zalo-icon{
-    width:42px;height:42px;border-radius:12px;
-    background:linear-gradient(135deg,#0068ff,#0052cc);
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    font-size:1.35rem;flex-shrink:0;
-    box-shadow:0 4px 12px rgba(0,104,255,.35);
-    animation:zaloIconBounce 2s infinite;
-}
-@keyframes zaloIconBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
-.chat-zalo-suggest .zalo-content{flex:1;min-width:0;}
-.chat-zalo-suggest .zalo-title{
-    font-weight:800;font-size:.88rem;color:#0068ff;
-    margin-bottom:.25rem;
-    display:flex;align-items:center;gap:.35rem;
-}
-.chat-zalo-suggest .zalo-desc{
-    font-size:.76rem;color:var(--text-2);line-height:1.5;
-    margin-bottom:.6rem;
-}
-.chat-zalo-suggest .zalo-actions{display:flex;gap:.4rem;flex-wrap:wrap;}
-.chat-zalo-suggest .zalo-btn{
-    padding:.42rem .85rem;border-radius:50px;border:none;
-    font-size:.76rem;font-weight:800;
-    cursor:pointer;font-family:inherit;
-    display:inline-flex;align-items:center;gap:.35rem;
-    transition:.15s;white-space:nowrap;
-}
-.chat-zalo-suggest .zalo-btn.primary{
-    background:linear-gradient(135deg,#0068ff,#0052cc);
-    color:#fff;box-shadow:0 4px 12px rgba(0,104,255,.35);
-}
-.chat-zalo-suggest .zalo-btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,104,255,.5);}
-.chat-zalo-suggest .zalo-btn.secondary{
-    background:var(--surface);color:var(--text-2);
-    border:1.5px solid var(--border);
-}
-.chat-zalo-suggest .zalo-btn.secondary:hover{background:var(--surface-2);color:var(--text);}
-[data-theme="dark"] .chat-zalo-suggest{background:linear-gradient(135deg,rgba(0,104,255,.15),rgba(0,104,255,.08));border-color:rgba(96,165,250,.4);}
-[data-theme="dark"] .chat-zalo-suggest .zalo-title{color:#60a5fa;}
-
-.chat-body{
-    flex:1;min-height:0;overflow-y:auto;
-    padding:1rem 1.25rem;
-    background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 100%);
-    display:flex;flex-direction:column;gap:.45rem;
-    scrollbar-width:thin;
-}
-.chat-body::-webkit-scrollbar{width:6px}
-.chat-body::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px;}
-
-.chat-msg{
-    display:flex;gap:.4rem;max-width:85%;align-items:flex-end;
-    animation:chatMsgIn .25s ease-out;position:relative;
-}
-@keyframes chatMsgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.chat-msg.from-user{align-self:flex-end;flex-direction:row-reverse}
-.chat-msg.from-admin{align-self:flex-start}
-.chat-msg .bubble{
-    padding:.6rem .85rem;border-radius:16px;
-    font-size:.85rem;line-height:1.45;
-    word-break:break-word;white-space:pre-wrap;
-    position:relative;max-width:100%;
-}
-.chat-msg.from-user .bubble{
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;border-bottom-right-radius:4px;
-    box-shadow:0 2px 8px rgba(124,58,237,.25);
-}
-.chat-msg.from-admin .bubble{
-    background:var(--surface);color:var(--text);
-    border:1px solid var(--border);
-    border-bottom-left-radius:4px;
-    box-shadow:0 2px 6px rgba(15,23,42,.06);
-}
-.chat-msg .msg-time{
-    font-size:.62rem;color:var(--text-3);
-    padding:0 .3rem;white-space:nowrap;
-    flex-shrink:0;align-self:flex-end;margin-bottom:.15rem;
-}
-.chat-msg.from-user .msg-time{color:rgba(255,255,255,.65)}
-.chat-system{
-    align-self:center;
-    font-size:.7rem;
-    color:var(--text-3);
-    background:var(--surface-2);
-    padding:.25rem .75rem;
-    border-radius:50px;
-    text-align:center;
-    margin:.3rem 0;
-    border:1px solid var(--border);
-}
-.chat-empty{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    height:100%;text-align:center;color:var(--text-3);
-    padding:1.5rem;gap:.75rem;
-}
-.chat-empty i{font-size:2.5rem;opacity:.35}
-.chat-empty .title{font-size:.92rem;font-weight:700;color:var(--text-2);}
-.chat-empty .desc{font-size:.78rem;line-height:1.5;max-width:280px;}
-
-.chat-footer{
-    padding:.75rem 1rem;
-    border-top:1px solid var(--border);
-    background:var(--surface);flex-shrink:0;
-    display:flex;flex-direction:column;gap:.5rem;
-}
-.chat-footer-row{display:flex;gap:.5rem;align-items:flex-end;}
-.chat-footer textarea{
-    flex:1;min-width:0;min-height:42px;max-height:130px;
-    padding:.65rem .9rem;border-radius:22px;
-    border:1.5px solid var(--border);
-    background:var(--surface-2);color:var(--text);
-    font-size:.85rem;font-family:inherit;
-    outline:none;resize:none;overflow-y:hidden;
-    line-height:1.4;transition:.15s;
-}
-.chat-footer textarea:focus{
-    border-color:var(--primary);background:var(--surface);
-    box-shadow:0 0 0 3px rgba(37,99,235,.12);
-}
-.chat-send-btn{
-    width:44px;height:44px;border-radius:50%;border:none;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.05rem;flex-shrink:0;
-    transition:transform .15s,box-shadow .2s;
-    box-shadow:0 4px 12px rgba(124,58,237,.35);
-}
-.chat-send-btn:hover:not(:disabled){transform:scale(1.08);box-shadow:0 6px 18px rgba(124,58,237,.5);}
-.chat-send-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
-
-.chat-quick-replies{
-    display:flex;
-    gap:.35rem;
-    flex-wrap:wrap;
-    padding:.5rem 0;
-    border-bottom:1px dashed var(--border);
-    margin-bottom:.1rem;
-}
-.chat-quick-replies.hidden{display:none}
-.chat-quick-btn{
-    padding:.3rem .7rem;border-radius:50px;
-    border:1.5px solid rgba(37,99,235,.3);
-    background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(37,99,235,.03));
-    color:var(--primary-dark);font-size:.72rem;font-weight:700;
-    cursor:pointer;font-family:inherit;transition:.15s;
-    white-space:nowrap;
-}
-.chat-quick-btn:hover{
-    background:var(--primary);color:#fff;border-color:var(--primary);
-    transform:translateY(-1px);box-shadow:0 4px 10px rgba(37,99,235,.25);
-}
-
-.admin-chat-thread{
-    display:flex;align-items:center;gap:.75rem;
-    padding:.75rem .85rem;
-    background:var(--surface-2);border:1px solid var(--border);
-    border-radius:12px;margin-bottom:.5rem;
-    cursor:pointer;transition:.15s;position:relative;
-}
-.admin-chat-thread:hover{
-    border-color:var(--primary);transform:translateY(-1px);
-    box-shadow:0 4px 12px rgba(37,99,235,.1);
-}
-.admin-chat-thread.unread{
-    border-color:#dc2626;
-    background:linear-gradient(135deg,rgba(220,38,38,.05),rgba(220,38,38,.02));
-}
-.admin-chat-thread .t-avatar{
-    width:42px;height:42px;border-radius:50%;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:1rem;flex-shrink:0;
-}
-.admin-chat-thread .t-info{flex:1;min-width:0}
-.admin-chat-thread .t-name{
-    font-weight:800;font-size:.88rem;color:var(--text);
-    display:flex;align-items:center;gap:.4rem;
-    margin-bottom:.15rem;
-}
-.admin-chat-thread .t-preview{
-    font-size:.75rem;color:var(--text-3);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-.admin-chat-thread.unread .t-preview{color:var(--text-2);font-weight:600;}
-.admin-chat-thread .t-time{
-    font-size:.68rem;color:var(--text-3);
-    flex-shrink:0;align-self:flex-start;margin-top:.15rem;
-}
-.admin-chat-thread .t-badge{
-    position:absolute;top:-4px;right:-4px;
-    min-width:22px;height:22px;padding:0 .4rem;
-    border-radius:50px;
-    background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;font-size:.65rem;font-weight:900;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 2px 8px rgba(220,38,38,.5),0 0 0 2px var(--surface);
-    animation:pendingPulse 1.5s infinite;line-height:1;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🔔 ADMIN CHAT TOAST — Thông báo khi admin nhắn tin
-   ═══════════════════════════════════════════════════════════════ */
-.admin-chat-toast{
-    position:fixed;top:80px;right:16px;z-index:5000;
-    max-width:360px;padding:1rem;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;border-radius:16px;
-    box-shadow:0 12px 40px rgba(124,58,237,.5),0 4px 12px rgba(0,0,0,.15);
-    display:none;align-items:flex-start;gap:.75rem;
-    animation:toastSlideIn .35s cubic-bezier(.34,1.56,.64,1);
-    cursor:pointer;
-}
-.admin-chat-toast.show{display:flex;}
-@keyframes toastSlideIn{
-    from{opacity:0;transform:translateX(120%);}
-    to{opacity:1;transform:translateX(0);}
-}
-.admin-chat-toast .toast-avatar{
-    width:42px;height:42px;border-radius:50%;
-    background:rgba(255,255,255,.2);
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.15rem;flex-shrink:0;
-    animation:toastAvatarPulse 1.5s infinite;
-}
-@keyframes toastAvatarPulse{
-    0%,100%{transform:scale(1);}
-    50%{transform:scale(1.1);}
-}
-.admin-chat-toast .toast-content{flex:1;min-width:0;}
-.admin-chat-toast .toast-title{
-    font-weight:800;font-size:.88rem;
-    display:flex;align-items:center;gap:.5rem;
-    margin-bottom:.3rem;
-}
-.admin-chat-toast .toast-title .new-badge{
-    background:linear-gradient(135deg,#fbbf24,#f59e0b);
-    color:#1e1b4b;font-size:.6rem;font-weight:900;
-    padding:.15rem .5rem;border-radius:50px;letter-spacing:.5px;
-    animation:toastBadgeBlink 1.2s infinite;
-}
-@keyframes toastBadgeBlink{
-    0%,100%{opacity:1;transform:scale(1);}
-    50%{opacity:.7;transform:scale(1.1);}
-}
-.admin-chat-toast .toast-message{
-    font-size:.8rem;line-height:1.4;opacity:.95;
-    margin-bottom:.6rem;
-    overflow:hidden;text-overflow:ellipsis;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-    word-break:break-word;
-}
-.admin-chat-toast .toast-action{
-    padding:.42rem .85rem;border-radius:50px;border:none;
-    background:rgba(255,255,255,.25);color:#fff;
-    font-size:.75rem;font-weight:800;
-    cursor:pointer;font-family:inherit;
-    display:inline-flex;align-items:center;gap:.35rem;
-    transition:.15s;
-}
-.admin-chat-toast .toast-action:hover{
-    background:rgba(255,255,255,.4);
-    transform:translateY(-1px);
-}
-.admin-chat-toast .toast-close{
-    width:28px;height:28px;border-radius:50%;border:none;
-    background:rgba(255,255,255,.15);color:#fff;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    font-size:.8rem;flex-shrink:0;transition:.15s;
-}
-.admin-chat-toast .toast-close:hover{background:rgba(255,255,255,.35);}
-
-@media (max-width:600px){
-    .chat-fab{
-        width:50px;height:50px;font-size:1.2rem;
-        right:14px;bottom:calc(85px + env(safe-area-inset-bottom));
+    .header-inner{
+        overflow:visible !important;
     }
-    .chat-box{max-width:100%;height:100vh;max-height:100vh;border-radius:0;}
-    .chat-header{padding:.85rem 1rem}
-    .chat-body{padding:.75rem .9rem}
-    .chat-footer{padding:.65rem .8rem}
-    .chat-msg{max-width:90%}
-    .chat-msg .bubble{font-size:.82rem;padding:.55rem .75rem}
-    .chat-zalo-suggest{margin:.75rem .9rem .25rem;padding:.75rem .85rem;}
-    .chat-zalo-suggest .zalo-icon{width:36px;height:36px;font-size:1.1rem;}
-    .chat-zalo-suggest .zalo-title{font-size:.82rem;}
-    .chat-zalo-suggest .zalo-desc{font-size:.72rem;}
-    .chat-quick-btn{font-size:.68rem;padding:.25rem .55rem}
-    .admin-chat-toast{
-        top:auto;bottom:calc(145px + env(safe-area-inset-bottom));
-        right:12px;left:12px;max-width:none;
+    .sticky-top{
+        overflow:visible !important;
+    }
+    .header-actions{
+        z-index:500 !important;
+    }
+    .user-menu{
+        position:relative;
+        z-index:501 !important;
+    }
+    .user-dropdown{
+        z-index:1000 !important;
     }
 }
-
-.chat-skeleton{
-    display:flex;gap:.5rem;padding:.6rem;
-    animation:chatSkelPulse 1.5s infinite;
+/* ═══════════════════════════════════════════════════════════════
+   🆕 USER DATA CHANGED TOAST — Thông báo khi admin duyệt
+   ═══════════════════════════════════════════════════════════════ */
+.user-changed-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    padding: .9rem 1.5rem;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #fff;
+    border-radius: 50px;
+    font-size: .9rem;
+    font-weight: 800;
+    font-family: inherit;
+    box-shadow: 0 12px 40px rgba(22, 163, 74, .5), 0 4px 12px rgba(0, 0, 0, .15);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity .3s ease, transform .4s cubic-bezier(.34, 1.56, .64, 1);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    max-width: 90vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-@keyframes chatSkelPulse{0%,100%{opacity:.5;}50%{opacity:1;}}
-.chat-skeleton .sk-avatar{
-    width:40px;height:40px;border-radius:50%;
-    background:var(--surface-2);
+.user-changed-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
-.chat-skeleton .sk-lines{flex:1;}
-.chat-skeleton .sk-line{
-    height:12px;border-radius:6px;background:var(--surface-2);margin-bottom:.4rem;
+.user-changed-toast i {
+    font-size: 1.2rem;
+    animation: successPop .5s cubic-bezier(.34, 1.56, .64, 1);
 }
-.chat-skeleton .sk-line.short{width:60%;}
+.user-changed-toast.expired {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 12px 40px rgba(220, 38, 38, .5), 0 4px 12px rgba(0, 0, 0, .15);
+}
+.user-changed-toast.info {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    box-shadow: 0 12px 40px rgba(124, 58, 237, .5), 0 4px 12px rgba(0, 0, 0, .15);
+}
 
 /* ==== INTRO CSS ==== */
 
@@ -8365,49 +8260,6 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
                 </div>
             </div>
 
-            <!-- 💬 CHAT SUPPORT — Danh sách hội thoại (admin) -->
-            <div class="admin-section" id="adminChatSection">
-                <div class="admin-section-head">
-                    <div class="ash-left">
-                        <div class="ash-icon violet"><i class="fas fa-comments"></i></div>
-                        <div class="ash-text">
-                            <div class="ash-title"><span>Chat hỗ trợ</span></div>
-                            <div class="ash-subtitle">
-                                <span class="chip primary">
-                                    <i class="fas fa-comments"></i>
-                                    <span id="adminChatCount">0</span> hội thoại
-                                </span>
-                                <span class="chip danger" id="adminChatUnreadChip" style="display:none;">
-                                    <i class="fas fa-bell"></i>
-                                    <span id="adminChatUnread">0</span> chưa đọc
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ash-actions">
-                        <button class="btn" id="refreshChatBtn" style="padding:.4rem .7rem;font-size:.75rem" title="Làm mới">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                        <button class="admin-toggle-btn active" id="toggleChatBtn" title="Ẩn chat">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="admin-section-body">
-                    <div class="admin-section-inner">
-                        <div id="adminChatList">
-                            <div class="no-data">
-                                <i class="fas fa-spinner fa-pulse"></i>
-                                <span>Đang tải...</span>
-                            </div>
-                        </div>
-                        <button class="btn" id="loadMoreChatBtn" style="display:none;width:100%;margin-top:.5rem;justify-content:center;">
-                            <i class="fas fa-chevron-down"></i> Xem thêm hội thoại
-                        </button>
-                    </div>
-                </div>
-            </div>
-
             <div class="admin-section collapsed" id="adminRenewalHistorySection">
                 <div class="admin-section-head">
                     <div class="ash-left">
@@ -8433,175 +8285,6 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
                 </div>
             </div>
 
-        </div>
-    </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════
-     💬 CHAT SUPPORT — FAB + Toast + Modal + Zalo
-     ═══════════════════════════════════════════════════════════ -->
-
-<!-- Nút chat FAB -->
-<button class="chat-fab hidden" id="chatFab" type="button" title="Chat với Admin" aria-label="Chat với Admin">
-    <i class="fas fa-comments"></i>
-    <span class="fab-badge" id="chatFabBadge">0</span>
-</button>
-
-<!-- Toast admin chat -->
-<div class="admin-chat-toast" id="adminChatToast">
-    <div class="toast-avatar">
-        <i class="fas fa-headset"></i>
-    </div>
-    <div class="toast-content">
-        <div class="toast-title">
-            <span>Admin vừa nhắn tin</span>
-            <span class="new-badge">MỚI</span>
-        </div>
-        <div class="toast-message" id="adminChatToastMsg">...</div>
-        <button class="toast-action" id="adminChatToastAction" type="button">
-            <i class="fas fa-reply"></i> Mở chat ngay
-        </button>
-    </div>
-    <button class="toast-close" id="adminChatToastClose" type="button" aria-label="Đóng">
-        <i class="fas fa-times"></i>
-    </button>
-</div>
-
-<!-- Modal chat -->
-<div class="chat-modal" id="chatModal">
-    <div class="chat-box">
-
-        <div class="chat-header">
-            <button class="chat-header-back" id="chatBack" type="button" aria-label="Quay lại">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-            <div class="chat-avatar">
-                <i class="fas fa-headset" id="chatAvatarIcon"></i>
-            </div>
-            <div class="chat-header-info" id="chatHeaderInfo">
-                <div class="name">
-                    Hỗ trợ Admin
-                    <i class="fas fa-check-circle" style="font-size:.7rem;color:#86efac;" title="Đã xác minh"></i>
-                </div>
-                <div class="status">
-                    <i class="fas fa-circle" style="font-size:.5rem;color:#22c55e;"></i>
-                    <span id="chatStatusText">Thường trả lời trong 5-10 phút</span>
-                </div>
-            </div>
-            <button class="chat-header-close" id="chatClose" type="button" aria-label="Đóng">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-
-        <div class="chat-admin-waiting-banner" id="chatAdminWaitingBanner">
-            <div class="banner-icon">
-                <i class="fas fa-bell"></i>
-            </div>
-            <div class="banner-text">
-                🔥 <b>Admin đang chờ bạn trả lời!</b> Hãy phản hồi sớm để được hỗ trợ nhanh nhất.
-            </div>
-        </div>
-
-        <div class="chat-body" id="chatBody">
-            <div class="chat-skeleton">
-                <div class="sk-avatar"></div>
-                <div class="sk-lines">
-                    <div class="sk-line"></div>
-                    <div class="sk-line short"></div>
-                </div>
-            </div>
-            <div class="chat-skeleton">
-                <div class="sk-avatar"></div>
-                <div class="sk-lines">
-                    <div class="sk-line"></div>
-                    <div class="sk-line short"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-zalo-suggest" id="chatZaloSuggest">
-            <div class="zalo-icon">
-                <i class="fas fa-comment-dots"></i>
-            </div>
-            <div class="zalo-content">
-                <div class="zalo-title">
-                    <i class="fas fa-lightbulb"></i>
-                    Thêm Zalo để hỗ trợ nhanh hơn
-                </div>
-                <div class="zalo-desc">
-                    Để lại số Zalo, admin sẽ <b>liên hệ trực tiếp</b> khi có vấn đề gấp (thanh toán, tài khoản...).
-                    Thông tin chỉ admin thấy.
-                </div>
-                <div class="zalo-actions">
-                    <button class="zalo-btn primary" id="chatAddZaloBtn" type="button">
-                        <i class="fas fa-plus"></i> Thêm Zalo
-                    </button>
-                    <button class="zalo-btn secondary" id="chatSkipZaloBtn" type="button">
-                        <i class="fas fa-times"></i> Để sau
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-footer">
-            <div class="chat-quick-replies hidden" id="chatQuickReplies">
-                <button class="chat-quick-btn" type="button" data-reply="Đã nhận được, em đợi admin 1-2 phút nhé!">Đã nhận, chờ 1-2 phút</button>
-                <button class="chat-quick-btn" type="button" data-reply="Admin đã xác nhận thanh toán. Tài khoản được gia hạn rồi em nhé!">Đã xác nhận thanh toán</button>
-                <button class="chat-quick-btn" type="button" data-reply="Em gửi giúp admin ảnh chụp biên lai chuyển khoản nhé.">Xin ảnh biên lai</button>
-                <button class="chat-quick-btn" type="button" data-reply="Cảm ơn em đã ủng hộ. Chúc em học tốt! 🎓">Cảm ơn</button>
-            </div>
-            <div class="chat-footer-row">
-                <textarea
-                    id="chatInput"
-                    placeholder="Nhập tin nhắn..."
-                    rows="1"
-                    maxlength="1000"
-                    autocomplete="off"
-                    autocorrect="off"
-                    autocapitalize="sentences"></textarea>
-                <button class="chat-send-btn" id="chatSendBtn" type="button" disabled aria-label="Gửi">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- Modal nhập Zalo -->
-<div class="edit-modal" id="zaloModal">
-    <div class="edit-box">
-        <button class="edit-close" id="zaloClose" type="button"><i class="fas fa-times"></i></button>
-        <h2><i class="fas fa-comment-dots" style="color:#0068ff;"></i> Liên hệ Zalo</h2>
-
-        <div class="edit-user-info">
-            <div style="font-size:.8rem;color:var(--text-2);line-height:1.5;">
-                <i class="fas fa-info-circle" style="color:var(--primary);"></i>
-                Điền SĐT Zalo để admin có thể <b>liên hệ nhanh</b> khi bạn mua gói,
-                cần hỗ trợ hoặc có vấn đề về tài khoản.
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Số điện thoại Zalo</label>
-            <input type="tel" id="zaloPhoneInput" placeholder="0901234567" maxlength="15" autocomplete="tel">
-        </div>
-
-        <div class="form-group">
-            <label>Tên Zalo (tùy chọn)</label>
-            <input type="text" id="zaloNameInput" placeholder="VD: Nguyễn Văn A" maxlength="50">
-        </div>
-
-        <div style="padding:.6rem .85rem;background:rgba(0,104,255,.08);border:1px solid rgba(0,104,255,.25);border-radius:10px;font-size:.75rem;color:var(--text-2);line-height:1.5;margin-bottom:1rem;">
-            <i class="fas fa-shield-alt" style="color:#0068ff;"></i>
-            Thông tin của bạn <b>chỉ admin thấy</b> và không chia sẻ với ai khác.
-        </div>
-
-        <div class="form-actions">
-            <button class="btn" id="zaloCancel" type="button">Hủy</button>
-            <button class="btn primary" id="zaloSave" type="button">
-                <i class="fas fa-check"></i> Lưu
-            </button>
         </div>
     </div>
 </div>
@@ -12845,9 +12528,6 @@ var RENEWAL_SUPPORT_ZALO = "0922331886";
 /* ⭐ TELEGRAM CONFIG */
 var TELEGRAM_BOT_TOKEN = "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU";
 var TELEGRAM_CHAT_ID   = "-0";
-window.TELEGRAM_BOT_TOKEN = TELEGRAM_BOT_TOKEN;
-window.TELEGRAM_CHAT_ID = TELEGRAM_CHAT_ID;
-
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -12861,30 +12541,40 @@ var appInitialized = false;
 var renewalSelectedPkg = null;
 var renewalCurrentReq = null;
 var renewalListener = null;
+
 var userWatcher = null;
 
+/* Search & Filter state */
 var adminSearchQuery = '';
 var adminCurrentFilter = 'all';
 var editingPermissionEmail = null;
 
+/* Renewals tab state */
 var renewalTab = 'pending';
 var pendingRenewalsData = [];
 var confirmedRenewalsData = [];
 
+/* Admin permissions definition */
 var ADMIN_PERMISSIONS = [
-    { key: 'canViewUsers',    name: 'Xem danh sách user',    desc: 'Xem thông tin tất cả tài khoản user' },
-    { key: 'canEditExpiry',   name: 'Chỉnh hạn sử dụng',     desc: 'Thay đổi ngày hết hạn của user' },
-    { key: 'canRenew',        name: 'Duyệt gia hạn',         desc: 'Xác nhận/từ chối yêu cầu gia hạn của user' },
-    { key: 'canAddUser',      name: 'Thêm user mới',         desc: 'Tạo tài khoản user mới' },
-    { key: 'canDeleteUser',   name: 'Xóa user',              desc: 'Xóa tài khoản user khỏi hệ thống' },
-    { key: 'canImportExport', name: 'Import/Export Excel',   desc: 'Nhập/xuất danh sách user' },
-    { key: 'canViewLogs',     name: 'Xem lịch sử đăng nhập', desc: 'Xem log đăng nhập của user' },
-    { key: 'canManageAdmin',  name: 'Quản lý Admin',         desc: 'Thêm/xóa/phân quyền admin khác (chỉ Super Admin)' }
+    { key: 'canViewUsers',      name: 'Xem danh sách user',   desc: 'Xem thông tin tất cả tài khoản user' },
+    { key: 'canEditExpiry',     name: 'Chỉnh hạn sử dụng',    desc: 'Thay đổi ngày hết hạn của user' },
+    { key: 'canRenew',          name: 'Duyệt gia hạn',        desc: 'Xác nhận/từ chối yêu cầu gia hạn của user' },
+    { key: 'canAddUser',        name: 'Thêm user mới',        desc: 'Tạo tài khoản user mới' },
+    { key: 'canDeleteUser',     name: 'Xóa user',             desc: 'Xóa tài khoản user khỏi hệ thống' },
+    { key: 'canImportExport',   name: 'Import/Export Excel',  desc: 'Nhập/xuất danh sách user' },
+    { key: 'canViewLogs',       name: 'Xem lịch sử đăng nhập', desc: 'Xem log đăng nhập của user' },
+    { key: 'canManageAdmin',    name: 'Quản lý Admin',        desc: 'Thêm/xóa/phân quyền admin khác (chỉ Super Admin)' }
 ];
 
 var DEFAULT_ADMIN_PERMS = {
-    canViewUsers: true, canEditExpiry: true, canRenew: true, canAddUser: true,
-    canDeleteUser: true, canImportExport: true, canViewLogs: true, canManageAdmin: false
+    canViewUsers: true,
+    canEditExpiry: true,
+    canRenew: true,
+    canAddUser: true,
+    canDeleteUser: true,
+    canImportExport: true,
+    canViewLogs: true,
+    canManageAdmin: false
 };
 
 /* ============ HELPERS ============ */
@@ -12914,10 +12604,14 @@ function hasPermission(permKey) {
     if (!currentUser || currentUser.role !== 'admin') return false;
     if (isSuperAdmin()) return true;
     var perms = currentUser.permissions || {};
-    if (perms[permKey] === undefined) return DEFAULT_ADMIN_PERMS[permKey] === true;
+    if (perms[permKey] === undefined) {
+        return DEFAULT_ADMIN_PERMS[permKey] === true;
+    }
     return perms[permKey] === true;
 }
-
+/* ═══════════════════════════════════════════════════════════════
+   🔔 TOAST THÔNG BÁO USER DATA CHANGED
+   ═══════════════════════════════════════════════════════════════ */
 function showUserChangedToast(message, type) {
     var old = document.getElementById('userChangedToast');
     if (old) old.remove();
@@ -12930,13 +12624,16 @@ function showUserChangedToast(message, type) {
          type === 'info' ? 'info-circle' : 'check-circle') +
         '"></i><span>' + message + '</span>';
     document.body.appendChild(toast);
-    requestAnimationFrame(function() { toast.classList.add('show'); });
+
+    requestAnimationFrame(function() {
+        toast.classList.add('show');
+    });
+
     setTimeout(function() {
         toast.classList.remove('show');
         setTimeout(function() { if (toast.parentNode) toast.remove(); }, 400);
     }, 4000);
 }
-
 /* ============ TIER STATE ============ */
 function publishTierState() {
     if (!currentUser) {
@@ -12978,15 +12675,23 @@ function publishTierState() {
 }
 
 function _refreshDatasetLockUI() {
-    if (typeof initDatasetSelector === 'function') { try { initDatasetSelector(); } catch(e) {} }
-    if (typeof pfBuildDatasetSelect === 'function') { try { pfBuildDatasetSelect(); } catch(e) {} }
+    if (typeof initDatasetSelector === 'function') {
+        try { initDatasetSelector(); } catch(e) {}
+    }
+    if (typeof pfBuildDatasetSelect === 'function') {
+        try { pfBuildDatasetSelect(); } catch(e) {}
+    }
     if (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET !== 'tonghop') {
         var canAccess = (window.APP_TIER === 'active');
         if (!canAccess) {
             try {
-                if (typeof window.__switchRawData === 'function') window.__switchRawData('tonghop');
+                if (typeof window.__switchRawData === 'function') {
+                    window.__switchRawData('tonghop');
+                }
                 if (typeof applyFilter === 'function') applyFilter();
-                if (typeof markCurrentDatasetActive === 'function') markCurrentDatasetActive();
+                if (typeof markCurrentDatasetActive === 'function') {
+                    markCurrentDatasetActive();
+                }
             } catch(e) {}
         }
     }
@@ -13006,25 +12711,14 @@ try {
 /* ============ AUTH STATE ============ */
 async function handleAuthChange(user) {
     if (!user) {
+        // Logout → hủy watcher
         if (userWatcher) { try { userWatcher(); } catch(e) {} userWatcher = null; }
-        if (typeof chatBadgeWatcher !== 'undefined' && chatBadgeWatcher) {
-            try { chatBadgeWatcher(); } catch(e) {}
-            chatBadgeWatcher = null;
-        }
-        if (typeof chatBadgePollTimer !== 'undefined' && chatBadgePollTimer) {
-            clearInterval(chatBadgePollTimer);
-            chatBadgePollTimer = null;
-        }
-        if (typeof chatUnsubscribe !== 'undefined' && chatUnsubscribe) {
-            try { chatUnsubscribe(); } catch(e) {}
-            chatUnsubscribe = null;
-        }
-        window.__chatBadgeStarted = false;
         currentUser = null; isDemo = true;
         publishTierState();
         applyUserUI(); enterDemoMode();
         return;
     }
+
     var email = (user.email || '').toLowerCase();
     var cacheKey = 'user_cache_' + email;
     var cached = null;
@@ -13039,6 +12733,7 @@ async function handleAuthChange(user) {
         if (!appInitialized) { initApp(); appInitialized = true; }
         else { if (typeof refreshApp === 'function') refreshApp(); }
         watchCurrentUser();
+        // Background verify sau 2s để phát hiện thay đổi từ admin
         setTimeout(function() { verifyCurrentUserBackground(); }, 2000);
         return;
     }
@@ -13072,6 +12767,7 @@ async function handleAuthChange(user) {
         }
 
         var data = doc.data() || {};
+
         var userTier = 'active';
         if (data.role === 'admin') userTier = 'active';
         else if (data.tier === 'trial' || data.isTrial === true) userTier = 'trial';
@@ -13089,9 +12785,7 @@ async function handleAuthChange(user) {
             trialMaxQuestions: data.trialMaxQuestions || TRIAL_MAX_QUESTIONS,
             trialMaxHSK: data.trialMaxHSK || TRIAL_MAX_HSK,
             isSubAdmin: data.isSubAdmin || false,
-            permissions: data.permissions || null,
-            zaloPhone: data.zaloPhone || '',
-            zaloName: data.zaloName || ''
+            permissions: data.permissions || null
         };
 
         currentUser = userData;
@@ -13099,7 +12793,9 @@ async function handleAuthChange(user) {
         var isExpiredUser = false;
         if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
             var expDate = getExpiryDate(currentUser.expiresAt);
-            if (expDate && !isNaN(expDate.getTime())) isExpiredUser = expDate.getTime() < Date.now();
+            if (expDate && !isNaN(expDate.getTime())) {
+                isExpiredUser = expDate.getTime() < Date.now();
+            }
         }
 
         if (isExpiredUser) {
@@ -13128,16 +12824,20 @@ async function handleAuthChange(user) {
         isDemo = true; enterDemoMode();
     }
 }
-
 /* ═══════════════════════════════════════════════════════════════
    🔄 REALTIME WATCHER — Tự động cập nhật khi admin duyệt gia hạn
    ═══════════════════════════════════════════════════════════════ */
 function watchCurrentUser() {
     if (!currentUser || !db) return;
-    if (userWatcher) { try { userWatcher(); } catch(e) {} userWatcher = null; }
+
+    if (userWatcher) {
+        try { userWatcher(); } catch(e) {}
+        userWatcher = null;
+    }
 
     var email = currentUser.email;
     if (!email) return;
+
     console.log('👁 Watching user changes for:', email);
 
     userWatcher = db.collection('allowed_users').doc(email).onSnapshot(function(doc) {
@@ -13150,11 +12850,13 @@ function watchCurrentUser() {
             var od = getExpiryDate(currentUser.expiresAt);
             if (od) oldExpiryMs = od.getTime();
         }
+
         var newExpiryMs = null;
         if (data.expiresAt) {
             var nd = getExpiryDate(data.expiresAt);
             if (nd) newExpiryMs = nd.getTime();
         }
+
         var oldPermanent = currentUser.isPermanent || false;
         var newPermanent = data.isPermanent || false;
         var oldRole = currentUser.role;
@@ -13162,10 +12864,17 @@ function watchCurrentUser() {
         var oldName = currentUser.name;
         var newName = data.name || currentUser.name;
 
-        if (oldExpiryMs === newExpiryMs && oldPermanent === newPermanent &&
-            oldRole === newRole && oldName === newName) return;
+        if (oldExpiryMs === newExpiryMs
+            && oldPermanent === newPermanent
+            && oldRole === newRole
+            && oldName === newName) {
+            return;
+        }
 
-        console.log('🔄 User data changed');
+        console.log('🔄 User data changed:', {
+            oldExpiry: oldExpiryMs, newExpiry: newExpiryMs,
+            oldPermanent: oldPermanent, newPermanent: newPermanent
+        });
 
         currentUser.expiresAt = data.expiresAt || null;
         currentUser.isPermanent = newPermanent;
@@ -13174,8 +12883,6 @@ function watchCurrentUser() {
         currentUser.tier = data.tier || 'active';
         if (data.permissions) currentUser.permissions = data.permissions;
         if (data.isSubAdmin !== undefined) currentUser.isSubAdmin = data.isSubAdmin;
-        if (data.zaloPhone !== undefined) currentUser.zaloPhone = data.zaloPhone;
-        if (data.zaloName !== undefined) currentUser.zaloName = data.zaloName;
 
         if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
             var expDate = getExpiryDate(currentUser.expiresAt);
@@ -13201,6 +12908,8 @@ function watchCurrentUser() {
         publishTierState();
         applyUserUI();
         if (typeof refreshApp === 'function') refreshApp();
+
+        /* ❤️ Cập nhật Yêu thích khi tier đổi (VD: trial → active sau khi admin duyệt) */
         if (typeof window.favRefreshUI === 'function') window.favRefreshUI();
 
         if (newPermanent && !oldPermanent) {
@@ -13215,14 +12924,15 @@ function watchCurrentUser() {
         } else if (newRole !== oldRole) {
             showUserChangedToast('ℹ️ Vai trò đã đổi thành: ' + newRole, 'info');
         }
+
     }, function(err) {
         console.warn('User watcher error:', err);
     });
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═════════════════════════════════════ {}
+══════════════════════════
    🔍 VERIFY BACKGROUND — Fetch server sau 2s
-   (ĐÃ FIX comment hỏng — trước đây có `/* {} */` chèn giữa)
    ═══════════════════════════════════════════════════════════════ */
 function verifyCurrentUserBackground() {
     if (!currentUser || !db) return;
@@ -13283,7 +12993,6 @@ function verifyCurrentUserBackground() {
             console.warn('Background verify error:', err);
         });
 }
-
 function getDaysRemaining(userData) {
     if (!userData || !userData.expiresAt) return null;
     if (userData.role === 'admin') return null;
@@ -13347,45 +13056,77 @@ function enterDemoMode() {
 
 /* ═══════════════════════════════════════════════════════════════
    ⏰ RENDER BANNER CẢNH BÁO GIA HẠN
+   Hiện 3 mức:
+     • Warning (vàng)   : còn ≤ 7 ngày
+     • Urgent  (cam đậm): còn ≤ 3 ngày
+     • Expired (đỏ)     : đã hết hạn (daysLeft ≤ 0)
+   Ẩn khi: chưa đăng nhập / admin / vĩnh viễn / còn > 7 ngày
    ═══════════════════════════════════════════════════════════════ */
 function renderExpiryBanner() {
     var banner = $('expiryBanner');
     if (!banner) return;
 
-    if (!currentUser) { banner.style.display = 'none'; return; }
-    if (currentUser.role === 'admin' || currentUser.isPermanent) { banner.style.display = 'none'; return; }
-    if (!currentUser.expiresAt) { banner.style.display = 'none'; return; }
+    if (!currentUser) {
+        banner.style.display = 'none';
+        return;
+    }
+    if (currentUser.role === 'admin' || currentUser.isPermanent) {
+        banner.style.display = 'none';
+        return;
+    }
+    if (!currentUser.expiresAt) {
+        banner.style.display = 'none';
+        return;
+    }
 
     var expDate = getExpiryDate(currentUser.expiresAt);
-    if (!expDate || isNaN(expDate.getTime())) { banner.style.display = 'none'; return; }
+    if (!expDate || isNaN(expDate.getTime())) {
+        banner.style.display = 'none';
+        return;
+    }
 
     var now = Date.now();
     var daysLeft = Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000));
     var expDateStr = expDate.toLocaleDateString('vi-VN');
     var tier = currentUser.tier || 'active';
 
-    if (daysLeft > 7) { banner.style.display = 'none'; return; }
+    if (daysLeft > 7) {
+        banner.style.display = 'none';
+        return;
+    }
 
     var isExpired = daysLeft <= 0;
     var isUrgent  = !isExpired && daysLeft <= 3;
 
     banner.classList.remove('urgent', 'expired');
-    if (isExpired) banner.classList.add('expired');
-    else if (isUrgent) banner.classList.add('urgent');
+    if (isExpired) {
+        banner.classList.add('expired');
+    } else if (isUrgent) {
+        banner.classList.add('urgent');
+    }
 
     var iconWrap = $('expiryBannerIcon') || banner.querySelector('.expiry-banner-icon');
     if (iconWrap) {
-        if (isExpired) iconWrap.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-        else if (isUrgent) iconWrap.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
-        else iconWrap.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+        if (isExpired) {
+            iconWrap.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (isUrgent) {
+            iconWrap.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+        } else {
+            iconWrap.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+        }
     }
 
     var titleEl = $('expiryBannerTitle') || banner.querySelector('.expiry-banner-text .title');
     if (titleEl) {
-        if (isExpired) titleEl.innerHTML = '❌ Tài khoản đã HẾT HẠN!';
-        else if (isUrgent) titleEl.innerHTML = '🔥 Chỉ còn ' + daysLeft + ' ngày!';
-        else if (tier === 'trial') titleEl.innerHTML = '🎁 Trial còn ' + daysLeft + ' ngày';
-        else titleEl.innerHTML = '⏰ Tài khoản sắp hết hạn';
+        if (isExpired) {
+            titleEl.innerHTML = '❌ Tài khoản đã HẾT HẠN!';
+        } else if (isUrgent) {
+            titleEl.innerHTML = '🔥 Chỉ còn ' + daysLeft + ' ngày!';
+        } else if (tier === 'trial') {
+            titleEl.innerHTML = '🎁 Trial còn ' + daysLeft + ' ngày';
+        } else {
+            titleEl.innerHTML = '⏰ Tài khoản sắp hết hạn';
+        }
     }
 
     var descEl = $('expiryBannerDesc') || banner.querySelector('.expiry-banner-text .desc');
@@ -13408,9 +13149,13 @@ function renderExpiryBanner() {
 
     var contactBtn = $('expiryContactBtn') || banner.querySelector('.expiry-banner-btn');
     if (contactBtn) {
-        if (isExpired) contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
-        else if (isUrgent) contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
-        else contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn';
+        if (isExpired) {
+            contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
+        } else if (isUrgent) {
+            contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
+        } else {
+            contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn';
+        }
         contactBtn.onclick = function(e) {
             e.preventDefault();
             if (typeof openRenewalModal === 'function') openRenewalModal();
@@ -13420,14 +13165,26 @@ function renderExpiryBanner() {
     banner.style.display = 'flex';
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ✅ ĐỒNG BỘ TRẠNG THÁI DROPDOWN USER MENU
+   ═══════════════════════════════════════════════════════════════ */
 function applyUserDropdownState() {
     var dd = $('userDropdown');
     if (!dd) return;
-    if (isDemo && !currentUser) { dd.classList.remove('show'); return; }
+
+    if (isDemo && !currentUser) {
+        dd.classList.remove('show');
+        return;
+    }
+
     var closedFlag = null;
     try { closedFlag = sessionStorage.getItem('userDropdownClosed'); } catch(_e) {}
-    if (closedFlag === '1') dd.classList.remove('show');
-    else dd.classList.add('show');
+
+    if (closedFlag === '1') {
+        dd.classList.remove('show');
+    } else {
+        dd.classList.add('show');
+    }
 }
 
 /* ============ USER UI ============ */
@@ -13500,6 +13257,7 @@ function applyUserUI() {
             }
         }
         updateUserDetails();
+
         applyUserDropdownState();
     }
 
@@ -13514,19 +13272,10 @@ function applyUserUI() {
     var toggleFocusBtn = $('toggleFocusBtn');
     if (toggleFocusBtn) toggleFocusBtn.style.display = isDemo ? 'none' : 'flex';
     if (isDemo) document.body.classList.remove('hide-floating');
+
+    /* ❤️ Cập nhật trạng thái Yêu thích khi tier thay đổi */
     if (typeof window.favUpdateLockState === 'function') window.favUpdateLockState();
-
-    /* 💬 Chat: FAB visibility + start badge watcher (chỉ 1 lần) */
-    if (typeof updateChatFABVisibility === 'function') updateChatFABVisibility();
-
-    if (currentUser && !isDemo && !window.__chatBadgeStarted) {
-        window.__chatBadgeStarted = true;
-        setTimeout(function() {
-            if (typeof startChatBadgeWatch === 'function') startChatBadgeWatch();
-        }, 800);
-    }
 }
-
 function updateUserDetails() {
     var detailsEl = $('userDetails');
     if (!detailsEl) return;
@@ -13629,7 +13378,6 @@ function logLogin(u) {
         }).then(function() { try { localStorage.setItem(logKey, today); } catch(e) {} }).catch(function(){});
     } catch(e) {}
 }
-
 /* ============ ADMIN SEARCH & FILTER ============ */
 function filterUsers(items) {
     var query = adminSearchQuery.toLowerCase().trim();
@@ -13677,24 +13425,30 @@ function getUserSortStatus(u, now) {
 function sortUsersForDisplay(items) {
     var myEmail = (currentUser && currentUser.email ? currentUser.email.toLowerCase() : '');
     var now = Date.now();
+
     return items.slice().sort(function(a, b) {
         var aEmail = (a.email || '').toLowerCase();
         var bEmail = (b.email || '').toLowerCase();
+
         var aIsMe = (aEmail === myEmail);
         var bIsMe = (bEmail === myEmail);
         if (aIsMe && !bIsMe) return -1;
         if (!aIsMe && bIsMe) return 1;
+
         var aGroup = a.role === 'admin' ? 1 : 2;
         var bGroup = b.role === 'admin' ? 1 : 2;
         if (aGroup !== bGroup) return aGroup - bGroup;
+
         if (aGroup === 2) {
             var aStatus = getUserSortStatus(a, now);
             var bStatus = getUserSortStatus(b, now);
             if (aStatus !== bStatus) return aStatus - bStatus;
         }
+
         var aLast = lastLoginMap[aEmail] ? lastLoginMap[aEmail].getTime() : 0;
         var bLast = lastLoginMap[bEmail] ? lastLoginMap[bEmail].getTime() : 0;
         if (aLast !== bLast) return bLast - aLast;
+
         return aEmail.localeCompare(bEmail);
     });
 }
@@ -13742,12 +13496,15 @@ window.setAdminFilter = function(filter) {
 
 /* ═══════════════════════════════════════════════════════════════
    🔒 OPEN RENEWAL MODAL — CHẶN 2 LỆNH CÙNG LÚC
+   • Nếu user đã có lệnh pending/user_paid → hỏi hủy để tạo mới
+   • Chỉ cho phép 1 lệnh tại 1 thời điểm
    ═══════════════════════════════════════════════════════════════ */
 window.openRenewalModal = async function() {
     if (!currentUser) { showLoginModal(); return; }
     if (currentUser.role === 'admin') { alert('Admin có hạn vĩnh viễn, không cần gia hạn!'); return; }
     if (currentUser.isPermanent) { alert('💎 Bạn đã sở hữu gói VĨNH VIỄN!\n\nKhông cần gia hạn thêm.'); return; }
 
+    /* ═══ CHECK LỆNH CŨ — Chỉ cho phép 1 lệnh pending ═══ */
     try {
         var existingSnap = await db.collection('renewal_requests')
             .where('email', '==', currentUser.email)
@@ -13761,6 +13518,7 @@ window.openRenewalModal = async function() {
             var oldData = oldReq.data();
             var oldCreated = oldData.createdAt ? oldData.createdAt.toDate() : new Date();
             var hoursAgo = Math.floor((Date.now() - oldCreated.getTime()) / 3600000);
+
             var statusText = oldData.status === 'user_paid' ? 'Chờ admin xác nhận' : 'Chờ chuyển khoản';
             var confirmMsg = '⚠️ Bạn đang có 1 lệnh gia hạn CHƯA hoàn tất:\n\n' +
                 '• Gói: ' + (oldData.packageLabel || oldData.package) + '\n' +
@@ -13771,18 +13529,23 @@ window.openRenewalModal = async function() {
                 '👉 Bạn KHÔNG THỂ tạo lệnh mới khi lệnh cũ chưa xử lý.\n\n' +
                 'Bạn có muốn HỦY lệnh cũ để tạo lệnh mới không?';
 
-            if (!confirm(confirmMsg)) return;
+            if (!confirm(confirmMsg)) {
+                return;
+            }
 
+            /* Hủy lệnh cũ */
             await db.collection('renewal_requests').doc(oldReq.id).update({
                 status: 'cancelled',
                 cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
                 cancelledBy: 'user_replace',
                 cancelReason: 'User hủy để tạo lệnh mới'
             });
+
             alert('✅ Đã hủy lệnh cũ. Bạn có thể tạo lệnh mới.');
         }
     } catch(e) {
         console.error('Check existing renewal error:', e);
+        /* Không block user nếu query lỗi */
     }
 
     renewalSelectedPkg = null;
@@ -13858,20 +13621,28 @@ window.selectPackage = function(pkgId) {
     if (btn) btn.disabled = false;
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   🔒 GO TO PAYMENT — DOUBLE-CHECK TRƯỚC KHI TẠO LỆNH
+   ═══════════════════════════════════════════════════════════════ */
 async function goToPayment() {
     if (!renewalSelectedPkg) return;
+
+    /* ═══ CHECK LẦN 2 — Đảm bảo không có lệnh pending ═══ */
     try {
         var checkSnap = await db.collection('renewal_requests')
             .where('email', '==', currentUser.email)
             .where('status', 'in', ['pending', 'user_paid'])
             .limit(1)
             .get();
+
         if (!checkSnap.empty) {
             alert('⚠️ Bạn vẫn còn 1 lệnh gia hạn chưa xử lý.\n\nVui lòng hủy lệnh cũ trước khi tạo lệnh mới.');
             closeRenewalModal();
             return;
         }
-    } catch(e) { console.error('Double-check error:', e); }
+    } catch(e) {
+        console.error('Double-check error:', e);
+    }
 
     var transferCode = generateTransferCode();
     var amount = renewalSelectedPkg.amount;
@@ -14082,8 +13853,6 @@ async function refreshCurrentUser() {
         if (data.tier) currentUser.tier = data.tier;
         if (data.permissions) currentUser.permissions = data.permissions;
         if (data.isSubAdmin !== undefined) currentUser.isSubAdmin = data.isSubAdmin;
-        if (data.zaloPhone !== undefined) currentUser.zaloPhone = data.zaloPhone;
-        if (data.zaloName !== undefined) currentUser.zaloName = data.zaloName;
 
         if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
             var expDate = getExpiryDate(currentUser.expiresAt);
@@ -14110,6 +13879,7 @@ async function refreshCurrentUser() {
 
 /* ═══════════════════════════════════════════════════════════════
    ⏰ AUTO-EXPIRE: Tự động hủy lệnh gia hạn sau 24H
+   Chạy khi load trang + mỗi 1 giờ
    ═══════════════════════════════════════════════════════════════ */
 async function autoExpireOldRenewals() {
     if (!db) return;
@@ -14120,7 +13890,9 @@ async function autoExpireOldRenewals() {
             .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(cutoff))
             .limit(50)
             .get();
+
         if (snap.empty) return;
+
         var batch = db.batch();
         var count = 0;
         snap.forEach(function(doc) {
@@ -14131,13 +13903,18 @@ async function autoExpireOldRenewals() {
             });
             count++;
         });
+
         await batch.commit();
         console.log('[Auto-expire] Đã hủy ' + count + ' lệnh gia hạn quá 24h');
-    } catch(e) { console.error('[Auto-expire] Lỗi:', e); }
+    } catch(e) {
+        console.error('[Auto-expire] Lỗi:', e);
+    }
 }
 
 function scheduleAutoExpire() {
+    /* Chạy lần đầu sau 10s để không block app load */
     setTimeout(autoExpireOldRenewals, 10000);
+    /* Chạy lại mỗi 1 giờ */
     setInterval(autoExpireOldRenewals, 60 * 60 * 1000);
 }
 
@@ -14154,14 +13931,19 @@ window.openRenewalHistory = async function() {
         var snapshot = await db.collection('renewal_requests')
             .where('email', '==', currentUser.email)
             .orderBy('createdAt', 'desc').limit(50).get();
+
         if (snapshot.empty) {
             listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
                 '<i class="fas fa-inbox" style="font-size:2rem;margin-bottom:.75rem;display:block;opacity:.5"></i>' +
                 'Bạn chưa có giao dịch gia hạn nào</div>';
             return;
         }
+
         var html = '';
-        snapshot.forEach(function(doc) { html += buildHistoryItemHtml(doc.data(), false); });
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            html += buildHistoryItemHtml(d, false);
+        });
         listEl.innerHTML = html;
     } catch(e) {
         console.error('Lỗi load lịch sử:', e);
@@ -14187,12 +13969,14 @@ window.openUserRenewalHistory = async function(email) {
         var snapshot = await db.collection('renewal_requests')
             .where('email', '==', email.toLowerCase())
             .orderBy('createdAt', 'desc').limit(100).get();
+
         if (snapshot.empty) {
             listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
                 '<i class="fas fa-inbox" style="font-size:2rem;margin-bottom:.75rem;display:block;opacity:.5"></i>' +
                 'User này chưa có giao dịch gia hạn nào</div>';
             return;
         }
+
         var totalAmount = 0, totalConfirmed = 0, totalPending = 0, totalRejected = 0, totalExpired = 0;
         snapshot.forEach(function(doc) {
             var d = doc.data();
@@ -14201,13 +13985,18 @@ window.openUserRenewalHistory = async function(email) {
             else if (d.status === 'rejected') totalRejected++;
             else if (d.status === 'expired') totalExpired++;
         });
+
         var statsHtml = '<div class="renewal-history-stats">' +
             '<div class="rhs-item"><div class="rhs-label">Tổng chi tiêu</div><div class="rhs-value amount">' + formatMoney(totalAmount) + 'đ</div></div>' +
             '<div class="rhs-item"><div class="rhs-label">Số giao dịch</div><div class="rhs-value">' + snapshot.size + '</div></div>' +
             '<div class="rhs-item"><div class="rhs-label">Đã xác nhận</div><div class="rhs-value" style="color:var(--success)">' + totalConfirmed + '</div></div>' +
             '<div class="rhs-item"><div class="rhs-label">Chờ / Hủy / Hết hạn</div><div class="rhs-value" style="color:#f59e0b">' + totalPending + ' / ' + totalRejected + ' / ' + totalExpired + '</div></div></div>';
+
         var html = statsHtml;
-        snapshot.forEach(function(doc) { html += buildHistoryItemHtml(doc.data(), true); });
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            html += buildHistoryItemHtml(d, true);
+        });
         listEl.innerHTML = html;
     } catch(e) {
         console.error('Lỗi load lịch sử:', e);
@@ -14219,6 +14008,7 @@ window.openUserRenewalHistory = async function(email) {
 function buildHistoryItemHtml(d, showAdminInfo) {
     var created = d.createdAt ? d.createdAt.toDate() : null;
     var createdStr = created ? created.toLocaleString('vi-VN') : 'Không rõ';
+
     var statusMap = {
         'pending':   { text: '⏱ Chờ chuyển khoản', cls: 'pending' },
         'user_paid': { text: '⏳ Chờ xác nhận',     cls: 'user_paid' },
@@ -14247,12 +14037,15 @@ function buildHistoryItemHtml(d, showAdminInfo) {
         var cn = d.cancelledAt.toDate ? d.cancelledAt.toDate() : null;
         if (cn) confirmInfo = '<div class="rh-date"><i class="fas fa-ban" style="color:#94a3b8"></i> Hủy: ' + cn.toLocaleString('vi-VN') + (d.cancelledBy ? ' — ' + escapeHtml(d.cancelledBy) : '') + '</div>';
     }
+
     var newExpiryInfo = '';
     if (d.newExpiresAt) {
         var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
         if (ne) newExpiryInfo = '<div class="rh-date"><i class="fas fa-calendar-check" style="color:#16a34a"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
     }
-    if (isPermanent) newExpiryInfo += '<div class="rh-date"><i class="fas fa-crown" style="color:#dc2626"></i> <b>VĨNH VIỄN</b></div>';
+    if (isPermanent) {
+        newExpiryInfo += '<div class="rh-date"><i class="fas fa-crown" style="color:#dc2626"></i> <b>VĨNH VIỄN</b></div>';
+    }
 
     return '<div class="renewal-history-item">' +
         '<div class="rh-head">' +
@@ -14368,7 +14161,9 @@ function initAdminPanel() {
     }
 
     document.querySelectorAll('.admin-filter-btn[data-filter]').forEach(function(btn) {
-        btn.addEventListener('click', function() { setAdminFilter(this.dataset.filter); });
+        btn.addEventListener('click', function() {
+            setAdminFilter(this.dataset.filter);
+        });
     });
 
     if ($('refreshRenewalsBtn')) $('refreshRenewalsBtn').addEventListener('click', function() { loadRenewals(); });
@@ -14378,6 +14173,7 @@ function initAdminPanel() {
         var btn = $(btnId);
         var sec = $(sectionId);
         if (!btn || !sec) return;
+
         function syncState() {
             var isVisible = !sec.classList.contains('collapsed');
             var icon = btn.querySelector('i');
@@ -14385,7 +14181,9 @@ function initAdminPanel() {
             btn.classList.toggle('active', isVisible);
             btn.title = (isVisible ? 'Ẩn ' : 'Hiện ') + (label || 'khung');
         }
+
         syncState();
+
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -14398,7 +14196,6 @@ function initAdminPanel() {
     bindSectionToggle('toggleUsersBtn', 'adminUsersSection', 'danh sách tài khoản');
     bindSectionToggle('toggleLogsBtn', 'adminLogsSection', 'lịch sử đăng nhập');
     bindSectionToggle('toggleRenewalHistoryBtn', 'adminRenewalHistorySection', 'lịch sử gia hạn');
-    bindSectionToggle('toggleChatBtn', 'adminChatSection', 'chat hỗ trợ');
 
     if ($('permissionClose')) $('permissionClose').addEventListener('click', closePermissionModal);
     if ($('permissionCancel')) $('permissionCancel').addEventListener('click', closePermissionModal);
@@ -14464,12 +14261,12 @@ function openAdminPanel() {
     loadLogs();
     loadRenewals();
     loadAdminRenewalHistory();
-    if (typeof loadAdminChatList === 'function') loadAdminChatList();
 }
 
 function loadUsers(forceRefresh) {
     var cacheKey = 'admin_users_cache';
     if (forceRefresh) { try { localStorage.removeItem(cacheKey); } catch(e) {} }
+
     if (!forceRefresh) {
         try {
             var cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
@@ -14482,17 +14279,22 @@ function loadUsers(forceRefresh) {
             }
         } catch(e) { try { localStorage.removeItem(cacheKey); } catch(e2) {} }
     }
+
     $('userList').innerHTML = '<div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>';
     db.collection('allowed_users').get().then(function(snapshot) {
         usersCache = [];
         snapshot.forEach(function(doc) {
             var data = doc.data() || {};
             usersCache.push({
-                email: doc.id, name: data.name || '', role: data.role || 'user',
-                expiresAt: data.expiresAt || null, tier: data.tier || 'active',
-                isTrial: data.isTrial || false, isPermanent: data.isPermanent || false,
-                isSubAdmin: data.isSubAdmin || false, permissions: data.permissions || null,
-                zaloPhone: data.zaloPhone || ''
+                email: doc.id,
+                name: data.name || '',
+                role: data.role || 'user',
+                expiresAt: data.expiresAt || null,
+                tier: data.tier || 'active',
+                isTrial: data.isTrial || false,
+                isPermanent: data.isPermanent || false,
+                isSubAdmin: data.isSubAdmin || false,
+                permissions: data.permissions || null
             });
         });
         usersCache.sort(function(a, b) { return (a.email || '').localeCompare(b.email || ''); });
@@ -14526,14 +14328,21 @@ function renderAdminStats() {
     var usersOnly = usersCache.filter(function(u) { return u.role !== 'admin'; });
     var users = usersOnly.length;
     var admins = usersCache.length - users;
+
     var summaryUsers = $('summaryTotalUsers');
     if (summaryUsers) summaryUsers.textContent = users;
+
     var summaryAdminItem = $('summaryAdminItem');
     var summaryAdmins = $('summaryTotalAdmins');
     if (summaryAdminItem && summaryAdmins) {
-        if (isSuperAdmin()) { summaryAdminItem.style.display = 'flex'; summaryAdmins.textContent = admins; }
-        else summaryAdminItem.style.display = 'none';
+        if (isSuperAdmin()) {
+            summaryAdminItem.style.display = 'flex';
+            summaryAdmins.textContent = admins;
+        } else {
+            summaryAdminItem.style.display = 'none';
+        }
     }
+
     var adminUserCountEl = $('adminUserCount');
     if (adminUserCountEl) adminUserCountEl.textContent = users;
     updateFilterCounts(usersCache);
@@ -14620,11 +14429,6 @@ function renderUsers(items) {
             historyBtn = '<button class="u-btn history" onclick="openUserRenewalHistory(\'' + escapeJs(u.email) + '\')" title="Xem lịch sử gia hạn"><i class="fas fa-history"></i></button>';
         }
 
-        var chatUserBtn = '';
-        if (!isAdmin) {
-            chatUserBtn = '<button class="u-btn chat" onclick="adminOpenChatWith(\'' + escapeJs(u.email) + '\')" title="Chat với user"><i class="fas fa-comments"></i></button>';
-        }
-
         var last = lastLoginMap[(u.email || '').toLowerCase()];
         var lastLoginHtml = last
             ? '<div class="u-last-login ' + ((now - last.getTime()) <= day7 ? 'active' : ((now - last.getTime()) <= day30 ? 'recent' : '')) + '"><i class="fas fa-clock"></i> ' + formatTimeDiff(now - last.getTime()) + '</div>'
@@ -14667,7 +14471,7 @@ function renderUsers(items) {
                 '<div class="u-email">' + escapeHtml(u.email) + '</div>' +
                 lastLoginHtml + expiryHtml +
             '</div>' + roleBadge +
-            '<div class="u-actions">' + chatUserBtn + historyBtn + permBtn + expiryBtn + roleBtn + deleteBtn + '</div>' +
+            '<div class="u-actions">' + historyBtn + permBtn + expiryBtn + roleBtn + deleteBtn + '</div>' +
         '</div>';
     }).join('');
 }
@@ -14754,6 +14558,7 @@ function buildRenewalRowHtml(d, isPending) {
     var timeStr = formatTimeDiff(Date.now() - created.getTime());
     var isPermanent = d.isPermanent || d.package === 'forever' || d.days >= 36500;
     var canApprove = isSuperAdmin() || hasPermission('canRenew');
+
     var hoursOld = Math.floor((Date.now() - created.getTime()) / 3600000);
     var hoursLeft = Math.max(0, 24 - hoursOld);
 
@@ -14780,7 +14585,9 @@ function buildRenewalRowHtml(d, isPending) {
         var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
         if (ne) newExpiryInfo = '<div class="rar-sub" style="color:#16a34a"><i class="fas fa-calendar-check"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
     }
-    if (isPermanent) newExpiryInfo = '<div class="rar-sub" style="color:#dc2626"><i class="fas fa-crown"></i> <b>💎 VĨNH VIỄN</b></div>';
+    if (isPermanent) {
+        newExpiryInfo = '<div class="rar-sub" style="color:#dc2626"><i class="fas fa-crown"></i> <b>💎 VĨNH VIỄN</b></div>';
+    }
 
     var timeWarnHtml = '';
     if (isPending && hoursLeft <= 6) {
@@ -14795,7 +14602,8 @@ function buildRenewalRowHtml(d, isPending) {
                 '<div class="rar-email">' + escapeHtml(d.name || d.email) + '</div>' +
                 '<div class="u-email">' + escapeHtml(d.email) + '</div>' +
                 '<div class="rar-sub"><i class="fas fa-clock"></i> ' + timeStr + '</div>' +
-                newExpiryInfo + timeWarnHtml +
+                newExpiryInfo +
+                timeWarnHtml +
             '</div>' +
             '<div class="rar-pkg">' +
                 '<div class="rar-amount">' + formatMoney(d.amount) + 'đ</div>' +
@@ -14822,6 +14630,7 @@ function loadRenewals() {
     }
     var renewalsSection = $('adminRenewalsSection');
     if (renewalsSection) renewalsSection.style.display = '';
+
     var listEl = $('renewalsList');
 
     db.collection('renewal_requests').orderBy('createdAt', 'desc').limit(200).get().then(function(snapshot) {
@@ -14835,7 +14644,10 @@ function loadRenewals() {
         });
 
         var pBadge = $('pendingRenewalsBadge');
-        if (pBadge) { pBadge.textContent = pendingRenewalsData.length; pBadge.classList.toggle('pulse', pendingRenewalsData.length > 0); }
+        if (pBadge) {
+            pBadge.textContent = pendingRenewalsData.length;
+            pBadge.classList.toggle('pulse', pendingRenewalsData.length > 0);
+        }
         var cBadge = $('confirmedRenewalsBadge');
         if (cBadge) cBadge.textContent = confirmedRenewalsData.length;
         var pTab = $('pendingCountTab');
@@ -14844,17 +14656,23 @@ function loadRenewals() {
         if (cTab) cTab.textContent = confirmedRenewalsData.length;
 
         var section = $('adminRenewalsSection');
-        if (section) section.classList.toggle('has-pending', pendingRenewalsData.length > 0);
-
-        if (pendingRenewalsData.length > 0 && renewalTab === 'confirmed') renewalTab = 'pending';
+        if (section) {
+            section.classList.toggle('has-pending', pendingRenewalsData.length > 0);
+        }
+        if (pendingRenewalsData.length > 0 && renewalTab === 'confirmed') {
+            renewalTab = 'pending';
+        }
         document.querySelectorAll('[data-renewal-tab]').forEach(function(btn) {
             btn.classList.toggle('active', btn.dataset.renewalTab === renewalTab);
         });
+
         renderRenewalsList();
 
         if (pendingRenewalsData.length > 0 && section && !window.__hasScrolledToRenewals) {
             window.__hasScrolledToRenewals = true;
-            setTimeout(function() { section.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 500);
+            setTimeout(function() {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 500);
         }
     }).catch(function(err) {
         if (listEl) listEl.innerHTML = '<div class="no-data" style="color:#dc2626"><i class="fas fa-exclamation-triangle"></i><span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
@@ -14866,6 +14684,7 @@ function renderRenewalsList() {
     if (!listEl) return;
     var items = (renewalTab === 'pending') ? pendingRenewalsData : confirmedRenewalsData;
     var isPending = (renewalTab === 'pending');
+
     if (items.length === 0) {
         listEl.innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i><span>' +
             (isPending ? 'Không có yêu cầu nào đang chờ' : 'Chưa có giao dịch nào đã xác nhận') + '</span></div>';
@@ -14886,6 +14705,9 @@ window.setRenewalTab = function(tab) {
 
 window.loadRenewals = loadRenewals;
 
+function loadPendingRenewals() { loadRenewals(); }
+function loadConfirmedRenewals() { loadRenewals(); }
+
 function loadAdminRenewalHistory() {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
         var histSection = $('adminRenewalHistorySection');
@@ -14894,6 +14716,7 @@ function loadAdminRenewalHistory() {
     }
     var histSection = $('adminRenewalHistorySection');
     if (histSection) histSection.style.display = '';
+
     var listEl = $('adminRenewalHistoryList');
     if (!listEl) return;
 
@@ -14903,7 +14726,10 @@ function loadAdminRenewalHistory() {
             return;
         }
         var html = '';
-        snapshot.forEach(function(doc) { html += buildHistoryItemHtml(doc.data(), true); });
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            html += buildHistoryItemHtml(d, true);
+        });
         listEl.innerHTML = html;
     }).catch(function(err) {
         listEl.innerHTML = '<div class="no-data" style="color:#dc2626"><i class="fas fa-exclamation-triangle"></i><span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
@@ -14921,6 +14747,7 @@ window.approveRenewal = async function(reqId) {
         if (!reqDoc.exists) return alert('Không tìm thấy yêu cầu!');
         var req = reqDoc.data();
 
+        /* ═══ CHECK LỆNH CHƯA QUÁ 24H ═══ */
         if (req.status === 'expired') {
             alert('⚠️ Lệnh này đã hết hạn (quá 24h). Không thể xác nhận.');
             loadRenewals();
@@ -15318,20 +15145,42 @@ function initAuthUI() {
             var originalHtml = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang đăng nhập...';
+
             var provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
+
             try {
                 var result = await auth.signInWithPopup(provider);
-                if (result && result.user) hideLoginModal();
+                if (result && result.user) {
+                    hideLoginModal();
+                }
             } catch (e) {
                 console.error('Login error:', e);
-                if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-                    /* Im lặng */
-                } else if (e.code === 'auth/popup-blocked') {
-                    showLoginError('<b>Trình duyệt đã chặn popup đăng nhập.</b><br>Vui lòng <b>cho phép popup</b> cho trang này rồi thử lại.');
-                } else if (e.code === 'auth/web-storage-unsupported' || (e.message && e.message.indexOf('missing initial state') !== -1)) {
-                    showLoginError('<b>Trình duyệt đang chặn storage cần thiết.</b><br>Vui lòng tắt chế độ ẩn danh hoặc cho phép cookie bên thứ ba.');
-                } else {
+
+                if (e.code === 'auth/popup-closed-by-user' ||
+                    e.code === 'auth/cancelled-popup-request') {
+                    // Im lặng
+                }
+                else if (e.code === 'auth/popup-blocked') {
+                    showLoginError(
+                        '<b>Trình duyệt đã chặn popup đăng nhập.</b><br>' +
+                        'Vui lòng <b>cho phép popup</b> cho trang này rồi thử lại.<br>' +
+                        '<span style="font-size:.8em;opacity:.8">' +
+                        '(Thường ở biểu tượng 🔒/⚠️ cạnh thanh địa chỉ → Popups → Allow)' +
+                        '</span>'
+                    );
+                }
+                else if (e.code === 'auth/web-storage-unsupported' ||
+                         (e.message && e.message.indexOf('missing initial state') !== -1)) {
+                    showLoginError(
+                        '<b>Trình duyệt đang chặn storage cần thiết.</b><br>' +
+                        'Vui lòng:<br>' +
+                        '• Tắt chế độ ẩn danh (nếu đang dùng)<br>' +
+                        '• Cho phép <b>cookie bên thứ ba</b> cho Google<br>' +
+                        '• Hoặc thử trình duyệt khác (Chrome/Edge mới nhất)'
+                    );
+                }
+                else {
                     showLoginError('Lỗi đăng nhập: <b>' + (e.code || e.message) + '</b>');
                 }
             } finally {
@@ -15341,46 +15190,47 @@ function initAuthUI() {
         });
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       🔥 LOGOUT — XÓA TOÀN BỘ CACHE
+       ═══════════════════════════════════════════════════════════ */
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
             if (!confirm('Đăng xuất?')) return;
+
             try {
-                if (userWatcher) { try { userWatcher(); } catch(e) {} userWatcher = null; }
-                if (typeof chatBadgePollTimer !== 'undefined' && chatBadgePollTimer) {
-                    clearInterval(chatBadgePollTimer);
-                    chatBadgePollTimer = null;
+                if (userWatcher) {
+                    try { userWatcher(); } catch(e) {}
+                    userWatcher = null;
                 }
-                if (typeof chatUnsubscribe !== 'undefined' && chatUnsubscribe) {
-                    try { chatUnsubscribe(); } catch(e) {}
-                    chatUnsubscribe = null;
-                }
-                if (typeof adminChatUnsubscribe !== 'undefined' && adminChatUnsubscribe) {
-                    try { adminChatUnsubscribe(); } catch(e) {}
-                    adminChatUnsubscribe = null;
-                }
-                if (typeof adminOpenChatUnsub !== 'undefined' && adminOpenChatUnsub) {
-                    try { adminOpenChatUnsub(); } catch(e) {}
-                    adminOpenChatUnsub = null;
-                }
-                window.__chatBadgeStarted = false;
 
                 if (currentUser && currentUser.email) {
                     localStorage.removeItem('user_cache_' + currentUser.email);
                 }
+
                 var keysToRemove = [];
                 for (var i = 0; i < localStorage.length; i++) {
                     var k = localStorage.key(i);
-                    if (k && (k.indexOf('user_cache_') === 0 || k === 'admin_users_cache')) keysToRemove.push(k);
+                    if (k && (k.indexOf('user_cache_') === 0 || k === 'admin_users_cache')) {
+                        keysToRemove.push(k);
+                    }
                 }
-                keysToRemove.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
+                keysToRemove.forEach(function(k) {
+                    try { localStorage.removeItem(k); } catch(e) {}
+                });
+
                 if (currentUser && currentUser.email) {
                     try { localStorage.removeItem('login_log_' + currentUser.email); } catch(e) {}
                 }
+
                 sessionStorage.removeItem('userDropdownClosed');
                 sessionStorage.removeItem('fabClosed');
                 sessionStorage.removeItem('session_start');
-                sessionStorage.removeItem('chatZaloDismissed');
-            } catch(e) { console.warn('Lỗi khi xóa cache:', e); }
+
+                console.log('✅ Đã xóa', keysToRemove.length, 'cache keys khi đăng xuất');
+            } catch(e) {
+                console.warn('Lỗi khi xóa cache:', e);
+            }
+
             auth.signOut();
         });
     }
@@ -15437,7 +15287,9 @@ function initAuthUI() {
             $('userDropdown').classList.remove('show');
             try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
             openRenewalModal();
-            setTimeout(function() { if (typeof selectPackage === 'function') selectPackage('forever'); }, 150);
+            setTimeout(function() {
+                if (typeof selectPackage === 'function') selectPackage('forever');
+            }, 150);
         });
     }
 
@@ -15453,10 +15305,7 @@ function initAuthUI() {
 
     initAdminPanel();
     scheduleAutoExpire();
-    if (typeof initChatSupport === 'function') initChatSupport();
-    if (typeof initZaloUI === 'function') initZaloUI();
 }
-
 /* ============ TIMEOUT FALLBACK ============ */
 setTimeout(function() {
     if (!appInitialized) {
@@ -15465,1129 +15314,16 @@ setTimeout(function() {
     }
 }, 5000);
 
-
 /* ═══════════════════════════════════════════════════════════════
-   💬 CHAT SUPPORT — User ↔ Admin
-   Tối ưu Firestore free tier:
-   - Badge watcher: POLL 60s (không onSnapshot liên tục)
-   - Messages: limit 50, load more khi cần
-   - Admin list: limit 30, pagination
-   - Close listener khi tab ẩn
-   - Gộp Telegram notify 30s
-   ═══════════════════════════════════════════════════════════════ */
-
-var chatUnsubscribe = null;
-var adminChatUnsubscribe = null;
-var adminOpenChatUnsub = null;
-var adminCurrentChatEmail = null;
-var chatBadgeWatcher = null;
-var chatBadgePollTimer = null;
-var chatToastTimer = null;
-var chatZaloDismissed = false;
-
-var adminChatListLimit = 30;
-var adminChatListLastDoc = null;
-var adminChatListLoading = false;
-
-var _tgChatQueue = {
-    messages: [],
-    userInfo: null,
-    timer: null,
-    timerStart: 0
-};
-var TG_CHAT_BATCH_DELAY = 30000;
-var CHAT_MSG_LIMIT = 50;
-
-/* ═══════════════════════════════════════════════════════════════
-   📲 TELEGRAM NOTIFY — Gộp 30s
-   ═══════════════════════════════════════════════════════════════ */
-
-function queueUserChatForTelegram(chatData) {
-    if (_tgChatQueue.messages.length === 0) {
-        _tgChatQueue.userInfo = {
-            email: chatData.email,
-            name: chatData.name,
-            zaloPhone: chatData.zaloPhone,
-            tier: chatData.tier,
-            daysLeft: chatData.daysLeft
-        };
-        _tgChatQueue.timerStart = Date.now();
-        console.log('📲 Telegram: bắt đầu gộp tin (chờ 30s)');
-    }
-    _tgChatQueue.messages.push({
-        text: chatData.text,
-        at: Date.now()
-    });
-    if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
-    _tgChatQueue.timer = setTimeout(flushTelegramChatQueue, TG_CHAT_BATCH_DELAY);
-    console.log('📲 Telegram queue: ' + _tgChatQueue.messages.length + ' tin chờ gửi');
-}
-
-function flushTelegramChatQueue() {
-    if (_tgChatQueue.messages.length === 0) return;
-    var userInfo = _tgChatQueue.userInfo;
-    var messages = _tgChatQueue.messages.slice();
-    _tgChatQueue.messages = [];
-    _tgChatQueue.userInfo = null;
-    _tgChatQueue.timer = null;
-    _tgChatQueue.timerStart = 0;
-    sendTelegramChatBatch(userInfo, messages);
-}
-
-function sendTelegramChatBatch(userInfo, messages) {
-    var token = window.TELEGRAM_BOT_TOKEN;
-    var chatId = window.TELEGRAM_CHAT_ID;
-
-    if (!token || !chatId || token.indexOf('__') === 0 || token.length < 20) {
-        console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
-        return;
-    }
-
-    var tierEmoji = {
-        'demo': '👤 Demo',
-        'trial': '🎁 Trial',
-        'active': '💎 Active',
-        'expired': '❌ Hết hạn'
-    };
-
-    var daysInfo = '';
-    if (userInfo.daysLeft !== null && userInfo.daysLeft !== undefined) {
-        if (userInfo.daysLeft <= 0) daysInfo = ' (đã hết hạn)';
-        else if (userInfo.daysLeft <= 7) daysInfo = ' (còn ' + userInfo.daysLeft + ' ngày)';
-    }
-
-    var siteUrl = 'https://hoctiengtrunghsk.github.io';
-    var chatLink = siteUrl + '/#chat=' + encodeURIComponent(userInfo.email);
-
-    var msg = '';
-    if (messages.length === 1) {
-        msg += '💬 <b>TIN NHẮN MỚI TỪ USER</b>\n';
-    } else {
-        msg += '💬 <b>' + messages.length + ' TIN NHẮN MỚI TỪ USER</b>\n';
-    }
-
-    msg += '━━━━━━━━━━━━━━━━━━━━\n';
-    msg += '👤 <b>' + escTg(userInfo.name) + '</b>\n';
-    msg += '📧 <code>' + escTg(userInfo.email) + '</code>\n';
-    msg += '📱 Zalo: ' + escTg(userInfo.zaloPhone) + '\n';
-    msg += '🏷 Tier: ' + (tierEmoji[userInfo.tier] || userInfo.tier) + daysInfo + '\n';
-    msg += '🕐 ' + new Date().toLocaleString('vi-VN') + '\n';
-    msg += '━━━━━━━━━━━━━━━━━━━━\n';
-
-    if (messages.length === 1) {
-        msg += '💬 <b>Nội dung:</b>\n';
-        msg += escTg(messages[0].text) + '\n';
-    } else {
-        msg += '💬 <b>Nội dung (' + messages.length + ' tin):</b>\n';
-        messages.forEach(function(m) {
-            var timeStr = new Date(m.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-            msg += '<b>[' + timeStr + ']</b> ' + escTg(m.text) + '\n';
-        });
-    }
-
-    var buttons = [{ text: '💬 Mở chat trả lời', url: chatLink }];
-
-    if (userInfo.zaloPhone && userInfo.zaloPhone !== 'Chưa có') {
-        var zaloNum = userInfo.zaloPhone.replace(/\D/g, '');
-        if (zaloNum.length >= 9) {
-            buttons.push({
-                text: '📱 Zalo: ' + userInfo.zaloPhone,
-                url: 'https://zalo.me/' + zaloNum
-            });
-        }
-    }
-
-    fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: msg,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true,
-            reply_markup: { inline_keyboard: [buttons] }
-        })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        if (d.ok) console.log('✅ Telegram: đã gửi ' + messages.length + ' tin');
-        else console.warn('⚠️ Telegram error:', d.description);
-    })
-    .catch(function(e) { console.warn('❌ Telegram fetch:', e); });
-}
-
-function escTg(s) {
-    if (s == null) return '';
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function setupChatQueueBeforeUnload() {
-    if (window.__chatUnloadBound) return;
-    window.__chatUnloadBound = true;
-
-    window.addEventListener('beforeunload', function() {
-        if (_tgChatQueue.messages.length > 0) {
-            console.log('🚨 User đóng tab — gửi nốt ' + _tgChatQueue.messages.length + ' tin');
-            if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
-            try { flushTelegramChatQueue(); } catch(_e) {}
-        }
-    });
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden && _tgChatQueue.messages.length > 0) {
-            var elapsed = Date.now() - _tgChatQueue.timerStart;
-            if (elapsed >= 10000) {
-                console.log('👁 User ẩn tab — gửi sớm sau ' + Math.round(elapsed / 1000) + 's');
-                if (_tgChatQueue.timer) clearTimeout(_tgChatQueue.timer);
-                flushTelegramChatQueue();
-            }
-        }
-    });
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   💬 USER — Mở chat, gửi tin
-   ═══════════════════════════════════════════════════════════════ */
-
-window.openChatSupport = function() {
-    if (!currentUser) { showLoginModal(); return; }
-    document.getElementById('chatModal').classList.add('show');
-
-    var dd = document.getElementById('userDropdown');
-    if (dd) dd.classList.remove('show');
-    try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
-
-    if (typeof restoreChatHeaderForUser === 'function') restoreChatHeaderForUser();
-
-    var qr = document.getElementById('chatQuickReplies');
-    if (qr) qr.classList.add('hidden');
-
-    adminCurrentChatEmail = null;
-    loadUserChat();
-};
-
-window.closeChatSupport = function() {
-    document.getElementById('chatModal').classList.remove('show');
-    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-    if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
-    adminCurrentChatEmail = null;
-};
-
-function loadUserChat() {
-    if (!currentUser) return;
-    var email = currentUser.email;
-    var bodyEl = document.getElementById('chatBody');
-
-    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-
-    var threadRef = db.collection('chat_threads').doc(email);
-    threadRef.get().then(function(doc) {
-        if (!doc.exists) {
-            threadRef.set({
-                userEmail: email,
-                userName: currentUser.name || email.split('@')[0],
-                lastMessage: '',
-                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastMessageFrom: 'user',
-                unreadByAdmin: 0,
-                unreadByUser: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    });
-
-    chatUnsubscribe = threadRef.collection('messages')
-        .orderBy('createdAt', 'desc')
-        .limit(CHAT_MSG_LIMIT)
-        .onSnapshot(function(snap) {
-            renderUserChat(snap);
-            markUserChatRead();
-            if (typeof updateChatWaitingBanner === 'function') updateChatWaitingBanner();
-            updateChatZaloSuggestVisibility();
-        }, function(err) {
-            console.error('Chat listen error:', err);
-            bodyEl.innerHTML = '<div class="chat-empty">' +
-                '<i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>' +
-                '<div class="title">Không tải được chat</div>' +
-                '<div class="desc">' + escapeHtml(err.message) + '</div>' +
-                '</div>';
-        });
-}
-
-function renderUserChat(snap) {
-    var bodyEl = document.getElementById('chatBody');
-    if (!bodyEl) return;
-
-    if (snap.empty) {
-        bodyEl.innerHTML = '<div class="chat-empty">' +
-            '<i class="fas fa-comments"></i>' +
-            '<div class="title">Bắt đầu cuộc trò chuyện</div>' +
-            '<div class="desc">Gửi tin nhắn cho admin nếu bạn cần hỗ trợ về thanh toán, tài khoản hoặc bất kỳ vấn đề gì khác.</div>' +
-            '</div>';
-        return;
-    }
-
-    var docs = [];
-    snap.forEach(function(doc) { docs.push(doc); });
-    docs.reverse();
-
-    var html = '';
-    var lastDate = null;
-
-    docs.forEach(function(doc) {
-        var d = doc.data();
-        var created = d.createdAt ? d.createdAt.toDate() : new Date();
-        var dateStr = created.toLocaleDateString('vi-VN');
-        if (dateStr !== lastDate) {
-            html += '<div class="chat-system">' + dateStr + '</div>';
-            lastDate = dateStr;
-        }
-        var timeStr = created.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        var isMe = (d.from === 'user');
-
-        html += '<div class="chat-msg ' + (isMe ? 'from-user' : 'from-admin') + '">' +
-            '<div class="bubble">' + escapeHtml(d.text || '').replace(/\n/g, '<br>') + '</div>' +
-            '<span class="msg-time">' + timeStr + '</span>' +
-        '</div>';
-    });
-
-    bodyEl.innerHTML = html;
-    setTimeout(function() { bodyEl.scrollTop = bodyEl.scrollHeight; }, 50);
-}
-
-function markUserChatRead() {
-    if (!currentUser) return;
-    var email = currentUser.email;
-    db.collection('chat_threads').doc(email).get().then(function(doc) {
-        if (doc.exists && (doc.data().unreadByUser || 0) > 0) {
-            db.collection('chat_threads').doc(email).update({ unreadByUser: 0 });
-        }
-    });
-    var badge = document.getElementById('chatFabBadge');
-    if (badge) { badge.classList.remove('show'); badge.textContent = '0'; }
-    var fab = document.getElementById('chatFab');
-    if (fab) {
-        fab.classList.remove('admin-chat-attention');
-        var bubble = fab.querySelector('.fab-new-bubble');
-        if (bubble) bubble.classList.remove('show');
-    }
-    var banner = document.getElementById('chatAdminWaitingBanner');
-    if (banner) banner.classList.remove('show');
-
-    var userBadge = document.getElementById('chatUserBadge');
-    if (userBadge) { userBadge.style.display = 'none'; userBadge.textContent = '0'; }
-}
-
-async function sendUserChat() {
-    if (!currentUser) return;
-    var input = document.getElementById('chatInput');
-    var text = input.value.trim();
-    if (!text) return;
-
-    var email = currentUser.email;
-    var name = currentUser.name || email.split('@')[0];
-    var btn = document.getElementById('chatSendBtn');
-    btn.disabled = true;
-
-    try {
-        await db.collection('chat_threads').doc(email).collection('messages').add({
-            from: 'user',
-            fromEmail: email,
-            fromName: name,
-            text: text,
-            read: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        await db.collection('chat_threads').doc(email).update({
-            userEmail: email,
-            userName: name,
-            lastMessage: text.substring(0, 100),
-            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastMessageFrom: 'user',
-            unreadByAdmin: firebase.firestore.FieldValue.increment(1),
-            unreadByUser: 0
-        });
-
-        var daysLeft = null;
-        try { if (typeof getDaysRemaining === 'function') daysLeft = getDaysRemaining(currentUser); } catch(_e) {}
-
-        queueUserChatForTelegram({
-            email: email,
-            name: name,
-            text: text,
-            zaloPhone: currentUser.zaloPhone || 'Chưa có',
-            tier: window.APP_TIER || 'demo',
-            daysLeft: daysLeft
-        });
-
-        input.value = '';
-        autoResizeChatInput();
-        document.getElementById('chatSendBtn').disabled = true;
-    } catch(e) {
-        alert('❌ Lỗi gửi tin: ' + e.message);
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-function autoResizeChatInput() {
-    var inp = document.getElementById('chatInput');
-    if (!inp) return;
-    inp.style.height = 'auto';
-    inp.style.height = Math.min(inp.scrollHeight, 130) + 'px';
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🔔 BADGE WATCHER — Poll 60s
-   ═══════════════════════════════════════════════════════════════ */
-
-function startChatBadgeWatch() {
-    if (!currentUser || !db) return;
-    if (chatBadgePollTimer) clearInterval(chatBadgePollTimer);
-
-    pollChatBadge();
-
-    chatBadgePollTimer = setInterval(function() {
-        if (document.hidden) return;
-        pollChatBadge();
-    }, 60000);
-
-    console.log('💬 Chat badge: bắt đầu poll 60s');
-}
-
-function pollChatBadge() {
-    if (!currentUser || !db) return;
-    var email = currentUser.email;
-
-    db.collection('chat_threads').doc(email).get()
-        .then(function(doc) {
-            if (!doc.exists) {
-                updateChatFABBadge(0, false);
-                return;
-            }
-            var d = doc.data();
-            var unread = d.unreadByUser || 0;
-            var isAdminSent = (d.lastMessageFrom === 'admin');
-            var hasUnreadFromAdmin = (unread > 0 && isAdminSent);
-
-            updateChatFABBadge(unread, hasUnreadFromAdmin);
-
-            if (hasUnreadFromAdmin) {
-                var msgAt = d.lastMessageAt ? d.lastMessageAt.toMillis() : 0;
-                if (msgAt && (Date.now() - msgAt) < 35000 && msgAt !== window.__lastChatToastAt) {
-                    window.__lastChatToastAt = msgAt;
-                    showAdminChatToast(d.lastMessage || 'Bạn có tin nhắn mới');
-                }
-            }
-        })
-        .catch(function(err) {
-            console.warn('Poll chat badge error:', err);
-        });
-}
-
-function updateChatFABBadge(unread, isAdminAlert) {
-    var fab = document.getElementById('chatFab');
-    var badge = document.getElementById('chatFabBadge');
-    var userBadge = document.getElementById('chatUserBadge');
-
-    if (!fab || !badge) return;
-
-    if (unread > 0) {
-        badge.textContent = unread > 99 ? '99+' : unread;
-        badge.classList.add('show');
-        if (userBadge) {
-            userBadge.textContent = unread > 99 ? '99+' : unread;
-            userBadge.style.display = 'inline-block';
-        }
-    } else {
-        badge.classList.remove('show');
-        if (userBadge) userBadge.style.display = 'none';
-    }
-
-    if (isAdminAlert) {
-        fab.classList.add('admin-chat-attention');
-        var bubble = fab.querySelector('.fab-new-bubble');
-        if (!bubble) {
-            bubble = document.createElement('span');
-            bubble.className = 'fab-new-bubble';
-            bubble.textContent = 'TIN NHẮN MỚI';
-            fab.appendChild(bubble);
-        }
-        bubble.classList.add('show');
-        var icon = fab.querySelector('i');
-        if (icon) icon.className = 'fas fa-comment-dots';
-    } else {
-        fab.classList.remove('admin-chat-attention');
-        var oldBubble = fab.querySelector('.fab-new-bubble');
-        if (oldBubble) oldBubble.classList.remove('show');
-        var icon2 = fab.querySelector('i');
-        if (icon2) icon2.className = 'fas fa-comments';
-    }
-}
-
-function showAdminChatToast(messageText) {
-    var toast = document.getElementById('adminChatToast');
-    var msgEl = document.getElementById('adminChatToastMsg');
-    if (!toast) return;
-
-    var chatModal = document.getElementById('chatModal');
-    if (chatModal && chatModal.classList.contains('show') && !adminCurrentChatEmail) return;
-
-    if (msgEl) msgEl.textContent = messageText || 'Bạn có tin nhắn mới từ admin';
-
-    if (chatToastTimer) clearTimeout(chatToastTimer);
-    toast.classList.add('show');
-
-    chatToastTimer = setTimeout(hideAdminChatToast, 8000);
-    tryPlayChatSound();
-}
-
-function hideAdminChatToast() {
-    var toast = document.getElementById('adminChatToast');
-    if (toast) toast.classList.remove('show');
-    if (chatToastTimer) { clearTimeout(chatToastTimer); chatToastTimer = null; }
-}
-
-function tryPlayChatSound() {
-    try {
-        var AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        var ctx = new AC();
-        var osc = ctx.createOscillator();
-        var gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.45);
-    } catch(e) {}
-}
-
-function updateChatWaitingBanner() {
-    if (!currentUser) return;
-    var banner = document.getElementById('chatAdminWaitingBanner');
-    if (!banner) return;
-
-    db.collection('chat_threads').doc(currentUser.email).get()
-        .then(function(doc) {
-            if (!doc.exists) { banner.classList.remove('show'); return; }
-            var d = doc.data();
-            var showBanner = (d.lastMessageFrom === 'admin' && (d.unreadByUser || 0) > 0);
-            banner.classList.toggle('show', showBanner);
-        })
-        .catch(function() { banner.classList.remove('show'); });
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   💙 ZALO SUGGEST
-   ═══════════════════════════════════════════════════════════════ */
-
-function updateChatZaloSuggestVisibility() {
-    var el = document.getElementById('chatZaloSuggest');
-    if (!el) return;
-    if (!currentUser) { el.classList.remove('show'); return; }
-    if (currentUser.zaloPhone || chatZaloDismissed) { el.classList.remove('show'); return; }
-    var chatModal = document.getElementById('chatModal');
-    if (chatModal && chatModal.classList.contains('show')) el.classList.add('show');
-    else el.classList.remove('show');
-}
-
-window.openZaloModal = function() {
-    if (!currentUser) { showLoginModal(); return; }
-    document.getElementById('zaloPhoneInput').value = currentUser.zaloPhone || '';
-    document.getElementById('zaloNameInput').value = currentUser.zaloName || '';
-    document.getElementById('zaloModal').classList.add('show');
-    setTimeout(function() {
-        var inp = document.getElementById('zaloPhoneInput');
-        if (inp) inp.focus();
-    }, 100);
-};
-
-window.closeZaloModal = function() {
-    document.getElementById('zaloModal').classList.remove('show');
-};
-
-async function saveZaloPhone() {
-    if (!currentUser) return;
-
-    var phone = document.getElementById('zaloPhoneInput').value.trim().replace(/\s+/g, '');
-    var name = document.getElementById('zaloNameInput').value.trim();
-
-    if (phone && !/^(\+?84|0)\d{9,10}$/.test(phone)) {
-        alert('⚠️ SĐT Zalo không hợp lệ.\n\nVí dụ hợp lệ:\n• 0901234567\n• +84901234567');
-        return;
-    }
-
-    var btn = document.getElementById('zaloSave');
-    var orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang lưu...';
-
-    try {
-        await db.collection('allowed_users').doc(currentUser.email).update({
-            zaloPhone: phone,
-            zaloName: name,
-            zaloUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        currentUser.zaloPhone = phone;
-        currentUser.zaloName = name;
-        try { localStorage.removeItem('user_cache_' + currentUser.email); } catch(e) {}
-        alert('✅ Đã lưu thông tin Zalo!');
-        closeZaloModal();
-        updateChatZaloSuggestVisibility();
-    } catch(e) {
-        alert('❌ Lỗi: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = orig;
-    }
-}
-
-function initZaloUI() {
-    var addBtn = document.getElementById('chatAddZaloBtn');
-    if (addBtn) addBtn.addEventListener('click', function() {
-        closeChatSupport();
-        setTimeout(openZaloModal, 200);
-    });
-
-    var skipBtn = document.getElementById('chatSkipZaloBtn');
-    if (skipBtn) skipBtn.addEventListener('click', function() {
-        chatZaloDismissed = true;
-        try { sessionStorage.setItem('chatZaloDismissed', '1'); } catch(_e) {}
-        updateChatZaloSuggestVisibility();
-    });
-
-    if (document.getElementById('zaloClose')) document.getElementById('zaloClose').addEventListener('click', closeZaloModal);
-    if (document.getElementById('zaloCancel')) document.getElementById('zaloCancel').addEventListener('click', closeZaloModal);
-    if (document.getElementById('zaloModal')) document.getElementById('zaloModal').addEventListener('click', function(e) {
-        if (e.target === this) closeZaloModal();
-    });
-    if (document.getElementById('zaloSave')) document.getElementById('zaloSave').addEventListener('click', saveZaloPhone);
-
-    ['zaloPhoneInput', 'zaloNameInput'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); saveZaloPhone(); }
-        });
-    });
-
-    try {
-        if (sessionStorage.getItem('chatZaloDismissed') === '1') chatZaloDismissed = true;
-    } catch(_e) {}
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🎯 ADMIN — Danh sách + chat với user
-   ═══════════════════════════════════════════════════════════════ */
-
-function loadAdminChatList() {
-    if (!currentUser || currentUser.role !== 'admin') return;
-    var listEl = document.getElementById('adminChatList');
-    if (!listEl) return;
-
-    if (adminChatUnsubscribe) { try { adminChatUnsubscribe(); } catch(e) {} }
-
-    listEl.innerHTML = '<div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>';
-    adminChatListLimit = 30;
-
-    adminChatUnsubscribe = db.collection('chat_threads')
-        .orderBy('lastMessageAt', 'desc')
-        .limit(adminChatListLimit)
-        .onSnapshot(function(snap) {
-            var totalUnread = 0;
-            var html = '';
-            var count = 0;
-            var lastDoc = null;
-
-            if (snap.empty) {
-                listEl.innerHTML = '<div class="no-data">' +
-                    '<i class="fas fa-comments"></i>' +
-                    '<span>Chưa có hội thoại nào</span>' +
-                    '</div>';
-                updateAdminChatBadge(0, 0);
-                var moreBtn0 = document.getElementById('loadMoreChatBtn');
-                if (moreBtn0) moreBtn0.style.display = 'none';
-                return;
-            }
-
-            snap.forEach(function(doc) {
-                lastDoc = doc;
-                var d = doc.data();
-                var email = d.userEmail || doc.id;
-                var name = d.userName || email.split('@')[0];
-                var unread = d.unreadByAdmin || 0;
-                totalUnread += unread;
-                count++;
-
-                var lastAt = d.lastMessageAt ? d.lastMessageAt.toDate() : new Date();
-                var timeStr = formatTimeDiff(Date.now() - lastAt.getTime());
-                var preview = d.lastMessage || '(chưa có tin nhắn)';
-                if (d.lastMessageFrom === 'admin') preview = 'Bạn: ' + preview;
-
-                var initial = (name.charAt(0) || '?').toUpperCase();
-
-                html += '<div class="admin-chat-thread' + (unread > 0 ? ' unread' : '') + '" ' +
-                    'onclick="adminOpenChatWith(\'' + escapeJs(email) + '\')">' +
-                    '<div class="t-avatar">' + escapeHtml(initial) + '</div>' +
-                    '<div class="t-info">' +
-                        '<div class="t-name">' + escapeHtml(name) + '</div>' +
-                        '<div class="t-preview">' + escapeHtml(preview) + '</div>' +
-                    '</div>' +
-                    '<div class="t-time">' + timeStr + '</div>' +
-                    (unread > 0 ? '<div class="t-badge">' + (unread > 99 ? '99+' : unread) + '</div>' : '') +
-                '</div>';
-            });
-
-            listEl.innerHTML = html;
-            adminChatListLastDoc = lastDoc;
-
-            var moreBtn = document.getElementById('loadMoreChatBtn');
-            if (moreBtn) {
-                moreBtn.style.display = (count >= adminChatListLimit) ? 'inline-flex' : 'none';
-            }
-
-            updateAdminChatBadge(count, totalUnread);
-        }, function(err) {
-            console.error('Admin chat list error:', err);
-            listEl.innerHTML = '<div class="no-data" style="color:#dc2626">' +
-                '<i class="fas fa-exclamation-triangle"></i>' +
-                '<span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
-        });
-}
-
-async function loadMoreAdminChat() {
-    if (!currentUser || currentUser.role !== 'admin') return;
-    if (!adminChatListLastDoc || adminChatListLoading) return;
-
-    adminChatListLoading = true;
-    var btn = document.getElementById('loadMoreChatBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang tải...';
-    }
-
-    try {
-        var snap = await db.collection('chat_threads')
-            .orderBy('lastMessageAt', 'desc')
-            .startAfter(adminChatListLastDoc)
-            .limit(adminChatListLimit)
-            .get();
-
-        if (snap.empty) {
-            if (btn) btn.style.display = 'none';
-            adminChatListLoading = false;
-            return;
-        }
-
-        var listEl = document.getElementById('adminChatList');
-        var html = '';
-        var lastDoc = null;
-
-        snap.forEach(function(doc) {
-            lastDoc = doc;
-            var d = doc.data();
-            var email = d.userEmail || doc.id;
-            var name = d.userName || email.split('@')[0];
-            var unread = d.unreadByAdmin || 0;
-            var lastAt = d.lastMessageAt ? d.lastMessageAt.toDate() : new Date();
-            var timeStr = formatTimeDiff(Date.now() - lastAt.getTime());
-            var preview = d.lastMessage || '(chưa có tin nhắn)';
-            if (d.lastMessageFrom === 'admin') preview = 'Bạn: ' + preview;
-            var initial = (name.charAt(0) || '?').toUpperCase();
-
-            html += '<div class="admin-chat-thread' + (unread > 0 ? ' unread' : '') + '" ' +
-                'onclick="adminOpenChatWith(\'' + escapeJs(email) + '\')">' +
-                '<div class="t-avatar">' + escapeHtml(initial) + '</div>' +
-                '<div class="t-info">' +
-                    '<div class="t-name">' + escapeHtml(name) + '</div>' +
-                    '<div class="t-preview">' + escapeHtml(preview) + '</div>' +
-                '</div>' +
-                '<div class="t-time">' + timeStr + '</div>' +
-                (unread > 0 ? '<div class="t-badge">' + (unread > 99 ? '99+' : unread) + '</div>' : '') +
-            '</div>';
-        });
-
-        listEl.insertAdjacentHTML('beforeend', html);
-        adminChatListLastDoc = lastDoc;
-
-        if (snap.size < adminChatListLimit && btn) btn.style.display = 'none';
-        else if (btn) btn.style.display = 'inline-flex';
-    } catch(e) {
-        console.error('Load more chat error:', e);
-    } finally {
-        adminChatListLoading = false;
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-chevron-down"></i> Xem thêm hội thoại';
-        }
-    }
-}
-
-function updateAdminChatBadge(count, unread) {
-    var countEl = document.getElementById('adminChatCount');
-    if (countEl) countEl.textContent = count;
-
-    var unreadChip = document.getElementById('adminChatUnreadChip');
-    var unreadEl = document.getElementById('adminChatUnread');
-    if (unreadChip && unreadEl) {
-        if (unread > 0) {
-            unreadEl.textContent = unread;
-            unreadChip.style.display = 'inline-flex';
-        } else {
-            unreadChip.style.display = 'none';
-        }
-    }
-}
-
-window.adminOpenChatWith = function(userEmail) {
-    if (!currentUser || currentUser.role !== 'admin') return;
-
-    adminCurrentChatEmail = userEmail;
-    var threadRef = db.collection('chat_threads').doc(userEmail);
-
-    threadRef.get().then(function(doc) {
-        if (!doc.exists) {
-            var u = (typeof usersCache !== 'undefined')
-                ? usersCache.find(function(x) { return x.email === userEmail; })
-                : null;
-            return threadRef.set({
-                userEmail: userEmail,
-                userName: u ? (u.name || userEmail.split('@')[0]) : userEmail.split('@')[0],
-                lastMessage: '',
-                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastMessageFrom: 'admin',
-                unreadByAdmin: 0,
-                unreadByUser: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    }).then(function() {
-        var modal = document.getElementById('chatModal');
-        var header = document.getElementById('chatHeaderInfo');
-        var avatarIcon = document.getElementById('chatAvatarIcon');
-        var backBtn = document.getElementById('chatBack');
-        var closeBtn = document.getElementById('chatClose');
-
-        if (avatarIcon) avatarIcon.className = 'fas fa-user';
-
-        threadRef.get().then(function(doc) {
-            var name = doc.exists ? (doc.data().userName || userEmail.split('@')[0]) : userEmail.split('@')[0];
-            if (header) {
-                header.innerHTML =
-                    '<div class="name">' + escapeHtml(name) + '</div>' +
-                    '<div class="status">' + escapeHtml(userEmail) + '</div>';
-            }
-        });
-
-        if (backBtn) backBtn.classList.add('show');
-        if (closeBtn) closeBtn.style.display = 'none';
-
-        var qr = document.getElementById('chatQuickReplies');
-        if (qr) qr.classList.remove('hidden');
-
-        var zalo = document.getElementById('chatZaloSuggest');
-        if (zalo) zalo.classList.remove('show');
-
-        var banner = document.getElementById('chatAdminWaitingBanner');
-        if (banner) banner.classList.remove('show');
-
-        modal.classList.add('show');
-
-        if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} }
-        adminOpenChatUnsub = threadRef.collection('messages')
-            .orderBy('createdAt', 'desc')
-            .limit(CHAT_MSG_LIMIT)
-            .onSnapshot(function(snap) {
-                renderAdminChatView(snap);
-                if (!snap.empty) threadRef.update({ unreadByAdmin: 0 });
-            });
-    });
-};
-
-function renderAdminChatView(snap) {
-    var bodyEl = document.getElementById('chatBody');
-    if (!bodyEl) return;
-
-    if (snap.empty) {
-        bodyEl.innerHTML = '<div class="chat-empty">' +
-            '<i class="fas fa-comments"></i>' +
-            '<div class="title">Chưa có tin nhắn</div>' +
-            '<div class="desc">Gửi tin nhắn chào user để bắt đầu.</div>' +
-            '</div>';
-        return;
-    }
-
-    var docs = [];
-    snap.forEach(function(doc) { docs.push(doc); });
-    docs.reverse();
-
-    var html = '';
-    var lastDate = null;
-
-    docs.forEach(function(doc) {
-        var d = doc.data();
-        var created = d.createdAt ? d.createdAt.toDate() : new Date();
-        var dateStr = created.toLocaleDateString('vi-VN');
-        if (dateStr !== lastDate) {
-            html += '<div class="chat-system">' + dateStr + '</div>';
-            lastDate = dateStr;
-        }
-        var timeStr = created.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        var isAdmin = (d.from === 'admin');
-
-        html += '<div class="chat-msg ' + (isAdmin ? 'from-user' : 'from-admin') + '">' +
-            '<div class="bubble">' + escapeHtml(d.text || '').replace(/\n/g, '<br>') + '</div>' +
-            '<span class="msg-time">' + timeStr + '</span>' +
-        '</div>';
-    });
-
-    bodyEl.innerHTML = html;
-    setTimeout(function() { bodyEl.scrollTop = bodyEl.scrollHeight; }, 50);
-}
-
-async function sendAdminChat() {
-    if (!adminCurrentChatEmail || !currentUser) return;
-    var input = document.getElementById('chatInput');
-    var text = input.value.trim();
-    if (!text) return;
-
-    var userEmail = adminCurrentChatEmail;
-    var btn = document.getElementById('chatSendBtn');
-    btn.disabled = true;
-
-    try {
-        await db.collection('chat_threads').doc(userEmail).collection('messages').add({
-            from: 'admin',
-            fromEmail: currentUser.email,
-            fromName: currentUser.name || 'Admin',
-            text: text,
-            read: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        await db.collection('chat_threads').doc(userEmail).update({
-            lastMessage: text.substring(0, 100),
-            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastMessageFrom: 'admin',
-            unreadByUser: firebase.firestore.FieldValue.increment(1)
-        });
-
-        input.value = '';
-        autoResizeChatInput();
-        btn.disabled = true;
-    } catch(e) {
-        alert('❌ Lỗi gửi: ' + e.message);
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-function restoreChatHeaderForUser() {
-    var header = document.getElementById('chatHeaderInfo');
-    var avatarIcon = document.getElementById('chatAvatarIcon');
-    var backBtn = document.getElementById('chatBack');
-    var closeBtn = document.getElementById('chatClose');
-
-    if (avatarIcon) avatarIcon.className = 'fas fa-headset';
-    if (header) {
-        header.innerHTML =
-            '<div class="name">Hỗ trợ Admin <i class="fas fa-check-circle" style="font-size:.7rem;color:#86efac;"></i></div>' +
-            '<div class="status">' +
-                '<i class="fas fa-circle" style="font-size:.5rem;color:#22c55e;"></i>' +
-                '<span>Thường trả lời trong 5-10 phút</span>' +
-            '</div>';
-    }
-    if (backBtn) backBtn.classList.remove('show');
-    if (closeBtn) closeBtn.style.display = 'flex';
-}
-
-function goBackToAdminChatList() {
-    if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
-    if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-    adminCurrentChatEmail = null;
-
-    var qr = document.getElementById('chatQuickReplies');
-    if (qr) qr.classList.add('hidden');
-
-    restoreChatHeaderForUser();
-
-    if (typeof loadAdminChatList === 'function') loadAdminChatList();
-}
-/* ═══════════════════════════════════════════════════════════════
-   🚀 INIT CHAT
-   ═══════════════════════════════════════════════════════════════ */
-
-function initChatSupport() {
-    var chatSupportBtn = document.getElementById('chatSupportBtn');
-    if (chatSupportBtn) chatSupportBtn.addEventListener('click', openChatSupport);
-
-    var fab = document.getElementById('chatFab');
-    if (fab) {
-        fab.addEventListener('click', function() {
-            fab.classList.remove('admin-chat-attention');
-            var bubble = fab.querySelector('.fab-new-bubble');
-            if (bubble) bubble.classList.remove('show');
-            openChatSupport();
-        });
-    }
-
-    var chatClose = document.getElementById('chatClose');
-    if (chatClose) chatClose.addEventListener('click', closeChatSupport);
-
-    var chatBack = document.getElementById('chatBack');
-    if (chatBack) chatBack.addEventListener('click', goBackToAdminChatList);
-
-    var chatModal = document.getElementById('chatModal');
-    if (chatModal) chatModal.addEventListener('click', function(e) {
-        if (e.target === this) closeChatSupport();
-    });
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && chatModal && chatModal.classList.contains('show')) closeChatSupport();
-    });
-
-    var input = document.getElementById('chatInput');
-    if (input) {
-        input.addEventListener('input', function() {
-            autoResizeChatInput();
-            var sendBtn = document.getElementById('chatSendBtn');
-            if (sendBtn) sendBtn.disabled = !this.value.trim();
-        });
-
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (adminCurrentChatEmail) sendAdminChat();
-                else sendUserChat();
-            }
-        });
-    }
-
-    var sendBtn = document.getElementById('chatSendBtn');
-    if (sendBtn) {
-        sendBtn.addEventListener('click', function() {
-            if (adminCurrentChatEmail) sendAdminChat();
-            else sendUserChat();
-        });
-    }
-
-    document.querySelectorAll('.chat-quick-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var reply = this.dataset.reply || this.textContent.trim();
-            var inp = document.getElementById('chatInput');
-            if (inp) {
-                inp.value = reply;
-                autoResizeChatInput();
-                var sb = document.getElementById('chatSendBtn');
-                if (sb) sb.disabled = false;
-                inp.focus();
-            }
-        });
-    });
-
-    /* Toast buttons */
-    var toastAction = document.getElementById('adminChatToastAction');
-    if (toastAction) toastAction.addEventListener('click', function(e) {
-        e.stopPropagation();
-        hideAdminChatToast();
-        openChatSupport();
-    });
-
-    var toast = document.getElementById('adminChatToast');
-    if (toast) toast.addEventListener('click', function(e) {
-        if (e.target.closest('.toast-close') || e.target.closest('.toast-action')) return;
-        hideAdminChatToast();
-        openChatSupport();
-    });
-
-    var toastClose = document.getElementById('adminChatToastClose');
-    if (toastClose) toastClose.addEventListener('click', function(e) {
-        e.stopPropagation();
-        hideAdminChatToast();
-    });
-
-    var refreshChatBtn = document.getElementById('refreshChatBtn');
-    if (refreshChatBtn) refreshChatBtn.addEventListener('click', function() { loadAdminChatList(); });
-
-    var loadMoreChatBtn = document.getElementById('loadMoreChatBtn');
-    if (loadMoreChatBtn) loadMoreChatBtn.addEventListener('click', loadMoreAdminChat);
-
-    setupChatQueueBeforeUnload();
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            if (chatUnsubscribe) { try { chatUnsubscribe(); } catch(e) {} chatUnsubscribe = null; }
-            if (adminOpenChatUnsub) { try { adminOpenChatUnsub(); } catch(e) {} adminOpenChatUnsub = null; }
-            if (adminChatUnsubscribe) { try { adminChatUnsubscribe(); } catch(e) {} adminChatUnsubscribe = null; }
-        } else {
-            if (document.getElementById('chatModal') && document.getElementById('chatModal').classList.contains('show')) {
-                if (adminCurrentChatEmail) adminOpenChatWith(adminCurrentChatEmail);
-                else if (currentUser && currentUser.role !== 'admin') loadUserChat();
-            }
-            if (document.getElementById('adminModal') && document.getElementById('adminModal').classList.contains('show')) {
-                if (typeof loadAdminChatList === 'function') loadAdminChatList();
-            }
-        }
-    });
-}
-
-function updateChatFABVisibility() {
-    var fab = document.getElementById('chatFab');
-    if (!fab) return;
-    if (currentUser && !isDemo) fab.classList.remove('hidden');
-    else fab.classList.add('hidden');
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   🔗 DEEP LINK — #chat=user@email
-   ═══════════════════════════════════════════════════════════════ */
-
-function handleChatDeepLink() {
-    var hash = window.location.hash;
-    if (!hash || hash.indexOf('#chat=') !== 0) return;
-
-    var email = decodeURIComponent(hash.substring(6));
-    if (!email || email.indexOf('@') === -1) return;
-
-    console.log('🔗 Deep link chat:', email);
-
-    var tries = 0;
-    var check = setInterval(function() {
-        tries++;
-        if (currentUser && currentUser.role === 'admin') {
-            clearInterval(check);
-            if (typeof openAdminPanel === 'function') openAdminPanel();
-            setTimeout(function() {
-                if (typeof adminOpenChatWith === 'function') adminOpenChatWith(email);
-                try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(_e) {}
-            }, 1200);
-        }
-        if (tries > 50) clearInterval(check);
-    }, 300);
-}
-
-window.addEventListener('hashchange', function() {
-    if (typeof handleChatDeepLink === 'function') handleChatDeepLink();
-});
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { setTimeout(handleChatDeepLink, 2000); });
-} else {
-    setTimeout(handleChatDeepLink, 2000);
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   📱 TELEGRAM NOTIFICATION — Renewal
+   📱 TELEGRAM NOTIFICATION — Gửi tin nhắn khi có sự kiện
+   - notifyTelegramUserPaid: khi user bấm "Tôi đã thanh toán"
+   - notifyTelegramAdminConfirmed: khi admin duyệt đơn
    ═══════════════════════════════════════════════════════════════ */
 function _telegramSendMessage(text) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
         console.warn('[Telegram] Chưa cấu hình bot_token / chat_id hợp lệ');
+        console.warn('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? 'OK' : 'MISSING');
+        console.warn('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || 'MISSING');
         return Promise.reject('not_configured');
     }
 
@@ -16603,7 +15339,9 @@ function _telegramSendMessage(text) {
             disable_web_page_preview: true
         })
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+        return r.json();
+    })
     .then(function(data) {
         if (!data.ok) {
             console.error('[Telegram] ❌ API error:', data.description);
@@ -16620,6 +15358,7 @@ function _telegramSendMessage(text) {
 
 window.notifyTelegramUserPaid = function(req) {
     if (!req) return Promise.resolve();
+
     var isPermanent = req.isPermanent || false;
     var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
@@ -16637,6 +15376,7 @@ window.notifyTelegramUserPaid = function(req) {
 
 window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
     if (!req) return Promise.resolve();
+
     var isPermanent = req.isPermanent || false;
     var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
@@ -16653,13 +15393,18 @@ window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
     return _telegramSendMessage(text);
 };
 
+/* ═══ DEBUG: Test gửi tin nhắn ═══ */
 window.testTelegram = function() {
     console.log('[Telegram] Test started...');
     console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
     console.log('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || '❌ MISSING');
     return _telegramSendMessage('🧪 <b>Test Telegram</b>\n\nBot đang hoạt động tốt! ✅\n\nThời gian: ' + new Date().toLocaleString('vi-VN'))
-        .then(function() { alert('✅ Đã gửi test! Kiểm tra Telegram.'); })
-        .catch(function(err) { alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.'); });
+        .then(function() {
+            alert('✅ Đã gửi test! Kiểm tra Telegram.');
+        })
+        .catch(function(err) {
+            alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.');
+        });
 };
 
 /* ==== INTRO JS ==== */
