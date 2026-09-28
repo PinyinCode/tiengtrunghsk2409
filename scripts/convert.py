@@ -19,7 +19,8 @@ import glob
 import re
 import unicodedata
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Cho phép import từ thư mục cha (scripts/ → root)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config_loader import load_config, print_banner, CONFIG_FILE
 from data_reader import read_excel
@@ -40,14 +41,14 @@ from intro_template import (
     build_intro_js,
 )
 
-# ⬇️⬇️⬇️ Module Favorites
+# ⬇️ Module Favorites
 from favorites_module import (
     build_favorites_css,
     build_favorites_html,
     build_favorites_js,
 )
 
-# ⬇️⬇️⬇️ Module Chat Support + Quota (độc lập)
+# ⬇️ Module Chat Support + Quota (độc lập)
 from chat_support import (
     build_chat_css,
     build_chat_html,
@@ -778,7 +779,7 @@ ui_html = build_ui_html()
 ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
 ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 
-# ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
+# ⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
 # ═══ 1. Tab Yêu thích ═══
@@ -836,24 +837,11 @@ ui_html = ui_html.replace(
 # ═══ 5. Auth HTML — chèn Quota Section vào Admin Panel ═══
 _quota_html = build_quota_html()
 
-# Tìm điểm chèn: trước </div> đóng .admin-body (cuối cùng)
-# Cách an toàn: chèn vào placeholder nếu có, ngược lại append vào cuối admin-body
 if "<!-- __ADMIN_QUOTA_SECTION__ -->" in auth_html:
     auth_html = auth_html.replace("<!-- __ADMIN_QUOTA_SECTION__ -->", _quota_html)
     print("✅ Đã chèn Quota Section vào Admin Panel (qua placeholder)")
 else:
-    # Fallback: chèn trước thẻ đóng admin-body cuối cùng
-    # Tìm `</div>` cuối của admin-body
-    _marker = '</div>\n        </div>\n    </div>\n</div>'  # pattern cũ
-    if '</div>\n        </div>\n    </div>\n</div>' in auth_html:
-        auth_html = auth_html.replace(
-            '</div>\n        </div>\n    </div>\n</div>',
-            '</div>\n' + _quota_html + '\n        </div>\n    </div>\n</div>',
-            1
-        )
-        print("✅ Đã chèn Quota Section vào Admin Panel (fallback)")
-    else:
-        print("⚠️  Không tìm thấy điểm chèn Quota — bỏ qua (không ảnh hưởng chat)")
+    print("⚠️  Không tìm thấy placeholder Quota — bỏ qua (không ảnh hưởng chat)")
 
 # ═══ 6. Full body ═══
 full_body = (
@@ -1031,23 +1019,30 @@ window.__switchRawData = function(datasetId) {
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
 html_output = (HTML_SHELL
+    # 1. Nhúng khối lớn
     .replace("__CSS__",  full_css)
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
+
+    # 2. Data blobs
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
     .replace("__SYNONYMS__",          synonyms_json)
     .replace("__FILLER_WORDS__",      fillers_json)
     .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
-    .replace("__DEMO_LIMIT))))
-__",            str   (int(CONFIG["demo_limit"])))
+
+    # 3. Numeric configs
+    .replace("__DEMO_LIMIT__",            str(int(CONFIG["demo_limit"])))
     .replace("__DEMO_DAILY_LIMIT__",      str(int(CONFIG["demo_daily_limit"])))
     .replace("__DEMO_HSK_MAX__",          str(int(CONFIG["demo_hsk_max"])))
     .replace("__TRIAL_MAX_QUESTIONS__",   str(int(CONFIG.get("trial_max_questions", 50))))
-    .replace("__TRIAL_MAX_HSK__",         str(int(CONFIG.get("trial_max_hsk", 5 .replace("__TRIAL_UNLIMITED_WRITING__",
+    .replace("__TRIAL_MAX_HSK__",         str(int(CONFIG.get("trial_max_hsk", 5))))
+    .replace("__TRIAL_UNLIMITED_WRITING__",
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
+
+    # 4. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
