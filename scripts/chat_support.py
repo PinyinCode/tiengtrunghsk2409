@@ -109,8 +109,7 @@ def build_chat_css():
     pointer-events:none;
 }
 
-/* ⭐ Khi chat đang mở → hạ z-index FAB xuống dưới chat box (4001)
-   để chat box + mũi tên không bị FAB đè lên */
+/* ⭐ Khi chat đang mở → hạ z-index FAB xuống dưới chat box (4001) */
 body.chat-is-open #chatFloatWrap{
     z-index:3999;
 }
@@ -194,6 +193,13 @@ body.has-floating-group #chatFloatWrap{
     transition:left .35s cubic-bezier(.34,1.56,.64,1);
 }
 
+/* ⭐ Khi admin đang chat với user (có quick replies) → chat box cao hơn */
+.chat-box.admin-thread-open{
+    height:55vh;
+    min-height:420px;
+    max-height:calc(100vh - 80px);
+}
+
 /* ─── MOBILE ─── */
 @media (max-width:600px){
     .chat-box{
@@ -205,6 +211,11 @@ body.has-floating-group #chatFloatWrap{
         /* left/bottom do JS set động */
     }
     .chat-box::before,.chat-box::after{display:none;}
+    .chat-box.admin-thread-open{
+        height:55vh;
+        min-height:400px;
+        max-height:calc(100vh - 70px);
+    }
 }
 
 @media (max-width:400px){
@@ -212,6 +223,10 @@ body.has-floating-group #chatFloatWrap{
         width:calc(100vw - 16px);
         height:30vh;
         min-height:220px;
+    }
+    .chat-box.admin-thread-open{
+        height:60vh;
+        min-height:380px;
     }
 }
 
@@ -263,14 +278,14 @@ body.has-floating-group #chatFloatWrap{
 /* ═══ LIMIT BANNER ═══ */
 .chat-limit-banner{display:none;margin:0 0 .5rem;padding:.65rem .85rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:10px;font-size:.78rem;color:#78350f;line-height:1.45;animation:chatLimitSlide .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;align-items:flex-start;gap:.5rem;}
 .chat-limit-banner.show{display:flex}
-.chat-limit-banner.danger{background:linear-gradient(135deg,#fecaca,#f:ca5a5);50border-color:#dc262px6;color:#7f;1d1d;}
-.chat-lborderimit-banner .clb-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;animation:chatLimitPulse 1.5s infinite;}
+.chat-limit-banner.danger{background:linear-gradient(135deg,#fecaca,#fca5a5);border-color:#dc2626;color:#7f1d1d;}
+.chat-limit-banner .clb-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;animation:chatLimitPulse 1.5s infinite;}
 .chat-limit-banner.danger .clb-icon{background:linear-gradient(135deg,#dc2626,#991b1b);}
 @keyframes chatLimitPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
 .chat-limit-banner .clb-text{flex:1;min-width:0;}
 .chat-limit-banner .clb-text b{color:#dc2626;font-weight:900;}
 .chat-limit-banner .clb-actions{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem;}
-.chat-limit-banner .clb-btn{padding:.35rem .7rem;border-radius:none;font-size:.72rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;transition:.15s;white-space:nowrap;}
+.chat-limit-banner .clb-btn{padding:.35rem .7rem;border-radius:50px;border:none;font-size:.72rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;transition:.15s;white-space:nowrap;}
 .chat-limit-banner .clb-btn.zalo{background:linear-gradient(135deg,#0068ff,#0052cc);color:#fff;box-shadow:0 3px 10px rgba(0,104,255,.35);}
 .chat-limit-banner .clb-btn.zalo:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,104,255,.5);color:#fff;}
 .chat-limit-banner .clb-btn.dismiss{background:rgba(120,53,15,.15);color:#78350f;}
@@ -348,8 +363,8 @@ body.has-floating-group #chatFloatWrap{
 @keyframes onlinePulse{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,.2);}50%{box-shadow:0 0 0 6px rgba(22,163,74,.1);}}
 .ou-info{flex:1;min-width:0;}
 .ou-name{font-weight:700;font-size:.85rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ou-sub{font-size:.7rem;color:var(--text-3);overflow:hidden;text-over|flow:ellipsis;white-space:nowrap;}
- .ou-chat-btn{width:32px;1height:32px;border |-radius:8px;border:none; `background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
+.ou-sub{font-size:.7rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ou-chat-btn{width:32px;height:32px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
 .ou-chat-btn:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(124,58,237,.4);}
 """
 
@@ -539,17 +554,17 @@ def build_chat_js():
     var MAX_MESSAGES = 100;
 
     var CHAT = {
-    inited: false,
-    threadUnsub: null,
-    adminListUnsub: null,
-    adminThreadUnsub: null,
-    adminCurrentEmail: null,
-    isOpen: false,
-    lastThreadData: null,
-    lastSeenAt: 0,
-    typingTimer: null,
-    onlineUnsub: null
-};
+        inited: false,
+        threadUnsub: null,
+        adminListUnsub: null,
+        adminThreadUnsub: null,
+        adminCurrentEmail: null,
+        isOpen: false,
+        lastThreadData: null,
+        lastSeenAt: 0,
+        typingTimer: null,
+        onlineUnsub: null
+    };
 
     function $id(id) { return document.getElementById(id); }
     function esc(s) {
@@ -681,14 +696,12 @@ def build_chat_js():
             '<span class="chat-badge" id="chatFabBadge">0</span>';
 
         wrap.appendChild(btn);
-        // ⭐ FIX: chỉ mở/đóng (không còn cycle qua expanded)
         btn.addEventListener('click', function() {
             btn.classList.remove('has-unread');
             if (CHAT.isOpen) closeChat();
             else openChat();
         });
 
-        /* ✨ Lóe sáng nhẹ 1 lần khi icon mount */
         setTimeout(function() {
             if (!btn.classList.contains('has-unread')) {
                 btn.classList.add('intro-glow');
@@ -726,7 +739,48 @@ def build_chat_js():
         }
     }
 
-    /* ⭐ Detect cụm floating group đang hiển thị → đẩy chat FAB xuống */
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ NEO CHAT BOX VÀO NÚT FAB
+       Đo vị trí nút FAB thực tế → set left/bottom cho .chat-box
+       để box LUÔN nằm ngay phía trên nút, mũi tên chỉ đúng nút.
+       ═══════════════════════════════════════════════════════════ */
+    function positionChatBox() {
+        var fab = $id('chatFloatBtn');
+        var box = document.querySelector('.chat-box');
+        if (!fab || !box) return;
+
+        var fabRect = fab.getBoundingClientRect();
+        var boxRect = box.getBoundingClientRect();
+        var isMobile = window.innerWidth <= 600;
+
+        // ─── Chiều ngang: canh trái box trùng trái nút FAB ───
+        var boxWidth = boxRect.width || (isMobile ? (window.innerWidth - 24) : 360);
+        var left = fabRect.left;
+
+        if (left + boxWidth > window.innerWidth - 8) {
+            left = Math.max(8, window.innerWidth - boxWidth - 8);
+        }
+        if (left < 8) left = 8;
+
+        // ─── Chiều dọc: box nằm TRÊN nút FAB ───
+        var gap = 16;
+        var bottom = window.innerHeight - fabRect.top + gap;
+
+        var maxBottom = window.innerHeight - (boxRect.height || 260) - 8;
+        if (bottom > maxBottom) bottom = Math.max(8, maxBottom);
+
+        box.style.left = left + 'px';
+        box.style.bottom = bottom + 'px';
+
+        // ─── Canh mũi tên chỉ vào giữa nút FAB ───
+        var fabCenterX = fabRect.left + fabRect.width / 2;
+        var arrowLeft = fabCenterX - left - 14;
+        arrowLeft = Math.max(16, Math.min(arrowLeft, boxWidth - 32));
+        box.style.setProperty('--arrow-left', arrowLeft + 'px');
+    }
+
+    /* ⭐ Detect cụm floating group đang hiển thị → đẩy chat FAB xuống
+       + reposition chat box nếu đang mở */
     function syncFloatingGroupState() {
         var group = document.getElementById('floatingLeftGroup');
         var isVisible = false;
@@ -736,7 +790,12 @@ def build_chat_js():
                         (style.visibility !== 'hidden') &&
                         (parseFloat(style.opacity || '1') > 0.05);
         }
+        var changed = document.body.classList.contains('has-floating-group') !== isVisible;
         document.body.classList.toggle('has-floating-group', isVisible);
+        if (changed && CHAT.isOpen) {
+            setTimeout(positionChatBox, 60);
+            setTimeout(positionChatBox, 380);
+        }
     }
 
     function startUserThreadWatch() {
@@ -840,6 +899,7 @@ def build_chat_js():
                 '<div class="title">Bắt đầu cuộc trò chuyện</div>' +
                 '<div class="desc">Gửi tin nhắn cho admin nếu bạn cần hỗ trợ.</div></div>' +
                 '<div class="chat-typing" id="chatTypingIndicator"><span>Đang trả lời</span><span class="dots"><span></span><span></span><span></span></span></div>';
+            if (CHAT.isOpen) { setTimeout(positionChatBox, 30); setTimeout(positionChatBox, 300); }
             return;
         }
         var html = '', lastDate = null;
@@ -857,6 +917,7 @@ def build_chat_js():
         body.innerHTML = html;
         var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 150;
         if (nearBottom) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
+        if (CHAT.isOpen) { setTimeout(positionChatBox, 30); setTimeout(positionChatBox, 300); }
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -958,6 +1019,7 @@ def build_chat_js():
                 if (snap.empty) {
                     if (body) body.innerHTML = '<div class="chat-empty"><i class="fas fa-comments"></i><div class="title">Chưa có hội thoại</div></div>';
                     setFabBadge(0);
+                    if (CHAT.isOpen) setTimeout(positionChatBox, 30);
                     return;
                 }
                 var html = '', totalUnread = 0;
@@ -981,6 +1043,7 @@ def build_chat_js():
                 });
                 if (body) body.innerHTML = html;
                 setFabBadge(totalUnread);
+                if (CHAT.isOpen) { setTimeout(positionChatBox, 30); setTimeout(positionChatBox, 300); }
             }, function(err) { console.error('Admin list watch error:', err); });
     }
     function stopAdminListWatch() {
@@ -1026,6 +1089,7 @@ def build_chat_js():
                 '<div class="title">Chưa có tin nhắn</div>' +
                 '<div class="desc">Gửi tin nhắn chào user để bắt đầu.</div></div>' +
                 '<div class="chat-typing" id="chatTypingIndicator"><span>Đang trả lời</span><span class="dots"><span></span><span></span><span></span></span></div>';
+            if (CHAT.isOpen) { setTimeout(positionChatBox, 30); setTimeout(positionChatBox, 300); }
             return;
         }
         var html = '', lastDate = null;
@@ -1043,54 +1107,70 @@ def build_chat_js():
         body.innerHTML = html;
         var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 150;
         if (nearBottom) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
+        if (CHAT.isOpen) { setTimeout(positionChatBox, 30); setTimeout(positionChatBox, 300); }
     }
-    /* ⭐ FIX: đã XÓA hoàn toàn updateExpandIcon() và toggleExpand() */
 
+    /* ═══════════════════════════════════════════════════════════
+       OPEN / CLOSE
+       ═══════════════════════════════════════════════════════════ */
     function openChat() {
-    var u = getCu();
-    if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
-    CHAT.isOpen = true;
-    $id('chatModal').classList.add('show');
-    document.body.classList.add('chat-is-open');   // ⭐ THÊM DÒNG NÀY
-    positionChatBox();
-    var dd = $id('userDropdown');
-    if (dd) dd.classList.remove('show');
-    if (isAdmin()) {
-        openAdminListView();
-        startOnlineWatch();
-    } else {
-        openUserView();
-        updateCounterUI();
+        var u = getCu();
+        if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
+        CHAT.isOpen = true;
+        $id('chatModal').classList.add('show');
+        document.body.classList.add('chat-is-open');   // ⭐ hạ z-index FAB
+        positionChatBox();
+        var dd = $id('userDropdown');
+        if (dd) dd.classList.remove('show');
+        if (isAdmin()) {
+            openAdminListView();
+            startOnlineWatch();
+        } else {
+            openUserView();
+            updateCounterUI();
+        }
+        setTimeout(positionChatBox, 30);
+        setTimeout(positionChatBox, 320);
     }
-    setTimeout(positionChatBox, 30);
-    setTimeout(positionChatBox, 320);
-}
 
-function closeChat() {
-    CHAT.isOpen = false;
-    $id('chatModal').classList.remove('show');
-    document.body.classList.remove('chat-is-open');   // ⭐ THÊM DÒNG NÀY
-    stopAdminThreadWatch();
-    stopOnlineWatch();
-    CHAT.adminCurrentEmail = null;
-    CHAT.lastSeenAt = Date.now();
-}
+    function closeChat() {
+        CHAT.isOpen = false;
+        $id('chatModal').classList.remove('show');
+        document.body.classList.remove('chat-is-open');   // ⭐ khôi phục z-index FAB
+        var box = document.querySelector('.chat-box');
+        if (box) box.classList.remove('admin-thread-open');  // ⭐ thu nhỏ box
+        stopAdminThreadWatch();
+        stopOnlineWatch();
+        CHAT.adminCurrentEmail = null;
+        CHAT.lastSeenAt = Date.now();
+    }
+
     function openUserView() {
         $id('chatHeaderInfo').innerHTML = '<div class="name">Hỗ trợ Admin</div><div class="status">Thường trả lời trong 5-10 phút</div>';
         $id('chatBack').classList.remove('show');
         $id('chatClose').style.display = 'flex';
         $id('chatQuickReplies').classList.add('hidden');
+        var box = document.querySelector('.chat-box');
+        if (box) box.classList.remove('admin-thread-open');  // ⭐ box nhỏ lại
         if (CHAT.lastThreadData) renderUserMessages(CHAT.lastThreadData);
+        setTimeout(positionChatBox, 30);
+        setTimeout(positionChatBox, 320);
     }
+
     function openAdminListView() {
         $id('chatHeaderInfo').innerHTML = '<div class="name">Chat hỗ trợ</div><div class="status">Chọn user để trả lời</div>';
         $id('chatBack').classList.remove('show');
         $id('chatClose').style.display = 'flex';
         $id('chatQuickReplies').classList.add('hidden');
+        var box = document.querySelector('.chat-box');
+        if (box) box.classList.remove('admin-thread-open');  // ⭐ box nhỏ lại
         stopAdminThreadWatch();
         CHAT.adminCurrentEmail = null;
         startAdminListWatch();
+        setTimeout(positionChatBox, 30);
+        setTimeout(positionChatBox, 320);
     }
+
     function openAdminThread(email) {
         if (!isAdmin()) return;
         stopAdminListWatch();
@@ -1098,7 +1178,11 @@ function closeChat() {
         $id('chatBack').classList.add('show');
         $id('chatClose').style.display = 'none';
         $id('chatQuickReplies').classList.remove('hidden');
+        var box = document.querySelector('.chat-box');
+        if (box) box.classList.add('admin-thread-open');  // ⭐ box mở rộng 55vh
         startAdminThreadWatch(email);
+        setTimeout(positionChatBox, 30);
+        setTimeout(positionChatBox, 320);
     }
 
     function sendMessage() {
@@ -1234,8 +1318,19 @@ function closeChat() {
         syncFloatingGroupState();
         setInterval(syncFloatingGroupState, 1000);
 
+        /* ⭐ Reposition khi resize window */
+        window.addEventListener('resize', function() {
+            if (CHAT.isOpen) positionChatBox();
+        });
+
+        /* ⭐ Reposition khi scroll */
+        window.addEventListener('scroll', function() {
+            if (CHAT.isOpen) positionChatBox();
+        }, { passive: true });
+
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
+        window.__chatPosition = positionChatBox;
     }
 
     var _lastEmail = null;
@@ -1256,6 +1351,7 @@ function closeChat() {
                 setFabBadge(0);
                 if (CHAT.isOpen) closeChat();
             }
+            if (CHAT.isOpen) setTimeout(positionChatBox, 100);
         }, 2000);
     }
 
