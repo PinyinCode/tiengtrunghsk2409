@@ -284,7 +284,7 @@ def build_admin_chat_css():
 /* ─── FAB MỞ ADMIN CHAT MANAGER ─── */
 .acm-fab{
     position:fixed;
-    right:20px;
+    right:80px;
     bottom:calc(20px + env(safe-area-inset-bottom));
     z-index:9997;
     width:56px;height:56px;
@@ -316,7 +316,7 @@ def build_admin_chat_css():
 @media (max-width:768px){
     .acm-fab{
         width:48px;height:48px;
-        right:12px;
+        right:70px;
         bottom:calc(12px + env(safe-area-inset-bottom));
         font-size:1.1rem;
     }
@@ -738,6 +738,13 @@ def build_admin_chat_js():
         // Không stop watchers — để badge FAB vẫn cập nhật realtime
     }
 
+    // ⭐ TOGGLE — nhấn 1 lần mở, nhấn lần nữa đóng
+    function toggleModal() {
+        if (ACM.isOpen) closeModal();
+        else openModal();
+    }
+
+    
     /* ═══════════════════════════════════════════════════════════
        🔗 MỞ CHAT VỚI USER (gọi hàm có sẵn trong chat_support)
        ═══════════════════════════════════════════════════════════ */
@@ -783,7 +790,7 @@ def build_admin_chat_js():
 
         // FAB mở modal
         var fab = $id('acmFab');
-        if (fab) fab.addEventListener('click', openModal);
+        if (fab) fab.addEventListener('click', toggleModal);
 
         // Search input
         var searchInput = $id('acmSearchInput');
