@@ -529,17 +529,19 @@ def build_chat_js():
     var MAX_MESSAGES = 100;
 
     var CHAT = {
-        inited: false,
-        threadUnsub: null,
-        adminListUnsub: null,
-        adminThreadUnsub: null,
-        adminCurrentEmail: null,
-        isOpen: false,
-        lastThreadData: null,
-        lastSeenAt: 0,
-        typingTimer: null,
-        onlineUnsub: null
-    };
+    inited: false,
+    threadUnsub: null,
+    adminListUnsub: null,
+    adminThreadUnsub: null,
+    adminCurrentEmail: null,
+    isOpen: false,
+    isExpanded: false,
+    state: 'closed',
+    lastThreadData: null,
+    lastSeenAt: 0,
+    typingTimer: null,
+    onlineUnsub: null
+};
 
     function $id(id) { return document.getElementById(id); }
     function esc(s) {
@@ -672,9 +674,9 @@ def build_chat_js():
 
         wrap.appendChild(btn);
         btn.addEventListener('click', function() {
-            btn.classList.remove('has-unread');
-            openChat();
-        });
+    btn.classList.remove('has-unread');
+    cycleChat();   // mini → expanded → closed → mini
+});
 
         /* ✨ Lóe sáng nhẹ 1 lần khi icon mount */
         setTimeout(function() {
@@ -1032,30 +1034,78 @@ def build_chat_js():
         var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 150;
         if (nearBottom) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
     }
+    function updateExpandIcon(expanded) {
+    var icon = $id('chatExpand');
+    if (!icon) return;
+    var i = icon.querySelector('i');
+    if (i) i.className = expanded ? 'fas fa-compress' : 'fas fa-expand';
+    icon.title = expanded ? 'Thu nhỏ' : 'Phóng to';
+}
+
+function toggleExpand() {
+    var box = document.querySelector('.chat-box');
+    if (!box) return;
+    CHAT.isExpanded = !CHAT.isExpanded;
+    CHAT.state = CHAT.isExpanded ? 'expanded' : 'mini';
+    box.classList.toggle('expanded', CHAT.isExpanded);
+    updateExpandIcon(CHAT.isExpanded);
+    setTimeout(function() {
+        var body = $id('chatBody');
+        if (body) body.scrollTop = body.scrollHeight;
+    }, 320);
+}
+
+function cycleChat() {
+    var box = document.querySelector('.chat-box');
+    if (!box) return;
+    if (CHAT.state === 'closed') { openChat(); return; }
+    if (CHAT.state === 'mini') {
+        CHAT.state = 'expanded';
+        CHAT.isExpanded = true;
+        box.classList.add('expanded');
+        updateExpandIcon(true);
+        setTimeout(function() {
+            var body = $id('chatBody');
+            if (body) body.scrollTop = body.scrollHeight;
+        }, 320);
+        return;
+    }
+    if (CHAT.state === 'expanded') { closeChat(); return; }
+}
 
     function openChat() {
-        var u = getCu();
-        if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
-        CHAT.isOpen = true;
-        $id('chatModal').classList.add('show');
-        var dd = $id('userDropdown');
-        if (dd) dd.classList.remove('show');
-        if (isAdmin()) {
-            openAdminListView();
-            startOnlineWatch();
-        } else {
-            openUserView();
-            updateCounterUI();
-        }
+    var u = getCu();
+    if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
+    CHAT.isOpen = true;
+    CHAT.state = 'mini';
+    CHAT.isExpanded = false;
+    $id('chatModal').classList.add('show');
+    var box = document.querySelector('.chat-box');
+    if (box) box.classList.remove('expanded');
+    updateExpandIcon(false);
+    var dd = $id('userDropdown');
+    if (dd) dd.classList.remove('show');
+    if (isAdmin()) {
+        openAdminListView();
+        startOnlineWatch();
+    } else {
+        openUserView();
+        updateCounterUI();
     }
+}
     function closeChat() {
-        CHAT.isOpen = false;
-        $id('chatModal').classList.remove('show');
-        stopAdminThreadWatch();
-        stopOnlineWatch();
-        CHAT.adminCurrentEmail = null;
-        CHAT.lastSeenAt = Date.now();
-    }
+    CHAT.isOpen = false;
+    CHAT.state = 'closed';
+    CHAT.isExpanded = false;
+    $id('chatModal').classList.remove('show');
+    stopAdminThreadWatch();
+    stopOnlineWatch();
+    CHAT.adminCurrentEmail = null;
+    CHAT.lastSeenAt = Date.now();
+    var box = document.querySelector('.chat-box');
+    if (box) box.classList.remove('expanded');
+    updateExpandIcon(false);
+}
     function openUserView() {
         $id('chatHeaderInfo').innerHTML = '<div class="name">Hỗ trợ Admin</div><div class="status">Thường trả lời trong 5-10 phút</div>';
         $id('chatBack').classList.remove('show');
