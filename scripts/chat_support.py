@@ -12,10 +12,15 @@ CHAT:
 • Icon rung + đỏ khi có tin chưa đọc
 • Modal góc trái-dưới + mũi tên chỉ về nút chat
 
-✅ FIX (2026-09): NÚT CHAT TÁCH KHỎI CỤM ZALO/TIKTOK
-   - Wrapper riêng #chatFloatWrap, position:fixed, không phụ thuộc floatingLeftGroup
-   - Không còn bị ẩn khi user thu gọn cụm Zalo/TikTok
-   - Tự đẩy xuống khi cụm floating group đang mở (syncFloatingGroupState)
+✅ FIX (2026-09):
+• NÚT CHAT TÁCH KHỎI CỤM ZALO/TIKTOK
+  - Wrapper riêng #chatFloatWrap, position:fixed
+  - Tự né cụm floatingLeftGroup (đo chiều cao thực)
+• 🆕 MINI CHAT POPUP
+  - Khi có tin mới → auto hiện popup nhỏ (mobile + desktop)
+  - Click popup → phóng to thành modal chat đầy đủ
+  - Nút X đóng popup, nút 💬 mở full
+  - Tự ẩn khi mở full chat
 
 QUOTA:
 • Đếm reads/writes/deletes client-side (localStorage)
@@ -89,13 +94,13 @@ def build_chat_css():
 #chatFloatWrap{
     position:fixed;
     left:20px;
-    bottom:calc(20px + env(safe-area-inset-bottom));
-    z-index:9998;                        /* dưới modal (4000) nhưng trên content */
+    bottom:calc(80px + env(safe-area-inset-bottom));
+    z-index:9998;
     display:flex;
     flex-direction:column;
     align-items:flex-start;
     gap:.5rem;
-    pointer-events:none;                 /* chỉ con nhận click */
+    pointer-events:none;
     transition:opacity .3s ease, transform .3s ease, bottom .35s cubic-bezier(.34,1.56,.64,1);
     opacity:1;
     transform:translateY(0);
@@ -107,29 +112,235 @@ def build_chat_css():
     transform:translateY(12px);
     pointer-events:none;
 }
-
-/* Khi cụm floating group đang mở → đẩy chat xuống dưới 1 chút để không đè */
-body.has-floating-group #chatFloatWrap{
-    bottom:calc(90px + env(safe-area-inset-bottom));
+body:not(.has-floating-group) #chatFloatWrap{
+    bottom:calc(20px + env(safe-area-inset-bottom));
 }
-
+body.has-floating-group #chatFloatWrap{
+    bottom:calc(140px + env(safe-area-inset-bottom));
+}
 @media (max-width:768px){
     #chatFloatWrap{
         left:12px;
+        bottom:calc(70px + env(safe-area-inset-bottom));
+    }
+    body:not(.has-floating-group) #chatFloatWrap{
         bottom:calc(12px + env(safe-area-inset-bottom));
     }
     body.has-floating-group #chatFloatWrap{
-        bottom:calc(70px + env(safe-area-inset-bottom));
+        bottom:calc(120px + env(safe-area-inset-bottom));
     }
 }
 @media (max-width:400px){
     #chatFloatWrap{
         left:10px;
-        bottom:calc(10px + env(safe-area-inset-bottom));
+    }
+    body.has-floating-group #chatFloatWrap{
+        bottom:calc(110px + env(safe-area-inset-bottom));
     }
 }
 
-/* ═══ CHAT MODAL ═══ */
+/* ═══════════════════════════════════════════════════════════════
+   🆕 MINI CHAT POPUP — hiện khi có tin mới
+   ═══════════════════════════════════════════════════════════════ */
+.mini-chat-popup{
+    position:fixed;
+    left:20px;
+    bottom:calc(80px + env(safe-area-inset-bottom));
+    width:320px;
+    max-width:calc(100vw - 40px);
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 12px 40px rgba(15,23,42,.28), 0 4px 12px rgba(15,23,42,.15);
+    z-index:9999;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    font-family:inherit;
+    opacity:0;
+    transform:translateY(16px) scale(.94);
+    transform-origin:bottom left;
+    pointer-events:none;
+    transition:opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+[data-theme="dark"] .mini-chat-popup{background:#1e293b;box-shadow:0 12px 40px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.4);}
+.mini-chat-popup.show{
+    opacity:1;
+    transform:translateY(0) scale(1);
+    pointer-events:auto;
+}
+/* Mũi tên chỉ xuống FAB */
+.mini-chat-popup::after{
+    content:'';
+    position:absolute;
+    bottom:-10px;
+    left:32px;
+    width:0;
+    height:0;
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    border-top:10px solid #4f46e5;
+    filter:drop-shadow(0 3px 4px rgba(79,70,229,.3));
+    pointer-events:none;
+}
+
+/* Header */
+.mini-chat-head{
+    padding:.75rem 1rem;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    cursor:pointer;
+    user-select:none;
+    transition:filter .2s ease;
+}
+.mini-chat-head:hover{filter:brightness(1.08);}
+.mini-chat-head .mch-avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:rgba(255,255,255,.22);
+    display:flex;align-items:center;justify-content:center;
+    font-size:1rem;flex-shrink:0;
+    animation:mchPulse 1.8s infinite;
+}
+@keyframes mchPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.4);}
+    50%{box-shadow:0 0 0 8px rgba(255,255,255,0);}
+}
+.mini-chat-head .mch-info{flex:1;min-width:0;}
+.mini-chat-head .mch-title{font-weight:800;font-size:.85rem;line-height:1.2;}
+.mini-chat-head .mch-sub{font-size:.7rem;opacity:.9;margin-top:1px;}
+.mini-chat-head .mch-close{
+    width:28px;height:28px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.2);color:#fff;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:.85rem;flex-shrink:0;
+    transition:background .15s;
+}
+.mini-chat-head .mch-close:hover{background:rgba(255,255,255,.4);}
+
+/* Body hiển thị tin cuối */
+.mini-chat-body{
+    padding:.7rem .9rem;
+    background:#f8fafc;
+    max-height:180px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:.4rem;
+}
+[data-theme="dark"] .mini-chat-body{background:#0f172a;}
+.mini-chat-msg{
+    display:flex;
+    max-width:90%;
+    animation:mchMsgIn .3s ease;
+}
+@keyframes mchMsgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.mini-chat-msg.from-admin{align-self:flex-start;}
+.mini-chat-msg.from-user{align-self:flex-end;flex-direction:row-reverse;}
+.mini-chat-msg .mc-bubble{
+    padding:.5rem .75rem;
+    border-radius:14px;
+    font-size:.82rem;
+    line-height:1.4;
+    word-break:break-word;
+    white-space:pre-wrap;
+    max-width:100%;
+}
+.mini-chat-msg.from-admin .mc-bubble{
+    background:#fff;color:#0f172a;border:1px solid #e2e8f0;
+    border-bottom-left-radius:4px;
+}
+[data-theme="dark"] .mini-chat-msg.from-admin .mc-bubble{background:#334155;color:#f1f5f9;border-color:#475569;}
+.mini-chat-msg.from-user .mc-bubble{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+    border-bottom-right-radius:4px;
+}
+.mini-chat-msg .mc-time{
+    font-size:.6rem;color:#94a3b8;
+    padding:0 .3rem;align-self:flex-end;margin-bottom:.1rem;
+    white-space:nowrap;
+}
+.mini-chat-empty{
+    text-align:center;color:#94a3b8;
+    font-size:.8rem;padding:.5rem;
+}
+
+/* Footer: gợi ý click để trả lời */
+.mini-chat-foot{
+    padding:.55rem .9rem;
+    background:#fff;
+    border-top:1px solid #e2e8f0;
+    display:flex;
+    gap:.5rem;
+    align-items:center;
+}
+[data-theme="dark"] .mini-chat-foot{background:#1e293b;border-color:#334155;}
+.mini-chat-foot .mcf-hint{
+    flex:1;
+    font-size:.72rem;
+    color:#64748b;
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+[data-theme="dark"] .mini-chat-foot .mcf-hint{color:#94a3b8;}
+.mini-chat-foot .mcf-hint i{color:#4f46e5;flex-shrink:0;}
+.mini-chat-foot .mcf-btn{
+    padding:.45rem .85rem;
+    border-radius:50px;
+    border:none;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    font-size:.75rem;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    white-space:nowrap;
+    flex-shrink:0;
+    box-shadow:0 3px 10px rgba(124,58,237,.35);
+    transition:transform .15s, box-shadow .2s;
+}
+.mini-chat-foot .mcf-btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(124,58,237,.55);}
+
+/* Khi cụm floating group hiện → đẩy mini popup lên */
+body.has-floating-group .mini-chat-popup{
+    bottom:calc(140px + env(safe-area-inset-bottom));
+}
+body:not(.has-floating-group) .mini-chat-popup{
+    bottom:calc(80px + env(safe-area-inset-bottom));
+}
+
+/* Mobile */
+@media (max-width:600px){
+    .mini-chat-popup{
+        left:10px;
+        right:10px;
+        width:auto;
+        max-width:none;
+        bottom:calc(72px + env(safe-area-inset-bottom));
+    }
+    body.has-floating-group .mini-chat-popup{
+        bottom:calc(120px + env(safe-area-inset-bottom));
+    }
+    body:not(.has-floating-group) .mini-chat-popup{
+        bottom:calc(72px + env(safe-area-inset-bottom));
+    }
+    .mini-chat-popup::after{left:24px;}
+    .mini-chat-body{max-height:140px;}
+}
+@media (max-width:400px){
+    .mini-chat-popup{left:8px;right:8px;}
+    .mini-chat-popup::after{left:20px;}
+}
+
+/* ═══ CHAT MODAL (FULL) ═══ */
 .chat-modal{position:fixed;inset:0;background:rgba(15,23,42,.75);backdrop-filter:blur(6px);z-index:4000;display:none;align-items:flex-end;justify-content:flex-start;padding:1rem;padding-bottom:calc(85px + env(safe-area-inset-bottom));padding-left:20px;}
 .chat-modal.show{display:flex}
 
@@ -291,6 +502,27 @@ body.has-floating-group #chatFloatWrap{
 # ═══════════════════════════════════════════════════════════════
 def build_chat_html():
     return r"""
+<!-- 🆕 MINI CHAT POPUP — hiện khi có tin mới -->
+<div class="mini-chat-popup" id="miniChatPopup" aria-hidden="true">
+    <div class="mini-chat-head" id="miniChatHead">
+        <div class="mch-avatar"><i class="fas fa-comments"></i></div>
+        <div class="mch-info">
+            <div class="mch-title" id="miniChatTitle">💬 Tin nhắn mới</div>
+            <div class="mch-sub" id="miniChatSub">Từ Admin</div>
+        </div>
+        <button class="mch-close" id="miniChatClose" type="button" title="Đóng" aria-label="Đóng">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="mini-chat-body" id="miniChatBody"></div>
+    <div class="mini-chat-foot">
+        <div class="mcf-hint"><i class="fas fa-hand-pointer"></i> Bấm để trả lời</div>
+        <button class="mcf-btn" id="miniChatOpen" type="button">
+            <i class="fas fa-reply"></i> Trả lời
+        </button>
+    </div>
+</div>
+
 <div class="chat-modal" id="chatModal">
     <div class="chat-box">
         <div class="chat-header">
@@ -470,6 +702,8 @@ def build_chat_js():
     var DAILY_LIMIT = 50;
     var LIMIT_WARN_AT = 40;
     var MAX_MESSAGES = 100;
+    var MINI_POPUP_AUTO_HIDE_MS = 60000;   // tự ẩn mini popup sau 60s
+    var MINI_POPUP_KEEP_LAST = 3;          // hiện 3 tin cuối trong mini popup
 
     var CHAT = {
         inited: false,
@@ -480,8 +714,11 @@ def build_chat_js():
         isOpen: false,
         lastThreadData: null,
         lastSeenAt: 0,
+        lastShownMsgAt: 0,          // 🆕 thời điểm tin cuối đã auto-hiện popup
         typingTimer: null,
-        onlineUnsub: null
+        onlineUnsub: null,
+        miniPopupTimer: null,       // 🆕 auto-hide timer
+        miniPopupMsgAt: 0           // 🆕 tin cuối đã hiển thị ở popup
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -619,7 +856,6 @@ def build_chat_js():
             openChat();
         });
 
-        /* ✨ Lóe sáng nhẹ 1 lần khi icon mount */
         setTimeout(function() {
             if (!btn.classList.contains('has-unread')) {
                 btn.classList.add('intro-glow');
@@ -627,7 +863,38 @@ def build_chat_js():
             }
         }, 800);
 
-        console.log('✅ Chat FAB mounted (độc lập với Zalo/TikTok)');
+        /* ⭐ Theo dõi cụm floating group → chat luôn né */
+        var group = document.getElementById('floatingLeftGroup');
+        if (group && !group._chatObserver) {
+            try {
+                var mo = new MutationObserver(function() { syncFloatingGroupState(); });
+                mo.observe(group, {
+                    attributes: true,
+                    attributeFilter: ['style', 'class'],
+                    childList: true,
+                    subtree: false
+                });
+                group._chatObserver = mo;
+            } catch(e) {}
+        }
+        if (!document.body._chatBodyObserver) {
+            try {
+                var mo2 = new MutationObserver(function() {
+                    var g = document.getElementById('floatingLeftGroup');
+                    if (g && !g._chatObserver) {
+                        var mo3 = new MutationObserver(function() { syncFloatingGroupState(); });
+                        mo3.observe(g, { attributes: true, attributeFilter: ['style','class'], childList: true });
+                        g._chatObserver = mo3;
+                    }
+                    syncFloatingGroupState();
+                });
+                mo2.observe(document.body, { childList: true, subtree: false });
+                document.body._chatBodyObserver = mo2;
+            } catch(e) {}
+        }
+
+        syncFloatingGroupState();
+        console.log('✅ Chat FAB mounted (độc lập + tự né cụm Zalo/TikTok)');
     }
 
     function updateFabVisibility() {
@@ -641,6 +908,7 @@ def build_chat_js():
         } else {
             wrap.classList.add('hidden');
             fab.classList.add('hidden');
+            hideMiniPopup();
         }
     }
     function setFabBadge(n) {
@@ -657,19 +925,131 @@ def build_chat_js():
         }
     }
 
-    /* ⭐ Detect cụm floating group đang hiển thị → đẩy chat FAB xuống */
+    /* ⭐ Đo cụm floating group → đẩy chat FAB lên */
     function syncFloatingGroupState() {
         var group = document.getElementById('floatingLeftGroup');
-        var isVisible = false;
-        if (group) {
-            var style = window.getComputedStyle(group);
-            isVisible = (style.display !== 'none') &&
+        var wrap = document.getElementById('chatFloatWrap');
+        if (!group || !wrap) {
+            document.body.classList.remove('has-floating-group');
+            return;
+        }
+        var style = window.getComputedStyle(group);
+        var isVisible = (style.display !== 'none') &&
                         (style.visibility !== 'hidden') &&
                         (parseFloat(style.opacity || '1') > 0.05);
-        }
         document.body.classList.toggle('has-floating-group', isVisible);
+
+        if (isVisible) {
+            var rect = group.getBoundingClientRect();
+            var groupHeight = rect.height || 60;
+            var groupBottom = parseInt(style.bottom, 10);
+            if (isNaN(groupBottom)) groupBottom = 20;
+            var chatBottom = groupBottom + groupHeight + 12;
+            wrap.style.bottom = 'calc(' + chatBottom + 'px + env(safe-area-inset-bottom))';
+        } else {
+            wrap.style.bottom = '';
+        }
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       🆕 MINI CHAT POPUP
+       ═══════════════════════════════════════════════════════════ */
+    function renderMiniPopup(d) {
+        var body = $id('miniChatBody');
+        var titleEl = $id('miniChatTitle');
+        var subEl = $id('miniChatSub');
+        if (!body) return;
+
+        var msgs = (d && d.messages) ? d.messages.slice(-MINI_POPUP_KEEP_LAST) : [];
+        if (titleEl) titleEl.textContent = '💬 Tin nhắn mới';
+        if (subEl) {
+            var lastFrom = d && d.lastMessageFrom;
+            subEl.textContent = (lastFrom === 'admin') ? 'Từ Admin · ' + timeAgo(Date.now() - (d.lastMessageAt ? d.lastMessageAt.toMillis() : Date.now())) : 'Bạn đã gửi';
+        }
+
+        if (msgs.length === 0) {
+            body.innerHTML = '<div class="mini-chat-empty">Chưa có tin nhắn</div>';
+            return;
+        }
+        var html = '';
+        msgs.forEach(function(m) {
+            var at = m.at ? (m.at.toDate ? m.at.toDate() : new Date((m.at.seconds||0)*1000)) : new Date();
+            var time = at.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'});
+            var isAdminMsg = (m.from === 'admin');
+            html += '<div class="mini-chat-msg ' + (isAdminMsg?'from-admin':'from-user') + '">' +
+                '<div class="mc-bubble">' + esc(m.text||'').replace(/\n/g,'<br>') + '</div>' +
+                '<span class="mc-time">' + time + '</span></div>';
+        });
+        body.innerHTML = html;
+        // scroll xuống cuối
+        setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
+    }
+
+    function showMiniPopup(d) {
+        var popup = $id('miniChatPopup');
+        if (!popup) return;
+        // Nếu full chat đang mở → không hiện mini
+        if (CHAT.isOpen) return;
+        // Nếu user đang không login → không hiện
+        var u = getCu();
+        if (!u || !u.email) return;
+
+        renderMiniPopup(d);
+        popup.classList.add('show');
+        popup.setAttribute('aria-hidden', 'false');
+
+        // Auto-hide sau 60s
+        if (CHAT.miniPopupTimer) clearTimeout(CHAT.miniPopupTimer);
+        CHAT.miniPopupTimer = setTimeout(function() {
+            hideMiniPopup();
+        }, MINI_POPUP_AUTO_HIDE_MS);
+    }
+
+    function hideMiniPopup() {
+        var popup = $id('miniChatPopup');
+        if (!popup) return;
+        popup.classList.remove('show');
+        popup.setAttribute('aria-hidden', 'true');
+        if (CHAT.miniPopupTimer) {
+            clearTimeout(CHAT.miniPopupTimer);
+            CHAT.miniPopupTimer = null;
+        }
+    }
+
+    function initMiniPopup() {
+        var popup = $id('miniChatPopup');
+        var head = $id('miniChatHead');
+        var closeBtn = $id('miniChatClose');
+        var openBtn = $id('miniChatOpen');
+        if (!popup) return;
+
+        // Click header hoặc nút "Trả lời" → mở full chat
+        if (head) head.addEventListener('click', function(e) {
+            // Không mở khi bấm nút X
+            if (e.target.closest('#miniChatClose')) return;
+            hideMiniPopup();
+            openChat();
+        });
+        if (openBtn) openBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            hideMiniPopup();
+            openChat();
+        });
+        // Nút X → chỉ ẩn popup, không mở full
+        if (closeBtn) closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            hideMiniPopup();
+            // Đánh dấu tin này đã xem → không auto-hiện lại
+            var d = CHAT.lastThreadData;
+            if (d && d.lastMessageAt) {
+                CHAT.lastShownMsgAt = d.lastMessageAt.toMillis ? d.lastMessageAt.toMillis() : Date.now();
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       🔥 USER THREAD WATCH
+       ═══════════════════════════════════════════════════════════ */
     function startUserThreadWatch() {
         stopUserThreadWatch();
         var u = getCu(), db = getDb();
@@ -702,12 +1082,23 @@ def build_chat_js():
             CHAT.lastThreadData = d;
             var unread = d.unreadByUser || 0;
             setFabBadge(unread);
+
             var lastAt = d.lastMessageAt ? d.lastMessageAt.toMillis() : 0;
             var fromAdmin = (d.lastMessageFrom === 'admin');
-            if (fromAdmin && lastAt > (CHAT.lastSeenAt || 0) && unread > 0) {
-                CHAT.lastSeenAt = lastAt;
-                if (!CHAT.isOpen) setTimeout(function() { if (!CHAT.isOpen) openChat(); }, 400);
+
+            // 🆕 AUTO-HIỆN MINI POPUP khi có tin mới TỪ ADMIN
+            if (fromAdmin && unread > 0 && lastAt > CHAT.lastShownMsgAt) {
+                CHAT.lastShownMsgAt = lastAt;
+                if (!CHAT.isOpen) {
+                    // Delay nhẹ để Firebase ổn định + tránh popup ngay khi vừa load
+                    setTimeout(function() {
+                        if (!CHAT.isOpen && CHAT.lastThreadData) {
+                            showMiniPopup(CHAT.lastThreadData);
+                        }
+                    }, 350);
+                }
             }
+
             if (CHAT.isOpen && !isAdmin()) {
                 renderUserMessages(d);
                 if ((d.unreadByUser || 0) > 0) threadRef.update({ unreadByUser: 0 }).catch(function(){});
@@ -979,6 +1370,7 @@ def build_chat_js():
     function openChat() {
         var u = getCu();
         if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
+        hideMiniPopup();  // 🆕 đóng mini popup nếu đang mở
         CHAT.isOpen = true;
         $id('chatModal').classList.add('show');
         var dd = $id('userDropdown');
@@ -1104,6 +1496,7 @@ def build_chat_js():
         CHAT.inited = true;
         mountChatButton();
         initLimitBanner();
+        initMiniPopup();   // 🆕
         var closeBtn = $id('chatClose');
         if (closeBtn) closeBtn.addEventListener('click', closeChat);
         var backBtn = $id('chatBack');
@@ -1156,10 +1549,12 @@ def build_chat_js():
 
         /* ⭐ Sync vị trí chat FAB khi cụm floating group mở/đóng */
         syncFloatingGroupState();
-        setInterval(syncFloatingGroupState, 1000);
+        setInterval(syncFloatingGroupState, 5000);
 
         window.__chatOpenThread = openAdminThread;
         window.__chatOpen = openChat;
+        window.__chatHideMini = hideMiniPopup;   // 🆕 expose
+        window.__chatShowMini = showMiniPopup;   // 🆕
     }
 
     var _lastEmail = null;
@@ -1173,6 +1568,7 @@ def build_chat_js():
             stopUserThreadWatch();
             stopAdminListWatch();
             stopAdminThreadWatch();
+            hideMiniPopup();   // 🆕 đổi user → ẩn popup cũ
             if (email) {
                 if (isAdmin()) startAdminListWatch();
                 else { startUserThreadWatch(); updateCounterUI(); }
@@ -1261,7 +1657,6 @@ def build_quota_js():
         if (window.__quotaWrapped) return true;
         window.__quotaWrapped = true;
 
-        var proto = firebase.firestore.Firestore.prototype;
         var docProto = firebase.firestore.DocumentReference.prototype;
         var colProto = firebase.firestore.CollectionReference.prototype;
 
@@ -1508,9 +1903,9 @@ def build_quota_init_js():
             });
         }
         var toggleQuotaBtn = $id('toggleQuotaBtn');
-        var quotaSection = $id('adminQuotaSection');
-        if (toggleQuotaBtn && quotaSection && !toggleQuotaBtn._bound) {
-            toggleQuotaBtn._bound = true;
+        var quotaSection = $Autoid('adminQuotaSection');
+        if (toggleQu-hotaBtn && quotaSection && !toggleQuideotaBtn._bound) {
+**            toggleQuotaBtn._bound = true;
             toggleQuotaBtn.addEventListener('click', function() {
                 quotaSection.classList.toggle('collapsed');
                 var isVisible = !quotaSection.classList.contains('collapsed');
