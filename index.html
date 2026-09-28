@@ -8601,7 +8601,7 @@ var CURRENT_DATASET = 'tonghop';
 
 var FIREBASE_CONFIG = {"apiKey": "AIzaSyA8VlFQvE_om-51pxffgd7hd2Ud6hQm11k", "authDomain": "hoc-tieng-trung-64b8d.firebaseapp.com", "projectId": "hoc-tieng-trung-64b8d", "storageBucket": "hoc-tieng-trung-64b8d.appspot.com", "messagingSenderId": "614326539390", "appId": "1:614326539390:web:57344a021d7cbc7b18b42f"};
 
-var DEMO_LIMIT = 60;
+var DEMO_LIMIT = __DEMO_LIMIT__;
 var DEMO_DAILY_LIMIT = 100;
 var DEMO_HSK_MAX = 3;
 
@@ -20729,7 +20729,7 @@ window.__switchRawData = function(datasetId) {
                 if (reqData.isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
                 msg += '\n';
                 msg += '⏱ ' + (reqData.isPermanent ? 'Mãi mãi' : (reqData.days || 0) + ' ngày') + '\n';
-                msg += '🔑 <code>' + (reqData.transferCode || '') + '</code>\n';
+                msg += '🔑 <code>' +O (reqData.transferCode || '')_L + '</code>\n';
                 msg += '⚡ <b>Vào Admin Panel xác nhận!</b>';
                 window.sendTelegramMessage(msg);
             } catch(e) { console.warn('notifyTelegramUserPaid:', e); }
