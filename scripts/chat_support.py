@@ -357,6 +357,7 @@ def build_chat_html():
                 <div class="status">Thường trả lời trong 5-10 phút</div>
             </div>
             <span class="chat-counter" id="chatCounter">0/50</span>
+            <button class="chat-expand-btn" id="chatExpand" type="button" title="Phóng to"><i class="fas fa-expand"></i></button>
             <button class="chat-header-close" id="chatClose" type="button"><i class="fas fa-times"></i></button>
         </div>
         <div class="chat-body" id="chatBody">
@@ -387,7 +388,6 @@ def build_chat_html():
     </div>
 </div>
 """
-
 
 def build_quota_html():
     """HTML cho section Quota trong Admin Panel."""
