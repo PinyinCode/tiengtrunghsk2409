@@ -20592,60 +20592,77 @@ window.favFilterCount = favFilterCount;
     }
 
     function sendMessage() {
-        var input = $id('chatInput');
-        var text = input.value.trim();
-        if (!text) return;
-        var u = getCu(), db = getDb();
-        if (!u || !db) return;
-        var targetEmail, from;
-        if (CHAT.adminCurrentEmail) { targetEmail = CHAT.adminCurrentEmail; from = 'admin'; }
-        else if (!isAdmin()) {
-            targetEmail = u.email; from = 'user';
-            if (!canSend()) {
-                var banner = $id('chatLimitBanner');
-                if (banner) banner.classList.add('show', 'danger');
-                input.style.animation = 'chatBellShake 0.4s';
-                setTimeout(function() { input.style.animation = ''; }, 500);
-                return;
-            }
-        } else return;
+    var input = $id('chatInput');
+    var text = input.value.trim();
+    if (!text) return;
+    var u = getCu(), db = getDb();
+    if (!u || !db) return;
+    var targetEmail, from;
+    if (CHAT.adminCurrentEmail) { targetEmail = CHAT.adminCurrentEmail; from = 'admin'; }
+    else if (!isAdmin()) {
+        targetEmail = u.email; from = 'user';
+        if (!canSend()) {
+            var banner = $id('chatLimitBanner');
+            if (banner) banner.classList.add('show', 'danger');
+            input.style.animation = 'chatBellShake 0.4s';
+            setTimeout(function() { input.style.animation = ''; }, 500);
+            return;
+        }
+    } else return;
 
-        var btn = $id('chatSendBtn');
-        btn.disabled = true;
-        input.value = '';
-        autoResize();
-        var threadRef = db.collection('chat_threads').doc(targetEmail);
-        var newMsg = {
-            from: from, fromEmail: u.email, fromName: u.name || 'User',
-            text: text, at: firebase.firestore.Timestamp.now()
+    var btn = $id('chatSendBtn');
+    btn.disabled = true;
+    input.value = '';
+    autoResize();
+    var threadRef = db.collection('chat_threads').doc(targetEmail);
+    var newMsg = {
+        from: from, fromEmail: u.email, fromName: u.name || 'User',
+        text: text, at: firebase.firestore.Timestamp.now()
+    };
+    threadRef.get().then(function(doc) {
+        var data = doc.exists ? doc.data() : {};
+        var msgs = data.messages || [];
+        msgs.push(newMsg);
+        if (msgs.length > MAX_MESSAGES) msgs = msgs.slice(-MAX_MESSAGES);
+        var update = {
+            messages: msgs, lastMessage: text.substring(0, 100),
+            lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastMessageFrom: from,
+            userEmail: targetEmail,
+            userName: data.userName || u.name || targetEmail.split('@')[0]
         };
-        threadRef.get().then(function(doc) {
-            var data = doc.exists ? doc.data() : {};
-            var msgs = data.messages || [];
-            msgs.push(newMsg);
-            if (msgs.length > MAX_MESSAGES) msgs = msgs.slice(-MAX_MESSAGES);
-            var update = {
-                messages: msgs, lastMessage: text.substring(0, 100),
-                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastMessageFrom: from,
-                userEmail: targetEmail,
-                userName: data.userName || u.name || targetEmail.split('@')[0]
-            };
-            if (from === 'user') {
-                update.unreadByAdmin = (data.unreadByAdmin || 0) + 1;
-                update.unreadByUser = 0;
-                update.userTypingAt = null;
-            } else {
-                update.unreadByUser = (data.unreadByUser || 0) + 1;
-                update.unreadByAdmin = 0;
-                update.adminTypingAt = null;
+        if (from === 'user') {
+            update.unreadByAdmin = (data.unreadByAdmin || 0) + 1;
+            update.unreadByUser = 0;
+            update.userTypingAt = null;
+        } else {
+            update.unreadByUser = (data.unreadByUser || 0) + 1;
+            update.unreadByAdmin = 0;
+            update.adminTypingAt = null;
+        }
+        return threadRef.set(update, { merge: true });
+    }).then(function() {
+        // ⭐ Chỉ xử lý khi USER gửi tin
+        if (from === 'user') {
+            incDailyCount();
+            updateCounterUI();
+
+            // ═══════════════════════════════════════════════════════
+            // 📨 GỬI THÔNG BÁO TELEGRAM — CHỈ KHI USER NHẮN
+            // ═══════════════════════════════════════════════════════
+            if (typeof window.__sendTelegramNotify === 'function') {
+                window.__sendTelegramNotify(
+                    targetEmail,                       // email user
+                    u.name || u.email.split('@')[0],   // tên user
+                    text,                              // nội dung
+                    'user'                             // from = 'user'
+                );
             }
-            return threadRef.set(update, { merge: true });
-        }).then(function() {
-            if (from === 'user') { incDailyCount(); updateCounterUI(); }
-        }).catch(function(err) { alert('❌ Lỗi gửi tin: ' + err.message); })
-        .finally(function() { btn.disabled = !input.value.trim(); });
-    }
+        }
+        // ⭐ Nếu from === 'admin' → KHÔNG gửi Telegram
+    }).catch(function(err) { alert('❌ Lỗi gửi tin: ' + err.message); })
+    .finally(function() { btn.disabled = !input.value.trim(); });
+}
     function autoResize() {
         var inp = $id('chatInput');
         if (!inp) return;
