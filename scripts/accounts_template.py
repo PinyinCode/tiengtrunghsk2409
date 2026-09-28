@@ -2685,7 +2685,6 @@ function goBackToAdminChatList() {
 
     if (typeof loadAdminChatList === 'function') loadAdminChatList();
 }
-
 /* ═══════════════════════════════════════════════════════════════
    🚀 INIT CHAT
    ═══════════════════════════════════════════════════════════════ */
