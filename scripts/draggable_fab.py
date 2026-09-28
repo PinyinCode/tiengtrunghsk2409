@@ -354,27 +354,223 @@ def build_draggable_fab_js():
     // AUTO INIT — Quyết định FAB nào được kéo
     // ═══════════════════════════════════════════════════════════
     function initChatFab() {
-        var chatBtn = document.getElementById('chatFloatBtn');
-        if (!chatBtn) return;
+        // ⭐ Kéo WRAPPER (chatFloatWrap) — chứa button bên trong
+        var el = document.getElementById('chatFloatWrap');
+        if (!el) {
+            console.warn('Không tìm thấy #chatFloatWrap');
+            return;
+        }
 
-        var chatKey = getUserKey('chat');
+        var storageKey = getUserKey('chat');
 
         // Nếu user đổi → reset
-        if (chatBtn.__draggable && chatBtn.__storageKey !== chatKey) {
-            chatBtn.__draggable = false;
-            chatBtn.__storageKey = null;
-            chatBtn.style.left = '';
-            chatBtn.style.top = '';
-            chatBtn.style.right = '';
-            chatBtn.style.bottom = '';
+       ấ if (el.__draggable && el.__storageKey !== storageKey) {
+            el.__draggable = false;
+            el.__storageKey = null;
+            el.style.left = '';
+            el.style.top = '';
+            el.style.right = '';
+            el.style.bottom = '';
         }
 
-        if (!chatBtn.__draggable) {
-            window.__makeDraggable('chatFloatBtn', 'chat');
-            chatBtn.__storageKey = chatKey;
+        if (el.__draggable) return;
+        el.__draggable = true;
+        el.__storageKey = storageKey;
+        el.setAttribute('data-draggable', '1');
+
+        // ⭐ Nút bên trong wrapper — dùng để bắt sự kiện
+        var btn = document.getElementById('chatFloatBtn');
+        if (!btn) {
+            console.warn('Không tìm thấy #chatFloatBtn');
+            return;
         }
+
+        var isDragging = false;
+        var hasMoved = false;
+        var startX = 0, startY = 0;
+        var elStartX = 0, elStartY = 0;
+
+        function applyPosition(x, y) {
+            var rect = el.getBoundingClientRect();
+            var maxX = window.innerWidth - rect.width - 4;
+            var maxY = window.innerHeight - rect.height - 4;
+            x = Math.max(4, Math.min(x, maxX));
+            y = Math.max(4, Math.min(y, maxY));
+
+            // ⭐ Set cho WRAPPER
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+        }
+
+        function getCurrentPosition() {
+            var rect = el.getBoundingClientRect();
+            return { x: Math.round(rect.left), y: Math.round(rect.top) };
+        }
+
+        function fromLocalStorage() {
+            try {
+                var saved = localStorage.getItem(STORAGE_PREFIX + storageKey);
+                if (saved) {
+                    var pos = JSON.parse(saved);
+                    if (pos && typeof pos.x === 'number') {
+                        applyPosition(pos.x, pos.y);
+                        return true;
+                    }
+                }
+            } catch(e) {}
+            return false;
+        }
+
+        function loadPosition() {
+            var email = getUserEmail();
+            var db = window.db;
+
+            if (!email || !db) {
+                fromLocalStorage();
+                return;
+            }
+
+            db.collection(FIRESTORE_COLLECTION).doc(email).get()
+                .then(function(doc) {
+                    if (doc.exists) {
+                        var data = doc.data();
+                        var pos = data[FIRESTORE_FIELD];
+                        if (pos && typeof pos.x === 'number') {
+                            applyPosition(pos.x, pos.y);
+                            try {
+                                localStorage.setItem(
+                                    STORAGE_PREFIX + storageKey,
+                                    JSON.stringify({ x: pos.x, y: pos.y })
+                                );
+                            } catch(e) {}
+                            return;
+                        }
+                    }
+                    fromLocalStorage();
+                })
+                .catch(function(e) {
+                    console.warn('FAB load Firestore error:', e);
+                    fromLocalStorage();
+                });
+        }
+
+        function savePosition() {
+            var pos = getCurrentPosition();
+
+            try {
+                localStorage.setItem(
+                    STORAGE_PREFIX + storageKey,
+                    JSON.stringify(pos)
+                );
+            } catch(e) {}
+
+            var email = getUserEmail();
+            var db = window.db;
+            if (email && db) {
+                var update = {};
+                update[FIRESTORE_FIELD] = pos;
+                db.collection(FIRESTORE_COLLECTION).doc(email)
+                    .set(update, { merge: true })
+                    .catch(function(e) {
+                        console.warn('FAB save Firestore error:', e);
+                    });
+            }
+        }
+
+        function getPoint(e) {
+            if (e.touches && e.touches.length) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+            if (e.changedTouches && e.changedTouches.length) {
+                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        function onPointerDown(e) {
+            if (e.type === 'mousedown' && e.button !== 0) return;
+
+            var point = getPoint(e);
+            startX = point.x;
+            startY = point.y;
+
+            var rect = el.getBoundingClientRect();
+            elStartX = rect.left;
+            elStartY = rect.top;
+
+            isDragging = true;
+            hasMoved = false;
+
+            el.style.transition = 'none';
+            el.classList.add('dragging');
+            el.style.zIndex = '99999';
+        }
+
+        function onPointerMove(e) {
+            if (!isDragging) return;
+
+            var point = getPoint(e);
+            var dx = point.x - startX;
+            var dy = point.y - startY;
+
+            if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+                hasMoved = true;
+            }
+
+            if (!hasMoved) return;
+
+            var newX = elStartX + dx;
+            var newY = elStartY + dy;
+            applyPosition(newX, newY);
+
+            if (e.cancelable) e.preventDefault();
+        }
+
+        function onPointerUp(e) {
+            if (!isDragging) return;
+            isDragging = false;
+
+            el.style.transition = '';
+            el.classList.remove('dragging');
+            el.style.zIndex = '';
+
+            if (hasMoved) {
+                savePosition();
+                btn.__suppressClick = true;
+                setTimeout(function() { btn.__suppressClick = false; }, 150);
+            }
+        }
+
+        // ⭐ Chặn click của BUTTON khi kéo
+        btn.addEventListener('click', function(e) {
+            if (btn.__suppressClick) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, true);
+
+        // ⭐ Bắt sự kiện từ BUTTON (để user nhn vào nút kéo)
+        btn.addEventListener('mousedown', onPointerDown);
+        btn.addEventListener('touchstart', onPointerDown, { passive: true });
+
+        document.addEventListener('mousemove', onPointerMove);
+        document.addEventListener('mouseup', onPointerUp);
+        document.addEventListener('touchmove', onPointerMove, { passive: false });
+        document.addEventListener('touchend', onPointerUp);
+        document.addEventListener('touchcancel', onPointerUp);
+
+        loadPosition();
+
+        window.addEventListener('resize', function() {
+            var pos = getCurrentPosition();
+            applyPosition(pos.x, pos.y);
+        });
+
+        console.log('✅ Draggable FAB chat wrapper | key:', storageKey);
     }
-
     function initAcmFab() {
         // ⭐ CHỈ ADMIN mới được kéo FAB xanh lá
         if (!isAdmin()) return;
