@@ -729,7 +729,8 @@ def build_admin_chat_js():
         // Đợi modal đóng xong
         setTimeout(function() {
             if (typeof window.__chatOpen === 'function') {
-                // Đảm bảo chat modal mở                if (!document.getElementById('chatModal').classList.contains('show')) {
+                // Đảm bảo chat modal mở
+                if (!document.getElementById('chatModal').classList.contains('show')) {
                     window.__chatOpen();
                 }
             }
@@ -741,7 +742,6 @@ def build_admin_chat_js():
             }, 400);
         }, 200);
     };
-
     /* ═══════════════════════════════════════════════════════════
        🚀 INIT
        ═══════════════════════════════════════════════════════════ */
