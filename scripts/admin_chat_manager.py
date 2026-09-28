@@ -643,24 +643,41 @@ def build_admin_chat_js():
     /* ═══════════════════════════════════════════════════════════
        🔌 WATCHERS — onSnapshot cả users và chat_threads
        ═══════════════════════════════════════════════════════════ */
-    function startWatchers() {
+ function startWatchers() {
         stopWatchers();
         var db = getDb();
         if (!db || !isAdmin()) return;
 
-        // 1. Watch users collection (toàn bộ user đăng ký)
-        ACM.usersUnsub = db.collection('users')
+        // ═══════════════════════════════════════════════════════════
+        // 1. Watch allowed_users collection (toàn bộ user đăng ký)
+        // ═══════════════════════════════════════════════════════════
+        ACM.usersUnsub = db.collection('allowed_users')
             .onSnapshot(function(snap) {
                 ACM.usersMap = {};
                 snap.forEach(function(doc) {
                     var d = doc.data() || {};
-                    var email = d.email || doc.id;
+                    var email = doc.id;   // allowed_users dùng email làm doc ID
                     if (email) {
+                        // ⭐ Tính tier chính xác từ allowed_users data
+                        var tier = 'demo';
+                        if (d.role === 'admin') {
+                            tier = 'admin';
+                        } else if (d.isPermanent) {
+                            tier = 'active';
+                        } else if (d.expiresAt) {
+                            var expTime = d.expiresAt.toMillis
+                                ? d.expiresAt.toMillis()
+                                : 0;
+                            tier = expTime > Date.now() ? 'active' : 'expired';
+                        } else if (d.tier) {
+                            tier = d.tier;
+                        }
+
                         ACM.usersMap[email] = {
                             email: email,
-                            name: d.name || d.displayName || d.fullName || email.split('@')[0],
+                            name: d.name || d.displayName || email.split('@')[0],
                             role: d.role || 'user',
-                            tier: d.tier || d.plan || d.accountType || 'demo'
+                            tier: tier
                         };
                     }
                 });
@@ -668,10 +685,11 @@ def build_admin_chat_js():
                 rebuildList();
             }, function(err) {
                 console.error('ACM users watch error:', err);
-                // Fallback: nếu không đọc được users collection → chỉ dùng chat_threads
             });
 
+        // ═══════════════════════════════════════════════════════════
         // 2. Watch chat_threads collection
+        // ═══════════════════════════════════════════════════════════
         ACM.threadsUnsub = db.collection('chat_threads')
             .onSnapshot(function(snap) {
                 ACM.threadsMap = {};
@@ -695,7 +713,6 @@ def build_admin_chat_js():
                 console.error('ACM threads watch error:', err);
             });
     }
-
     function stopWatchers() {
         if (ACM.usersUnsub) { try { ACM.usersUnsub(); } catch(e){} ACM.usersUnsub = null; }
         if (ACM.threadsUnsub) { try { ACM.threadsUnsub(); } catch(e){} ACM.threadsUnsub = null; }
