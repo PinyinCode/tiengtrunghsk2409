@@ -109,6 +109,12 @@ def build_chat_css():
     pointer-events:none;
 }
 
+/* ⭐ Khi chat đang mở → hạ z-index FAB xuống dưới chat box (4001)
+   để chat box + mũi tên không bị FAB đè lên */
+body.chat-is-open #chatFloatWrap{
+    z-index:3999;
+}
+
 body.has-floating-group #chatFloatWrap{
     bottom:calc(180px + env(safe-area-inset-bottom));
 }
@@ -133,12 +139,16 @@ body.has-floating-group #chatFloatWrap{
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CHAT MODAL — CHỈ CÒN CHẾ ĐỘ MINI (~30vh)
+   CHAT MODAL — NEO VÀO NÚT FAB (JS set left/bottom động)
    ═══════════════════════════════════════════════════════════════ */
-.chat-modal{position:fixed;inset:0;background:transparent;z-index:4000;display:none;align-items:flex-end;justify-content:flex-start;padding:0;pointer-events:none;}
-.chat-modal.show{display:flex;pointer-events:auto;}
+.chat-modal{position:fixed;inset:0;background:transparent;z-index:4000;display:none;padding:0;pointer-events:none;}
+.chat-modal.show{display:block;pointer-events:auto;}
 
+/* ⭐ .chat-box dùng position:fixed — left/bottom do JS set động theo nút FAB */
 .chat-box{
+    position:fixed;
+    left:20px;
+    bottom:80px;
     background:#fff;
     border-radius:18px;
     width:360px;
@@ -147,33 +157,52 @@ body.has-floating-group #chatFloatWrap{
     max-height:calc(100vh - 120px);
     box-shadow:0 16px 48px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.05);
     display:flex;flex-direction:column;overflow:hidden;
-    position:relative;
-    margin-left:20px;
-    margin-bottom:calc(80px + env(safe-area-inset-bottom));
     transform-origin:bottom left;
     animation:chatPopIn .28s cubic-bezier(.34,1.56,.64,1);
-    transition:width .3s cubic-bezier(.4,0,.2,1), height .3s cubic-bezier(.4,0,.2,1), margin-bottom .3s cubic-bezier(.4,0,.2,1), border-radius .3s;
+    transition:width .3s cubic-bezier(.4,0,.2,1),
+               height .3s cubic-bezier(.4,0,.2,1),
+               left .35s cubic-bezier(.34,1.56,.64,1),
+               bottom .35s cubic-bezier(.34,1.56,.64,1),
+               border-radius .3s;
     pointer-events:auto;
+    z-index:4001;
 }
 @keyframes chatPopIn{from{opacity:0;transform:scale(.85) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
 [data-theme="dark"] .chat-box{background:#1e293b;box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08);}
 
-.chat-box::before{content:'';position:absolute;bottom:-14px;left:22px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid #fff;filter:drop-shadow(0 2px 3px rgba(0,0,0,.08));pointer-events:none;z-index:1;transition:opacity .25s ease;}
+/* ⭐ Mũi tên chỉ xuống nút FAB — vị trí set bằng biến --arrow-left do JS */
+.chat-box::before{
+    content:'';position:absolute;bottom:-14px;
+    left:var(--arrow-left,22px);
+    width:0;height:0;
+    border-left:14px solid transparent;
+    border-right:14px solid transparent;
+    border-top:14px solid #fff;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.08));
+    pointer-events:none;z-index:1;
+    transition:left .35s cubic-bezier(.34,1.56,.64,1);
+}
 [data-theme="dark"] .chat-box::before{border-top-color:#1e293b;}
-.chat-box::after{content:'';position:absolute;bottom:-10px;left:24px;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:12px solid #4f46e5;pointer-events:none;z-index:2;transition:opacity .25s ease;}
+.chat-box::after{
+    content:'';position:absolute;bottom:-10px;
+    left:calc(var(--arrow-left,22px) + 2px);
+    width:0;height:0;
+    border-left:12px solid transparent;
+    border-right:12px solid transparent;
+    border-top:12px solid #4f46e5;
+    pointer-events:none;z-index:2;
+    transition:left .35s cubic-bezier(.34,1.56,.64,1);
+}
 
 /* ─── MOBILE ─── */
 @media (max-width:600px){
-    .chat-modal{align-items:flex-end;justify-content:flex-start;}
     .chat-box{
         width:calc(100vw - 24px);
         height:30vh;
         min-height:240px;
         max-height:calc(100vh - 90px);
         border-radius:18px;
-        margin-left:12px;
-        margin-right:12px;
-        margin-bottom:calc(80px + env(safe-area-inset-bottom));
+        /* left/bottom do JS set động */
     }
     .chat-box::before,.chat-box::after{display:none;}
 }
@@ -181,7 +210,6 @@ body.has-floating-group #chatFloatWrap{
 @media (max-width:400px){
     .chat-box{
         width:calc(100vw - 16px);
-        margin-left:8px;margin-right:8px;
         height:30vh;
         min-height:220px;
     }
@@ -235,14 +263,14 @@ body.has-floating-group #chatFloatWrap{
 /* ═══ LIMIT BANNER ═══ */
 .chat-limit-banner{display:none;margin:0 0 .5rem;padding:.65rem .85rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:10px;font-size:.78rem;color:#78350f;line-height:1.45;animation:chatLimitSlide .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;align-items:flex-start;gap:.5rem;}
 .chat-limit-banner.show{display:flex}
-.chat-limit-banner.danger{background:linear-gradient(135deg,#fecaca,#fca5a5);border-color:#dc2626;color:#7f1d1d;}
-.chat-limit-banner .clb-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;animation:chatLimitPulse 1.5s infinite;}
+.chat-limit-banner.danger{background:linear-gradient(135deg,#fecaca,#f:ca5a5);50border-color:#dc262px6;color:#7f;1d1d;}
+.chat-lborderimit-banner .clb-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;animation:chatLimitPulse 1.5s infinite;}
 .chat-limit-banner.danger .clb-icon{background:linear-gradient(135deg,#dc2626,#991b1b);}
 @keyframes chatLimitPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
 .chat-limit-banner .clb-text{flex:1;min-width:0;}
 .chat-limit-banner .clb-text b{color:#dc2626;font-weight:900;}
 .chat-limit-banner .clb-actions{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem;}
-.chat-limit-banner .clb-btn{padding:.35rem .7rem;border-radius:50px;border:none;font-size:.72rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;transition:.15s;white-space:nowrap;}
+.chat-limit-banner .clb-btn{padding:.35rem .7rem;border-radius:none;font-size:.72rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;transition:.15s;white-space:nowrap;}
 .chat-limit-banner .clb-btn.zalo{background:linear-gradient(135deg,#0068ff,#0052cc);color:#fff;box-shadow:0 3px 10px rgba(0,104,255,.35);}
 .chat-limit-banner .clb-btn.zalo:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,104,255,.5);color:#fff;}
 .chat-limit-banner .clb-btn.dismiss{background:rgba(120,53,15,.15);color:#78350f;}
@@ -320,8 +348,8 @@ body.has-floating-group #chatFloatWrap{
 @keyframes onlinePulse{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,.2);}50%{box-shadow:0 0 0 6px rgba(22,163,74,.1);}}
 .ou-info{flex:1;min-width:0;}
 .ou-name{font-weight:700;font-size:.85rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ou-sub{font-size:.7rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ou-chat-btn{width:32px;height:32px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
+.ou-sub{font-size:.7rem;color:var(--text-3);overflow:hidden;text-over|flow:ellipsis;white-space:nowrap;}
+ .ou-chat-btn{width:32px;1height:32px;border |-radius:8px;border:none; `background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;transition:.15s;}
 .ou-chat-btn:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(124,58,237,.4);}
 """
 
@@ -1019,28 +1047,34 @@ def build_chat_js():
     /* ⭐ FIX: đã XÓA hoàn toàn updateExpandIcon() và toggleExpand() */
 
     function openChat() {
-        var u = getCu();
-        if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
-        CHAT.isOpen = true;
-        $id('chatModal').classList.add('show');
-        var dd = $id('userDropdown');
-        if (dd) dd.classList.remove('show');
-        if (isAdmin()) {
-            openAdminListView();
-            startOnlineWatch();
-        } else {
-            openUserView();
-            updateCounterUI();
-        }
+    var u = getCu();
+    if (!u) { if (typeof window.showLoginModal === 'function') window.showLoginModal(); return; }
+    CHAT.isOpen = true;
+    $id('chatModal').classList.add('show');
+    document.body.classList.add('chat-is-open');   // ⭐ THÊM DÒNG NÀY
+    positionChatBox();
+    var dd = $id('userDropdown');
+    if (dd) dd.classList.remove('show');
+    if (isAdmin()) {
+        openAdminListView();
+        startOnlineWatch();
+    } else {
+        openUserView();
+        updateCounterUI();
     }
-    function closeChat() {
-        CHAT.isOpen = false;
-        $id('chatModal').classList.remove('show');
-        stopAdminThreadWatch();
-        stopOnlineWatch();
-        CHAT.adminCurrentEmail = null;
-        CHAT.lastSeenAt = Date.now();
-    }
+    setTimeout(positionChatBox, 30);
+    setTimeout(positionChatBox, 320);
+}
+
+function closeChat() {
+    CHAT.isOpen = false;
+    $id('chatModal').classList.remove('show');
+    document.body.classList.remove('chat-is-open');   // ⭐ THÊM DÒNG NÀY
+    stopAdminThreadWatch();
+    stopOnlineWatch();
+    CHAT.adminCurrentEmail = null;
+    CHAT.lastSeenAt = Date.now();
+}
     function openUserView() {
         $id('chatHeaderInfo').innerHTML = '<div class="name">Hỗ trợ Admin</div><div class="status">Thường trả lời trong 5-10 phút</div>';
         $id('chatBack').classList.remove('show');
