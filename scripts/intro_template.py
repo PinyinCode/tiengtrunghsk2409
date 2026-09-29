@@ -1,24 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Intro Template — Tính năng giới thiệu & hướng dẫn sử dụng.
-
-Cung cấp 3 hàm:
-  - build_intro_css()   → CSS cho intro modal + quick banner
-  - build_intro_html()  → HTML cho intro modal + quick banner
-  - build_intro_js()    → JS điều khiển intro modal + quick banner
-
-5 slides:
-  1. Cover + Đăng nhập
-  2. Hướng dẫn sử dụng + Trial Popup
-  3. Tổng quan + 9 chuyên ngành
-  4. Gói gia hạn + 3 bước nhanh
-  5. CTA
-"""
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  CSS
-# ═══════════════════════════════════════════════════════════════════
 def build_intro_css():
     return r"""
 /* ═══════════════════════════════════════════════════════════════ */
@@ -90,9 +69,6 @@ def build_intro_css():
 
 .qib-content { flex: 1 1 300px; min-width: 0; position: relative; z-index: 2; }
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ TITLE BANNER — BRAND LUÔN CÙNG 1 DÒNG ★
-   ═══════════════════════════════════════════════════════════════ */
 .qib-title {
     font-size: .92rem;
     font-weight: 700;
@@ -102,7 +78,6 @@ def build_intro_css():
     word-wrap: break-word;
 }
 
-/* Brand: KHÔNG BAO GIỜ tách dòng */
 .qib-title strong {
     display: inline-block;
     white-space: nowrap;
@@ -114,7 +89,6 @@ def build_intro_css():
     font-weight: 900;
 }
 
-/* ═══ Features chips ═══ */
 .qib-features { display: flex; flex-wrap: wrap; gap: .35rem; }
 .qib-feature {
     display: inline-flex;
@@ -142,7 +116,6 @@ def build_intro_css():
 }
 [data-theme="dark"] .qib-feature i { color: #c4b5fd; }
 
-/* ═══ Action buttons ═══ */
 .qib-actions {
     display: flex;
     align-items: center;
@@ -196,11 +169,6 @@ def build_intro_css():
     transform: rotate(90deg);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ RESPONSIVE — FONT CO GIÃN ĐỂ BRAND VẪN VỪA 1 DÒNG ★
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ─── Tablet 640px ─── */
 @media (max-width: 640px) {
     .quick-intro-banner { padding: .75rem .85rem; gap: .65rem; flex-wrap: wrap; }
     .qib-icon { width: 38px; height: 38px; font-size: 1.05rem; border-radius: 11px; }
@@ -220,7 +188,6 @@ def build_intro_css():
     .qib-btn-ghost { width: 30px; height: 30px; }
 }
 
-/* ─── Mobile 480px ─── */
 @media (max-width: 480px) {
     .qib-title strong {
         font-size: .72rem;
@@ -228,17 +195,15 @@ def build_intro_css():
     }
 }
 
-/* ─── Mobile nhỏ 400px ─── */
 @media (max-width: 400px) {
     .qib-title { font-size: .78rem; }
     .qib-title strong {
         font-size: .68rem;
         letter-spacing: -0.025em;
     }
-    .qib-feature:nth-child(n+5) { display: none; }
+    .qib-feature:nth-child(n+6) { display: none; }
 }
 
-/* ─── Cực nhỏ 360px ─── */
 @media (max-width: 360px) {
     .qib-title strong {
         font-size: .64rem;
@@ -246,9 +211,6 @@ def build_intro_css():
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* INTRO SLIDES — Modal giới thiệu                                 */
-/* ═══════════════════════════════════════════════════════════════ */
 .intro-modal {
     position: fixed;
     inset: 0;
@@ -343,7 +305,6 @@ def build_intro_css():
 .intro-slide.prev { transform: translateX(-30px); }
 .intro-slide-content { width: 100%; max-width: 780px; margin: 0 auto; }
 
-/* ═══ Slide 1: Cover + Login ═══ */
 .cover-slide { text-align: center; }
 .cover-icon {
     width: 96px;
@@ -432,7 +393,6 @@ def build_intro_css():
     border-color: rgba(167,139,250,.4);
 }
 
-/* Cover Login CTA */
 .cover-login-cta {
     margin-top: 1.75rem;
     padding: 1rem 1.25rem;
@@ -498,7 +458,6 @@ def build_intro_css():
 }
 .cover-login-btn i { font-size: .95rem; }
 
-/* ═══ Slide badge + title ═══ */
 .slide-badge {
     display: inline-flex;
     align-items: center;
@@ -524,7 +483,6 @@ def build_intro_css():
     letter-spacing: -.02em;
 }
 
-/* ═══ Feature items (Slide 3) ═══ */
 .slide-body.two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -576,7 +534,6 @@ def build_intro_css():
     line-height: 1.5;
 }
 
-/* ═══ Industry grid ═══ */
 .industry-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -623,10 +580,8 @@ def build_intro_css():
 .industry-chip[data-c="6"] i { background: linear-gradient(135deg, #dc2626, #b91c1c); }
 .industry-chip[data-c="7"] i { background: linear-gradient(135deg, #65a30d, #4d7c0f); }
 .industry-chip[data-c="8"] i { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.industry-chip[data-c="9"] i { background: linear-gradient(135deg, #a16207, #78350f); }
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* GUIDE STEPS — Slide hướng dẫn                                    */
-/* ═══════════════════════════════════════════════════════════════ */
 .guide-steps { display: flex; flex-direction: column; gap: .75rem; }
 .guide-step {
     display: flex;
@@ -806,7 +761,6 @@ def build_intro_css():
     box-shadow: 0 2px 6px rgba(124, 58, 237, .35);
 }
 
-/* Browser support */
 .guide-step-browsers {
     background: linear-gradient(135deg, rgba(59, 130, 246, .08), rgba(16, 185, 129, .06));
     border-color: rgba(59, 130, 246, .3);
@@ -856,7 +810,6 @@ def build_intro_css():
     margin-left: .2rem;
 }
 
-/* Popup warning */
 .guide-step-popup {
     background: linear-gradient(135deg, rgba(245, 158, 11, .1), rgba(251, 191, 36, .06));
     border-color: rgba(245, 158, 11, .35);
@@ -931,7 +884,6 @@ def build_intro_css():
 .guide-step-tip .guide-step-title { color: #92400e; }
 [data-theme="dark"] .guide-step-tip .guide-step-title { color: #fcd34d; }
 
-/* ═══ Package items ═══ */
 .package-item {
     display: flex;
     gap: .7rem;
@@ -994,7 +946,6 @@ def build_intro_css():
 }
 .package-desc { font-size: .72rem; color: var(--text-2); line-height: 1.4; }
 
-/* Renewal flow */
 .renewal-flow {
     display: flex;
     flex-direction: column;
@@ -1039,7 +990,6 @@ def build_intro_css():
 }
 .renewal-flow-item b { color: var(--text); }
 
-/* QR */
 .qr-preview { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
 .qr-box {
     width: 140px;
@@ -1057,7 +1007,6 @@ def build_intro_css():
 .qr-caption { font-size: .75rem; color: var(--text-2); text-align: center; line-height: 1.5; }
 .qr-caption strong { color: #16a34a; }
 
-/* ═══ CTA slide ═══ */
 .cta-slide { text-align: center; }
 .cta-icon {
     width: 88px;
@@ -1143,16 +1092,16 @@ def build_intro_css():
     transform: translateY(-2px);
 }
 .cta-btn.primary {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed 50%, #a855f7);
-    color: #fff;
-    box-shadow: 0 8px 24px rgba(124,58,237,.4);
+    background: linear-gradient(135deg, #4f46e5, #7c3aed 50%, #a 855f7);
+    color12: #fff;
+   px box-shadow: 0 8;px 24px rgba(124,58 }
+,237,.4);
 }
 .cta-btn.primary:hover {
     transform: translateY(-3px) scale(1.03);
     box-shadow: 0 12px 32px rgba(124,58,237,.65);
 }
 
-/* ═══ Navigation ═══ */
 .intro-nav {
     position: absolute;
     top: 50%;
@@ -1180,24 +1129,25 @@ def build_intro_css():
     box-shadow: 0 8px 24px rgba(124,58,237,.5);
 }
 .intro-nav.prev { left: 12px; }
-.intro-nav.next { right: 12px; }
-.intro-nav:disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+.intro-nav.next { right:.intro-nav:disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
 @media (max-width: 640px) { .intro-nav { display: none; } }
 
-/* ═══ Footer ═══ */
 .intro-footer {
     flex: 0 0 auto;
     padding: .85rem 1.5rem;
-    background: var(--surface-2);
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
+    background:}
+
+ var(--surface-2@media);
+    border-top: ( 1px solid varmax(--border);
+    display:-width flex;
+    align-items: center:;
     justify-content: space-between;
-    gap: 1rem;
+ 640    gap:px 1rem;
 }
-.intro-counter {
-    font-size: .78rem;
-    font-weight: 800;
+.intro-counter) {
+    font-size: .78 {
+rem;
+    font-weight:    800;
     color: var(--text-2);
     letter-spacing: .5px;
 }
@@ -1220,11 +1170,7 @@ def build_intro_css():
     border-radius: 50px;
     background: linear-gradient(90deg, #4f46e5, #7c3aed);
     box-shadow: 0 2px 8px rgba(124,58,237,.5);
-}
-
-/* ═══ Mobile modal ═══ */
-@media (max-width: 640px) {
-    .intro-modal { padding: .5rem; align-items: flex-end; }
+ .intro-modal { padding: .5rem; align-items: flex-end; }
     .intro-box { max-width: 100%; max-height: 94vh; border-radius: 20px 20px 0 0; }
     .intro-slide { padding: 2rem 1.25rem 1.5rem; }
     .intro-close { top: 10px; right: 10px; width: 32px; height: 32px; }
@@ -1277,11 +1223,6 @@ def build_intro_css():
 }
 [data-theme="dark"] .intro-footer { background: rgba(15,23,42,.6); }
 """
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  HTML
-# ═══════════════════════════════════════════════════════════════════
 def build_intro_html():
     return r"""
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -1296,12 +1237,12 @@ def build_intro_html():
             🎉 Chào mừng đến với <strong>Học Tiếng Trung · Văn Phòng &amp; Công Xưởng</strong>
         </div>
         <div class="qib-features">
-            <span class="qib-feature"><i class="fas fa-database"></i> 1700+ câu</span>
+            <span class="qib-feature"><i class="fas fa-database"></i> 2700+ câu</span>
+            <span class="qib-feature"><i class="fas fa-comments"></i> 1000+ giao tiếp</span>
             <span class="qib-feature"><i class="fas fa-graduation-cap"></i> HSK1-6</span>
-            <span class="qib-feature"><i class="fas fa-industry"></i> 9 chuyên ngành</span>
+            <span class="qib-feature"><i class="fas fa-industry"></i> 10 chuyên ngành</span>
             <span class="qib-feature"><i class="fas fa-volume-up"></i> Audio chuẩn</span>
             <span class="qib-feature"><i class="fas fa-pen-fancy"></i> Luyện viết</span>
-            <span class="qib-feature"><i class="fas fa-book-open"></i> Hướng dẫn chi tiết</span>
         </div>
     </div>
     <div class="qib-actions">
@@ -1334,14 +1275,16 @@ def build_intro_html():
                     <h1 class="cover-title">Học Tiếng Trung</h1>
                     <h2 class="cover-subtitle">Văn Phòng · Công Xưởng</h2>
                     <p class="cover-desc">
-                        1700+ câu phản xạ giao tiếp chuyên sâu,<br>
+                        2700+ câu phản xạ giao tiếp chuyên sâu,<br>
+                        bao gồm <b>1000+ câu giao tiếp</b> thông dụng,<br>
                         phục vụ công việc văn phòng, xưởng sản xuất<br>
                         và quản lý nhân sự cho doanh nghiệp VN-TQ.
                     </p>
                     <div class="cover-tags">
-                        <span class="cover-tag"><i class="fas fa-fire"></i> 1700+ câu</span>
+                        <span class="cover-tag"><i class="fas fa-fire"></i> 2700+ câu</span>
+                        <span class="cover-tag"><i class="fas fa-comments"></i> 1000+ giao tiếp</span>
                         <span class="cover-tag"><i class="fas fa-graduation-cap"></i> HSK1-6</span>
-                        <span class="cover-tag"><i class="fas fa-industry"></i> 9 chuyên ngành</span>
+                        <span class="cover-tag"><i class="fas fa-industry"></i> 10 chuyên ngành</span>
                         <span class="cover-tag"><i class="fas fa-volume-up"></i> Audio</span>
                         <span class="cover-tag"><i class="fas fa-pen-fancy"></i> Luyện viết</span>
                     </div>
@@ -1510,11 +1453,11 @@ def build_intro_html():
                 </div>
             </div>
 
-            <!-- ═══ SLIDE 3: Tổng quan + 9 chuyên ngành ═══ -->
+            <!-- ═══ SLIDE 3: Tổng quan + 10 chuyên ngành ═══ -->
             <div class="intro-slide" data-slide="2">
                 <div class="intro-slide-content">
                     <div class="slide-badge"><i class="fas fa-star"></i> Tổng quan</div>
-                    <h2 class="slide-title">Kho Dữ Liệu &amp; 9 Chuyên Ngành</h2>
+                    <h2 class="slide-title">Kho Dữ Liệu &amp; 10 Chuyên Ngành</h2>
 
                     <div class="slide-body two-col">
                         <div class="slide-col">
@@ -1526,14 +1469,21 @@ def build_intro_html():
                                 </div>
                             </div>
                             <div class="feature-item">
-                                <div class="feature-icon purple"><i class="fas fa-industry"></i></div>
+                                <div class="feature-icon green"><i class="fas fa-comments"></i></div>
                                 <div class="feature-text">
-                                    <div class="feature-title">9 chuyên ngành riêng biệt</div>
-                                    <div class="feature-desc">Mỗi chuyên ngành có bộ câu hỏi chuyên sâu, sát với công việc thực tế.</div>
+                                    <div class="feature-title">1000+ câu giao tiếp thông dụng</div>
+                                    <div class="feature-desc">Câu giao tiếp hàng ngày, chào hỏi, mua sắm, đi lại, ăn uống, ứng xử xã hội.</div>
                                 </div>
                             </div>
                             <div class="feature-item">
-                                <div class="feature-icon green"><i class="fas fa-user-check"></i></div>
+                                <div class="feature-icon purple"><i class="fas fa-industry"></i></div>
+                                <div class="feature-text">
+                                    <div class="feature-title">10 chuyên ngành riêng biệt</div>
+                                    <div class="feature-desc">Nhân sự, Thu mua, XNK, Kế toán, Chất lượng, Sản xuất, Kho, IT, Giày da...</div>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon blue"><i class="fas fa-user-check"></i></div>
                                 <div class="feature-text">
                                     <div class="feature-title">Đăng nhập Google</div>
                                     <div class="feature-desc">Đồng bộ tiến trình, mở khóa toàn bộ kho câu, không giới hạn.</div>
@@ -1552,6 +1502,7 @@ def build_intro_html():
                                     <div class="industry-chip" data-c="6"><i class="fas fa-industry"></i> Sản xuất</div>
                                     <div class="industry-chip" data-c="7"><i class="fas fa-warehouse"></i> Kho</div>
                                     <div class="industry-chip" data-c="8"><i class="fas fa-laptop-code"></i> IT</div>
+                                    <div class="industry-chip" data-c="9"><i class="fas fa-shoe-prints"></i> Giày da</div>
                                 </div>
                             </div>
                         </div>
@@ -1629,7 +1580,7 @@ def build_intro_html():
                 <div class="intro-slide-content cta-slide">
                     <div class="cta-icon"><i class="fas fa-rocket"></i></div>
                     <h2 class="cta-title">Bắt Đầu Học Ngay Hôm Nay!</h2>
-                    <p class="cta-desc">Đăng nhập Google để mở khóa toàn bộ 1700+ câu và 9 chuyên ngành — miễn phí 3 ngày đầu tiên.</p>
+                    <p class="cta-desc">Đăng nhập Google để mở khóa toàn bộ <b>2700+ câu</b> (bao gồm 1000+ câu giao tiếp) và <b>10 chuyên ngành</b> — miễn phí 3 ngày đầu tiên.</p>
                     <div class="cta-message">
                         <i class="fas fa-graduation-cap"></i>
                         Chúc bạn học tốt &amp; thành công trong công việc!
@@ -1669,11 +1620,6 @@ def build_intro_html():
     </div>
 </div>
 """
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  JS
-# ═══════════════════════════════════════════════════════════════════
 def build_intro_js():
     return r"""
 /* ═══════════════════════════════════════════════════════════════ */
@@ -1866,14 +1812,26 @@ function maybeAutoOpenIntro() {
     } catch(e) {}
 }
 
-/* Hook vào initApp */
+/* ⭐ Hook vào initApp + fallback DOM ready */
+function _runIntroInit() {
+    if (typeof initIntroModal === 'function') initIntroModal();
+    if (typeof initQuickIntroBanner === 'function') initQuickIntroBanner();
+    if (typeof maybeAutoOpenIntro === 'function') maybeAutoOpenIntro();
+}
+
 if (typeof window.initApp === 'function') {
     var _origInitApp = window.initApp;
     window.initApp = function() {
         _origInitApp.apply(this, arguments);
-        initIntroModal();
-        initQuickIntroBanner();
-        maybeAutoOpenIntro();
+        _runIntroInit();
     };
+} else {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(_runIntroInit, 500);
+        });
+    } else {
+        setTimeout(_runIntroInit, 500);
+    }
 }
 """
