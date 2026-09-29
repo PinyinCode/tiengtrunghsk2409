@@ -10044,6 +10044,7 @@ var $ = function(id) { return document.getElementById(id); };
 /* ═══════════════════════════════════════════════════════════════
    📨 TELEGRAM NOTIFY — Gửi thông báo về Telegram
    Cung cấp: window.__sendTelegramNotify(email, name, text, from)
+   + URL copy → admin mở Chrome/Safari trả lời
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
@@ -10086,6 +10087,10 @@ var $ = function(id) { return document.getElementById(id); };
         var isAdmin  = (from === 'admin');
         var header   = isAdmin ? '📤 *Admin vừa trả lời*' : '💬 *Tin nhắn mới từ*';
 
+        // ⭐ URL để admin copy → mở Chrome/Safari
+        var siteUrl = window.location.origin + window.location.pathname;
+        var adminUrl = siteUrl + '?admin_chat=' + encodeURIComponent(userEmail || '');
+
         var text =
             header + ' ' + escapeMarkdown(siteName) + '\n' +
             '👤 *Tên:* ' + escapeMarkdown(userName || 'User') + '\n' +
@@ -10093,7 +10098,9 @@ var $ = function(id) { return document.getElementById(id); };
             '─────────────────\n' +
             escapeMarkdown(messageText || '') + '\n' +
             '─────────────────\n' +
-            '⏰ ' + new Date().toLocaleString('vi-VN');
+            '⏰ ' + new Date().toLocaleString('vi-VN') + '\n\n' +
+            '🔗 *Copy link dưới → mở Chrome/Safari để trả lời:*\n' +
+            '`' + adminUrl + '`';
 
         var url = 'https://api.telegram.org/bot' + token + '/sendMessage';
         var payload = {
@@ -10102,6 +10109,8 @@ var $ = function(id) { return document.getElementById(id); };
             parse_mode: 'Markdown',
             disable_web_page_preview: true
         };
+
+        console.log('[Telegram] 📤 Sending...', { to: chatId, from: from, adminUrl: adminUrl });
 
         fetch(url, {
             method: 'POST',
