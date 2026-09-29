@@ -8200,21 +8200,41 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
    ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════
+   ★★★ 4 TAB BỘ DỮ LIỆU — PC: 4 CỘT · MOBILE: 2x2 ★★★
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* PC: 4 tab cùng hàng */
 @media (min-width: 769px) {
     .ds-main-row {
-        grid-template-columns: 1fr 1fr 1fr !important;
+        grid-template-columns: 1fr 1fr 1fr 1fr !important;
     }
 }
 
+/* Mobile + Tablet: 2 cột x 2 hàng */
 @media (max-width: 768px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr !important;
+        gap: .5rem !important;
     }
 }
 
-@media (max-width: 500px) {
+/* Mobile rất nhỏ (≤ 360px): vẫn giữ 2 cột, thu gọn font */
+@media (max-width: 360px) {
     .ds-main-row {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: .35rem !important;
+    }
+    .ds-main-row .ds-btn {
+        padding: .55rem .5rem !important;
+        font-size: .72rem !important;
+    }
+    .ds-main-row .ds-btn span {
+        font-size: .72rem !important;
+        line-height: 1.25 !important;
+    }
+    .ds-main-row .ds-btn i:first-child {
+        font-size: .85rem !important;
     }
 }
 
