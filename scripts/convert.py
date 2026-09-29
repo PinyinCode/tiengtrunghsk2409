@@ -254,7 +254,7 @@ DATASET_REGISTRY = {
 #   CÙNG CẤP với "tonghop" — KHÔNG KHOÁ
 #   Dùng chung onboarding config từ config.json
 # ═══════════════════════════════════════════════════════════════════
-GIAOTIEP_FILE = CONFIG.get("giaotiep_file", "1060.xlsx")
+GIAOTIEP_FILE = CONFIG.get("giaotiep_file", "data/1060.xlsx")
 
 if os.path.exists(GIAOTIEP_FILE):
     try:
