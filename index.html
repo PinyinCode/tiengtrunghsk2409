@@ -128,14 +128,32 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     letter-spacing:.5px;margin-bottom:.5rem;
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
+/* 4 tab dataset: PC 4 cột · Mobile 2x2 */
 .ds-main-row{
-    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:.5rem;
 }
-@media(max-width:768px){
-    .ds-main-row{grid-template-columns:1fr 1fr;}
+@media(max-width:900px){
+    .ds-main-row{
+        grid-template-columns:1fr 1fr;
+    }
 }
-@media(max-width:500px){
-    .ds-main-row{grid-template-columns:1fr;}
+@media(max-width:360px){
+    .ds-main-row{
+        gap:.35rem;
+    }
+    .ds-main-row .ds-btn{
+        padding:.5rem .45rem;
+        font-size:.7rem;
+    }
+    .ds-main-row .ds-btn span{
+        font-size:.68rem;
+        line-height:1.2;
+    }
+    .ds-main-row .ds-btn i:first-child{
+        font-size:.8rem;
+    }
 }
 @media(max-width:500px){
     .ds-main-row{grid-template-columns:1fr}
@@ -10197,6 +10215,7 @@ function initDatasetSelector() {
     if (typeof DATASET_REGISTRY === 'undefined' || !DATASET_REGISTRY) return;
     if (!DATASET_REGISTRY.tonghop) return;
 
+    /* Label nút Tổng hợp */
     var labelEl = $('dsTonghopLabel');
     if (labelEl) {
         var count = DATASET_REGISTRY.tonghop.count
@@ -10204,8 +10223,17 @@ function initDatasetSelector() {
         labelEl.textContent = count + ' câu phản xạ tổng hợp VPCX';
     }
 
+    /* ⭐ Label nút Giao tiếp */
+    var gtLabelEl = $('dsGiaotiepLabel');
+    if (gtLabelEl && DATASET_REGISTRY.giaotiep) {
+        var gtCount = DATASET_REGISTRY.giaotiep.count
+                   || (DATASET_REGISTRY.giaotiep.data || []).length;
+        gtLabelEl.textContent = gtCount + ' câu giao tiếp';
+    }
+
+    /* ⭐ Loại trừ giaotiep + tonghop khỏi danh sách chuyên ngành */
     var chuyenNganhKeys = Object.keys(DATASET_REGISTRY).filter(function(id) {
-        return id !== 'tonghop';
+        return id !== 'giaotiep' && id !== 'tonghop';
     });
 
     var cnBtn = $('dsChuyenNganhBtn');
@@ -10269,15 +10297,18 @@ function initDatasetSelector() {
     /* ═══════════════════════════════════════════════════════════
        NÚT TỔNG HỢP — Click để về tab tổng hợp
        ═══════════════════════════════════════════════════════════ */
-    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
-        if (btn.__boundDataset) return;
+    /* ═══════════════════════════════════════════════════════════
+       NÚT CẤP 1 KHÔNG KHOÁ: Giao tiếp + Tổng hợp
+       ═══════════════════════════════════════════════════════════ */
+    ['giaotiep', 'tonghop'].forEach(function(dsId) {
+        var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
+        if (!btn || btn.__boundDataset) return;
         btn.__boundDataset = true;
         btn.addEventListener('click', function() {
-            switchDataset('tonghop');
+            switchDataset(dsId);
             var sub = $('dsSubWrap');
             if (sub) sub.style.display = 'none';
 
-            /* Bỏ active TẤT CẢ tab */
             document.querySelectorAll('.ds-btn').forEach(function(b) {
                 b.classList.remove('active');
             });
@@ -10343,21 +10374,34 @@ function initDatasetSelector() {
 }
 function markCurrentDatasetActive() {
     var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+
+    /* Sub-buttons Chuyên ngành */
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
         b.classList.toggle('active', b.dataset.dataset === current);
     });
-    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
-        b.classList.toggle('active', current === 'tonghop');
-    });
-    if (current !== 'tonghop') {
-        var wrap = $('dsSubWrap');
-        if (wrap) wrap.style.display = 'block';
-        document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
-            b.classList.add('active');
-        });
-    }
-}
 
+    /* ⭐ Nút cấp 1 không khoá: Giao tiếp + Tổng hợp */
+    document.querySelectorAll('.ds-btn[data-dataset="giaotiep"], .ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+        b.classList.toggle('active', current === b.dataset.dataset);
+    });
+
+    /* Giao tiếp / Tổng hợp → ẩn dropdown Chuyên ngành */
+    if (current === 'giaotiep' || current === 'tonghop') {
+        var wrap = $('dsSubWrap');
+        if (wrap) wrap.style.display = 'none';
+        document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        return;
+    }
+
+    /* Chuyên ngành → mở dropdown */
+    var wrap2 = $('dsSubWrap');
+    if (wrap2) wrap2.style.display = 'block';
+    document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
+        b.classList.add('active');
+    });
+}
 function switchDataset(datasetId) {
     if (!DATASET_REGISTRY[datasetId]) return;
 
@@ -10366,7 +10410,10 @@ function switchDataset(datasetId) {
         favState.currentView = false;
     }
 
-    if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
+    /* ⭐ 2 dataset cấp 1 KHÔNG KHOÁ */
+    var FREE_PRIMARY = ['giaotiep', 'tonghop'];
+
+    if (FREE_PRIMARY.indexOf(datasetId) === -1 && !canAccessChuyenNganh()) {
         showChuyenNganhLockMessage();
         return;
     }
@@ -10392,11 +10439,12 @@ function switchDataset(datasetId) {
     if (typeof favUpdateLockState === 'function') favUpdateLockState();
 
     /* Khôi phục banner chủ đề sau khi đổi dataset */
+    /* Khôi phục banner chủ đề sau khi đổi dataset */
     var saved = loadOnboardingSelection();
     if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
         var cfg = getOnboardingConfig();
         if (cfg) {
-            if (datasetId === 'tonghop') {
+            if (FREE_PRIMARY.indexOf(datasetId) !== -1) {
                 window.__onboardingAutoPicked = !!saved.auto_picked;
                 applyOnboardingSelection(saved.topics, false);
             }
@@ -13916,7 +13964,15 @@ function pfBuildDatasetSelect() {
     Object.keys(DATASET_REGISTRY).forEach(function(id) {
         var ds = DATASET_REGISTRY[id];
         var isTonghop = (id === 'tonghop');
-        var isLocked = !isTonghop && !canAccessAll;
+        var isGiaotiep = (id === 'giaotiep');
+
+        /* ⭐ Giao tiếp + Tổng hợp: KHÔNG KHOÁ */
+        var isLocked;
+        if (isTonghop || isGiaotiep) {
+            isLocked = false;
+        } else {
+            isLocked = !canAccessAll;
+        }
 
         var opt = document.createElement('option');
         opt.value = id;
@@ -13928,6 +13984,8 @@ function pfBuildDatasetSelect() {
         var dsName = ds.name && ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
         if (isTonghop) {
             opt.textContent = (ds.count || 0) + ' câu - Tổng hợp VPCX';
+        } else if (isGiaotiep) {
+            opt.textContent = (ds.count || 0) + ' câu - Giao tiếp';
         } else {
             opt.textContent = (isLocked ? '[Khoá] ' : '') +
                               dsName + ' (' + (ds.count || 0) + ' câu)';
@@ -13936,7 +13994,13 @@ function pfBuildDatasetSelect() {
         sel.appendChild(opt);
     });
 
-    sel.value = (current !== 'tonghop' && !canAccessAll) ? 'tonghop' : current;
+    /* ⭐ Fallback nếu current không hợp lệ */
+    var FREE_PRIMARY = ['giaotiep', 'tonghop'];
+    if (FREE_PRIMARY.indexOf(current) === -1 && !canAccessAll) {
+        sel.value = 'tonghop';
+    } else {
+        sel.value = current;
+    }
 
     if (row) {
         var hasLock = !canAccessAll && Object.keys(DATASET_REGISTRY).length > 1;
@@ -13958,12 +14022,13 @@ document.addEventListener('change', function(e) {
         return;
     }
 
-    if (val !== 'tonghop' && !canAccessChuyenNganh()) {
+    /* ⭐ Giao tiếp + Tổng hợp không cần quyền */
+    var FREE_PRIMARY = ['giaotiep', 'tonghop'];
+    if (FREE_PRIMARY.indexOf(val) === -1 && !canAccessChuyenNganh()) {
         sel.value = currentDataset;
         showPracticeFullLockMessage();
         return;
     }
-
     var ok = (typeof window.__switchRawData === 'function')
              ? window.__switchRawData(val)
              : false;
