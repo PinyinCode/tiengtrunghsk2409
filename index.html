@@ -129,16 +129,34 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
 .ds-main-row{
-    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:.5rem;
 }
+/* Mobile + Tablet: LUÔN 2 CỘT */
 @media(max-width:768px){
-    .ds-main-row{grid-template-columns:1fr 1fr;}
+    .ds-main-row{
+        grid-template-columns:1fr 1fr !important;
+        gap:.5rem;
+    }
 }
-@media(max-width:500px){
-    .ds-main-row{grid-template-columns:1fr;}
-}
-@media(max-width:500px){
-    .ds-main-row{grid-template-columns:1fr}
+/* Mobile rất nhỏ (≤360px): vẫn 2 cột, thu gọn chữ */
+@media(max-width:360px){
+    .ds-main-row{
+        grid-template-columns:1fr 1fr !important;
+        gap:.35rem;
+    }
+    .ds-main-row .ds-btn{
+        padding:.5rem .45rem !important;
+        font-size:.7rem !important;
+    }
+    .ds-main-row .ds-btn span{
+        font-size:.68rem !important;
+        line-height:1.2 !important;
+    }
+    .ds-main-row .ds-btn i:first-child{
+        font-size:.8rem !important;
+    }
 }
 .ds-btn{
     display:flex;align-items:center;gap:.5rem;
