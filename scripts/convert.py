@@ -238,6 +238,7 @@ def slugify_dataset_id(filename):
 
 
 # ─── 3. Khởi tạo DATASET_REGISTRY ───
+# ─── 3. Khởi tạo DATASET_REGISTRY ───
 DATASET_REGISTRY = {
     "tonghop": {
         "id": "tonghop",
@@ -249,17 +250,14 @@ DATASET_REGISTRY = {
         "source": EXCEL_FILE,
     }
 }
+
 # ═══════════════════════════════════════════════════════════════════
-# ─── 3b. Dataset "1060 câu giao tiếp" ───
+# ─── 3b. Dataset "Giao tiếp" ───
 #   CÙNG CẤP với "tonghop" — KHÔNG KHOÁ
-#   Dùng chung onboarding config từ config.json
-# ═══════════════════════════════════════════════════════════════════
-# ═══════════════════════════════════════════════════════════════════
-# ─── 3b. Dataset "1060 câu giao tiếp" ───
-#   CÙNG CẤP với "tonghop" — KHÔNG KHOÁ
-#   File 1060.xlsx đặt CÙNG CHỖ với input.xlsx (trong data/)
+#   File 1060.xlsx đặt cùng chỗ với input.xlsx (trong data/)
 # ═══════════════════════════════════════════════════════════════════
 GIAOTIEP_FILE = CONFIG.get("giaotiep_file", "data/1060.xlsx")
+_giaotiep_loaded = False
 
 if os.path.exists(GIAOTIEP_FILE):
     try:
@@ -267,7 +265,7 @@ if os.path.exists(GIAOTIEP_FILE):
         if data_giaotiep:
             DATASET_REGISTRY["giaotiep"] = {
                 "id": "giaotiep",
-                "name": "1060 câu giao tiếp tiếng Trung",
+                "name": f"{len(data_giaotiep)} câu giao tiếp",
                 "icon": "fa-comments",
                 "color": "#10b981",
                 "data": data_giaotiep,
@@ -276,6 +274,7 @@ if os.path.exists(GIAOTIEP_FILE):
                 "isPrimary": True,
                 "requiresActive": False,
             }
+            _giaotiep_loaded = True
             print(f"💬 Giao tiếp: {len(data_giaotiep)} câu (tab cấp 1, mở như tổng hợp)")
         else:
             print(f"⚠️  {GIAOTIEP_FILE}: file rỗng, bỏ qua")
@@ -287,7 +286,7 @@ else:
 
 # ─── 4. Quét thư mục data/ ───
 _tonghop_abs = os.path.abspath(EXCEL_FILE)
-_giaotiep_abs = os.path.abspath(GIAOTIEP_FILE) if os.path.exists(GIAOTIEP_FILE) else None
+_giaotiep_abs = os.path.abspath(GIAOTIEP_FILE) if _giaotiep_loaded else None
 _chuyen_nganh_count = 0
 
 if os.path.isdir(DATA_DIR):
@@ -350,6 +349,7 @@ if os.path.isdir(DATA_DIR):
 else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
     print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
+
 # ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
 json_data = _json_blob(data_tonghop)
@@ -540,41 +540,21 @@ FULLWIDTH_CSS = r"""
    ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★★★ 4 TAB BỘ DỮ LIỆU — PC: 4 CỘT · MOBILE: 2x2 ★★★
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* PC: 4 tab cùng hàng */
 @media (min-width: 769px) {
     .ds-main-row {
-        grid-template-columns: 1fr 1fr 1fr 1fr !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
     }
 }
 
-/* Mobile + Tablet: 2 cột x 2 hàng */
 @media (max-width: 768px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr !important;
-        gap: .5rem !important;
     }
 }
 
-/* Mobile rất nhỏ (≤ 360px): vẫn giữ 2 cột, thu gọn font */
-@media (max-width: 360px) {
+@media (max-width: 500px) {
     .ds-main-row {
-        grid-template-columns: 1fr 1fr !important;
-        gap: .35rem !important;
-    }
-    .ds-main-row .ds-btn {
-        padding: .55rem .5rem !important;
-        font-size: .72rem !important;
-    }
-    .ds-main-row .ds-btn span {
-        font-size: .72rem !important;
-        line-height: 1.25 !important;
-    }
-    .ds-main-row .ds-btn i:first-child {
-        font-size: .85rem !important;
+        grid-template-columns: 1fr !important;
     }
 }
 
@@ -989,7 +969,8 @@ full_body = (
     + '\n</div>'
 )
 
-# ═══════════════════════════════════════════════════════════════════#  GHÉP JS
+# ═══════════════════════════════════════════════════════════════════
+#  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
     # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
@@ -1022,9 +1003,6 @@ full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
 # Fallback: nếu vẫn còn dạng escape '<\/script>' → giữ nguyên an toàn
 # (không replace vì đã an toàn)
 
-# ═══════════════════════════════════════════════════════════════════
-#  HTML SHELL
-# ═══════════════════════════════════════════════════════════════════
 
 # ═══════════════════════════════════════════════════════════════════
 #  HTML SHELL
