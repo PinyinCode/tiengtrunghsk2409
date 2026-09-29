@@ -992,39 +992,12 @@ full_body = (
 # ═══════════════════════════════════════════════════════════════════
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
-# ═══════════════════════════════════════════════════════════════════
-#  HELPER: Strip thẻ <script> CHỈ Ở ĐẦU/CUỐI (không xóa toàn cục)
-# ═══════════════════════════════════════════════════════════════════
-import re as _re
-
-def _strip_script_wrapper(js_code):
-    """
-    Chỉ strip thẻ <script>...</script> ở ĐẦU và CUỐI chuỗi.
-    KHÔNG dùng .replace() toàn cục vì sẽ xóa nhầm thẻ <script>
-    bên trong string literal / comment của code JS.
-    """
-    if not js_code:
-        return js_code
-    s = js_code.strip()
-    s = _re.sub(r'^\s*<script\b[^>]*>', '', s, flags=_re.IGNORECASE)
-    s = _re.sub(r'</script\s*>\s*$', '', s, flags=_re.IGNORECASE)
-    return s
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  GHÉP JS
-# ═══════════════════════════════════════════════════════════════════
-
-# ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN
-_config_js = _strip_script_wrapper(build_config_js(CONFIG))
-
-# ⭐ 2. Telegram notify module
-_telegram_js = _strip_script_wrapper(build_telegram_notify_js())
-
-# ⭐ 3. Ghép TOÀN BỘ JS — KHÔNG replace toàn cục
 full_js = (
-    _config_js
-    + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + _telegram_js
+    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
+    build_config_js(CONFIG)
+    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
+    + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
+    # 3. Các module còn lại
     + "\n/* ==== UI JS ==== */\n" + build_ui_js()
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
@@ -1036,12 +1009,7 @@ full_js = (
     + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
     + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
-# ⚠️ KHÔNG gọi full_js.replace('<script>', '') nữa!
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  HTML SHELL
-# ═══════════════════════════════════════════════════════════════════
 
 # ═══════════════════════════════════════════════════════════════════
 #  HTML SHELL
