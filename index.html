@@ -11015,6 +11015,42 @@ function maybeShowOnboarding() {
 
     var cfg = getOnboardingConfig();
     if (!cfg) return;
+
+    /* ⬇️ THÊM PHẦN THÂN HÀM BỊ THIẾU Ở ĐÂY ⬇️ */
+
+    var mainContent = $('mainContent');
+    if (!mainContent || mainContent.style.display === 'none') {
+        setTimeout(maybeShowOnboarding, 300);
+        return;
+    }
+
+    if (typeof RAW_DATA === 'undefined' || !RAW_DATA || RAW_DATA.length === 0) {
+        setTimeout(maybeShowOnboarding, 300);
+        return;
+    }
+
+    var saved = loadOnboardingSelection();
+    if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
+        window.__onboardingAutoPicked = !!saved.auto_picked;
+
+        var existingBanner = $('onboardingActiveBanner');
+        var override = window.__onboardingOverride;
+
+        if (!existingBanner || !override || override.length === 0) {
+            applyOnboardingSelection(saved.topics, false);
+        } else {
+            showOnboardingActiveBanner(saved.topics, override.length);
+        }
+        return;
+    }
+
+    /* Nếu đã có banner (rỗng) thì không hiện modal */
+    var existingBanner2 = $('onboardingActiveBanner');
+    if (existingBanner2) {
+        return;
+    }
+
+    showOnboardingModal();
 }
 function showOnboardingModal() {
     var cfg = getOnboardingConfig();
