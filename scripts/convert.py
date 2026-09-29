@@ -3,12 +3,19 @@
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + data.
 
-✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
-   thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
+⭐ KIẾN TRÚC MỚI (2026-09):
+   ┌─ data/         → TAB CHÍNH (type="main")
+   │                  Hiển thị cùng hàng với "Tổng hợp"
+   │
+   └─ script/data/  → TAB CHUYÊN NGÀNH (type="specialty")
+                      Hiển thị trong dropdown "Chuyên ngành"
 
-✅ ĐA DATASET: Tự động quét thư mục `data/`, mỗi file Excel
-   → 1 mục "Chuyên ngành" trong dropdown. Thêm file mới = copy
-   vào `data/` + chạy lại `python main.py`, không cần sửa code.
+   • Bỏ file Excel tổng hợp cứng — TẤT CẢ đều quét từ data/
+   • Thêm file vào data/        → tab mới xuất hiện ngay
+   • Thêm file vào script/data/ → item mới trong dropdown
+   • Prefix số "01_", "02_" để sắp xếp thứ tự
+
+✅ HEADER: Subtitle "Văn phòng & Công xưởng" PILL nổi bật với icon ✦
 
 ✅ ONBOARDING: Demo + Trial được hỏi chọn chủ đề quan tâm
    → tự động filter + chia đều theo HSK.
@@ -16,35 +23,13 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
 ✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
 
 ✅ FAVORITES:
-   - Tab Yêu thích — 3 tab cùng hàng trên PC (Tổng hợp + Chuyên ngành + Yêu thích)
-   - Item Yêu thích trong dropdown bộ dữ liệu
-   - Nút tim trên card (đổi màu theo trạng thái)
-   - Nút tim FLOAT góc phải (Practice Full)
-   - ★ Nút toggle "Chỉ câu yêu thích" góc trái (Practice Full)
-     → Khi bật: dropdown "CÂU:" chỉ liệt kê câu yêu thích
+   - Tab Yêu thích — hiển thị dọc (từ favorites_module.py)
+   - Nút tim trên card + Nút tim FLOAT + toggle "Chỉ câu yêu thích"
    - Chỉ tier ACTIVE/ADMIN dùng được, tier khác hiển thị 🔒
 
-✅ CHAT SUPPORT: Module độc lập (chat_support.py)
-   - User ↔ Admin realtime qua Firestore
-   - FAB + badge poll 60s
-   - Admin panel có tab "Chat hỗ trợ"
+✅ CHAT SUPPORT, RTDB PRESENCE, QUOTA DASHBOARD: giữ nguyên.
 
-✅ RTDB PRESENCE (2026-09):
-   - User online tracking qua Firebase Realtime Database
-   - KHÔNG tốn Firestore quota
-   - onDisconnect tự động xóa khi user tắt tab
-   - Admin xem được danh sách user online realtime
-
-✅ FIX (2026-09):
-   - Chèn QUOTA DASHBOARD vào Admin Panel (trước đây bị thiếu)
-   - Chèn USER ONLINE section vào Admin Panel
-   - Escape "</" cho TẤT CẢ JSON blobs
-
-✅ FIX (2026-09-28): TELEGRAM NOTIFY
-   - Thêm build_config_js() + build_telegram_notify_js() vào full_js
-   - Gửi thông báo Telegram khi user nhắn tin
-   - LOẠI BỎ thẻ <script> thừa trong full_js (build_config_js wrap trong
-     <script>...</script> → khi nhúng vào HTML_SHELL bị LỒNG 2 thẻ → vỡ HTML).
+✅ FIX (2026-09-28): LOẠI BỎ thẻ <script> thừa trong full_js
 """
 import json
 import os
@@ -90,11 +75,11 @@ from chat_support import (
     build_quota_js,
     build_quota_init_js,
     build_online_section_html,
-    build_config_js,              # ⭐ THÊM
-    build_telegram_notify_js,     # ⭐ THÊM
+    build_config_js,
+    build_telegram_notify_js,
 )
 
-# ⬇️⬇️⬇️ Module Admin Chat Manager (trình quản lý chat riêng cho admin)
+# ⬇️⬇️⬇️ Module Admin Chat Manager
 from admin_chat_manager import (
     build_admin_chat_css,
     build_admin_chat_html,
@@ -104,6 +89,8 @@ from draggable_fab import (
     build_draggable_fab_css,
     build_draggable_fab_js,
 )
+
+
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
 # ═══════════════════════════════════════════════════════════════════
@@ -121,10 +108,7 @@ def _js_str(s):
 
 
 def _json_blob(obj, compact=True):
-    """
-    Serialize object → JSON an toàn để nhúng vào <script>.
-    Escape "</" → "<\\/" để tránh đóng </script> sớm.
-    """
+    """Serialize object → JSON an toàn để nhúng vào <script>."""
     if compact:
         s = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
     else:
@@ -133,22 +117,52 @@ def _json_blob(obj, compact=True):
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  LOAD CONFIG + DATA
+#  LOAD CONFIG
 # ═══════════════════════════════════════════════════════════════════
 CONFIG = load_config()
 print_banner(CONFIG)
 
-EXCEL_FILE = CONFIG["excel_file"]
 OUTPUT_HTML = CONFIG["output_html"]
-SHEET_INDEX = CONFIG["sheet_index"]
-DATA_DIR = CONFIG.get("data_dir", "data")
+SHEET_INDEX = CONFIG.get("sheet_index", 0)
+DATA_DIR_MAIN = CONFIG.get("data_dir", "data")                    # Tab chính
+DATA_DIR_SPEC = CONFIG.get("data_dir_specialty", "script/data")   # Chuyên ngành
 
-# ─── 1. Đọc dataset gốc ───
-data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
-print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
-# ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
+# ═══════════════════════════════════════════════════════════════════
+#  HELPER: slugify + icon detection
+# ═══════════════════════════════════════════════════════════════════
+def slugify_dataset_id(filename):
+    """Tạo id slug từ tên file: 'Nhân_sự.xlsx' → 'nhan-su'."""
+    base = filename.rsplit(".", 1)[0]
+    # Bỏ prefix số trước khi slugify
+    base = re.sub(r'^\d+[_\-\.\s]+', '', base)
+    base = unicodedata.normalize("NFD", base)
+    base = "".join(c for c in base if unicodedata.category(c) != "Mn")
+    base = base.replace("đ", "d").replace("Đ", "D")
+    base = re.sub(r"[^a-zA-Z0-9]+", "-", base).strip("-").lower()
+    return base or "dataset"
+
+
+def clean_display_name(filename):
+    """'01_Giao_tiếp.xlsx' → 'Giao tiếp'."""
+    base = filename.rsplit(".", 1)[0]
+    base = re.sub(r'^\d+[_\-\.\s]+', '', base)
+    name = base.replace("_", " ").strip()
+    if name.islower() or name.isupper():
+        name = name.title()
+    return name
+
+
+# ─── Icon map cho tab chính (mở rộng) ───
 ICON_MAP = {
+    # ─── Tab chính thường gặp ───
+    "giao tiếp":            "fa-comments",
+    "tổng hợp":             "fa-book-open",
+    "phản xạ":              "fa-book-open",
+    "văn phòng":            "fa-building",
+    "văn phòng công xưởng": "fa-building",
+    "công xưởng":           "fa-industry",
+
     # ─── Nhân sự / Hành chính ───
     "nhân sự":              "fa-users",
     "hành chính":           "fa-briefcase",
@@ -200,26 +214,40 @@ ICON_MAP = {
 DEFAULT_ICON_NAME = "fa-folder"
 UNIFIED_COLOR = "#7c3aed"
 
+# ─── Palette màu xoay vòng cho tab chính ───
+TAB_PALETTE = [
+    "#4f46e5",   # Indigo
+    "#2563eb",   # Blue
+    "#16a34a",   # Green
+    "#f59e0b",   # Amber
+    "#dc2626",   # Red
+    "#0891b2",   # Cyan
+    "#db2777",   # Pink
+    "#65a30d",   # Lime
+    "#7c3aed",   # Violet
+    "#ea580c",   # Orange
+]
 
-def auto_detect_icon_color(display_name):
+
+def auto_detect_icon_color(display_name, fallback_index=0):
     """
     Trả về tuple (icon, color).
-    - Icon: RIÊNG cho từng ngành (match theo nhiều cấp)
-    - Color: LUÔN = UNIFIED_COLOR → đồng bộ style
+    - Icon: match theo tên (nhiều cấp)
+    - Color: palette xoay vòng (fallback_index)
     """
     key = display_name.strip().lower()
 
-    # ─── 1. Match CHÍNH XÁC tên ───
+    # ─── 1. Match CHÍNH XÁC ───
     if key in ICON_MAP:
         return (ICON_MAP[key], UNIFIED_COLOR)
 
-    # ─── 2. Match theo TỪ riêng ───
+    # ─── 2. Match theo TỪ ───
     words = re.split(r'[\s&\-_/,\.]+', key)
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if k in words:
             return (ICON_MAP[k], UNIFIED_COLOR)
 
-    # ─── 3. Match substring (CHỈ key >= 3 ký tự) ───
+    # ─── 3. Match substring ───
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if len(k) >= 3 and k in key:
             return (ICON_MAP[k], UNIFIED_COLOR)
@@ -227,132 +255,144 @@ def auto_detect_icon_color(display_name):
     return (DEFAULT_ICON_NAME, UNIFIED_COLOR)
 
 
-def slugify_dataset_id(filename):
-    """Tạo id slug từ tên file: 'Nhân_sự.xlsx' → 'nhan-su'."""
-    base = filename.rsplit(".", 1)[0]
-    base = unicodedata.normalize("NFD", base)
-    base = "".join(c for c in base if unicodedata.category(c) != "Mn")
-    base = base.replace("đ", "d").replace("Đ", "D")
-    base = re.sub(r"[^a-zA-Z0-9]+", "-", base).strip("-").lower()
-    return base or "dataset"
+def pick_tab_icon(display_name, index):
+    """Icon cho tab chính — match tên, fallback palette."""
+    icon, _ = auto_detect_icon_color(display_name, index)
+    return icon
 
 
-# ─── 3. Khởi tạo DATASET_REGISTRY ───
-# ─── 3. Khởi tạo DATASET_REGISTRY ───
-DATASET_REGISTRY = {
-    "tonghop": {
-        "id": "tonghop",
-        "name": f"{len(data_tonghop)} câu phản xạ tổng hợp VPCX",
-        "icon": "fa-book-open",
-        "color": "#4f46e5",
-        "data": data_tonghop,
-        "count": len(data_tonghop),
-        "source": EXCEL_FILE,
-    }
-}
+def pick_tab_color(index):
+    """Màu xoay vòng cho tab chính."""
+    return TAB_PALETTE[index % len(TAB_PALETTE)]
+
 
 # ═══════════════════════════════════════════════════════════════════
-# ─── 3b. Dataset "Giao tiếp" ───
-#   CÙNG CẤP với "tonghop" — KHÔNG KHOÁ
-#   File 1060.xlsx đặt cùng chỗ với input.xlsx (trong data/)
+#  QUÉT THƯ MỤC
 # ═══════════════════════════════════════════════════════════════════
-GIAOTIEP_FILE = CONFIG.get("giaotiep_file", "data/1060.xlsx")
-_giaotiep_loaded = False
+def scan_excel_folder(folder_path):
+    """
+    Quét 1 thư mục, trả về list[dict]:
+        {filepath, filename, display_name, data, count}
+    Sắp xếp theo tên file (để prefix số "01_", "02_" có tác dụng).
+    """
+    results = []
+    if not os.path.isdir(folder_path):
+        return results
 
-if os.path.exists(GIAOTIEP_FILE):
-    try:
-        data_giaotiep = read_excel(GIAOTIEP_FILE, 0)
-        if data_giaotiep:
-            DATASET_REGISTRY["giaotiep"] = {
-                "id": "giaotiep",
-                "name": f"{len(data_giaotiep)} câu giao tiếp",
-                "icon": "fa-comments",
-                "color": "#10b981",
-                "data": data_giaotiep,
-                "count": len(data_giaotiep),
-                "source": GIAOTIEP_FILE,
-                "isPrimary": True,
-                "requiresActive": False,
-            }
-            _giaotiep_loaded = True
-            print(f"💬 Giao tiếp: {len(data_giaotiep)} câu (tab cấp 1, mở như tổng hợp)")
-        else:
-            print(f"⚠️  {GIAOTIEP_FILE}: file rỗng, bỏ qua")
-    except Exception as e:
-        print(f"❌ Lỗi đọc {GIAOTIEP_FILE}: {e}")
-else:
-    print(f"⚠️  Không tìm thấy '{GIAOTIEP_FILE}' — bỏ qua tab Giao tiếp")
-    print(f"   → Đặt file 1060.xlsx cùng chỗ với '{EXCEL_FILE}'")
-
-# ─── 4. Quét thư mục data/ ───
-_tonghop_abs = os.path.abspath(EXCEL_FILE)
-_giaotiep_abs = os.path.abspath(GIAOTIEP_FILE) if _giaotiep_loaded else None
-_chuyen_nganh_count = 0
-
-if os.path.isdir(DATA_DIR):
-    excel_files = []
+    files = []
     for ext in ("*.xlsx", "*.xls", "*.csv"):
-        excel_files.extend(glob.glob(os.path.join(DATA_DIR, ext)))
-    excel_files.sort()
+        files.extend(glob.glob(os.path.join(folder_path, ext)))
+    files.sort()
 
-    print(f"\n🔍 Quét thư mục '{DATA_DIR}/' — tìm thấy {len(excel_files)} file Excel")
-
-    for filepath in excel_files:
+    for filepath in files:
         filename = os.path.basename(filepath)
-
         if filename.startswith("~$"):
             continue
-        if os.path.abspath(filepath) == _tonghop_abs:
-            print(f"⏭️  {filename} — bỏ qua (file tổng hợp)")
-            continue
-        if _giaotiep_abs and os.path.abspath(filepath) == _giaotiep_abs:
-            print(f"⏭️  {filename} — bỏ qua (file giao tiếp)")
-            continue
-
         try:
             sub_data = read_excel(filepath, 0)
             if not sub_data:
                 print(f"⚠️  {filename}: file rỗng, bỏ qua")
                 continue
 
-            display_name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
-            if display_name.islower() or display_name.isupper():
-                display_name = display_name.title()
-
-            dataset_id = slugify_dataset_id(filename)
-            base_id = dataset_id
-            counter = 2
-            while dataset_id in DATASET_REGISTRY:
-                dataset_id = f"{base_id}-{counter}"
-                counter += 1
-
-            icon, color = auto_detect_icon_color(display_name)
-
-            DATASET_REGISTRY[dataset_id] = {
-                "id": dataset_id,
-                "name": display_name,
-                "icon": icon,
-                "color": color,
+            results.append({
+                "filepath": filepath,
+                "filename": filename,
+                "display_name": clean_display_name(filename),
                 "data": sub_data,
                 "count": len(sub_data),
-                "source": filename,
-            }
-            _chuyen_nganh_count += 1
-            print(f"🏭 {display_name:25s} ({filename}) — {len(sub_data)} câu")
+            })
         except Exception as e:
             print(f"❌ Lỗi đọc {filename}: {e}")
-            continue
+    return results
 
-    if _chuyen_nganh_count == 0:
-        print(f"ℹ️  Không có file chuyên ngành nào trong '{DATA_DIR}/'")
-        print(f"   (chỉ dùng dataset tổng hợp).")
-else:
-    print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
-    print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
-# ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
+# ─── Quét 2 thư mục ───
+print(f"\n{'═' * 60}")
+print(f"🔍 TAB CHÍNH — '{DATA_DIR_MAIN}/'")
+print(f"{'═' * 60}")
+main_files = scan_excel_folder(DATA_DIR_MAIN)
+
+print(f"\n{'═' * 60}")
+print(f"🔍 CHUYÊN NGÀNH — '{DATA_DIR_SPEC}/'")
+print(f"{'═' * 60}")
+spec_files = scan_excel_folder(DATA_DIR_SPEC)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  KHỞI TẠO DATASET_REGISTRY
+# ═══════════════════════════════════════════════════════════════════
+DATASET_REGISTRY = {}
+
+# ─── 1. Đăng ký TAB CHÍNH (data/) ───
+#      type = "main" → hiển thị dọc, ngang hàng với nhau
+for idx, item in enumerate(main_files):
+    did = slugify_dataset_id(item["filename"])
+    base_id = did
+    c = 2
+    while did in DATASET_REGISTRY:
+        did = f"{base_id}-{c}"
+        c += 1
+
+    DATASET_REGISTRY[did] = {
+        "id": did,
+        "name": item["display_name"],
+        "shortName": item["display_name"],         # Tên ngắn cho tab
+        "icon": pick_tab_icon(item["display_name"], idx),
+        "color": pick_tab_color(idx),
+        "data": item["data"],
+        "count": item["count"],
+        "source": item["filename"],
+        "type": "main",                            # ⭐ TAB CHÍNH
+        "order": idx + 1,
+    }
+    print(f"📑 [TAB] {item['display_name']:30s} — {item['count']:5d} câu")
+
+# ─── 2. Đăng ký CHUYÊN NGÀNH (script/data/) ───
+#      type = "specialty" → hiển thị trong dropdown
+for idx, item in enumerate(spec_files):
+    did = slugify_dataset_id(item["filename"])
+    base_id = did
+    c = 2
+    while did in DATASET_REGISTRY:
+        did = f"{base_id}-{c}"
+        c += 1
+
+    DATASET_REGISTRY[did] = {
+        "id": did,
+        "name": item["display_name"],
+        "shortName": item["display_name"],
+        "icon": auto_detect_icon_color(item["display_name"])[0],
+        "color": UNIFIED_COLOR,                    # Tím đồng bộ cho chuyên ngành
+        "data": item["data"],
+        "count": item["count"],
+        "source": item["filename"],
+        "type": "specialty",                       # ⭐ CHUYÊN NGÀNH
+        "order": idx + 1,
+    }
+    print(f"🏭 [SPEC] {item['display_name']:29s} — {item['count']:5d} câu")
+
+# ─── 3. Kiểm tra rỗng ───
+if not DATASET_REGISTRY:
+    print("\n⚠️  CẢNH BÁO: Không có dataset nào được đăng ký!")
+    print(f"   → Bỏ file Excel vào '{DATA_DIR_MAIN}/' (tab chính)")
+    print(f"   → Hoặc '{DATA_DIR_SPEC}/' (chuyên ngành)")
+
+# ─── 4. Xác định dataset đầu tiên (fallback cho CURRENT_DATASET) ───
+first_dataset_id = next(iter(DATASET_REGISTRY), "")
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  SERIALIZE (escape "</" cho TẤT CẢ)
+# ═══════════════════════════════════════════════════════════════════
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
-json_data = _json_blob(data_tonghop)
+
+# RAW_DATA ban đầu = dataset đầu tiên (JS sẽ tự đổi khi user chọn tab khác)
+if first_dataset_id:
+    _first_data = DATASET_REGISTRY[first_dataset_id]["data"]
+else:
+    _first_data = []
+json_data = _json_blob(_first_data)
+
 firebase_config_json = _json_blob(CONFIG["firebase_config"])
 synonyms_json = _json_blob(CONFIG["synonyms"])
 fillers_json = _json_blob(CONFIG["filler_words"])
@@ -367,7 +407,6 @@ telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 # ═══════════════════════════════════════════════════════════════════
 auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
-# ⬇️⬇️⬇️ THÊM: Chèn User Online section (RTDB) vào Admin Panel
 if '<!-- __ADMIN_ONLINE_SECTION__ -->' in auth_html:
     auth_html = auth_html.replace(
         '<!-- __ADMIN_ONLINE_SECTION__ -->',
@@ -376,10 +415,7 @@ if '<!-- __ADMIN_ONLINE_SECTION__ -->' in auth_html:
     print("✅ Đã chèn User Online section vào Admin Panel")
 else:
     print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_ONLINE_SECTION__ -->")
-    print("   → Thêm vào accounts_template.py → build_accounts_html()")
-    print("   → TRƯỚC dòng <!-- __ADMIN_QUOTA_SECTION__ -->")
 
-# ⬇️⬇️⬇️ Chèn Quota Dashboard vào Admin Panel (như cũ)
 if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
     auth_html = auth_html.replace(
         '<!-- __ADMIN_QUOTA_SECTION__ -->',
@@ -388,7 +424,6 @@ if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
     print("✅ Đã chèn Quota Dashboard vào Admin Panel")
 else:
     print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_QUOTA_SECTION__ -->")
-    print("   → Kiểm tra accounts_template.py → build_accounts_html()")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -399,14 +434,7 @@ FULLWIDTH_CSS = r"""
 /* ═══════════════════════════════════════════════════════════════════
    ★ FULL-WIDTH SCALE ★
    ═══════════════════════════════════════════════════════════════════ */
-
-.page-wrap {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-    overflow-x: hidden;
-}
-
+.page-wrap { width: 100%; max-width: 100%; margin: 0 auto; overflow-x: hidden; }
 .container {
     width: 100% !important;
     max-width: 100% !important;
@@ -415,20 +443,9 @@ FULLWIDTH_CSS = r"""
     padding-left: 1.25rem !important;
     padding-right: 1.25rem !important;
 }
+.sticky-top { position: relative !important; width: 100% !important; max-width: 100% !important; }
+.main, #mainContent { width: 100% !important; max-width: 100% !important; }
 
-.sticky-top {
-    position: relative !important;
-    width: 100% !important;
-    max-width: 100% !important;
-}
-
-.main,
-#mainContent {
-    width: 100% !important;
-    max-width: 100% !important;
-}
-
-/* ═══ SEARCH + FILTER ═══ */
 .search-bar { width: 100% !important; max-width: 100% !important; }
 .search-bar input { width: 100% !important; max-width: 100% !important; }
 
@@ -440,15 +457,10 @@ FULLWIDTH_CSS = r"""
     gap: .75rem !important;
 }
 @media (min-width: 1000px) {
-    .filters {
-        grid-template-columns: 220px 260px !important;
-        gap: 1rem !important;
-    }
+    .filters { grid-template-columns: 220px 260px !important; gap: 1rem !important; }
 }
-
 .result-count { margin-top: .5rem !important; }
 
-/* ═══ GRID CARDS ═══ */
 .mobile-view {
     display: grid !important;
     width: 100% !important;
@@ -458,30 +470,17 @@ FULLWIDTH_CSS = r"""
     gap: 1rem !important;
     grid-template-columns: 1fr !important;
 }
-
 @media (min-width: 769px) {
-    .mobile-view {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 1.1rem !important;
-    }
+    .mobile-view { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1.1rem !important; }
 }
-
 @media (min-width: 1800px) {
-    .mobile-view {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 1.2rem !important;
-    }
+    .mobile-view { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1.2rem !important; }
 }
 @media (min-width: 2400px) {
-    .mobile-view {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 1.3rem !important;
-    }
+    .mobile-view { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 1.3rem !important; }
 }
 
-/* ═══ Banner full width ═══ */
-.demo-banner,
-.expiry-banner {
+.demo-banner, .expiry-banner {
     width: 100% !important;
     max-width: 100% !important;
     margin-left: auto !important;
@@ -489,7 +488,6 @@ FULLWIDTH_CSS = r"""
     margin-bottom: 1rem !important;
 }
 
-/* ═══ Container padding co giãn ═══ */
 @media (min-width: 1000px) {
     .container { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 }
@@ -500,13 +498,11 @@ FULLWIDTH_CSS = r"""
     .container { padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
 }
 
-/* ═══ MOBILE: thu gọn padding ═══ */
 @media (max-width: 768px) {
     .container { padding-left: .7rem !important; padding-right: .7rem !important; }
     .mobile-view { gap: .8rem !important; }
 }
 
-/* ═══ CHẾ ĐỘ FULL ═══ */
 .practice-full-modal {
     position: fixed !important;
     inset: 0 !important;
@@ -535,59 +531,10 @@ FULLWIDTH_CSS = r"""
     font-size: clamp(1.15rem, 2.2vw, 1.6rem) !important;
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════
-   ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* ═══════════════════════════════════════════════════════════════════
-   ★★★ 4 TAB BỘ DỮ LIỆU — PC: 4 CỘT · MOBILE: 2x2 ★★★
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* PC: 4 tab cùng hàng */
-@media (min-width: 769px) {
-    .ds-main-row {
-        grid-template-columns: repeat(4, 1fr) !important;
-    }
-}
-
-/* Mobile + Tablet: 2 cột x 2 hàng */
-@media (max-width: 768px) {
-    .ds-main-row {
-        grid-template-columns: 1fr 1fr !important;
-        gap: .5rem !important;
-    }
-}
-
-/* Mobile rất nhỏ (≤ 360px): vẫn 2 cột, thu gọn font */
-@media (max-width: 360px) {
-    .ds-main-row {
-        grid-template-columns: 1fr 1fr !important;
-        gap: .35rem !important;
-    }
-    .ds-main-row .ds-btn {
-        padding: .55rem .5rem !important;
-        font-size: .72rem !important;
-    }
-    .ds-main-row .ds-btn span {
-        font-size: .72rem !important;
-        line-height: 1.25 !important;
-    }
-    .ds-main-row .ds-btn i:first-child {
-        font-size: .85rem !important;
-    }
-}
-
-
 /* ═══════════════════════════════════════════════════════════════════
    ★★★ HEADER DESIGN ★★★
    ═══════════════════════════════════════════════════════════════════ */
-
-.header {
-    position: relative;
-    padding: .25rem 0;
-}
-
+.header { position: relative; padding: .25rem 0; }
 .header-inner {
     display: flex !important;
     align-items: center !important;
@@ -595,7 +542,6 @@ FULLWIDTH_CSS = r"""
     width: 100% !important;
     gap: 1rem !important;
 }
-
 .logo {
     flex: 1 1 auto !important;
     min-width: 0 !important;
@@ -603,7 +549,6 @@ FULLWIDTH_CSS = r"""
     align-items: center !important;
     gap: .9rem !important;
 }
-
 .logo-icon {
     width: clamp(46px, 4.5vw, 58px) !important;
     height: clamp(46px, 4.5vw, 58px) !important;
@@ -624,37 +569,24 @@ FULLWIDTH_CSS = r"""
     transition: transform .35s cubic-bezier(.34,1.56,.64,1),
                 box-shadow .35s ease !important;
 }
-
 .logo-icon::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        115deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.35) 50%,
-        transparent 70%
-    );
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
     transform: translateX(-100%) rotate(25deg);
     transition: transform .8s ease;
     pointer-events: none;
 }
-.logo-icon:hover::before {
-    transform: translateX(100%) rotate(25deg);
-}
-
+.logo-icon:hover::before { transform: translateX(100%) rotate(25deg); }
 .logo-icon::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 30% 20%,
-        rgba(255, 255, 255, 0.4), transparent 55%);
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.4), transparent 55%);
     pointer-events: none;
 }
-
 .logo-icon:hover {
     transform: translateY(-2px) rotate(-4deg) scale(1.04);
     box-shadow:
@@ -662,7 +594,6 @@ FULLWIDTH_CSS = r"""
         0 4px 10px rgba(139, 92, 246, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
 }
-
 .logo-text {
     display: flex !important;
     flex-direction: column !important;
@@ -671,7 +602,6 @@ FULLWIDTH_CSS = r"""
     overflow: hidden !important;
     gap: 4px !important;
 }
-
 .logo-text .title {
     font-size: clamp(1.25rem, 1.9vw, 1.7rem) !important;
     font-weight: 900 !important;
@@ -693,40 +623,31 @@ FULLWIDTH_CSS = r"""
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
 }
-
 .logo-text .subtitle {
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.4rem !important;
     padding: 0.25rem 0.7rem !important;
     border-radius: 999px !important;
-
-    background: linear-gradient(
-        135deg,
+    background: linear-gradient(135deg,
         rgba(99, 102, 241, 0.13) 0%,
         rgba(139, 92, 246, 0.13) 50%,
-        rgba(217, 70, 239, 0.13) 100%
-    ) !important;
+        rgba(217, 70, 239, 0.13) 100%) !important;
     border: 1px solid rgba(139, 92, 246, 0.3) !important;
-
     color: #5b21b6 !important;
     font-size: clamp(.68rem, .85vw, .78rem) !important;
     font-weight: 700 !important;
     letter-spacing: 0.02em !important;
-
     margin-top: 3px !important;
     padding-left: 0.6rem !important;
-
     width: fit-content !important;
     max-width: 100% !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-
     box-shadow:
         0 1px 3px rgba(139, 92, 246, 0.12),
         inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-
     transition: transform .3s ease, box-shadow .3s ease !important;
 }
 .logo-text .subtitle:hover {
@@ -735,7 +656,6 @@ FULLWIDTH_CSS = r"""
         0 4px 12px rgba(139, 92, 246, 0.25),
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
-
 .logo-text .subtitle::before {
     content: '✦';
     display: inline-flex !important;
@@ -752,10 +672,7 @@ FULLWIDTH_CSS = r"""
     animation: sparkleSubtitle 2.5s ease-in-out infinite !important;
 }
 @keyframes sparkleSubtitle {
-    0%, 100% {
-        opacity: 0.65;
-        transform: scale(1) rotate(0deg);
-    }
+    0%, 100% { opacity: 0.65; transform: scale(1) rotate(0deg); }
     50% {
         opacity: 1;
         transform: scale(1.2) rotate(18deg);
@@ -764,14 +681,11 @@ FULLWIDTH_CSS = r"""
             0 0 18px rgba(139, 92, 246, 0.7);
     }
 }
-
 [data-theme="dark"] .logo-text .subtitle {
-    background: linear-gradient(
-        135deg,
+    background: linear-gradient(135deg,
         rgba(99, 102, 241, 0.28) 0%,
         rgba(139, 92, 246, 0.28) 50%,
-        rgba(217, 70, 239, 0.28) 100%
-    ) !important;
+        rgba(217, 70, 239, 0.28) 100%) !important;
     border-color: rgba(165, 180, 252, 0.45) !important;
     color: #ddd6fe !important;
     box-shadow:
@@ -792,7 +706,6 @@ FULLWIDTH_CSS = r"""
     gap: .5rem !important;
     align-items: center !important;
 }
-
 .header-actions .icon-btn {
     width: clamp(34px, 3vw, 40px) !important;
     height: clamp(34px, 3vw, 40px) !important;
@@ -820,7 +733,6 @@ FULLWIDTH_CSS = r"""
     color: #a5b4fc !important;
     border-color: rgba(165, 180, 252, 0.5) !important;
 }
-
 .header-actions .trial-badge {
     position: relative !important;
     overflow: hidden !important;
@@ -837,16 +749,9 @@ FULLWIDTH_CSS = r"""
 .header-actions .trial-badge::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.5),
-        transparent
-    );
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
     animation: shimmerBadge 2.8s infinite;
     pointer-events: none;
 }
@@ -854,7 +759,6 @@ FULLWIDTH_CSS = r"""
     0% { left: -100%; }
     60%, 100% { left: 200%; }
 }
-
 .header-actions .demo-badge {
     background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
     color: #78350f !important;
@@ -863,7 +767,6 @@ FULLWIDTH_CSS = r"""
     border: 1.5px solid #f59e0b !important;
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
 }
-
 @media (max-width: 768px) {
     .logo { gap: .65rem !important; }
     .logo-icon {
@@ -887,16 +790,9 @@ FULLWIDTH_CSS = r"""
         font-size: .82rem !important;
     }
 }
-
 @media (max-width: 400px) {
-    .logo-text .subtitle {
-        display: none !important;
-    }
-    .logo-icon {
-        width: 40px !important;
-        height: 40px !important;
-        font-size: 1rem !important;
-    }
+    .logo-text .subtitle { display: none !important; }
+    .logo-icon { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
     .logo-text .title { font-size: 1.05rem !important; }
 }
 """
@@ -927,16 +823,26 @@ ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 # ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
-# ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
-ui_html = ui_html.replace(
+# ═══ 1. Tab Yêu thích — chèn vào ds-list (fallback nhiều pattern) ═══
+#     Vì layout mới dùng <div class="ds-list"> thay vì .ds-main-row
+_fav_tab_patterns = [
     '<!-- __FAV_DATASET_TAB__ -->',
-    _fav_html["dataset_tab"]
-)
-if 'data-dataset-group="favorites"' not in ui_html:
-    print("⚠️  Chưa chèn được tab Yêu thích — kiểm tra placeholder")
-    print("   <!-- __FAV_DATASET_TAB__ --> trong ui_template.py")
-else:
-    print("✅ Đã chèn tab Yêu thích vào ds-main-row")
+    '<!-- __FAV_DATASET_ITEM__ -->',
+    '<!-- __FAV_ROW_TAB__ -->',
+]
+_fav_inserted = False
+for _pat in _fav_tab_patterns:
+    if _fav_inserted:
+        break
+    if _pat in ui_html:
+        ui_html = ui_html.replace(_pat, _fav_html["dataset_tab"])
+        _fav_inserted = True
+        print(f"✅ Đã chèn tab Yêu thích (pattern: {_pat})")
+
+if not _fav_inserted:
+    # Fallback: chèn sau tab Chuyên ngành trong ds-list
+    print("⚠️  Không tìm thấy placeholder tab Yêu thích.")
+    print("   → Kiểm tra ui_template.py có <!-- __FAV_DATASET_TAB__ --> không")
 
 # ═══ 2. HAI NÚT FLOAT trong Practice Full ═══
 _pf_buttons = _fav_html["pf_float_btn"] + '\n' + _fav_html["pf_fav_only_btn"]
@@ -970,9 +876,7 @@ for _pat in _dd_patterns:
         print("✅ Đã chèn 'Yêu thích' vào dropdown bộ dữ liệu")
 
 if not _dd_inserted:
-    print("⚠️  Chưa tìm thấy item Chuyên ngành trong dropdown.")
-    print("   → Kiểm tra lại class/id của dropdown item trong ui_template.py")
-    print("   → Hoặc chèn thủ công snippet 'dataset_dropdown_item' vào đúng vị trí")
+    print("ℹ️  Không tìm thấy dropdown Chuyên ngành (có thể layout mới không dùng)")
 
 social_html = build_social_html()
 ui_html = ui_html.replace(
@@ -993,11 +897,8 @@ full_body = (
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
-    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
     build_config_js(CONFIG)
-    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
     + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
-    # 3. Các module còn lại
     + "\n/* ==== UI JS ==== */\n" + build_ui_js()
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
@@ -1011,17 +912,10 @@ full_js = (
 )
 
 # ═══════════════════════════════════════════════════════════════════
-#  ⭐⭐⭐ FIX (2026-09-28): LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
-#  Lý do: build_config_js() và build_telegram_notify_js() trả về chuỗi
-#         CÓ WRAP trong '<script>...</script>' → khi nhúng vào HTML_SHELL
-#         (đã có sẵn <script>__JS__</script>) → LỒNG 2 THẺ SCRIPT
-#         → trình duyệt đóng thẻ script sớm → TRANG TRẮNG, code rò rỉ.
-#  Giải pháp: strip TẤT CẢ thẻ <script> và </script> khỏi full_js.
+#  FIX: LOẠI BỎ THẺ <script> THỪA TRONG full_js
 # ═══════════════════════════════════════════════════════════════════
 full_js = full_js.replace('<script>', '').replace('</script>', '')
 full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
-# Fallback: nếu vẫn còn dạng escape '<\/script>' → giữ nguyên an toàn
-# (không replace vì đã an toàn)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1054,7 +948,7 @@ __BODY__
 /* ============ DỮ LIỆU + CONFIG ============ */
 var RAW_DATA = __DATA__;
 var DATASET_REGISTRY = __DATASET_REGISTRY__;
-var CURRENT_DATASET = 'tonghop';
+var CURRENT_DATASET = "__FIRST_DATASET__";
 
 var FIREBASE_CONFIG = __FIREBASE_CONFIG__;
 
@@ -1181,7 +1075,7 @@ html_output = (HTML_SHELL
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
 
-    # 2. Data blobs (đã escape "</" qua _json_blob)
+    # 2. Data blobs
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
@@ -1189,7 +1083,10 @@ html_output = (HTML_SHELL
     .replace("__FILLER_WORDS__",      fillers_json)
     .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
 
-    # 3. Numeric configs
+    # 3. FIRST DATASET (thay vì 'tonghop' cứng)
+    .replace("__FIRST_DATASET__",     _js_str(first_dataset_id))
+
+    # 4. Numeric configs
     .replace("__DEMO_LIMIT__",            str(int(CONFIG["demo_limit"])))
     .replace("__DEMO_DAILY_LIMIT__",      str(int(CONFIG["demo_daily_limit"])))
     .replace("__DEMO_HSK_MAX__",          str(int(CONFIG["demo_hsk_max"])))
@@ -1199,7 +1096,7 @@ html_output = (HTML_SHELL
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
 
-    # 4. String configs
+    # 5. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
@@ -1217,18 +1114,25 @@ with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
 size_kb = os.path.getsize(OUTPUT_HTML) / 1024
 total_datasets = len(DATASET_REGISTRY)
 total_questions = sum(ds["count"] for ds in DATASET_REGISTRY.values())
+main_count = sum(1 for ds in DATASET_REGISTRY.values() if ds["type"] == "main")
+spec_count = sum(1 for ds in DATASET_REGISTRY.values() if ds["type"] == "specialty")
 
-print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
+print(f"\n{'═' * 60}")
+print(f"🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
-print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
-print(f"📝 Tổng số câu hỏi: {total_questions}")
-print(f"❤️  Yêu thích: 3 tab cùng hàng (PC) + dropdown + 2 nút float")
-print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
-print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
-print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
-print(f"💬 Chat Support: đã thêm (user ↔ admin)")
-print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")
-print(f"👥 User Online (RTDB): đã thêm section vào Admin Panel")
+print(f"{'═' * 60}")
+print(f"📑 Tab chính   (data/):         {main_count}")
+print(f"🏭 Chuyên ngành (script/data/): {spec_count}")
+print(f"📚 Tổng dataset:                {total_datasets}")
+print(f"📝 Tổng số câu:                 {total_questions}")
+print(f"{'═' * 60}")
+print(f"✅ Subtitle PILL với icon ✦")
+print(f"✅ Tab chính từ data/ (tự động)")
+print(f"✅ Chuyên ngành từ script/data/ (dropdown)")
+print(f"✅ Thêm file = thêm tab (không cần sửa code)")
+print(f"❤️  Yêu thích + dropdown + 2 nút float")
+print(f"💬 Chat Support + 📊 Quota + 👥 User Online (RTDB)")
+print(f"{'═' * 60}")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
