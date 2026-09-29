@@ -1010,19 +1010,6 @@ full_js = (
     + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
 
-# ═══════════════════════════════════════════════════════════════════
-#  ⭐⭐⭐ FIX (2026-09-28): LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
-#  Lý do: build_config_js() và build_telegram_notify_js() trả về chuỗi
-#         CÓ WRAP trong '<script>...</script>' → khi nhúng vào HTML_SHELL
-#         (đã có sẵn <script>__JS__</script>) → LỒNG 2 THẺ SCRIPT
-#         → trình duyệt đóng thẻ script sớm → TRANG TRẮNG, code rò rỉ.
-#  Giải pháp: strip TẤT CẢ thẻ <script> và </script> khỏi full_js.
-# ═══════════════════════════════════════════════════════════════════
-full_js = full_js.replace('<script>', '').replace('</script>', '')
-full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
-# Fallback: nếu vẫn còn dạng escape '<\/script>' → giữ nguyên an toàn
-# (không replace vì đã an toàn)
-
 
 # ═══════════════════════════════════════════════════════════════════
 #  HTML SHELL
