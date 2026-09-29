@@ -1010,6 +1010,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     display: flex !important;
     align-items: center;
     gap: .5rem;
+    flex-wrap: wrap;                     /* ⭐ Cho phép nút Lọc xuống dòng */
     visibility: visible !important;
     opacity: 1 !important;
 }
@@ -2852,7 +2853,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     position:relative;
     overflow:visible;
 }
-.ds-btn[data-dataset-group="favorites"] .ds-fav-badge{   
+.ds-btn[data-dataset-group="favorites"] .ds-fav-badge{
     position:absolute;
     top:-8px;
     right:-6px;
@@ -3174,21 +3175,310 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .fav-toast i{font-size:1rem;}
 
 /* ═══════════════════════════════════════════════════════════════
+   ❤️ FAVORITES — 2 NÚT FLOAT TRONG PRACTICE FULL
+   Vị trí: GÓC PHẢI — xếp dọc
+   - Nút "Chỉ câu yêu thích" ở TRÊN
+   - Nút "Like" ở DƯỚI
+   - KHÔNG đè nút TikTok (góc trái)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Nút Like — dưới cùng góc phải */
+.pf-fav-float {
+    position: fixed !important;
+    left: auto !important;
+    right: clamp(14px, 2vw, 22px) !important;
+    bottom: calc(82px + env(safe-area-inset-bottom)) !important;
+    z-index: 2450 !important;
+    display: none;
+    align-items: center;
+    gap: .5rem;
+    padding: .55rem .95rem .55rem .8rem;
+    border-radius: 999px;
+    border: 2px solid rgba(239, 68, 68, .4);
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    color: #dc2626;
+    font-size: .82rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-sizing: border-box;
+    max-width: 180px;
+    max-height: 44px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    transition: all .25s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, .35), 0 2px 8px rgba(0, 0, 0, .1);
+}
+.pf-fav-float.show { display: inline-flex; }
+.pf-fav-float i {
+    font-size: 1.05rem;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.pf-fav-float:hover {
+    transform: translateY(-3px) scale(1.05);
+    border-color: #ef4444;
+    box-shadow: 0 12px 32px rgba(239, 68, 68, .5), 0 4px 12px rgba(0, 0, 0, .15);
+}
+.pf-fav-float:hover i { transform: scale(1.15); }
+.pf-fav-float:active { transform: translateY(-1px) scale(1.02); }
+
+.pf-fav-float.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    border-color: #dc2626;
+    box-shadow: 0 8px 28px rgba(239, 68, 68, .6), 0 2px 8px rgba(220, 38, 38, .3);
+    animation: pfFavPulse 2s ease-in-out infinite;
+}
+.pf-fav-float.active i { animation: favHeartPop .5s cubic-bezier(.34,1.56,.64,1); }
+.pf-fav-float.active::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 999px;
+    border: 2px solid rgba(239, 68, 68, .5);
+    animation: favRing 1s ease-out infinite;
+    pointer-events: none;
+}
+@keyframes pfFavPulse {
+    0%, 100% { box-shadow: 0 8px 28px rgba(239, 68, 68, .6), 0 2px 8px rgba(220, 38, 38, .3); }
+    50%      { box-shadow: 0 8px 36px rgba(239, 68, 68, .85), 0 4px 12px rgba(220, 38, 38, .4); }
+}
+
+.pf-fav-float.locked {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #b45309;
+    border-color: rgba(217, 119, 6, .5);
+    animation: none;
+}
+.pf-fav-float.locked:hover {
+    background: linear-gradient(135deg, #fde68a, #fcd34d);
+    color: #92400e;
+    border-color: #d97706;
+    transform: translateY(-3px) scale(1.05);
+}
+.pf-fav-float.locked::after { display: none; }
+.pf-fav-float .pf-fav-float-label { display: inline-block; white-space: nowrap; }
+
+[data-theme="dark"] .pf-fav-float {
+    background: linear-gradient(135deg, rgba(239, 68, 68, .2), rgba(220, 38, 38, .15));
+    border-color: rgba(239, 68, 68, .5);
+    color: #fca5a5;
+}
+[data-theme="dark"] .pf-fav-float.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+}
+[data-theme="dark"] .pf-fav-float.locked {
+    background: linear-gradient(135deg, rgba(217, 119, 6, .25), rgba(180, 83, 9, .2));
+    color: #fcd34d;
+    border-color: rgba(217, 119, 6, .5);
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* Nút "Chỉ câu yêu thích" — phía TRÊN nút Like */
+.pf-fav-only-float {
+    position: fixed !important;
+    left: auto !important;
+    right: clamp(14px, 2vw, 22px) !important;
+    bottom: calc(138px + env(safe-area-inset-bottom)) !important;
+    z-index: 2450 !important;
+    display: none;
+    align-items: center;
+    gap: .5rem;
+    padding: .55rem .95rem .55rem .8rem;
+    border-radius: 999px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: .82rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-sizing: border-box;
+    max-width: 180px;
+    max-height: 44px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    user-select: none;
+    transition: all .25s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
+}
+.pf-fav-only-float.show { display: inline-flex; }
+.pf-fav-only-float i {
+    font-size: 1.05rem;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.pf-fav-only-float:hover {
+    transform: translateY(-3px) scale(1.04);
+    border-color: #ef4444;
+    color: #dc2626;
+    box-shadow: 0 8px 22px rgba(239, 68, 68, .3);
+}
+.pf-fav-only-float:active { transform: translateY(-1px) scale(1.01); }
+
+.pf-fav-only-float .pf-fav-only-count {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 .4rem;
+    border-radius: 50px;
+    background: rgba(239, 68, 68, .15);
+    color: #dc2626;
+    font-size: .68rem;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: .2s;
+}
+.pf-fav-only-float.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    border-color: #dc2626;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, .5);
+}
+.pf-fav-only-float.active i { animation: favHeartPop .4s cubic-bezier(.34,1.56,.64,1); }
+.pf-fav-only-float.active .pf-fav-only-count {
+    background: rgba(255, 255, 255, .3);
+    color: #fff;
+}
+.pf-fav-only-float.locked {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #b45309;
+    border-color: rgba(217, 119, 6, .5);
+}
+.pf-fav-only-float.locked:hover {
+    background: linear-gradient(135deg, #fde68a, #fcd34d);
+    color: #92400e;
+    border-color: #d97706;
+    transform: translateY(-3px) scale(1.04);
+}
+.pf-fav-only-float.locked .pf-fav-only-count {
+    background: rgba(217, 119, 6, .2);
+    color: #92400e;
+}
+.pf-fav-only-float.empty { opacity: .55; }
+.pf-fav-only-float.empty .pf-fav-only-count { display: none; }
+
+/* Trạng thái: câu hiện tại KHÔNG phải yêu thích → mờ */
+.pf-fav-only-float.current-not-fav {
+    opacity: .5 !important;
+    filter: grayscale(.6);
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+.pf-fav-only-float.current-not-fav:hover {
+    transform: none !important;
+    border-color: var(--border) !important;
+    color: var(--text-2) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .12) !important;
+    opacity: .6 !important;
+}
+.pf-fav-only-float.current-not-fav i { animation: none !important; }
+.pf-fav-only-float.current-not-fav .pf-fav-only-count {
+    background: rgba(148, 163, 184, .2);
+    color: var(--text-3);
+}
+
+[data-theme="dark"] .pf-fav-only-float {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text-2);
+}
+[data-theme="dark"] .pf-fav-only-float.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    border-color: #dc2626;
+}
+[data-theme="dark"] .pf-fav-only-float.locked {
+    background: linear-gradient(135deg, rgba(217, 119, 6, .25), rgba(180, 83, 9, .2));
+    color: #fcd34d;
+    border-color: rgba(217, 119, 6, .5);
+}
+[data-theme="dark"] .pf-fav-only-float.current-not-fav {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text-3);
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* Khoá kích thước trên màn rộng để không bị phình */
+@media (min-width: 1600px) {
+    .pf-fav-float,
+    .pf-fav-only-float {
+        max-width: 170px;
+        max-height: 42px;
+        font-size: .8rem;
+        padding: .5rem .85rem .5rem .75rem;
+    }
+    .pf-fav-float i,
+    .pf-fav-only-float i {
+        font-size: 1rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    ❤️ FAVORITES — Responsive
    ═══════════════════════════════════════════════════════════════ */
-@media (max-width:500px){
-    .fav-btn{width:30px;height:30px;font-size:.75rem;}
-    .fav-header{padding:.55rem .7rem;gap:.4rem;}
-    .fav-header .fav-title{font-size:.8rem;}
-    .fav-header .fav-count-text{font-size:.68rem;padding:.12rem .45rem;}
+@media (max-width: 500px) {
+    .fav-btn { width: 30px; height: 30px; font-size: .75rem; }
+    .fav-header { padding: .55rem .7rem; gap: .4rem; }
+    .fav-header .fav-title { font-size: .8rem; }
+    .fav-header .fav-count-text { font-size: .68rem; padding: .12rem .45rem; }
     .fav-header .fav-sort,
-    .fav-header .fav-clear-all{font-size:.68rem;padding:.3rem .6rem;}
-    .fav-header .fav-sort{padding-right:1.6rem;}
-    .fav-empty{padding:2.2rem 1rem;}
-    .fav-empty .fav-empty-icon{width:58px;height:58px;font-size:1.5rem;}
-    .fav-empty .fav-empty-title{font-size:.95rem;}
-    .fav-empty .fav-empty-desc{font-size:.78rem;}
-    .pf-fav-btn{width:32px;height:32px;}
+    .fav-header .fav-clear-all { font-size: .68rem; padding: .3rem .6rem; }
+    .fav-header .fav-sort { padding-right: 1.6rem; }
+    .fav-empty { padding: 2.2rem 1rem; }
+    .fav-empty .fav-empty-icon { width: 58px; height: 58px; font-size: 1.5rem; }
+    .fav-empty .fav-empty-title { font-size: .95rem; }
+    .fav-empty .fav-empty-desc { font-size: .78rem; }
+    .pf-fav-btn { width: 32px; height: 32px; }
+
+    /* 2 nút float — thu gọn, dời sát mép */
+    .pf-fav-float {
+        right: 12px !important;
+        bottom: calc(78px + env(safe-area-inset-bottom)) !important;
+        padding: .55rem .9rem .55rem .75rem;
+        font-size: .78rem;
+    }
+    .pf-fav-float i { font-size: 1.05rem; }
+    .pf-fav-float .pf-fav-float-label { display: none; }
+
+    .pf-fav-only-float {
+        right: 12px !important;
+        bottom: calc(128px + env(safe-area-inset-bottom)) !important;
+        padding: .55rem .9rem .55rem .75rem;
+        font-size: .78rem;
+    }
+    .pf-fav-only-float i { font-size: 1rem; }
+    .pf-fav-only-float .pf-fav-only-label { display: none; }
+}
+
+@media (max-width: 400px) {
+    .pf-fav-float {
+        padding: .5rem;
+        min-width: 46px;
+        justify-content: center;
+    }
+    .pf-fav-only-float {
+        padding: .5rem;
+        min-width: 46px;
+        justify-content: center;
+    }
+}
+
+/* Landscape màn thấp — thu nhỏ, sát đáy */
+@media (max-height: 550px) and (orientation: landscape) {
+    .pf-fav-float {
+        bottom: calc(66px + env(safe-area-inset-bottom)) !important;
+        transform: scale(.9);
+        transform-origin: right bottom;
+    }
+    .pf-fav-only-float {
+        bottom: calc(114px + env(safe-area-inset-bottom)) !important;
+        transform: scale(.9);
+        transform-origin: right bottom;
+    }
 }
 """
 def build_ui_html():
