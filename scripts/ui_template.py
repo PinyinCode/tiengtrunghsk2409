@@ -1010,7 +1010,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     display: flex !important;
     align-items: center;
     gap: .5rem;
-    flex-wrap: wrap;                     /* ⭐ Cho phép nút Lọc xuống dòng */
+    
     visibility: visible !important;
     opacity: 1 !important;
 }
@@ -7923,52 +7923,5 @@ function favBuildFavButton(stt) {
    🔧 FIX NÚT LỌC — EVENT DELEGATION Ở DOCUMENT LEVEL
    Đảm bảo LUÔN bắt được sự kiện click, bất kể timing
    ═══════════════════════════════════════════════════════════════ */
-(function initFilterBtnFix() {
-    if (window.__filterBtnFixInstalled) return;
-    window.__filterBtnFixInstalled = true;
 
-    /* ⭐ Dùng capture phase → bắt sự kiện trước mọi handler khác */
-    document.addEventListener('click', function(e) {
-        var btn = e.target.closest('#pfFavFilterBtn');
-        if (!btn) return;
-
-        console.log('🔵 [Filter] Click detected!');
-
-        e.stopPropagation();
-        e.preventDefault();
-
-        try {
-            if (typeof window.favOpenFilterModal === 'function') {
-                window.favOpenFilterModal();
-                console.log('🔵 [Filter] Modal opened');
-            } else {
-                console.warn('⚠️ [Filter] favOpenFilterModal() chưa tồn tại');
-            }
-        } catch(err) {
-            console.error('🔴 [Filter] Error:', err);
-        }
-    }, true);  /* ⭐ useCapture = true */
-
-    /* ⭐ Bổ sung: đảm bảo nút Lọc hiện diện đúng lúc */
-    var retries = 0;
-    var injectInterval = setInterval(function() {
-        retries++;
-        var pfModal = document.getElementById('practiceFullModal');
-        var isOpen = pfModal && pfModal.classList.contains('show');
-        var hasBtn = !!document.getElementById('pfFavFilterBtn');
-
-        if (isOpen && !hasBtn && typeof window.favInjectFilterUI === 'function') {
-            try {
-                window.favInjectFilterUI();
-                console.log('✅ [Filter] Re-injected nút Lọc');
-            } catch(err) {
-                console.warn('⚠️ [Filter] Re-inject lỗi:', err);
-            }
-        }
-
-        if (retries > 120) clearInterval(injectInterval);
-    }, 500);
-
-    console.log('✅ [Filter] Fix installed — event delegation + auto-reinject');
-})();
 """
