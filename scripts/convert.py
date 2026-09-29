@@ -3,37 +3,11 @@
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + data.
 
-⭐ KIẾN TRÚC MỚI (2026-09):
-   ┌─ data/         → TAB CHÍNH (type="main")
-   │                  Hiển thị dọc cùng "Tổng hợp"
-   │
-   └─ script/data/  → TAB CHUYÊN NGÀNH (type="specialty")
-                      Hiển thị trong dropdown "Chuyên ngành"
+KIẾN TRÚC 2 THƯ MỤC:
+  - data/         → TAB CHÍNH (type="main")
+  - script/data/  → TAB CHUYÊN NGÀNH (type="specialty")
 
-   • Bỏ file Excel tổng hợp cứng — TẤT CẢ đều quét từ data/
-   • Thêm file vào data/        → tab mới xuất hiện ngay
-   • Thêm file vào script/data/ → item mới trong dropdown
-   • Prefix số "01_", "02_" để sắp xếp thứ tự
-
-⭐ UI OVERRIDE:
-   Layout dọc + fix 2 bug CSS được đóng gói trong `ui_override.py`
-   → KHÔNG đụng vào `ui_template.py` gốc.
-
-✅ HEADER: Subtitle "Văn phòng & Công xưởng" PILL nổi bật với icon ✦
-
-✅ ONBOARDING: Demo + Trial được hỏi chọn chủ đề quan tâm
-   → tự động filter + chia đều theo HSK.
-
-✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
-
-✅ FAVORITES:
-   - Tab Yêu thích — hiển thị dọc
-   - Nút tim trên card + Nút tim FLOAT + toggle "Chỉ câu yêu thích"
-   - Chỉ tier ACTIVE/ADMIN dùng được, tier khác hiển thị 🔒
-
-✅ CHAT SUPPORT, RTDB PRESENCE, QUOTA DASHBOARD: giữ nguyên.
-
-✅ FIX (2026-09-28): LOẠI BỎ thẻ <script> thừa trong full_js
+UI OVERRIDE: Layout dọc + fix bug CSS được đóng gói trong ui_override.py
 """
 import json
 import os
@@ -43,7 +17,7 @@ import re
 import unicodedata
 
 # ═══════════════════════════════════════════════════════════════════
-#  PATH SETUP — đảm bảo import được các module cùng thư mục scripts/
+#  PATH SETUP
 # ═══════════════════════════════════════════════════════════════════
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _HERE)
@@ -70,15 +44,11 @@ from intro_template import (
     build_intro_html,
     build_intro_js,
 )
-
-# ⬇️⬇️⬇️ Module Favorites
 from favorites_module import (
     build_favorites_css,
     build_favorites_html,
     build_favorites_js,
 )
-
-# ⬇️⬇️⬇️ Module Chat Support (độc lập) + Quota + Online
 from chat_support import (
     build_chat_css,
     build_chat_html,
@@ -90,8 +60,6 @@ from chat_support import (
     build_config_js,
     build_telegram_notify_js,
 )
-
-# ⬇️⬇️⬇️ Module Admin Chat Manager
 from admin_chat_manager import (
     build_admin_chat_css,
     build_admin_chat_html,
@@ -104,10 +72,10 @@ from draggable_fab import (
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  HELPER: escape string an toàn khi nhúng vào JS
+#  HELPER
 # ═══════════════════════════════════════════════════════════════════
 def _js_str(s):
-    """Escape string để nhúng an toàn vào JS (giữa 2 dấu \")."""
+    """Escape string để nhúng an toàn vào JS."""
     if s is None:
         return ""
     return (str(s)
@@ -120,7 +88,7 @@ def _js_str(s):
 
 
 def _json_blob(obj, compact=True):
-    """Serialize object → JSON an toàn để nhúng vào <script>."""
+    """Serialize object → JSON an toàn để nhúng vào script."""
     if compact:
         s = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
     else:
@@ -137,31 +105,27 @@ print_banner(CONFIG)
 OUTPUT_HTML = CONFIG["output_html"]
 SHEET_INDEX = CONFIG.get("sheet_index", 0)
 
-# ─── 2 thư mục dataset ───
-#     Nếu chạy từ scripts/, đường dẫn tương đối sẽ tính từ scripts/
-#     → cần lên 1 cấp để về root project.
 _ROOT_DIR = os.path.dirname(_HERE)
 
+
 def _resolve_path(p):
-    """Chuẩn hóa đường dẫn: nếu là relative → tính từ ROOT project."""
+    """Chuẩn hóa đường dẫn tương đối."""
     if os.path.isabs(p):
         return p
-    # Thử tính từ scripts/ trước
     from_scripts = os.path.join(_HERE, p)
     if os.path.exists(from_scripts):
         return from_scripts
-    # Fallback: tính từ root
     return os.path.join(_ROOT_DIR, p)
+
 
 DATA_DIR_MAIN = _resolve_path(CONFIG.get("data_dir", "data"))
 DATA_DIR_SPEC = _resolve_path(CONFIG.get("data_dir_specialty", "script/data"))
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  HELPER: slugify + icon detection
+#  SLUGIFY + ICON
 # ═══════════════════════════════════════════════════════════════════
 def slugify_dataset_id(filename):
-    """Tạo id slug từ tên file: 'Nhân_sự.xlsx' → 'nhan-su'."""
     base = filename.rsplit(".", 1)[0]
     base = re.sub(r'^\d+[_\-\.\s]+', '', base)
     base = unicodedata.normalize("NFD", base)
@@ -172,7 +136,6 @@ def slugify_dataset_id(filename):
 
 
 def clean_display_name(filename):
-    """'01_Giao_tiếp.xlsx' → 'Giao tiếp'."""
     base = filename.rsplit(".", 1)[0]
     base = re.sub(r'^\d+[_\-\.\s]+', '', base)
     name = base.replace("_", " ").strip()
@@ -181,7 +144,6 @@ def clean_display_name(filename):
     return name
 
 
-# ─── Icon map ───
 ICON_MAP = {
     "giao tiếp":            "fa-comments",
     "tổng hợp":             "fa-book-open",
@@ -191,8 +153,6 @@ ICON_MAP = {
     "công xưởng":           "fa-industry",
     "nhân sự":              "fa-users",
     "hành chính":           "fa-briefcase",
-    "hành chính - nhân sự": "fa-briefcase",
-    "hành chính nhân sự":   "fa-briefcase",
     "thu mua":              "fa-shopping-cart",
     "xuất nhập khẩu":       "fa-ship",
     "logistics":            "fa-truck",
@@ -205,7 +165,6 @@ ICON_MAP = {
     "chăm sóc khách hàng":  "fa-headset",
     "kế toán":              "fa-calculator",
     "tài chính":            "fa-coins",
-    "hành chính kế toán":   "fa-file-invoice-dollar",
     "sản xuất":             "fa-industry",
     "kế hoạch sản xuất":    "fa-calendar-alt",
     "kỹ thuật":             "fa-tools",
@@ -220,64 +179,47 @@ ICON_MAP = {
     "dệt may":              "fa-tshirt",
     "thực phẩm":            "fa-utensils",
     "nông nghiệp":          "fa-seedling",
-    "máy tính & it":        "fa-laptop-code",
     "máy tính":             "fa-laptop-code",
-    "công nghệ thông tin":  "fa-laptop-code",
     "it":                   "fa-laptop-code",
 }
 
 DEFAULT_ICON_NAME = "fa-folder"
 UNIFIED_COLOR = "#7c3aed"
 
-# ─── Palette màu xoay vòng cho tab chính ───
 TAB_PALETTE = [
-    "#4f46e5",   # Indigo
-    "#2563eb",   # Blue
-    "#16a34a",   # Green
-    "#f59e0b",   # Amber
-    "#dc2626",   # Red
-    "#0891b2",   # Cyan
-    "#db2777",   # Pink
-    "#65a30d",   # Lime
-    "#7c3aed",   # Violet
-    "#ea580c",   # Orange
+    "#4f46e5",
+    "#2563eb",
+    "#16a34a",
+    "#f59e0b",
+    "#dc2626",
+    "#0891b2",
+    "#db2777",
+    "#65a30d",
+    "#7c3aed",
+    "#ea580c",
 ]
 
 
 def auto_detect_icon_color(display_name, fallback_index=0):
-    """
-    Trả về tuple (icon, color).
-    - Icon: match theo tên (3 cấp: exact → word → substring)
-    - Color: UNIFIED_COLOR (tím) cho chuyên ngành
-    """
     key = display_name.strip().lower()
-
-    # ─── 1. Match CHÍNH XÁC ───
     if key in ICON_MAP:
         return (ICON_MAP[key], UNIFIED_COLOR)
-
-    # ─── 2. Match theo TỪ ───
     words = re.split(r'[\s&\-_/,\.]+', key)
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if k in words:
             return (ICON_MAP[k], UNIFIED_COLOR)
-
-    # ─── 3. Match substring ───
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if len(k) >= 3 and k in key:
             return (ICON_MAP[k], UNIFIED_COLOR)
-
     return (DEFAULT_ICON_NAME, UNIFIED_COLOR)
 
 
 def pick_tab_icon(display_name, index):
-    """Icon cho tab chính — match tên, fallback palette."""
     icon, _ = auto_detect_icon_color(display_name, index)
     return icon
 
 
 def pick_tab_color(index):
-    """Màu xoay vòng cho tab chính."""
     return TAB_PALETTE[index % len(TAB_PALETTE)]
 
 
@@ -285,11 +227,6 @@ def pick_tab_color(index):
 #  QUÉT THƯ MỤC
 # ═══════════════════════════════════════════════════════════════════
 def scan_excel_folder(folder_path):
-    """
-    Quét 1 thư mục, trả về list[dict]:
-        {filepath, filename, display_name, data, count}
-    Sắp xếp theo tên file (để prefix số "01_", "02_" có tác dụng).
-    """
     results = []
     if not os.path.isdir(folder_path):
         return results
@@ -306,7 +243,7 @@ def scan_excel_folder(folder_path):
         try:
             sub_data = read_excel(filepath, 0)
             if not sub_data:
-                print(f"⚠️  {filename}: file rỗng, bỏ qua")
+                print("⚠️  " + filename + ": file rỗng, bỏ qua")
                 continue
 
             results.append({
@@ -317,34 +254,35 @@ def scan_excel_folder(folder_path):
                 "count": len(sub_data),
             })
         except Exception as e:
-            print(f"❌ Lỗi đọc {filename}: {e}")
+            print("❌ Lỗi đọc " + filename + ": " + str(e))
     return results
 
 
-# ─── Quét 2 thư mục ───
-print(f"\n{'═' * 60}")
-print(f"🔍 TAB CHÍNH — '{DATA_DIR_MAIN}/'")
-print(f"{'═' * 60}")
+print("")
+print("=" * 60)
+print("🔍 TAB CHÍNH — " + DATA_DIR_MAIN)
+print("=" * 60)
 main_files = scan_excel_folder(DATA_DIR_MAIN)
 
-print(f"\n{'═' * 60}")
-print(f"🔍 CHUYÊN NGÀNH — '{DATA_DIR_SPEC}/'")
-print(f"{'═' * 60}")
+print("")
+print("=" * 60)
+print("🔍 CHUYÊN NGÀNH — " + DATA_DIR_SPEC)
+print("=" * 60)
 spec_files = scan_excel_folder(DATA_DIR_SPEC)
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  KHỞI TẠO DATASET_REGISTRY
+#  DATASET_REGISTRY
 # ═══════════════════════════════════════════════════════════════════
 DATASET_REGISTRY = {}
 
-# ─── 1. Đăng ký TAB CHÍNH (data/) ───
+# TAB CHÍNH (data/)
 for idx, item in enumerate(main_files):
     did = slugify_dataset_id(item["filename"])
     base_id = did
     c = 2
     while did in DATASET_REGISTRY:
-        did = f"{base_id}-{c}"
+        did = base_id + "-" + str(c)
         c += 1
 
     DATASET_REGISTRY[did] = {
@@ -359,15 +297,15 @@ for idx, item in enumerate(main_files):
         "type": "main",
         "order": idx + 1,
     }
-    print(f"📑 [TAB] {item['display_name']:30s} — {item['count']:5d} câu")
+    print("📑 [TAB] " + item["display_name"].ljust(30) + " — " + str(item["count"]) + " câu")
 
-# ─── 2. Đăng ký CHUYÊN NGÀNH (script/data/) ───
+# CHUYÊN NGÀNH (script/data/)
 for idx, item in enumerate(spec_files):
     did = slugify_dataset_id(item["filename"])
     base_id = did
     c = 2
     while did in DATASET_REGISTRY:
-        did = f"{base_id}-{c}"
+        did = base_id + "-" + str(c)
         c += 1
 
     DATASET_REGISTRY[did] = {
@@ -382,20 +320,19 @@ for idx, item in enumerate(spec_files):
         "type": "specialty",
         "order": idx + 1,
     }
-    print(f"🏭 [SPEC] {item['display_name']:29s} — {item['count']:5d} câu")
+    print("🏭 [SPEC] " + item["display_name"].ljust(29) + " — " + str(item["count"]) + " câu")
 
-# ─── 3. Kiểm tra rỗng ───
 if not DATASET_REGISTRY:
-    print("\n⚠️  CẢNH BÁO: Không có dataset nào được đăng ký!")
-    print(f"   → Bỏ file Excel vào '{DATA_DIR_MAIN}/' (tab chính)")
-    print(f"   → Hoặc '{DATA_DIR_SPEC}/' (chuyên ngành)")
+    print("")
+    print("⚠️  CẢNH BÁO: Không có dataset nào!")
+    print("   → Bỏ file Excel vào: " + DATA_DIR_MAIN)
+    print("   → Hoặc: " + DATA_DIR_SPEC)
 
-# ─── 4. Dataset đầu tiên (fallback cho CURRENT_DATASET) ───
 first_dataset_id = next(iter(DATASET_REGISTRY), "")
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  SERIALIZE (escape "</" cho TẤT CẢ)
+#  SERIALIZE
 # ═══════════════════════════════════════════════════════════════════
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
 
@@ -415,7 +352,7 @@ telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  BUILD AUTH + CHÈN QUOTA + ONLINE SECTIONS
+#  AUTH + QUOTA + ONLINE
 # ═══════════════════════════════════════════════════════════════════
 auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
@@ -426,7 +363,7 @@ if '<!-- __ADMIN_ONLINE_SECTION__ -->' in auth_html:
     )
     print("✅ Đã chèn User Online section vào Admin Panel")
 else:
-    print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_ONLINE_SECTION__ -->")
+    print("⚠️  Không tìm thấy placeholder __ADMIN_ONLINE_SECTION__")
 
 if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
     auth_html = auth_html.replace(
@@ -435,18 +372,14 @@ if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
     )
     print("✅ Đã chèn Quota Dashboard vào Admin Panel")
 else:
-    print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_QUOTA_SECTION__ -->")
+    print("⚠️  Không tìm thấy placeholder __ADMIN_QUOTA_SECTION__")
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  ★ FULLWIDTH SCALE CSS + HEADER DESIGN ★
-#  (KHÔNG còn .ds-main-row — đã chuyển sang layout dọc)
+#  FULLWIDTH CSS
 # ═══════════════════════════════════════════════════════════════════
-FULLWIDTH_CSS = r"""
-
-/* ═══════════════════════════════════════════════════════════════════
-   ★ FULL-WIDTH SCALE ★
-   ═══════════════════════════════════════════════════════════════════ */
+FULLWIDTH_CSS = """
+/* FULL-WIDTH SCALE */
 .page-wrap { width: 100%; max-width: 100%; margin: 0 auto; overflow-x: hidden; }
 .container {
     width: 100% !important;
@@ -458,10 +391,8 @@ FULLWIDTH_CSS = r"""
 }
 .sticky-top { position: relative !important; width: 100% !important; max-width: 100% !important; }
 .main, #mainContent { width: 100% !important; max-width: 100% !important; }
-
 .search-bar { width: 100% !important; max-width: 100% !important; }
 .search-bar input { width: 100% !important; max-width: 100% !important; }
-
 .filters {
     display: grid !important;
     width: 100% !important;
@@ -473,7 +404,6 @@ FULLWIDTH_CSS = r"""
     .filters { grid-template-columns: 220px 260px !important; gap: 1rem !important; }
 }
 .result-count { margin-top: .5rem !important; }
-
 .mobile-view {
     display: grid !important;
     width: 100% !important;
@@ -492,7 +422,6 @@ FULLWIDTH_CSS = r"""
 @media (min-width: 2400px) {
     .mobile-view { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 1.3rem !important; }
 }
-
 .demo-banner, .expiry-banner {
     width: 100% !important;
     max-width: 100% !important;
@@ -500,7 +429,6 @@ FULLWIDTH_CSS = r"""
     margin-right: auto !important;
     margin-bottom: 1rem !important;
 }
-
 @media (min-width: 1000px) {
     .container { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 }
@@ -510,12 +438,10 @@ FULLWIDTH_CSS = r"""
 @media (min-width: 1900px) {
     .container { padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
 }
-
 @media (max-width: 768px) {
     .container { padding-left: .7rem !important; padding-right: .7rem !important; }
     .mobile-view { gap: .8rem !important; }
 }
-
 .practice-full-modal {
     position: fixed !important;
     inset: 0 !important;
@@ -525,28 +451,23 @@ FULLWIDTH_CSS = r"""
     overflow: hidden !important;
 }
 .practice-full-modal.show { display: flex !important; }
-
 .practice-full-header,
 .pf-filters,
 .practice-full-nav {
     flex: 0 0 auto !important;
 }
-
 .practice-full-body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     overflow-y: auto !important;
 }
-
 .practice-full-input {
     width: 100% !important;
     text-align: center !important;
     font-size: clamp(1.15rem, 2.2vw, 1.6rem) !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★★★ HEADER DESIGN ★★★
-   ═══════════════════════════════════════════════════════════════════ */
+/* HEADER */
 .header { position: relative; padding: .25rem 0; }
 .header-inner {
     display: flex !important;
@@ -809,34 +730,33 @@ FULLWIDTH_CSS = r"""
 }
 """
 
-# Áp override lên FULLWIDTH_CSS (xóa .ds-main-row nếu còn sót)
 FULLWIDTH_CSS = override_fullwidth_css(FULLWIDTH_CSS)
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP CSS — BỌC OVERRIDE
+#  GHÉP CSS
 # ═══════════════════════════════════════════════════════════════════
 full_css = (
-    override_ui_css(build_ui_css())           # ⭐ BỌC OVERRIDE
+    override_ui_css(build_ui_css())
     + "\n/* ==== SOCIAL CSS ==== */\n" + build_social_css()
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
     + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
-    + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
-    + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
-    + "\n/* ==== 📋 ADMIN CHAT MANAGER CSS ==== */\n" + build_admin_chat_css()
-    + "\n/* ==== 🎯 DRAGGABLE FAB CSS ==== */\n" + build_draggable_fab_css()
-    + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
+    + "\n/* ==== FAVORITES CSS ==== */\n" + build_favorites_css()
+    + "\n/* ==== CHAT SUPPORT CSS ==== */\n" + build_chat_css()
+    + "\n/* ==== ADMIN CHAT MANAGER CSS ==== */\n" + build_admin_chat_css()
+    + "\n/* ==== DRAGGABLE FAB CSS ==== */\n" + build_draggable_fab_css()
+    + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN ==== */\n" + FULLWIDTH_CSS
 )
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP HTML BODY — BỌC OVERRIDE
+#  GHÉP HTML BODY
 # ═══════════════════════════════════════════════════════════════════
-ui_html = override_ui_html(build_ui_html())   # ⭐ BỌC OVERRIDE
-ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ ch -->", build_tiktok_barèn_html())
-ui_html = tab ui_html.replace("<!-- __QU YICK_INTRO_BANNERêu__ -->", build_intro th_html())
+ui_html = override_ui_html(build_ui_html())
+ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
+ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 
-# ═══ Chèn tab Yêu thích ═══
+# Chèn tab Yêu thích
 _fav_html = build_favorites_html()
 
 _fav_tab_patterns = [
@@ -851,20 +771,19 @@ for _pat in _fav_tab_patterns:
     if _pat in ui_html:
         ui_html = ui_html.replace(_pat, _fav_html["dataset_tab"])
         _fav_inserted = True
-        print(f"✅ Đãích (pattern: {_pat})")
+        print("✅ Đã chèn tab Yêu thích (pattern: " + _pat + ")")
 
 if not _fav_inserted:
     print("⚠️  Không tìm thấy placeholder tab Yêu thích")
-    print("   → Kiểm tra ui_template.py có <!-- __FAV_DATASET_TAB__ --> không")
 
-# ═══ Chèn 2 nút float Practice Full ═══
-_pf_buttons = _fav_html["pf_float_btn"] + '\n' + _fav_html["pf_fav_only_btn"]
+# Chèn 2 nút float Practice Full
+_pf_buttons = _fav_html["pf_float_btn"] + "\n" + _fav_html["pf_fav_only_btn"]
 ui_html = ui_html.replace(
     '<a class="pf-tiktok-float" id="pfTiktokFloat"',
     _pf_buttons + '\n<a class="pf-tiktok-float" id="pfTiktokFloat"'
 )
 
-# ═══ Chèn dropdown item Yêu thích ═══
+# Chèn dropdown item Yêu thích
 _dd_patterns = [
     r'(<button[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</button>)',
     r'(<button[^>]*id="dsChuyenNganhDropdownItem"[^>]*>.*?</button>)',
@@ -907,26 +826,23 @@ full_body = (
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP JS — BỌC OVERRIDE
+#  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
     build_config_js(CONFIG)
-    + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
-    + "\n/* ==== UI JS ==== */\n" + override_ui_js(build_ui_js())   # ⭐ BỌC OVERRIDE
+    + "\n/* ==== TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
+    + "\n/* ==== UI JS ==== */\n" + override_ui_js(build_ui_js())
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
-    + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
-    + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
-    + "\n/* ==== 📋 ADMIN CHAT MANAGER JS ==== */\n" + build_admin_chat_js()
-    + "\n/* ==== 🎯 DRAGGABLE FAB JS ==== */\n" + build_draggable_fab_js()
-    + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
-    + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
+    + "\n/* ==== FAVORITES JS ==== */\n" + build_favorites_js()
+    + "\n/* ==== CHAT SUPPORT JS ==== */\n" + build_chat_js()
+    + "\n/* ==== ADMIN CHAT MANAGER JS ==== */\n" + build_admin_chat_js()
+    + "\n/* ==== DRAGGABLE FAB JS ==== */\n" + build_draggable_fab_js()
+    + "\n/* ==== QUOTA JS ==== */\n" + build_quota_js()
+    + "\n/* ==== QUOTA INIT ==== */\n" + build_quota_init_js()
 )
 
-# ═══════════════════════════════════════════════════════════════════
-#  FIX: LOẠI BỎ THẺ <script> THỪA TRONG full_js
-# ═══════════════════════════════════════════════════════════════════
 full_js = full_js.replace('<script>', '').replace('</script>', '')
 full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
 
@@ -958,7 +874,6 @@ __CSS__
 __BODY__
 
 <script>
-/* ============ DỮ LIỆU + CONFIG ============ */
 var RAW_DATA = __DATA__;
 var DATASET_REGISTRY = __DATASET_REGISTRY__;
 var CURRENT_DATASET = "__FIRST_DATASET__";
@@ -989,7 +904,6 @@ var $ = function(id) { return document.getElementById(id); };
 
 __JS__
 
-/* ============ ĐỒNG BỘ RAW_DATA KHI ĐỔI DATASET ============ */
 window.__switchRawData = function(datasetId) {
     if (!DATASET_REGISTRY || !DATASET_REGISTRY[datasetId]) return false;
     RAW_DATA = DATASET_REGISTRY[datasetId].data || [];
@@ -1005,18 +919,15 @@ window.__switchRawData = function(datasetId) {
         var _TG_TOKEN = "__TELEGRAM_BOT_TOKEN__";
         var _TG_CHAT = "__TELEGRAM_CHAT_ID__";
 
-        console.log('📲 Telegram module init:', {
+        console.log('Telegram module init:', {
             hasToken: _TG_TOKEN && _TG_TOKEN.indexOf('__') !== 0 && _TG_TOKEN.length > 20,
-            tokenPreview: (_TG_TOKEN && _TG_TOKEN.length > 15)
-                ? _TG_TOKEN.substring(0, 15) + '...'
-                : '(empty)',
             chatId: _TG_CHAT || '(empty)'
         });
 
         window.sendTelegramMessage = function(text) {
             try {
                 if (!_TG_TOKEN || !_TG_CHAT || _TG_TOKEN.indexOf('__') === 0 || _TG_TOKEN.length < 20) {
-                    console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
+                    console.log('Telegram chua cau hinh - bo qua');
                     return;
                 }
                 fetch('https://api.telegram.org/bot' + _TG_TOKEN + '/sendMessage', {
@@ -1031,47 +942,41 @@ window.__switchRawData = function(datasetId) {
                 })
                 .then(function(r) { return r.json(); })
                 .then(function(d) {
-                    if (d.ok) console.log('✅ Telegram sent OK');
-                    else console.warn('⚠️ Telegram error:', d.description);
+                    if (d.ok) console.log('Telegram sent OK');
+                    else console.warn('Telegram error:', d.description);
                 })
-                .catch(function(e) { console.warn('❌ Telegram fetch:', e); });
+                .catch(function(e) { console.warn('Telegram fetch:', e); });
             } catch(e) { console.warn('sendTelegramMessage:', e); }
         };
 
         window.notifyTelegramUserPaid = function(reqData) {
             try {
-                var msg = '🔔 <b>CÓ YÊU CẦU GIA HẠN MỚI</b>\n';
-                msg += '━━━━━━━━━━━━━━━━━━━━\n';
-                msg += '👤 <b>' + (reqData.name || reqData.email) + '</b>\n';
-                msg += '📧 <code>' + reqData.email + '</code>\n';
-                msg += '💰 <b>' + (reqData.amount || 0).toLocaleString('vi-VN') + 'đ</b>\n';
-                msg += '📦 ' + (reqData.packageLabel || reqData.package || '');
-                if (reqData.isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
-                msg += '\n';
-                msg += '⏱ ' + (reqData.isPermanent ? 'Mãi mãi' : (reqData.days || 0) + ' ngày') + '\n';
-                msg += '🔑 <code>' + (reqData.transferCode || '') + '</code>\n';
-                msg += '⚡ <b>Vào Admin Panel xác nhận!</b>';
+                var msg = 'YEU CAU GIA HAN MOI\n';
+                msg += '-----------------\n';
+                msg += 'User: ' + (reqData.name || reqData.email) + '\n';
+                msg += 'Email: ' + reqData.email + '\n';
+                msg += 'Amount: ' + (reqData.amount || 0).toLocaleString('vi-VN') + 'd\n';
+                msg += 'Package: ' + (reqData.packageLabel || reqData.package || '') + '\n';
+                msg += 'Code: ' + (reqData.transferCode || '') + '\n';
                 window.sendTelegramMessage(msg);
             } catch(e) { console.warn('notifyTelegramUserPaid:', e); }
         };
 
         window.notifyTelegramAdminConfirmed = function(reqData, newExpiry) {
             try {
-                var msg = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n';
-                msg += '━━━━━━━━━━━━━━━━━━━━\n';
-                msg += '👤 <b>' + (reqData.name || reqData.email) + '</b>\n';
-                msg += '📧 <code>' + reqData.email + '</code>\n';
-                msg += '💰 <b>' + (reqData.amount || 0).toLocaleString('vi-VN') + 'đ</b>\n';
-                if (reqData.isPermanent) msg += '💎 <b>Đã kích hoạt VĨNH VIỄN</b>\n';
-                else if (newExpiry) msg += '📅 Hạn mới: <b>' + newExpiry + '</b>\n';
-                msg += '🕐 ' + new Date().toLocaleString('vi-VN');
+                var msg = 'DA XAC NHAN GIA HAN\n';
+                msg += '-----------------\n';
+                msg += 'User: ' + (reqData.name || reqData.email) + '\n';
+                msg += 'Email: ' + reqData.email + '\n';
+                msg += 'Amount: ' + (reqData.amount || 0).toLocaleString('vi-VN') + 'd\n';
+                if (newExpiry) msg += 'Han moi: ' + newExpiry + '\n';
                 window.sendTelegramMessage(msg);
             } catch(e) { console.warn('notifyTelegramAdminConfirmed:', e); }
         };
 
-        console.log('✅ Telegram module loaded');
+        console.log('Telegram module loaded');
     } catch(e) {
-        console.error('❌ Telegram module failed (KHÔNG ảnh hưởng app):', e);
+        console.error('Telegram module failed:', e);
     }
 })();
 </script>
@@ -1083,23 +988,16 @@ window.__switchRawData = function(datasetId) {
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
 html_output = (HTML_SHELL
-    # 1. Nhúng khối lớn
     .replace("__CSS__",  full_css)
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
-
-    # 2. Data blobs (đã escape "</" qua _json_blob)
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
     .replace("__SYNONYMS__",          synonyms_json)
     .replace("__FILLER_WORDS__",      fillers_json)
     .replace("__ONBOARDING_CONFIG__", onboarding_config_json)
-
-    # 3. Dataset đầu tiên
     .replace("__FIRST_DATASET__",     _js_str(first_dataset_id))
-
-    # 4. Numeric configs
     .replace("__DEMO_LIMIT__",            str(int(CONFIG["demo_limit"])))
     .replace("__DEMO_DAILY_LIMIT__",      str(int(CONFIG["demo_daily_limit"])))
     .replace("__DEMO_HSK_MAX__",          str(int(CONFIG["demo_hsk_max"])))
@@ -1108,8 +1006,6 @@ html_output = (HTML_SHELL
     .replace("__TRIAL_UNLIMITED_WRITING__",
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
     .replace("__TARGET_ADMINS__",         str(int(CONFIG["target_admins"])))
-
-    # 5. String configs
     .replace("__SUPER_ADMIN__",        _js_str(CONFIG["super_admin"]))
     .replace("__ZALO_PHONE__",         _js_str(CONFIG["zalo_phone"]))
     .replace("__ZALO_NAME__",          _js_str(CONFIG["zalo_name"]))
@@ -1130,31 +1026,25 @@ total_questions = sum(ds["count"] for ds in DATASET_REGISTRY.values())
 main_count = sum(1 for ds in DATASET_REGISTRY.values() if ds["type"] == "main")
 spec_count = sum(1 for ds in DATASET_REGISTRY.values() if ds["type"] == "specialty")
 
-print(f"\n{'═' * 60}")
-print(f"🎉 Đã tạo: {OUTPUT_HTML}")
-print(f"📦 Kích thước: {size_kb:.1f} KB")
-print(f"{'═' * 60}")
-print(f"📑 Tab chính   (data/):         {main_count}")
-print(f"🏭 Chuyên ngành (script/data/): {spec_count}")
-print(f"📚 Tổng dataset:                {total_datasets}")
-print(f"📝 Tổng số câu:                 {total_questions}")
-print(f"{'═' * 60}")
-print(f"✅ Subtitle PILL với icon ✦")
-print(f"✅ Layout dọc cho Dataset Selector")
-print(f"✅ Thêm file = thêm tab (không cần sửa code)")
-print(f"❤️  Yêu thích + dropdown + 2 nút float")
-print(f"💬 Chat Support + 📊 Quota + 👥 User Online (RTDB)")
-print(f"{'═' * 60}")
+print("")
+print("=" * 60)
+print("🎉 Đã tạo: " + OUTPUT_HTML)
+print("📦 Kích thước: " + str(round(size_kb, 1)) + " KB")
+print("=" * 60)
+print("📑 Tab chính   (data/):         " + str(main_count))
+print("🏭 Chuyên ngành (script/data/): " + str(spec_count))
+print("📚 Tổng dataset:                " + str(total_datasets))
+print("📝 Tổng số câu:                 " + str(total_questions))
+print("=" * 60)
 
-# ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
 if _onb.get("demo", {}).get("enabled"):
     _d = _onb["demo"]
-    print(f"✅ Onboarding Demo: {_d.get('max_questions', 0)} câu, "
-          f"HSK {_d.get('hsk_allowed', [])}, "
-          f"tối đa {_d.get('topics_per_user', 3)} chủ đề")
+    print("✅ Onboarding Demo: " + str(_d.get("max_questions", 0)) + " câu, "
+          "HSK " + str(_d.get("hsk_allowed", [])) + ", "
+          "tối đa " + str(_d.get("topics_per_user", 3)) + " chủ đề")
 if _onb.get("trial", {}).get("enabled"):
     _t = _onb["trial"]
-    print(f"✅ Onboarding Trial: {_t.get('max_questions', 0)} câu, "
-          f"HSK {_t.get('hsk_allowed', [])}, "
-          f"tối đa {_t.get('topics_per_user', 5)} chủ đề")
+    print("✅ Onboarding Trial: " + str(_t.get("max_questions", 0)) + " câu, "
+          "HSK " + str(_t.get("hsk_allowed", [])) + ", "
+          "tối đa " + str(_t.get("topics_per_user", 5)) + " chủ đề")
