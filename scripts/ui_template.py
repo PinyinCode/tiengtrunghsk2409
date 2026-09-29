@@ -3213,16 +3213,28 @@ def build_ui_html():
         <span>Bộ dữ liệu</span>
     </div>
     <div class="ds-main-row">
+
+        <!-- ⭐ TAB #1: GIAO TIẾP — KHÔNG KHOÁ -->
+        <button class="ds-btn ds-btn-primary" data-dataset="giaotiep" id="dsGiaotiepBtn">
+            <i class="fas fa-comments"></i>
+            <span id="dsGiaotiepLabel">1060 câu giao tiếp</span>
+        </button>
+
+        <!-- TAB #2: 1700 CÂU VĂN PHÒNG — DEFAULT ACTIVE -->
         <button class="ds-btn ds-btn-primary active" data-dataset="tonghop">
             <i class="fas fa-book-open"></i>
             <span id="dsTonghopLabel">1700 câu phản xạ tổng hợp VPCX</span>
         </button>
+
+        <!-- TAB #3: CHUYÊN NGÀNH — KHOÁ -->
         <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">
             <i class="fas fa-industry"></i>
             <span>Chuyên ngành</span>
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
+
+        <!-- TAB #4: YÊU THÍCH -->
         <!-- __FAV_DATASET_TAB__ -->
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
