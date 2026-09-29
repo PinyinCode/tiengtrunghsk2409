@@ -128,38 +128,18 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     letter-spacing:.5px;margin-bottom:.5rem;
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
-
-/* ═══════════════════════════════════════════════════════════ */
-/* 4 tab dataset: PC 4 cột · Tablet/Mobile 2x2                   */
-/* ĐÃ FIX: XÓA rule 1fr ở ≤500px gây layout 1 cột               */
-/* ═══════════════════════════════════════════════════════════ */
 .ds-main-row{
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:.5rem;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
 }
-@media(max-width:900px){
-    .ds-main-row{
-        grid-template-columns:1fr 1fr;
-    }
+@media(max-width:768px){
+    .ds-main-row{grid-template-columns:1fr 1fr;}
 }
-@media(max-width:360px){
-    .ds-main-row{
-        gap:.35rem;
-    }
-    .ds-main-row .ds-btn{
-        padding:.5rem .45rem;
-        font-size:.7rem;
-    }
-    .ds-main-row .ds-btn span{
-        font-size:.68rem;
-        line-height:1.2;
-    }
-    .ds-main-row .ds-btn i:first-child{
-        font-size:.8rem;
-    }
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr;}
 }
-
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr}
+}
 .ds-btn{
     display:flex;align-items:center;gap:.5rem;
     padding:.65rem .85rem;
@@ -265,6 +245,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     letter-spacing:.4px;margin-bottom:.5rem;
 }
 .ds-sub-label i{color:var(--amber);font-size:.8rem}
+
 /* ═══════════════════════════════════════════════════════════ */
 /* SUB-BUTTONS CHUYÊN NGÀNH - FIX HIỂN THỊ ĐẦY ĐỦ DẤU TIẾNG VIỆT */
 /* ═══════════════════════════════════════════════════════════ */
@@ -2798,14 +2779,15 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* Trạng thái KHOÁ */
-/* Trạng thái KHOÁ */
 .fav-btn.locked{
     color:#dc2626;
-    background:rgba(220,38,38,.1);
+   {
+ background:rgba(220,   38,38,.1);
 }
-.fav-btn.locked:hover{
-    transform:scale(1.12);
-    background:rgba(220,38,38,.2);
+.fav-btn position.locked:hover{
+    transform:scale(1:.12);
+    background:absolutergba(220,38,38;
+,.2);
     color:#b91c1c;
 }
 .fav-btn.locked i{font-size:.65rem;}
@@ -2869,9 +2851,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     position:relative;
     overflow:visible;
 }
-.ds-btn[data-dataset-group="favorites"] .ds-fav-badge{
-    position:absolute;
-    top:-8px;
+.ds-btn[data-dataset-group="favorites"] .ds-fav-badge    top:-8px;
     right:-6px;
     min-width:22px;
     height:22px;
