@@ -114,34 +114,16 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
 .ds-main-row{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
-    gap:.5rem;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
 }
-/* Mobile + Tablet: LUÔN 2 CỘT */
 @media(max-width:768px){
-    .ds-main-row{
-        grid-template-columns:1fr 1fr !important;
-        gap:.5rem;
-    }
+    .ds-main-row{grid-template-columns:1fr 1fr;}
 }
-/* Mobile rất nhỏ (≤360px): vẫn 2 cột, thu gọn chữ */
-@media(max-width:360px){
-    .ds-main-row{
-        grid-template-columns:1fr 1fr !important;
-        gap:.35rem;
-    }
-    .ds-main-row .ds-btn{
-        padding:.5rem .45rem !important;
-        font-size:.7rem !important;
-    }
-    .ds-main-row .ds-btn span{
-        font-size:.68rem !important;
-        line-height:1.2 !important;
-    }
-    .ds-main-row .ds-btn i:first-child{
-        font-size:.8rem !important;
-    }
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr;}
+}
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr}
 }
 .ds-btn{
     display:flex;align-items:center;gap:.5rem;
@@ -1010,7 +992,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     display: flex !important;
     align-items: center;
     gap: .5rem;
-    
     visibility: visible !important;
     opacity: 1 !important;
 }
@@ -2785,11 +2766,13 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 /* Trạng thái KHOÁ */
 .fav-btn.locked{
     color:#dc2626;
-    background:rgba(220,38,38,.1);
+   {
+ background:rgba(220,   38,38,.1);
 }
-.fav-btn.locked:hover{
-    transform:scale(1.12);
-    background:rgba(220,38,38,.2);
+.fav-btn position.locked:hover{
+    transform:scale(1:.12);
+    background:absolutergba(220,38,38;
+,.2);
     color:#b91c1c;
 }
 .fav-btn.locked i{font-size:.65rem;}
@@ -2853,9 +2836,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     position:relative;
     overflow:visible;
 }
-.ds-btn[data-dataset-group="favorites"] .ds-fav-badge{
-    position:absolute;
-    top:-8px;
+.ds-btn[data-dataset-group="favorites"] .ds-fav-badge    top:-8px;
     right:-6px;
     min-width:22px;
     height:22px;
@@ -3175,310 +3156,21 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .fav-toast i{font-size:1rem;}
 
 /* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — 2 NÚT FLOAT TRONG PRACTICE FULL
-   Vị trí: GÓC PHẢI — xếp dọc
-   - Nút "Chỉ câu yêu thích" ở TRÊN
-   - Nút "Like" ở DƯỚI
-   - KHÔNG đè nút TikTok (góc trái)
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Nút Like — dưới cùng góc phải */
-.pf-fav-float {
-    position: fixed !important;
-    left: auto !important;
-    right: clamp(14px, 2vw, 22px) !important;
-    bottom: calc(82px + env(safe-area-inset-bottom)) !important;
-    z-index: 2450 !important;
-    display: none;
-    align-items: center;
-    gap: .5rem;
-    padding: .55rem .95rem .55rem .8rem;
-    border-radius: 999px;
-    border: 2px solid rgba(239, 68, 68, .4);
-    background: linear-gradient(135deg, #fef2f2, #fee2e2);
-    color: #dc2626;
-    font-size: .82rem;
-    font-weight: 800;
-    font-family: inherit;
-    cursor: pointer;
-    box-sizing: border-box;
-    max-width: 180px;
-    max-height: 44px;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-    transition: all .25s cubic-bezier(.34,1.56,.64,1);
-    box-shadow: 0 8px 24px rgba(239, 68, 68, .35), 0 2px 8px rgba(0, 0, 0, .1);
-}
-.pf-fav-float.show { display: inline-flex; }
-.pf-fav-float i {
-    font-size: 1.05rem;
-    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
-}
-.pf-fav-float:hover {
-    transform: translateY(-3px) scale(1.05);
-    border-color: #ef4444;
-    box-shadow: 0 12px 32px rgba(239, 68, 68, .5), 0 4px 12px rgba(0, 0, 0, .15);
-}
-.pf-fav-float:hover i { transform: scale(1.15); }
-.pf-fav-float:active { transform: translateY(-1px) scale(1.02); }
-
-.pf-fav-float.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff;
-    border-color: #dc2626;
-    box-shadow: 0 8px 28px rgba(239, 68, 68, .6), 0 2px 8px rgba(220, 38, 38, .3);
-    animation: pfFavPulse 2s ease-in-out infinite;
-}
-.pf-fav-float.active i { animation: favHeartPop .5s cubic-bezier(.34,1.56,.64,1); }
-.pf-fav-float.active::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 999px;
-    border: 2px solid rgba(239, 68, 68, .5);
-    animation: favRing 1s ease-out infinite;
-    pointer-events: none;
-}
-@keyframes pfFavPulse {
-    0%, 100% { box-shadow: 0 8px 28px rgba(239, 68, 68, .6), 0 2px 8px rgba(220, 38, 38, .3); }
-    50%      { box-shadow: 0 8px 36px rgba(239, 68, 68, .85), 0 4px 12px rgba(220, 38, 38, .4); }
-}
-
-.pf-fav-float.locked {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #b45309;
-    border-color: rgba(217, 119, 6, .5);
-    animation: none;
-}
-.pf-fav-float.locked:hover {
-    background: linear-gradient(135deg, #fde68a, #fcd34d);
-    color: #92400e;
-    border-color: #d97706;
-    transform: translateY(-3px) scale(1.05);
-}
-.pf-fav-float.locked::after { display: none; }
-.pf-fav-float .pf-fav-float-label { display: inline-block; white-space: nowrap; }
-
-[data-theme="dark"] .pf-fav-float {
-    background: linear-gradient(135deg, rgba(239, 68, 68, .2), rgba(220, 38, 38, .15));
-    border-color: rgba(239, 68, 68, .5);
-    color: #fca5a5;
-}
-[data-theme="dark"] .pf-fav-float.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff;
-}
-[data-theme="dark"] .pf-fav-float.locked {
-    background: linear-gradient(135deg, rgba(217, 119, 6, .25), rgba(180, 83, 9, .2));
-    color: #fcd34d;
-    border-color: rgba(217, 119, 6, .5);
-}
-
-/* ─────────────────────────────────────────────────────────────── */
-/* Nút "Chỉ câu yêu thích" — phía TRÊN nút Like */
-.pf-fav-only-float {
-    position: fixed !important;
-    left: auto !important;
-    right: clamp(14px, 2vw, 22px) !important;
-    bottom: calc(138px + env(safe-area-inset-bottom)) !important;
-    z-index: 2450 !important;
-    display: none;
-    align-items: center;
-    gap: .5rem;
-    padding: .55rem .95rem .55rem .8rem;
-    border-radius: 999px;
-    border: 2px solid var(--border);
-    background: var(--surface);
-    color: var(--text-2);
-    font-size: .82rem;
-    font-weight: 800;
-    font-family: inherit;
-    cursor: pointer;
-    box-sizing: border-box;
-    max-width: 180px;
-    max-height: 44px;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-    user-select: none;
-    transition: all .25s cubic-bezier(.34,1.56,.64,1);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
-}
-.pf-fav-only-float.show { display: inline-flex; }
-.pf-fav-only-float i {
-    font-size: 1.05rem;
-    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
-}
-.pf-fav-only-float:hover {
-    transform: translateY(-3px) scale(1.04);
-    border-color: #ef4444;
-    color: #dc2626;
-    box-shadow: 0 8px 22px rgba(239, 68, 68, .3);
-}
-.pf-fav-only-float:active { transform: translateY(-1px) scale(1.01); }
-
-.pf-fav-only-float .pf-fav-only-count {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 .4rem;
-    border-radius: 50px;
-    background: rgba(239, 68, 68, .15);
-    color: #dc2626;
-    font-size: .68rem;
-    font-weight: 900;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transition: .2s;
-}
-.pf-fav-only-float.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff;
-    border-color: #dc2626;
-    box-shadow: 0 8px 24px rgba(239, 68, 68, .5);
-}
-.pf-fav-only-float.active i { animation: favHeartPop .4s cubic-bezier(.34,1.56,.64,1); }
-.pf-fav-only-float.active .pf-fav-only-count {
-    background: rgba(255, 255, 255, .3);
-    color: #fff;
-}
-.pf-fav-only-float.locked {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #b45309;
-    border-color: rgba(217, 119, 6, .5);
-}
-.pf-fav-only-float.locked:hover {
-    background: linear-gradient(135deg, #fde68a, #fcd34d);
-    color: #92400e;
-    border-color: #d97706;
-    transform: translateY(-3px) scale(1.04);
-}
-.pf-fav-only-float.locked .pf-fav-only-count {
-    background: rgba(217, 119, 6, .2);
-    color: #92400e;
-}
-.pf-fav-only-float.empty { opacity: .55; }
-.pf-fav-only-float.empty .pf-fav-only-count { display: none; }
-
-/* Trạng thái: câu hiện tại KHÔNG phải yêu thích → mờ */
-.pf-fav-only-float.current-not-fav {
-    opacity: .5 !important;
-    filter: grayscale(.6);
-    cursor: not-allowed;
-    pointer-events: auto;
-}
-.pf-fav-only-float.current-not-fav:hover {
-    transform: none !important;
-    border-color: var(--border) !important;
-    color: var(--text-2) !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .12) !important;
-    opacity: .6 !important;
-}
-.pf-fav-only-float.current-not-fav i { animation: none !important; }
-.pf-fav-only-float.current-not-fav .pf-fav-only-count {
-    background: rgba(148, 163, 184, .2);
-    color: var(--text-3);
-}
-
-[data-theme="dark"] .pf-fav-only-float {
-    background: var(--surface-2);
-    border-color: var(--border);
-    color: var(--text-2);
-}
-[data-theme="dark"] .pf-fav-only-float.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff;
-    border-color: #dc2626;
-}
-[data-theme="dark"] .pf-fav-only-float.locked {
-    background: linear-gradient(135deg, rgba(217, 119, 6, .25), rgba(180, 83, 9, .2));
-    color: #fcd34d;
-    border-color: rgba(217, 119, 6, .5);
-}
-[data-theme="dark"] .pf-fav-only-float.current-not-fav {
-    background: var(--surface-2);
-    border-color: var(--border);
-    color: var(--text-3);
-}
-
-/* ─────────────────────────────────────────────────────────────── */
-/* Khoá kích thước trên màn rộng để không bị phình */
-@media (min-width: 1600px) {
-    .pf-fav-float,
-    .pf-fav-only-float {
-        max-width: 170px;
-        max-height: 42px;
-        font-size: .8rem;
-        padding: .5rem .85rem .5rem .75rem;
-    }
-    .pf-fav-float i,
-    .pf-fav-only-float i {
-        font-size: 1rem;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
    ❤️ FAVORITES — Responsive
    ═══════════════════════════════════════════════════════════════ */
-@media (max-width: 500px) {
-    .fav-btn { width: 30px; height: 30px; font-size: .75rem; }
-    .fav-header { padding: .55rem .7rem; gap: .4rem; }
-    .fav-header .fav-title { font-size: .8rem; }
-    .fav-header .fav-count-text { font-size: .68rem; padding: .12rem .45rem; }
+@media (max-width:500px){
+    .fav-btn{width:30px;height:30px;font-size:.75rem;}
+    .fav-header{padding:.55rem .7rem;gap:.4rem;}
+    .fav-header .fav-title{font-size:.8rem;}
+    .fav-header .fav-count-text{font-size:.68rem;padding:.12rem .45rem;}
     .fav-header .fav-sort,
-    .fav-header .fav-clear-all { font-size: .68rem; padding: .3rem .6rem; }
-    .fav-header .fav-sort { padding-right: 1.6rem; }
-    .fav-empty { padding: 2.2rem 1rem; }
-    .fav-empty .fav-empty-icon { width: 58px; height: 58px; font-size: 1.5rem; }
-    .fav-empty .fav-empty-title { font-size: .95rem; }
-    .fav-empty .fav-empty-desc { font-size: .78rem; }
-    .pf-fav-btn { width: 32px; height: 32px; }
-
-    /* 2 nút float — thu gọn, dời sát mép */
-    .pf-fav-float {
-        right: 12px !important;
-        bottom: calc(78px + env(safe-area-inset-bottom)) !important;
-        padding: .55rem .9rem .55rem .75rem;
-        font-size: .78rem;
-    }
-    .pf-fav-float i { font-size: 1.05rem; }
-    .pf-fav-float .pf-fav-float-label { display: none; }
-
-    .pf-fav-only-float {
-        right: 12px !important;
-        bottom: calc(128px + env(safe-area-inset-bottom)) !important;
-        padding: .55rem .9rem .55rem .75rem;
-        font-size: .78rem;
-    }
-    .pf-fav-only-float i { font-size: 1rem; }
-    .pf-fav-only-float .pf-fav-only-label { display: none; }
-}
-
-@media (max-width: 400px) {
-    .pf-fav-float {
-        padding: .5rem;
-        min-width: 46px;
-        justify-content: center;
-    }
-    .pf-fav-only-float {
-        padding: .5rem;
-        min-width: 46px;
-        justify-content: center;
-    }
-}
-
-/* Landscape màn thấp — thu nhỏ, sát đáy */
-@media (max-height: 550px) and (orientation: landscape) {
-    .pf-fav-float {
-        bottom: calc(66px + env(safe-area-inset-bottom)) !important;
-        transform: scale(.9);
-        transform-origin: right bottom;
-    }
-    .pf-fav-only-float {
-        bottom: calc(114px + env(safe-area-inset-bottom)) !important;
-        transform: scale(.9);
-        transform-origin: right bottom;
-    }
+    .fav-header .fav-clear-all{font-size:.68rem;padding:.3rem .6rem;}
+    .fav-header .fav-sort{padding-right:1.6rem;}
+    .fav-empty{padding:2.2rem 1rem;}
+    .fav-empty .fav-empty-icon{width:58px;height:58px;font-size:1.5rem;}
+    .fav-empty .fav-empty-title{font-size:.95rem;}
+    .fav-empty .fav-empty-desc{font-size:.78rem;}
+    .pf-fav-btn{width:32px;height:32px;}
 }
 """
 def build_ui_html():
@@ -3521,28 +3213,20 @@ def build_ui_html():
         <span>Bộ dữ liệu</span>
     </div>
     <div class="ds-main-row">
-
-        <!-- ⭐ TAB #1: GIAO TIẾP — KHÔNG KHOÁ -->
-        <button class="ds-btn ds-btn-primary" data-dataset="giaotiep" id="dsGiaotiepBtn">
+        <button class="ds-btn ds-btn-primary active" data-dataset="giaotiep" id="dsGiaotiepBtn">
             <i class="fas fa-comments"></i>
-            <span id="dsGiaotiepLabel">1060 câu giao tiếp</span>
+            <span id="dsGiaotiepLabel">1650 câu giao tiếp</span>
         </button>
-
-        <!-- TAB #2: 1700 CÂU VĂN PHÒNG — DEFAULT ACTIVE -->
-        <button class="ds-btn ds-btn-primary active" data-dataset="tonghop">
+        <button class="ds-btn ds-btn-primary" data-dataset="tonghop">
             <i class="fas fa-book-open"></i>
             <span id="dsTonghopLabel">1700 câu phản xạ tổng hợp VPCX</span>
         </button>
-
-        <!-- TAB #3: CHUYÊN NGÀNH — KHOÁ -->
         <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">
             <i class="fas fa-industry"></i>
             <span>Chuyên ngành</span>
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
-
-        <!-- TAB #4: YÊU THÍCH -->
         <!-- __FAV_DATASET_TAB__ -->
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
@@ -3995,21 +3679,6 @@ function initDatasetSelector() {
             }
         });
     }
-    /* ⭐ NÚT GIAO TIẾP — Cấp 1, KHÔNG KHOÁ (giống tonghop) */
-    var gtBtn = $('dsGiaotiepBtn');
-    if (gtBtn && !gtBtn.__boundToggle) {
-        gtBtn.__boundToggle = true;
-        gtBtn.title = '1060 câu giao tiếp tiếng Trung';
-        gtBtn.addEventListener('click', function() {
-            switchDataset('giaotiep');
-            var sub = $('dsSubWrap');
-            if (sub) sub.style.display = 'none';
-            document.querySelectorAll('.ds-btn').forEach(function(b) {
-                b.classList.remove('active');
-            });
-            gtBtn.classList.add('active');
-        });
-    }
 
     /* ═══════════════════════════════════════════════════════════
        SUB-BUTTONS CHUYÊN NGÀNH — Click để chuyển dataset
@@ -4043,32 +3712,19 @@ function initDatasetSelector() {
 }
 function markCurrentDatasetActive() {
     var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
-
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
         b.classList.toggle('active', b.dataset.dataset === current);
     });
-
-    /* ⭐ Nút cấp 1 KHÔNG KHOÁ: Tổng hợp + Giao tiếp */
-    document.querySelectorAll('.ds-btn[data-dataset="tonghop"], .ds-btn[data-dataset="giaotiep"]').forEach(function(b) {
-        b.classList.toggle('active', current === b.dataset.dataset);
+    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+        b.classList.toggle('active', current === 'tonghop');
     });
-
-    /* Giao tiếp / Tổng hợp → ẩn dropdown chuyên ngành */
-    if (current === 'giaotiep' || current === 'tonghop') {
+    if (current !== 'tonghop') {
         var wrap = $('dsSubWrap');
-        if (wrap) wrap.style.display = 'none';
+        if (wrap) wrap.style.display = 'block';
         document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
-            b.classList.remove('active');
+            b.classList.add('active');
         });
-        return;
     }
-
-    /* Chuyên ngành → mở dropdown */
-    var wrap2 = $('dsSubWrap');
-    if (wrap2) wrap2.style.display = 'block';
-    document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
-        b.classList.add('active');
-    });
 }
 
 function switchDataset(datasetId) {
@@ -4079,10 +3735,7 @@ function switchDataset(datasetId) {
         favState.currentView = false;
     }
 
-    /* ⭐ Dataset cấp 1 KHÔNG KHOÁ: tonghop + giaotiep */
-    var FREE_PRIMARY = ['tonghop', 'giaotiep'];
-
-    if (FREE_PRIMARY.indexOf(datasetId) === -1 && !canAccessChuyenNganh()) {
+    if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
         showChuyenNganhLockMessage();
         return;
     }
@@ -4092,10 +3745,6 @@ function switchDataset(datasetId) {
     }
 
     window.__onboardingOverride = null;
-
-    /* ⭐ Xóa banner onboarding CŨ (của tab trước) */
-    var oldBanner = $('onboardingActiveBanner');
-    if (oldBanner) oldBanner.remove();
 
     state = { search:'', hsk:'', subject:'' };
     if ($('searchInput')) $('searchInput').value = '';
@@ -4111,21 +3760,16 @@ function switchDataset(datasetId) {
     /* ❤️ Cập nhật lock state cho tab (bao gồm tab Yêu thích) */
     if (typeof favUpdateLockState === 'function') favUpdateLockState();
 
-    /* ⭐ Load onboarding RIÊNG của tab MỚI (nếu đã chọn trước đó) */
+    /* Khôi phục banner chủ đề sau khi đổi dataset */
     var saved = loadOnboardingSelection();
     if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
         var cfg = getOnboardingConfig();
         if (cfg) {
-            window.__onboardingAutoPicked = !!saved.auto_picked;
-            applyOnboardingSelection(saved.topics, false);
-        }
-    } else {
-        /* ⭐ Chưa chọn cho tab này → hiện modal hỏi */
-        setTimeout(function() {
-            if (typeof maybeShowOnboarding === 'function') {
-                maybeShowOnboarding();
+            if (datasetId === 'tonghop') {
+                window.__onboardingAutoPicked = !!saved.auto_picked;
+                applyOnboardingSelection(saved.topics, false);
             }
-        }, 300);
+        }
     }
 }
 
@@ -4594,20 +4238,15 @@ function getOnboardingConfig() {
 
 function getOnboardingStorageKey() {
     var info = getTierInfo();
-
-    /* ⭐ Thêm dataset ID → mỗi tab có selection RIÊNG */
-    var ds = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
-             ? CURRENT_DATASET
-             : 'tonghop';
-
-    if (info.tier === 'demo') return 'onboarding_demo_' + ds;
-    if (info.tier === 'trial' && info.email)  return 'onboarding_trial_' + info.email + '_' + ds;
-    if (info.tier === 'active' && info.email) return 'onboarding_active_' + info.email + '_' + ds;
-    if (info.tier === 'active') return 'onboarding_active_guest_' + ds;
-    if (info.tier === 'expired' && info.email) return 'onboarding_expired_' + info.email + '_' + ds;
-    if (info.tier === 'expired') return 'onboarding_expired_guest_' + ds;
+    if (info.tier === 'demo') return 'onboarding_demo';
+    if (info.tier === 'trial' && info.email)  return 'onboarding_trial_' + info.email;
+    if (info.tier === 'active' && info.email) return 'onboarding_active_' + info.email;
+    if (info.tier === 'active') return 'onboarding_active_guest';
+    if (info.tier === 'expired' && info.email) return 'onboarding_expired_' + info.email;
+    if (info.tier === 'expired') return 'onboarding_expired_guest';
     return null;
 }
+
 function getAvailableTopicsForTier() {
     var info = getTierInfo();
     var allowedHsk = getAllowedHskList();
@@ -4661,16 +4300,8 @@ function maybeShowOnboarding() {
         return;
     }
 
-    /* ⭐ CHỈ chạy onboarding cho 2 tab cấp 1: tonghop + giaotiep */
-    var ds = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
-    if (ds !== 'tonghop' && ds !== 'giaotiep') {
-        return;
-    }
-
     var cfg = getOnboardingConfig();
     if (!cfg) return;
-
-    /* ⬇️ THÊM PHẦN THÂN HÀM BỊ THIẾU Ở ĐÂY ⬇️ */
 
     var mainContent = $('mainContent');
     if (!mainContent || mainContent.style.display === 'none') {
@@ -4698,7 +4329,7 @@ function maybeShowOnboarding() {
         return;
     }
 
-    /* Nếu đã có banner (rỗng) thì không hiện modal */
+    // ⬇️ THÊM: Nếu đã có banner (rỗng) thì không hiện modal
     var existingBanner2 = $('onboardingActiveBanner');
     if (existingBanner2) {
         return;
@@ -4706,6 +4337,7 @@ function maybeShowOnboarding() {
 
     showOnboardingModal();
 }
+
 function showOnboardingModal() {
     var cfg = getOnboardingConfig();
     if (!cfg) return;
@@ -5460,12 +5092,6 @@ function initApp() {
     if (typeof initSocial === 'function') initSocial();
     if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
     if (typeof initAuthUI === 'function') initAuthUI();
-
-    /* ⭐ INTRO: Banner "Chào mừng" + Modal hướng dẫn */
-    if (typeof initIntroModal === 'function') initIntroModal();
-    if (typeof initQuickIntroBanner === 'function') initQuickIntroBanner();
-    if (typeof maybeAutoOpenIntro === 'function') maybeAutoOpenIntro();
-
     initScrollDetection();
     initFabGroup();
     initTheme();
@@ -5570,9 +5196,6 @@ function initApp() {
     try { buildFilters(); applyFilter(); }
     catch(e) { console.error('Init error:', e); }
 }
-
-/* ⭐ Expose initApp để module intro hook vào (nếu cần) */
-window.initApp = initApp;
 /* ═══════════════════════════════════════════════════════════ */
 /* SỬA: REFRESH APP — VẼ LẠI BANNER SAU LOGIN/RELOAD            */
 /* ═══════════════════════════════════════════════════════════ */
@@ -7662,15 +7285,7 @@ function pfBuildDatasetSelect() {
     Object.keys(DATASET_REGISTRY).forEach(function(id) {
         var ds = DATASET_REGISTRY[id];
         var isTonghop = (id === 'tonghop');
-        var isGiaotiep = (id === 'giaotiep');
-
-        /* ⭐ tonghop + giaotiep: KHÔNG KHOÁ */
-        var isLocked;
-        if (isTonghop || isGiaotiep) {
-            isLocked = false;
-        } else {
-            isLocked = !canAccessAll;
-        }
+        var isLocked = !isTonghop && !canAccessAll;
 
         var opt = document.createElement('option');
         opt.value = id;
@@ -7682,8 +7297,6 @@ function pfBuildDatasetSelect() {
         var dsName = ds.name && ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
         if (isTonghop) {
             opt.textContent = (ds.count || 0) + ' câu - Tổng hợp VPCX';
-        } else if (isGiaotiep) {
-            opt.textContent = (ds.count || 0) + ' câu - Giao tiếp';
         } else {
             opt.textContent = (isLocked ? '[Khoá] ' : '') +
                               dsName + ' (' + (ds.count || 0) + ' câu)';
@@ -7691,6 +7304,7 @@ function pfBuildDatasetSelect() {
 
         sel.appendChild(opt);
     });
+
     sel.value = (current !== 'tonghop' && !canAccessAll) ? 'tonghop' : current;
 
     if (row) {
@@ -7919,9 +7533,4 @@ function favBuildFavButton(stt) {
         '<i class="' + iconClass + '"></i>' +
         '</button>';
 }
-/* ═══════════════════════════════════════════════════════════════
-   🔧 FIX NÚT LỌC — EVENT DELEGATION Ở DOCUMENT LEVEL
-   Đảm bảo LUÔN bắt được sự kiện click, bất kể timing
-   ═══════════════════════════════════════════════════════════════ */
-
 """
