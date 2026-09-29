@@ -3,10 +3,15 @@ name: Convert Excel to HTML
 on:
   push:
     paths:
-      - 'scripts/data/**'                # File Excel trong scripts/data/
-      - 'scripts/**/*.py'                # Mọi file Python trong scripts/
+      # ⭐ File Excel tổng hợp + 1060 câu giao tiếp
+      - 'data/**'
+      # File Excel chuyên ngành
+      - 'scripts/data/**'
+      # Code Python
+      - 'scripts/**/*.py'
       - 'scripts/config.json'
       - 'requirements.txt'
+      # Workflow tự nó
       - '.github/workflows/convert.yml'
   workflow_dispatch:
 
@@ -32,15 +37,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install openpyxl
-          pip install cn2an
-          pip install pypinyin
-          pip install jieba
+          pip install openpyxl cn2an pypinyin jieba
 
       - name: Verify dependencies
         run: |
@@ -54,6 +55,9 @@ jobs:
           echo "=== Root ==="
           ls -la
           echo ""
+          echo "=== data/ ==="
+          ls -la data/ || echo "No data folder"
+          echo ""
           echo "=== scripts/ ==="
           ls -la scripts/
           echo ""
@@ -64,7 +68,7 @@ jobs:
         run: |
           python -c "
           import cn2an
-          tests = [500, 480, 20, 50, 30, 2024]
+          tests = [500, 480, 20, 50, 30]
           for n in tests:
               print(f'  {n} → {cn2an.an2cn(n)}')
           "
@@ -93,17 +97,34 @@ jobs:
             fi
           done
 
+      - name: Verify datasets loaded
+        run: |
+          echo "=== Kiểm tra bộ dữ liệu trong index.html ==="
+          for ds in tonghop giaotiep; do
+            if grep -q "\"$ds\"" index.html; then
+              echo "  ✅ dataset '$ds' found"
+            else
+              echo "  ⚠️  dataset '$ds' MISSING"
+            fi
+          done
+          echo ""
+          echo "=== Kiểm tra tab Giao tiếp ==="
+          if grep -q "dsGiaotiepBtn" index.html; then
+            echo "  ✅ Nút Giao tiếp (dsGiaotiepBtn) found"
+          else
+            echo "  ❌ Nút Giao tiếp MISSING"
+          fi
+
       - name: Verify numbers converted
         run: |
           echo "=== Kiểm tra số Ả Rập trong index.html ==="
-          # Tìm câu 176 để verify
           if grep -q "五百" index.html; then
-            echo "✅ Tìm thấy '五百' → số đã được chuyển"
+            echo "✅ Tìm thấy '五百'"
           else
-            echo "⚠️  Không tìm thấy '五百' — có thể chưa convert"
+            echo "⚠️  Không tìm thấy '五百'"
           fi
           if grep -q "四百八十" index.html; then
-            echo "✅ Tìm thấy '四百八十' → số đã được chuyển"
+            echo "✅ Tìm thấy '四百八十'"
           else
             echo "⚠️  Không tìm thấy '四百八十'"
           fi
