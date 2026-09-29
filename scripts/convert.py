@@ -249,7 +249,35 @@ DATASET_REGISTRY = {
         "source": EXCEL_FILE,
     }
 }
+# ═══════════════════════════════════════════════════════════════════
+# ─── 3b. Dataset "1060 câu giao tiếp" ───
+#   CÙNG CẤP với "tonghop" — KHÔNG KHOÁ
+#   Dùng chung onboarding config từ config.json
+# ═══════════════════════════════════════════════════════════════════
+GIAOTIEP_FILE = CONFIG.get("giaotiep_file", "1060 câu giao tiếp.xlsx")
 
+if os.path.exists(GIAOTIEP_FILE):
+    try:
+        data_giaotiep = read_excel(GIAOTIEP_FILE, 0)
+        if data_giaotiep:
+            DATASET_REGISTRY["giaotiep"] = {
+                "id": "giaotiep",
+                "name": "1060 câu giao tiếp tiếng Trung",
+                "icon": "fa-comments",
+                "color": "#10b981",
+                "data": data_giaotiep,
+                "count": len(data_giaotiep),
+                "source": GIAOTIEP_FILE,
+                "isPrimary": True,
+                "requiresActive": False,
+            }
+            print(f"💬 Giao tiếp: {len(data_giaotiep)} câu (tab cấp 1, mở như tổng hợp)")
+        else:
+            print(f"⚠️  {GIAOTIEP_FILE}: file rỗng, bỏ qua")
+    except Exception as e:
+        print(f"❌ Lỗi đọc {GIAOTIEP_FILE}: {e}")
+else:
+    print(f"⚠️  Không tìm thấy '{GIAOTIEP_FILE}' — bỏ qua tab Giao tiếp")
 # ─── 4. Quét thư mục data/ ───
 _tonghop_abs = os.path.abspath(EXCEL_FILE)
 _chuyen_nganh_count = 0
@@ -502,21 +530,41 @@ FULLWIDTH_CSS = r"""
    ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════
+   ★★★ 4 TAB BỘ DỮ LIỆU — PC: 4 CỘT · MOBILE: 2x2 ★★★
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* PC: 4 tab cùng hàng */
 @media (min-width: 769px) {
     .ds-main-row {
-        grid-template-columns: 1fr 1fr 1fr !important;
+        grid-template-columns: 1fr 1fr 1fr 1fr !important;
     }
 }
 
+/* Mobile + Tablet: 2 cột x 2 hàng */
 @media (max-width: 768px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr !important;
+        gap: .5rem !important;
     }
 }
 
-@media (max-width: 500px) {
+/* Mobile rất nhỏ (≤ 360px): vẫn giữ 2 cột, thu gọn font */
+@media (max-width: 360px) {
     .ds-main-row {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: .35rem !important;
+    }
+    .ds-main-row .ds-btn {
+        padding: .55rem .5rem !important;
+        font-size: .72rem !important;
+    }
+    .ds-main-row .ds-btn span {
+        font-size: .72rem !important;
+        line-height: 1.25 !important;
+    }
+    .ds-main-row .ds-btn i:first-child {
+        font-size: .85rem !important;
     }
 }
 
