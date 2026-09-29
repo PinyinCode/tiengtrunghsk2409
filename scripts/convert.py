@@ -254,6 +254,11 @@ DATASET_REGISTRY = {
 #   CÙNG CẤP với "tonghop" — KHÔNG KHOÁ
 #   Dùng chung onboarding config từ config.json
 # ═══════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════
+# ─── 3b. Dataset "1060 câu giao tiếp" ───
+#   CÙNG CẤP với "tonghop" — KHÔNG KHOÁ
+#   File 1060.xlsx đặt CÙNG CHỖ với input.xlsx (trong data/)
+# ═══════════════════════════════════════════════════════════════════
 GIAOTIEP_FILE = CONFIG.get("giaotiep_file", "data/1060.xlsx")
 
 if os.path.exists(GIAOTIEP_FILE):
@@ -278,8 +283,11 @@ if os.path.exists(GIAOTIEP_FILE):
         print(f"❌ Lỗi đọc {GIAOTIEP_FILE}: {e}")
 else:
     print(f"⚠️  Không tìm thấy '{GIAOTIEP_FILE}' — bỏ qua tab Giao tiếp")
+    print(f"   → Đặt file 1060.xlsx cùng chỗ với '{EXCEL_FILE}'")
+
 # ─── 4. Quét thư mục data/ ───
 _tonghop_abs = os.path.abspath(EXCEL_FILE)
+_giaotiep_abs = os.path.abspath(GIAOTIEP_FILE) if os.path.exists(GIAOTIEP_FILE) else None
 _chuyen_nganh_count = 0
 
 if os.path.isdir(DATA_DIR):
@@ -297,6 +305,9 @@ if os.path.isdir(DATA_DIR):
             continue
         if os.path.abspath(filepath) == _tonghop_abs:
             print(f"⏭️  {filename} — bỏ qua (file tổng hợp)")
+            continue
+        if _giaotiep_abs and os.path.abspath(filepath) == _giaotiep_abs:
+            print(f"⏭️  {filename} — bỏ qua (file giao tiếp)")
             continue
 
         try:
@@ -339,7 +350,6 @@ if os.path.isdir(DATA_DIR):
 else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
     print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
-
 # ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
 json_data = _json_blob(data_tonghop)
