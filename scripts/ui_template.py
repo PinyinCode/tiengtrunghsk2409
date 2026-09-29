@@ -115,7 +115,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .ds-label i{color:var(--primary);font-size:.85rem}
 .ds-main-row{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr;
+    grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
     gap:.5rem;
 }
 /* Mobile + Tablet: LUÔN 2 CỘT */
