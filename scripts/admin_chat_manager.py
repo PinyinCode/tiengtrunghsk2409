@@ -2584,7 +2584,7 @@ def build_admin_chat_js():
                 startWatchers();
             }
             // ⭐ Kiểm tra pending email sau khi login admin
-            checkPendingEmail();
+            /* checkPendingEmail(); // DISABLED */
         } else {
             fab.classList.remove('show');
             stopWatchers();
