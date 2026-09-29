@@ -4246,15 +4246,20 @@ function getOnboardingConfig() {
 
 function getOnboardingStorageKey() {
     var info = getTierInfo();
-    if (info.tier === 'demo') return 'onboarding_demo';
-    if (info.tier === 'trial' && info.email)  return 'onboarding_trial_' + info.email;
-    if (info.tier === 'active' && info.email) return 'onboarding_active_' + info.email;
-    if (info.tier === 'active') return 'onboarding_active_guest';
-    if (info.tier === 'expired' && info.email) return 'onboarding_expired_' + info.email;
-    if (info.tier === 'expired') return 'onboarding_expired_guest';
+
+    /* ⭐ Thêm dataset ID → mỗi tab có selection RIÊNG */
+    var ds = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
+             ? CURRENT_DATASET
+             : 'tonghop';
+
+    if (info.tier === 'demo') return 'onboarding_demo_' + ds;
+    if (info.tier === 'trial' && info.email)  return 'onboarding_trial_' + info.email + '_' + ds;
+    if (info.tier === 'active' && info.email) return 'onboarding_active_' + info.email + '_' + ds;
+    if (info.tier === 'active') return 'onboarding_active_guest_' + ds;
+    if (info.tier === 'expired' && info.email) return 'onboarding_expired_' + info.email + '_' + ds;
+    if (info.tier === 'expired') return 'onboarding_expired_guest_' + ds;
     return null;
 }
-
 function getAvailableTopicsForTier() {
     var info = getTierInfo();
     var allowedHsk = getAllowedHskList();
@@ -4308,43 +4313,14 @@ function maybeShowOnboarding() {
         return;
     }
 
+    /* ⭐ CHỈ chạy onboarding cho 2 tab cấp 1: tonghop + giaotiep */
+    var ds = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+    if (ds !== 'tonghop' && ds !== 'giaotiep') {
+        return;
+    }
+
     var cfg = getOnboardingConfig();
     if (!cfg) return;
-
-    var mainContent = $('mainContent');
-    if (!mainContent || mainContent.style.display === 'none') {
-        setTimeout(maybeShowOnboarding, 300);
-        return;
-    }
-
-    if (typeof RAW_DATA === 'undefined' || !RAW_DATA || RAW_DATA.length === 0) {
-        setTimeout(maybeShowOnboarding, 300);
-        return;
-    }
-
-    var saved = loadOnboardingSelection();
-    if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
-        window.__onboardingAutoPicked = !!saved.auto_picked;
-
-        var existingBanner = $('onboardingActiveBanner');
-        var override = window.__onboardingOverride;
-
-        if (!existingBanner || !override || override.length === 0) {
-            applyOnboardingSelection(saved.topics, false);
-        } else {
-            showOnboardingActiveBanner(saved.topics, override.length);
-        }
-        return;
-    }
-
-    // ⬇️ THÊM: Nếu đã có banner (rỗng) thì không hiện modal
-    var existingBanner2 = $('onboardingActiveBanner');
-    if (existingBanner2) {
-        return;
-    }
-
-    showOnboardingModal();
-}
 
 function showOnboardingModal() {
     var cfg = getOnboardingConfig();
