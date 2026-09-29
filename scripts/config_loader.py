@@ -24,7 +24,7 @@ def load_config():
         print(f"❌ Không tìm thấy file cấu hình: {CONFIG_FILE}")
         sys.exit(1)
 
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+    with open(CONFIG_FILE, "r", encoding="utf-8-sig") as f:
         cfg = json.load(f)
 
     if not cfg.get("firebase_config", {}).get("apiKey"):

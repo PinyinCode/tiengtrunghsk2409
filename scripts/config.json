@@ -1,14 +1,14 @@
 {
     "data_dir": "data",
-    "data_dir_specialty": "scripts/data",
+    "data_dir_specialty": "scripts/specialty",
     "output_html": "index.html",
     "sheet_index": 0,
 
     "zalo_phone": "0922331886",
-    "zalo_name": "Hỗ trợ",
+    "zalo_name": "Há»— trá»£",
 
     "tiktok_username": "thaonoizhongwen",
-    "tiktok_nickname": "Thảo nói 中文",
+    "tiktok_nickname": "Tháº£o nĂ³i ä¸­æ–‡",
     "tiktok_avatar": "https://i.postimg.cc/QBD0vj6C/IMG-6296.jpg",
     "tiktok_url": "https://www.tiktok.com/@thaonoizhongwen",
 
@@ -29,7 +29,7 @@
         "authDomain": "hoc-tieng-trung-64b8d.firebaseapp.com",
         "projectId": "hoc-tieng-trung-64b8d",
         "storageBucket": "hoc-tieng-trung-64b8d.appspot.com",
-        "messagingSenderId": "614max326539390",
+        "messagingSenderId": "614326539390",
         "appId": "1:614326539390:web:57344a021d7cbc7b18b42f"
     },
 
@@ -43,26 +43,26 @@
     "packages": [
         {
             "id": "1m",
-            "label": "1 tháng",
+            "label": "1 thĂ¡ng",
             "amount": 50000,
             "days": 30,
             "popular": false
         },
         {
             "id": "3m",
-            "label": "3 tháng",
+            "label": "3 thĂ¡ng",
             "amount": 120000,
             "days": 90,
             "popular": true,
-            "save": "Tiết kiệm 33%"
+            "save": "Tiáº¿t kiá»‡m 33%"
         },
         {
             "id": "1y",
-            "label": "1 năm",
+            "label": "1 nÄƒm",
             "amount": 300000,
             "days": 365,
             "popular": false,
-            "save": "Tiết kiệm 58%"
+            "save": "Tiáº¿t kiá»‡m 58%"
         },
         {
             "id": "forever",
@@ -70,7 +70,7 @@
             "amount": 1000000,
             "days": 36500,
             "popular": false,
-            "save": "Premium - Admin Hỗ trợ trực tiếp",
+            "save": "Premium - Admin Há»— trá»£ trá»±c tiáº¿p",
             "permanent": true
         }
     ],
@@ -86,24 +86,24 @@
             "max_questions": 80,
             "hsk_allowed": [1, 2, 3],
             "topics_per_user": 5,
-            "title": "Bạn quan tâm chủ đề nào?",
-            "subtitle": "Chọn tối đa 5 chủ đề — chúng tôi sẽ gợi ý 80 câu phù hợp nhất"
+            "title": "Báº¡n quan tĂ¢m chá»§ Ä‘á» nĂ o?",
+            "subtitle": "Chá»n tá»‘i Ä‘a 5 chá»§ Ä‘á» â€” chĂºng tĂ´i sáº½ gá»£i Ă½ 80 cĂ¢u phĂ¹ há»£p nháº¥t"
         },
         "trial": {
             "enabled": true,
-            "_questions": 250,
+            "max_questions": 250,
             "hsk_allowed": [1, 2, 3, 4, 5],
             "topics_per_user": 12,
-            "title": "Bạn quan tâm chủ đề nào?",
-            "subtitle": "Chọn tối đa 12 chủ đề — chúng tôi sẽ gợi ý 250 câu phù hợp nhất"
+            "title": "Báº¡n quan tĂ¢m chá»§ Ä‘á» nĂ o?",
+            "subtitle": "Chá»n tá»‘i Ä‘a 12 chá»§ Ä‘á» â€” chĂºng tĂ´i sáº½ gá»£i Ă½ 250 cĂ¢u phĂ¹ há»£p nháº¥t"
         },
         "active": {
             "enabled": true,
             "max_questions": -1,
             "hsk_allowed": [1, 2, 3, 4, 5, 6],
             "topics_per_user": -1,
-            "title": "Bạn quan tâm chủ đề nào?",
-            "subtitle": "không giới hạn"
+            "title": "Báº¡n quan tĂ¢m chá»§ Ä‘á» nĂ o?",
+            "subtitle": "khĂ´ng giá»›i háº¡n"
         }
     }
 }

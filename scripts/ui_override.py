@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 ui_override.py
 ═══════════════════════════════════════════════════════════════════
@@ -517,7 +517,7 @@ NEW_DATASET_CSS = r"""/* =======================================================
 # ═══════════════════════════════════════════════════════════════════
 #  HTML MỚI cho Dataset Selector
 # ═══════════════════════════════════════════════════════════════════
-NEW_DATASET_HTML = r"""<!-- DATASET SELECTOR — LAYOUT DỌC -->
+NEW_DATASET_HTML = r"""<!-- DATASET SELECTOR - LAYOUT DOC -->
 <div class="dataset-selector" id="datasetSelector">
     <div class="ds-label">
         <i class="fas fa-layer-group"></i>
@@ -525,6 +525,7 @@ NEW_DATASET_HTML = r"""<!-- DATASET SELECTOR — LAYOUT DỌC -->
     </div>
     <div class="ds-list" id="dsList" role="tablist">
         <!-- JS render động từ DATASET_REGISTRY -->
+        <!-- __FAV_DATASET_TAB__ -->
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
         <div class="ds-sub-label">
@@ -534,7 +535,6 @@ NEW_DATASET_HTML = r"""<!-- DATASET SELECTOR — LAYOUT DỌC -->
         <div class="ds-sub-grid" id="dsSubGrid"></div>
     </div>
 </div>"""
-
 
 # ═══════════════════════════════════════════════════════════════════
 #  JS MỚI — override 4 hàm
