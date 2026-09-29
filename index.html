@@ -7075,6 +7075,23 @@ body.has-floating-group #chatFloatWrap{
 }
 .acm-close:hover{background:rgba(255,255,255,.35);transform:scale(1.05);}
 
+/* ⭐ Nút toggle bulk mode trên header */
+.acm-bulk-toggle{
+    width:36px;height:36px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.2);
+    color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.95rem;flex-shrink:0;transition:.15s;
+}
+.acm-bulk-toggle:hover{
+    background:rgba(255,255,255,.35);
+    transform:scale(1.05);
+}
+.acm-bulk-toggle.active{
+    background:rgba(251,191,36,.5);
+    box-shadow:0 0 0 3px rgba(251,191,36,.3);
+}
+
 /* ─── STATS BAR ─── */
 .acm-stats{
     display:grid;
@@ -7145,6 +7162,144 @@ body.has-floating-group #chatFloatWrap{
 .acm-refresh-btn:hover{background:#4f46e5;color:#fff;transform:rotate(180deg);}
 .acm-refresh-btn.spinning{animation:acmSpin .6s linear infinite;}
 @keyframes acmSpin{to{transform:rotate(360deg);}}
+
+/* ⭐ BULK TOOLBAR */
+.acm-bulk-toolbar{
+    display:none;
+    padding:.65rem 1.25rem;
+    background:linear-gradient(135deg, #eff6ff, #e0e7ff);
+    border-bottom:1px solid #c7d2fe;
+    flex-shrink:0;
+    align-items:center;
+    gap:.75rem;
+    flex-wrap:wrap;
+}
+.acm-bulk-toolbar.show{display:flex;}
+[data-theme="dark"] .acm-bulk-toolbar{
+    background:linear-gradient(135deg, rgba(79,70,229,.15), rgba(124,58,237,.1));
+    border-color:rgba(124,58,237,.3);
+}
+.acm-bulk-info{
+    flex:1;
+    min-width:0;
+    font-size:.82rem;
+    font-weight:700;
+    color:#4f46e5;
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+}
+[data-theme="dark"] .acm-bulk-info{color:#a5b4fc;}
+.acm-bulk-count{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    padding:.15rem .55rem;
+    border-radius:50px;
+    font-weight:900;
+    font-size:.85rem;
+    min-width:28px;
+    text-align:center;
+}
+.acm-bulk-btn{
+    padding:.5rem 1rem;
+    border-radius:9px;
+    border:none;
+    font-size:.8rem;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    transition:.15s;
+    white-space:nowrap;
+}
+.acm-bulk-btn.primary{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    box-shadow:0 3px 10px rgba(79,70,229,.35);
+}
+.acm-bulk-btn.primary:hover{
+    transform:translateY(-1px);
+    box-shadow:0 5px 14px rgba(79,70,229,.5);
+}
+.acm-bulk-btn.primary:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    transform:none;
+}
+.acm-bulk-btn.ghost{
+    background:rgba(255,255,255,.7);
+    color:#4f46e5;
+    border:1.5px solid rgba(79,70,229,.35);
+}
+.acm-bulk-btn.ghost:hover{
+    background:#fff;
+    border-color:#4f46e5;
+}
+[data-theme="dark"] .acm-bulk-btn.ghost{
+    background:rgba(30,41,59,.6);
+    color:#a5b4fc;
+    border-color:rgba(124,58,237,.4);
+}
+
+/* ⭐ CHECKBOX user */
+.acm-user-checkbox{
+    width:24px;height:24px;flex-shrink:0;
+    display:none;
+    align-items:center;justify-content:center;
+    cursor:pointer;
+}
+body.acm-bulk-mode .acm-user-checkbox{display:flex;}
+.acm-user-checkbox input{
+    width:20px;height:20px;
+    accent-color:#4f46e5;
+    cursor:pointer;
+    margin:0;
+}
+
+/* User được chọn */
+.acm-user.selected{
+    border-color:#4f46e5;
+    background:linear-gradient(90deg, rgba(79,70,229,.08), rgba(124,58,237,.05));
+    box-shadow:0 2px 12px rgba(79,70,229,.15);
+}
+[data-theme="dark"] .acm-user.selected{
+    background:linear-gradient(90deg, rgba(79,70,229,.2), rgba(124,58,237,.12));
+}
+
+/* ⭐ SELECT ALL ROW */
+.acm-select-all-row{
+    display:none;
+    padding:.5rem .85rem;
+    background:#fff;
+    border:1.5px dashed #c7d2fe;
+    border-radius:10px;
+    margin-bottom:.5rem;
+    align-items:center;
+    gap:.5rem;
+    font-size:.8rem;
+    font-weight:700;
+    color:#4f46e5;
+    cursor:pointer;
+    transition:.15s;
+}
+body.acm-bulk-mode .acm-select-all-row{display:flex;}
+.acm-select-all-row:hover{
+    background:#eff6ff;
+    border-color:#4f46e5;
+}
+[data-theme="dark"] .acm-select-all-row{
+    background:#1e293b;
+    border-color:rgba(124,58,237,.3);
+    color:#a5b4fc;
+}
+.acm-select-all-row input{
+    width:20px;height:20px;
+    accent-color:#4f46e5;
+    cursor:pointer;
+    margin:0;
+}
 
 /* ─── LIST ─── */
 .acm-list{
@@ -7231,8 +7386,6 @@ body.has-floating-group #chatFloatWrap{
 .acm-user-time{
     font-size:.68rem;color:#94a3b8;white-space:nowrap;
 }
-
-/* ⭐ Thời gian hoạt động — Online / Recent login */
 .acm-user-time.online-now{
     color:#16a34a;
     font-weight:800;
@@ -7262,7 +7415,7 @@ body.has-floating-group #chatFloatWrap{
     50%{transform:scale(1.15);}
 }
 
-/* ⭐ Actions cho mỗi user (chat + history) */
+/* ⭐ Actions cho mỗi user */
 .acm-user-actions{
     display:flex;gap:.3rem;flex-shrink:0;margin-left:.5rem;
 }
@@ -7278,6 +7431,18 @@ body.has-floating-group #chatFloatWrap{
 .acm-user-btn.chat:hover{box-shadow:0 4px 12px rgba(79,70,229,.4);}
 .acm-user-btn.history{background:#eff6ff;color:#4f46e5;}
 .acm-user-btn.history:hover{background:#4f46e5;color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.4);}
+
+/* ⭐ Nút xoá lịch sử */
+.acm-user-btn.delete-history{
+    background:#fef2f2;
+    color:#dc2626;
+}
+.acm-user-btn.delete-history:hover{
+    background:#dc2626;
+    color:#fff;
+    box-shadow:0 4px 12px rgba(220,38,38,.4);
+    transform:scale(1.1);
+}
 
 /* ─── EMPTY ─── */
 .acm-empty{
@@ -7312,7 +7477,6 @@ body.has-floating-group #chatFloatWrap{
 .acm-history.show{display:block;}
 [data-theme="dark"] .acm-history{background:#0f172a;}
 
-/* Header của user trong history */
 .acm-hist-header{
     display:flex;align-items:center;gap:1rem;
     padding:1rem;
@@ -7346,7 +7510,6 @@ body.has-floating-group #chatFloatWrap{
     display:flex;flex-wrap:wrap;gap:.75rem;
 }
 
-/* ── Filter tabs history ── */
 .acm-hist-filters{
     display:flex;gap:.4rem;flex-wrap:wrap;
     margin-bottom:1rem;
@@ -7365,7 +7528,6 @@ body.has-floating-group #chatFloatWrap{
 .acm-hist-filter:hover{border-color:#4f46e5;color:#4f46e5;}
 .acm-hist-filter.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent;}
 
-/* ── Timeline ── */
 .acm-timeline{
     position:relative;
     padding-left:2rem;
@@ -7391,7 +7553,6 @@ body.has-floating-group #chatFloatWrap{
 [data-theme="dark"] .acm-tl-item{background:#1e293b;border-color:#4f46e5;}
 .acm-tl-item:hover{box-shadow:0 4px 12px rgba(79,70,229,.1);transform:translateX(2px);}
 
-/* Chấm tròn trên timeline */
 .acm-tl-item::before{
     content:'';
     position:absolute;
@@ -7403,7 +7564,6 @@ body.has-floating-group #chatFloatWrap{
 }
 [data-theme="dark"] .acm-tl-item::before{border-color:#1e293b;}
 
-/* Màu theo type */
 .acm-tl-item[data-type="login"]{border-left-color:#16a34a;}
 .acm-tl-item[data-type="login"]::before{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.15);}
 .acm-tl-item[data-type="logout"]{border-left-color:#94a3b8;}
@@ -7462,10 +7622,20 @@ body.has-floating-group #chatFloatWrap{
 
 /* ─── MOBILE ─── */
 @media (max-width:768px){
-    .acm-modal{padding:0;align-items:flex-end;}
+    .acm-modal{
+        padding:0;
+        align-items:flex-end;
+        /* ⭐ FIX: dùng dvh để trừ address bar mobile */
+        height:100vh;
+        height:100dvh;
+    }
     .acm-box{
         max-width:100%;
+        /* ⭐ FIX: dùng dvh + fallback vh cho browser cũ */
         height:92vh;
+        height:92dvh;
+        max-height:calc(100vh - 8px);
+        max-height:calc(100dvh - 8px);
         border-radius:20px 20px 0 0;
         animation:acmSlideUp .3s cubic-bezier(.34,1.56,.64,1);
     }
@@ -7530,6 +7700,303 @@ body.has-floating-group #chatFloatWrap{
         bottom:calc(16px + env(safe-area-inset-bottom));
         font-size:1.1rem;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ CONFIRM MODAL — Xoá lịch sử chat
+   ═══════════════════════════════════════════════════════════════ */
+.acm-confirm-overlay{
+    position:fixed;inset:0;
+    background:rgba(15,23,42,.8);
+    backdrop-filter:blur(4px);
+    z-index:6000;
+    display:none;
+    align-items:center;justify-content:center;
+    padding:1rem;
+}
+.acm-confirm-overlay.show{display:flex;}
+.acm-confirm-box{
+    background:#fff;
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+    padding:1.5rem;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    animation:acmSlideIn .3s cubic-bezier(.34,1.56,.64,1);
+    text-align:center;
+}
+[data-theme="dark"] .acm-confirm-box{background:#1e293b;}
+.acm-confirm-icon{
+    width:60px;height:60px;border-radius:50%;
+    background:linear-gradient(135deg,#fef2f2,#fee2e2);
+    color:#dc2626;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.6rem;
+    margin:0 auto 1rem;
+}
+[data-theme="dark"] .acm-confirm-icon{background:rgba(220,38,38,.2);}
+.acm-confirm-title{
+    font-size:1.05rem;font-weight:800;
+    color:#0f172a;margin-bottom:.5rem;
+}
+[data-theme="dark"] .acm-confirm-title{color:#f1f5f9;}
+.acm-confirm-desc{
+    font-size:.85rem;color:#64748b;
+    line-height:1.5;margin-bottom:1.25rem;
+}
+[data-theme="dark"] .acm-confirm-desc{color:#94a3b8;}
+.acm-confirm-desc b{color:#dc2626;font-weight:800;}
+.acm-confirm-actions{
+    display:flex;gap:.5rem;justify-content:center;
+    flex-wrap:wrap;
+}
+.acm-confirm-btn{
+    padding:.6rem 1.2rem;
+    border-radius:10px;
+    border:1.5px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    font-size:.85rem;font-weight:700;
+    cursor:pointer;font-family:inherit;
+    display:inline-flex;align-items:center;gap:.4rem;
+    transition:.15s;
+}
+.acm-confirm-btn:hover{background:#f8fafc;}
+.acm-confirm-btn.danger{
+    background:linear-gradient(135deg,#dc2626,#b91c1c);
+    color:#fff;border-color:#dc2626;
+    box-shadow:0 4px 12px rgba(220,38,38,.3);
+}
+.acm-confirm-btn.danger:hover{
+    box-shadow:0 6px 18px rgba(220,38,38,.5);
+    transform:translateY(-1px);
+}
+.acm-confirm-btn:disabled{opacity:.5;cursor:not-allowed;}
+[data-theme="dark"] .acm-confirm-btn{
+    background:#334155;color:#f1f5f9;border-color:#475569;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ BULK COMPOSE MODAL
+   ═══════════════════════════════════════════════════════════════ */
+.acm-bulk-compose{
+    position:fixed;inset:0;
+    background:rgba(15,23,42,.8);
+    backdrop-filter:blur(4px);
+    z-index:6100;
+    display:none;
+    align-items:center;justify-content:center;
+    padding:1rem;
+}
+.acm-bulk-compose.show{display:flex;}
+.acm-bulk-compose-box{
+    background:#fff;
+    border-radius:18px;
+    max-width:560px;
+    width:100%;
+    max-height:90vh;
+    display:flex;flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    animation:acmSlideIn .3s cubic-bezier(.34,1.56,.64,1);
+    overflow:hidden;
+}
+[data-theme="dark"] .acm-bulk-compose-box{background:#1e293b;}
+.acm-bulk-compose-header{
+    padding:1rem 1.25rem;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    display:flex;align-items:center;gap:.75rem;
+    flex-shrink:0;
+}
+.acm-bulk-compose-header h3{
+    font-size:1rem;font-weight:800;
+    margin:0;flex:1;
+    display:flex;align-items:center;gap:.4rem;
+}
+.acm-bulk-compose-close{
+    width:32px;height:32px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.2);
+    color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.9rem;flex-shrink:0;
+    transition:.15s;
+}
+.acm-bulk-compose-close:hover{background:rgba(255,255,255,.35);}
+.acm-bulk-compose-body{
+    padding:1.25rem;
+    overflow-y:auto;
+    flex:1;
+    min-height:0;
+}
+.acm-bulk-label{
+    font-size:.72rem;
+    font-weight:800;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    margin-bottom:.4rem;
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+}
+[data-theme="dark"] .acm-bulk-label{color:#94a3b8;}
+.acm-bulk-textarea{
+    width:100%;
+    min-height:130px;
+    max-height:280px;
+    padding:.85rem 1rem;
+    border-radius:12px;
+    border:1.5px solid #e2e8f0;
+    background:#f8fafc;
+    color:#0f172a;
+    font-size:.9rem;
+    font-family:inherit;
+    line-height:1.5;
+    outline:none;
+    resize:vertical;
+    transition:.15s;
+}
+.acm-bulk-textarea:focus{
+    border-color:#4f46e5;
+    box-shadow:0 0 0 3px rgba(79,70,229,.1);
+}
+[data-theme="dark"] .acm-bulk-textarea{
+    background:#0f172a;
+    color:#f1f5f9;
+    border-color:#334155;
+}
+.acm-bulk-charcount{
+    text-align:right;
+    font-size:.72rem;
+    color:#94a3b8;
+    margin-top:.35rem;
+}
+.acm-bulk-templates{
+    display:flex;
+    gap:.35rem;
+    flex-wrap:wrap;
+    margin-top:.65rem;
+}
+.acm-bulk-template{
+    padding:.35rem .75rem;
+    border-radius:50px;
+    border:1.5px solid #e2e8f0;
+    background:#fff;
+    color:#4f46e5;
+    font-size:.72rem;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+}
+.acm-bulk-template:hover{
+    background:#4f46e5;
+    color:#fff;
+    border-color:#4f46e5;
+}
+[data-theme="dark"] .acm-bulk-template{
+    background:#334155;
+    color:#a5b4fc;
+    border-color:#475569;
+}
+[data-theme="dark"] .acm-bulk-template:hover{
+    background:#4f46e5;
+    color:#fff;
+}
+.acm-bulk-recipients{
+    margin-top:1rem;
+    padding:.75rem;
+    border-radius:10px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    max-height:140px;
+    overflow-y:auto;
+}
+[data-theme="dark"] .acm-bulk-recipients{
+    background:#0f172a;
+    border-color:#334155;
+}
+.acm-bulk-recipient-tag{
+    display:inline-block;
+    padding:.2rem .55rem;
+    margin:.15rem;
+    border-radius:50px;
+    background:#e0e7ff;
+    color:#3730a3;
+    font-size:.7rem;
+    font-weight:700;
+}
+[data-theme="dark"] .acm-bulk-recipient-tag{
+    background:rgba(124,58,237,.25);
+    color:#ddd6fe;
+}
+.acm-bulk-compose-footer{
+    padding:1rem 1.25rem;
+    border-top:1px solid #e2e8f0;
+    display:flex;
+    gap:.5rem;
+    justify-content:flex-end;
+    flex-shrink:0;
+    background:#fff;
+}
+[data-theme="dark"] .acm-bulk-compose-footer{
+    background:#1e293b;
+    border-color:#334155;
+}
+.acm-bulk-send-btn{
+    padding:.7rem 1.4rem;
+    border-radius:10px;
+    border:none;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    font-size:.85rem;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    transition:.15s;
+    box-shadow:0 4px 12px rgba(124,58,237,.35);
+}
+.acm-bulk-send-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 6px 18px rgba(124,58,237,.5);
+}
+.acm-bulk-send-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+    transform:none;
+}
+.acm-bulk-progress{
+    display:none;
+    padding:.75rem 1.25rem;
+    background:linear-gradient(90deg, #eff6ff, #e0e7ff);
+    border-top:1px solid #c7d2fe;
+    flex-shrink:0;
+}
+.acm-bulk-progress.show{display:block;}
+.acm-bulk-progress-text{
+    font-size:.78rem;
+    font-weight:700;
+    color:#4f46e5;
+    margin-bottom:.4rem;
+    display:flex;
+    justify-content:space-between;
+    gap:.5rem;
+}
+.acm-bulk-progress-bar{
+    height:6px;
+    background:#c7d2fe;
+    border-radius:50px;
+    overflow:hidden;
+}
+.acm-bulk-progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,#4f46e5,#7c3aed);
+    border-radius:50px;
+    transition:width .3s ease;
+    width:0%;
 }
 
 /* ==== 🎯 DRAGGABLE FAB CSS ==== */
@@ -9365,6 +9832,9 @@ body.has-floating-group #chatFloatWrap{
         <!-- ═══ VIEW 1: DANH SÁCH USER ═══ -->
         <div class="acm-header" id="acmHeaderList">
             <h3><i class="fas fa-users-cog"></i> Quản lý Chat — Tất cả User</h3>
+            <button class="acm-bulk-toggle" id="acmBulkToggle" type="button" title="Chọn nhiều user để gửi hàng loạt">
+                <i class="fas fa-check-square"></i>
+            </button>
             <button class="acm-close" id="acmClose" type="button" title="Đóng">
                 <i class="fas fa-times"></i>
             </button>
@@ -9401,6 +9871,23 @@ body.has-floating-group #chatFloatWrap{
             </button>
         </div>
 
+        <!-- ⭐ BULK TOOLBAR -->
+        <div class="acm-bulk-toolbar" id="acmBulkToolbar">
+            <div class="acm-bulk-info">
+                <i class="fas fa-check-circle"></i>
+                Đã chọn: <span class="acm-bulk-count" id="acmBulkCount">0</span> user
+            </div>
+            <button class="acm-bulk-btn ghost" type="button" id="acmBulkSelectAll">
+                <i class="fas fa-check-double"></i> Chọn tất cả
+            </button>
+            <button class="acm-bulk-btn ghost" type="button" id="acmBulkClear">
+                <i class="fas fa-times"></i> Bỏ chọn
+            </button>
+            <button class="acm-bulk-btn primary" type="button" id="acmBulkSend" disabled>
+                <i class="fas fa-paper-plane"></i> Gửi hàng loạt
+            </button>
+        </div>
+
         <div class="acm-list" id="acmList">
             <div class="acm-loading">
                 <i class="fas fa-spinner fa-pulse"></i>
@@ -9426,6 +9913,79 @@ body.has-floating-group #chatFloatWrap{
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- ⭐ Confirm xoá lịch sử chat -->
+<div class="acm-confirm-overlay" id="acmConfirmDelete">
+    <div class="acm-confirm-box">
+        <div class="acm-confirm-icon">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <div class="acm-confirm-title">Xoá lịch sử chat?</div>
+        <div class="acm-confirm-desc" id="acmConfirmDesc">
+            Toàn bộ tin nhắn sẽ bị xoá vĩnh viễn và <b>không thể khôi phục</b>.
+        </div>
+        <div class="acm-confirm-actions">
+            <button class="acm-confirm-btn" type="button" id="acmConfirmCancel">
+                <i class="fas fa-times"></i> Huỷ
+            </button>
+            <button class="acm-confirm-btn danger" type="button" id="acmConfirmOk">
+                <i class="fas fa-trash-alt"></i> Xoá vĩnh viễn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ⭐ BULK MESSAGE COMPOSE MODAL -->
+<div class="acm-bulk-compose" id="acmBulkCompose">
+    <div class="acm-bulk-compose-box">
+        <div class="acm-bulk-compose-header">
+            <h3><i class="fas fa-bullhorn"></i> Nhắn tin hàng loạt</h3>
+            <button class="acm-bulk-compose-close" type="button" id="acmBulkComposeClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="acm-bulk-compose-body">
+            <div class="acm-bulk-label">
+                <i class="fas fa-users"></i> Người nhận (<span id="acmBulkRecipientCount">0</span>)
+            </div>
+            <div class="acm-bulk-recipients" id="acmBulkRecipientsList"></div>
+
+            <div class="acm-bulk-label" style="margin-top:1rem;">
+                <i class="fas fa-comment-dots"></i> Nội dung tin nhắn
+            </div>
+            <textarea class="acm-bulk-textarea" id="acmBulkTextarea"
+                      placeholder="Nhập nội dung tin nhắn gửi cho tất cả user đã chọn..."
+                      maxlength="1000"></textarea>
+            <div class="acm-bulk-charcount">
+                <span id="acmBulkCharCount">0</span>/1000
+            </div>
+
+            <div class="acm-bulk-templates">
+                <button class="acm-bulk-template" type="button" data-text="Chào bạn, admin đã xác nhận thanh toán và gia hạn tài khoản cho bạn. Chúc bạn học tốt! 🎓">✅ Đã gia hạn</button>
+                <button class="acm-bulk-template" type="button" data-text="Chào bạn, admin đã nhận được yêu cầu gia hạn của bạn. Vui lòng chuyển khoản và xác nhận để được kích hoạt nhé!">💰 Nhắc thanh toán</button>
+                <button class="acm-bulk-template" type="button" data-text="Chào bạn, tài khoản của bạn sắp hết hạn. Vui lòng gia hạn để tiếp tục sử dụng đầy đủ tính năng nhé! ⏰">⏰ Nhắc gia hạn</button>
+                <button class="acm-bulk-template" type="button" data-text="Cảm ơn bạn đã ủng hộ. Chúc bạn học tiếng Trung hiệu quả! 🎉">🎉 Cảm ơn</button>
+            </div>
+        </div>
+        <div class="acm-bulk-progress" id="acmBulkProgress">
+            <div class="acm-bulk-progress-text">
+                <span><i class="fas fa-spinner fa-pulse"></i> Đang gửi...</span>
+                <span id="acmBulkProgressText">0/0</span>
+            </div>
+            <div class="acm-bulk-progress-bar">
+                <div class="acm-bulk-progress-fill" id="acmBulkProgressFill"></div>
+            </div>
+        </div>
+        <div class="acm-bulk-compose-footer">
+            <button class="acm-bulk-btn ghost" type="button" id="acmBulkComposeCancel">
+                <i class="fas fa-times"></i> Huỷ
+            </button>
+            <button class="acm-bulk-send-btn" type="button" id="acmBulkComposeSend" disabled>
+                <i class="fas fa-paper-plane"></i> Gửi <span id="acmBulkSendCount">0</span> tin
+            </button>
+        </div>
     </div>
 </div>
 
@@ -21765,9 +22325,15 @@ window.favFilterCount = favFilterCount;
 
 /* ═══════════════════════════════════════════════════════════════
    📋 ADMIN CHAT MANAGER — Trình quản lý chat + Lịch sử hoạt động
+   + Xoá lịch sử + Nhắn tin hàng loạt
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
+
+    /* ⭐ CẤU HÌNH ONLINE: 20 PHÚT
+       User được coi là ONLINE nếu timestamp presence
+       trong vòng 20 phút gần nhất. */
+    var ACM_PRESENCE_CUTOFF_MS = 20 * 60 * 1000;  // 20 phút = 1,200,000 ms
 
     var ACM = {
         inited: false,
@@ -21775,19 +22341,22 @@ window.favFilterCount = favFilterCount;
         view: 'list',           // 'list' | 'history'
         usersUnsub: null,
         threadsUnsub: null,
-        presenceUnsub: null,    // RTDB presence
-        historyUnsub: null,     // Firestore activity logs
-        loginLogsUnsub: null,   // ⭐ MỚI: watch login_logs
+        presenceUnsub: null,
+        historyUnsub: null,
+        loginLogsUnsub: null,
         currentHistoryEmail: null,
         allUsers: [],
         usersMap: {},
         threadsMap: {},
-        onlineMap: {},          // { email: true } — RTDB
-        loginLogsMap: {},       // ⭐ MỚI: { email: timestamp } — login_logs
+        onlineMap: {},
+        loginLogsMap: {},
         activityMap: {},
         filter: 'all',
         searchTerm: '',
-        renderTimer: null
+        renderTimer: null,
+        pendingDelete: null,
+        bulkMode: false,        // ⭐ bulk
+        selectedUsers: []       // ⭐ bulk
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -21799,6 +22368,10 @@ window.favFilterCount = favFilterCount;
     function jsStr(s) {
         if (s == null) return '';
         return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');
+    }
+    function cssEsc(s) {
+        if (window.CSS && CSS.escape) return CSS.escape(s);
+        return String(s).replace(/([^\w-])/g, '\\$1');
     }
     function getDb() { return window.db || null; }
     function getCu() { return window.currentUser || null; }
@@ -21858,20 +22431,24 @@ window.favFilterCount = favFilterCount;
                 lastMessage: '',
                 lastMessageAt: 0,
                 lastMessageFrom: '',
-                lastLoginAt: ACM.loginLogsMap[emailLower] || 0   // ⭐ MỚI
+                lastLoginAt: ACM.loginLogsMap[emailLower] || 0
             };
         });
 
         // 2. Merge với chat_threads
         Object.keys(ACM.threadsMap).forEach(function(email) {
             var t = ACM.threadsMap[email];
+
+            // ⭐ Chỉ coi "có tin nhắn" nếu lastMessage có nội dung thực
+            var threadHasMessages = !!(t.lastMessage && t.lastMessage.trim());
+
             if (!map[email]) {
                 map[email] = {
                     email: email,
                     name: t.userName || email.split('@')[0],
                     role: 'user',
                     tier: 'demo',
-                    thread: t,
+                    thread: threadHasMessages ? t : null,   // ⭐ null nếu rỗng
                     unread: 0,
                     lastMessage: '',
                     lastMessageAt: 0,
@@ -21879,7 +22456,11 @@ window.favFilterCount = favFilterCount;
                     lastLoginAt: 0
                 };
             }
-            map[email].thread = t;
+
+            if (threadHasMessages) {
+                map[email].thread = t;
+            }
+
             map[email].unread = t.unreadByAdmin || 0;
             map[email].lastMessage = t.lastMessage || '';
             map[email].lastMessageAt = t.lastMessageAt
@@ -21888,7 +22469,6 @@ window.favFilterCount = favFilterCount;
             map[email].lastMessageFrom = t.lastMessageFrom || '';
             if (t.userName && !map[email].name) map[email].name = t.userName;
 
-            // ⭐ Fallback: nếu chưa có login log → dùng last message time
             if (!map[email].lastLoginAt && map[email].lastMessageAt) {
                 map[email].lastLoginAt = map[email].lastMessageAt;
             }
@@ -21899,26 +22479,21 @@ window.favFilterCount = favFilterCount;
 
         // 4. Sort: unread > online > login gần đây > có tin gần đây > alphabet
         ACM.allUsers.sort(function(a, b) {
-            // Ưu tiên 1: unread
             if (a.unread > 0 && b.unread === 0) return -1;
             if (a.unread === 0 && b.unread > 0) return 1;
 
-            // Ưu tiên 2: đang online (RTDB presence)
             var aOn = ACM.onlineMap[a.email] ? 1 : 0;
             var bOn = ACM.onlineMap[b.email] ? 1 : 0;
             if (aOn !== bOn) return bOn - aOn;
 
-            // ⭐ Ưu tiên 3: login gần đây (login_logs)
             if (a.lastLoginAt !== b.lastLoginAt) {
                 return b.lastLoginAt - a.lastLoginAt;
             }
 
-            // Ưu tiên 4: có tin nhắn gần đây
             if (a.lastMessageAt > 0 && b.lastMessageAt === 0) return -1;
             if (a.lastMessageAt === 0 && b.lastMessageAt > 0) return 1;
             if (a.lastMessageAt !== b.lastMessageAt) return b.lastMessageAt - a.lastMessageAt;
 
-            // Cuối: alphabet
             return (a.name || '').localeCompare(b.name || '');
         });
 
@@ -21932,12 +22507,21 @@ window.favFilterCount = favFilterCount;
     function updateStats() {
         var all = ACM.allUsers.length;
         var unread = 0, hasThread = 0, noThread = 0, online = 0;
+
         ACM.allUsers.forEach(function(u) {
+            // ⭐ Chỉ đếm "có tin nhắn" nếu thread có lastMessage thực
+            var threadHasMessages = false;
+            if (u.thread) {
+                var t = u.thread;
+                threadHasMessages = !!(t.lastMessage && t.lastMessage.trim());
+            }
+
             if (u.unread > 0) unread++;
-            if (u.thread) hasThread++;
+            if (threadHasMessages) hasThread++;
             else noThread++;
             if (ACM.onlineMap[u.email]) online++;
         });
+
         var el;
         if ((el = $id('acmCountAll'))) el.textContent = all;
         if ((el = $id('acmCountOnline'))) el.textContent = online;
@@ -21945,6 +22529,7 @@ window.favFilterCount = favFilterCount;
         if ((el = $id('acmCountHasThread'))) el.textContent = hasThread;
         if ((el = $id('acmCountNoThread'))) el.textContent = noThread;
 
+        // ⭐ Badge FAB
         var fabBadge = $id('acmFabBadge');
         if (fabBadge) {
             if (unread > 0) {
@@ -21954,6 +22539,11 @@ window.favFilterCount = favFilterCount;
                 fabBadge.classList.remove('show');
             }
         }
+
+        console.log('📊 ACM Stats:', {
+            all: all, online: online, unread: unread,
+            hasThread: hasThread, noThread: noThread
+        });
     }
 
     function scheduleRender() {
@@ -22001,10 +22591,22 @@ window.favFilterCount = favFilterCount;
         }
 
         var html = '';
+
+        // ⭐ Select all row (chỉ hiện trong bulk mode)
+        var allSelected = list.length > 0 && list.every(function(u) {
+            return ACM.selectedUsers.indexOf(u.email) !== -1;
+        });
+        html += '<label class="acm-select-all-row">' +
+            '<input type="checkbox" ' + (allSelected ? 'checked' : '') +
+                ' onchange="window.__acmToggleSelectAll(this.checked)" />' +
+            '<span>Chọn tất cả (' + list.length + ' user đang hiển thị)</span>' +
+        '</label>';
+
         list.forEach(function(u) {
             var hasUnread = u.unread > 0;
             var hasThread = !!u.thread;
             var isOnline = !!ACM.onlineMap[u.email];
+            var isSelected = ACM.selectedUsers.indexOf(u.email) !== -1;
             var initial = (u.name || u.email || '?').charAt(0).toUpperCase();
             var tierClass = getTierClass(u.role === 'admin' ? 'admin' : u.tier);
             var tierLabel = getTierLabel(u.role === 'admin' ? 'admin' : u.tier);
@@ -22020,7 +22622,6 @@ window.favFilterCount = favFilterCount;
                 preview = '<i>Chưa nhắn tin</i>';
             }
 
-            // ⭐ Thời gian hoạt động gần nhất — Ưu tiên: Online > Login > Chat
             var timeText = '';
             var timeClass = '';
             if (isOnline) {
@@ -22036,7 +22637,13 @@ window.favFilterCount = favFilterCount;
             html += '<div class="acm-user' +
                         (hasUnread ? ' has-unread' : '') +
                         (hasThread ? '' : ' no-thread') +
-                    '">' +
+                        (isSelected ? ' selected' : '') +
+                    '" data-email="' + esc(u.email) + '">' +
+                '<label class="acm-user-checkbox" onclick="event.stopPropagation()">' +
+                    '<input type="checkbox" ' +
+                        (isSelected ? 'checked' : '') +
+                        ' onchange="window.__acmToggleSelect(\'' + jsStr(u.email) + '\', this.checked)" />' +
+                '</label>' +
                 '<div class="acm-user-avatar' +
                     (hasThread ? '' : ' no-thread') +
                     (isOnline ? ' online' : '') +
@@ -22058,6 +22665,14 @@ window.favFilterCount = favFilterCount;
                         (u.unread > 99 ? '99+' : u.unread) + '</span>' : '') +
                 '</div>' +
                 '<div class="acm-user-actions">' +
+                    (hasThread ?
+                        '<button class="acm-user-btn delete-history" type="button" ' +
+                            'onclick="window.__acmDeleteHistory(\'' + jsStr(u.email) + '\', \'' + jsStr(u.name || u.email) + '\', ' + (u.unread || 0) + ')" ' +
+                            'title="Xoá lịch sử chat">' +
+                            '<i class="fas fa-trash-alt"></i>' +
+                        '</button>'
+                        : ''
+                    ) +
                     '<button class="acm-user-btn history" type="button" ' +
                         'onclick="window.__acmShowHistory(\'' + jsStr(u.email) + '\')" ' +
                         'title="Xem lịch sử hoạt động">' +
@@ -22076,6 +22691,401 @@ window.favFilterCount = favFilterCount;
     }
 
     /* ═══════════════════════════════════════════════════════════
+       ⭐ BULK MODE
+       ═══════════════════════════════════════════════════════════ */
+    function toggleBulkMode() {
+        ACM.bulkMode = !ACM.bulkMode;
+        document.body.classList.toggle('acm-bulk-mode', ACM.bulkMode);
+
+        var btn = $id('acmBulkToggle');
+        if (btn) btn.classList.toggle('active', ACM.bulkMode);
+
+        var toolbar = $id('acmBulkToolbar');
+        if (toolbar) toolbar.classList.toggle('show', ACM.bulkMode);
+
+        if (!ACM.bulkMode) {
+            ACM.selectedUsers = [];
+            updateBulkCount();
+        }
+
+        scheduleRender();
+    }
+
+    window.__acmToggleSelect = function(email, checked) {
+        if (!email) return;
+        var idx = ACM.selectedUsers.indexOf(email);
+        if (checked && idx === -1) {
+            ACM.selectedUsers.push(email);
+        } else if (!checked && idx !== -1) {
+            ACM.selectedUsers.splice(idx, 1);
+        }
+        updateBulkCount();
+        var userEl = document.querySelector('.acm-user[data-email="' + cssEsc(email) + '"]');
+        if (userEl) userEl.classList.toggle('selected', checked);
+    };
+
+    window.__acmToggleSelectAll = function(checked) {
+        var visibleList = ACM.allUsers.filter(function(u) {
+            if (ACM.filter === 'online' && !ACM.onlineMap[u.email]) return false;
+            if (ACM.filter === 'unread' && u.unread === 0) return false;
+            if (ACM.filter === 'has-thread' && !u.thread) return false;
+            if (ACM.filter === 'no-thread' && u.thread) return false;
+            if (ACM.searchTerm) {
+                var s = ACM.searchTerm.toLowerCase();
+                var name = (u.name || '').toLowerCase();
+                var email = (u.email || '').toLowerCase();
+                if (name.indexOf(s) < 0 && email.indexOf(s) < 0) return false;
+            }
+            return true;
+        });
+
+        if (checked) {
+            visibleList.forEach(function(u) {
+                if (ACM.selectedUsers.indexOf(u.email) === -1) {
+                    ACM.selectedUsers.push(u.email);
+                }
+            });
+        } else {
+            visibleList.forEach(function(u) {
+                var idx = ACM.selectedUsers.indexOf(u.email);
+                if (idx !== -1) ACM.selectedUsers.splice(idx, 1);
+            });
+        }
+
+        updateBulkCount();
+        scheduleRender();
+    };
+
+    function updateBulkCount() {
+        var count = ACM.selectedUsers.length;
+        var countEl = $id('acmBulkCount');
+        if (countEl) countEl.textContent = count;
+
+        var sendBtn = $id('acmBulkSend');
+        if (sendBtn) sendBtn.disabled = count === 0;
+    }
+
+    function openBulkCompose() {
+        var count = ACM.selectedUsers.length;
+        if (count === 0) {
+            alert('⚠️ Vui lòng chọn ít nhất 1 user!');
+            return;
+        }
+
+        var listEl = $id('acmBulkRecipientsList');
+        if (listEl) {
+            var html = '';
+            ACM.selectedUsers.forEach(function(email) {
+                var user = ACM.usersMap[email] || {};
+                var name = user.name || email.split('@')[0];
+                html += '<span class="acm-bulk-recipient-tag">' + esc(name) + '</span>';
+            });
+            listEl.innerHTML = html;
+        }
+
+        var countEl = $id('acmBulkRecipientCount');
+        if (countEl) countEl.textContent = count;
+
+        var sendCountEl = $id('acmBulkSendCount');
+        if (sendCountEl) sendCountEl.textContent = count;
+
+        var ta = $id('acmBulkTextarea');
+        if (ta) {
+            ta.value = '';
+            var cc = $id('acmBulkCharCount');
+            if (cc) cc.textContent = '0';
+        }
+
+        var prog = $id('acmBulkProgress');
+        if (prog) prog.classList.remove('show');
+        var fill = $id('acmBulkProgressFill');
+        if (fill) fill.style.width = '0%';
+
+        var sendBtn = $id('acmBulkComposeSend');
+        if (sendBtn) sendBtn.disabled = true;
+
+        $id('acmBulkCompose').classList.add('show');
+        setTimeout(function() { if (ta) ta.focus(); }, 200);
+    }
+
+    function closeBulkCompose() {
+        $id('acmBulkCompose').classList.remove('show');
+    }
+
+    async function sendBulkMessage() {
+        if (!isAdmin()) {
+            alert('Chỉ admin mới có quyền gửi!');
+            return;
+        }
+
+        var ta = $id('acmBulkTextarea');
+        var text = (ta && ta.value.trim()) || '';
+
+        if (!text) {
+            alert('⚠️ Vui lòng nhập nội dung tin nhắn!');
+            if (ta) ta.focus();
+            return;
+        }
+
+        var recipients = ACM.selectedUsers.slice();
+        if (recipients.length === 0) {
+            alert('⚠️ Không có user nào để gửi!');
+            return;
+        }
+
+        if (!confirm('📤 GỬI TIN NHẮN HÀNG LOẠT\n\n' +
+                     'Số người nhận: ' + recipients.length + '\n' +
+                     'Nội dung: ' + text.substring(0, 100) + (text.length > 100 ? '...' : '') +
+                     '\n\nTiếp tục?')) return;
+
+        var db = getDb();
+        if (!db) return;
+
+        var sendBtn = $id('acmBulkComposeSend');
+        var cancelBtn = $id('acmBulkComposeCancel');
+        var closeBtn = $id('acmBulkComposeClose');
+
+        if (sendBtn) sendBtn.disabled = true;
+        if (cancelBtn) cancelBtn.disabled = true;
+        if (closeBtn) closeBtn.disabled = true;
+
+        var prog = $id('acmBulkProgress');
+        if (prog) prog.classList.add('show');
+
+        var success = 0;
+        var failed = 0;
+        var adminEmail = (getCu() && getCu().email) || 'admin';
+        var adminName = (getCu() && getCu().name) || 'Admin';
+
+        for (var i = 0; i < recipients.length; i++) {
+            var email = recipients[i];
+
+            var progText = $id('acmBulkProgressText');
+            if (progText) progText.textContent = (i + 1) + '/' + recipients.length;
+            var progFill = $id('acmBulkProgressFill');
+            if (progFill) progFill.style.width = Math.round(((i + 1) / recipients.length) * 100) + '%';
+
+            try {
+                var threadRef = db.collection('chat_threads').doc(email);
+                var doc = await threadRef.get();
+                var data = doc.exists ? doc.data() : {};
+                var msgs = data.messages || [];
+
+                var newMsg = {
+                    from: 'admin',
+                    fromEmail: adminEmail,
+                    fromName: adminName,
+                    text: text,
+                    at: firebase.firestore.Timestamp.now()
+                };
+                msgs.push(newMsg);
+                if (msgs.length > 100) msgs = msgs.slice(-100);
+
+                await threadRef.set({
+                    messages: msgs,
+                    lastMessage: text.substring(0, 100),
+                    lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastMessageFrom: 'admin',
+                    userEmail: email,
+                    userName: data.userName || email.split('@')[0],
+                    unreadByUser: (data.unreadByUser || 0) + 1,
+                    unreadByAdmin: 0,
+                    adminTypingAt: null
+                }, { merge: true });
+
+                success++;
+                console.log('✅ Bulk sent to:', email);
+
+            } catch (e) {
+                failed++;
+                console.error('❌ Bulk send failed:', email, e);
+            }
+
+            if (i < recipients.length - 1) {
+                await new Promise(function(r) { setTimeout(r, 100); });
+            }
+        }
+
+        try {
+            db.collection('activity_logs').add({
+                email: adminEmail,
+                type: 'admin',
+                title: 'Gửi tin nhắn hàng loạt',
+                detail: 'Gửi cho ' + success + '/' + recipients.length + ' user: ' + text.substring(0, 80),
+                at: firebase.firestore.FieldValue.serverTimestamp(),
+                metadata: { recipients: recipients, success: success, failed: failed }
+            });
+        } catch(e) {}
+
+        if (sendBtn) sendBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+        if (closeBtn) closeBtn.disabled = false;
+
+        showSmallToast('✅ Đã gửi ' + success + '/' + recipients.length + ' tin' +
+                       (failed > 0 ? ' (' + failed + ' lỗi)' : ''));
+
+        closeBulkCompose();
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ XOÁ LỊCH SỬ CHAT
+       ═══════════════════════════════════════════════════════════ */
+    window.__acmDeleteHistory = function(email, userName, unread) {
+        if (!isAdmin()) {
+            alert('Chỉ admin mới có quyền xoá!');
+            return;
+        }
+        if (!email) return;
+
+        ACM.pendingDelete = { email: email, userName: userName || email };
+
+        var descEl = $id('acmConfirmDesc');
+        if (descEl) {
+            descEl.innerHTML =
+                'Xoá toàn bộ tin nhắn của <b>' + esc(userName || email) + '</b>' +
+                '<br><span style="font-size:.78rem;color:#94a3b8">' + esc(email) + '</span>' +
+                (unread > 0 ? '<br><br>⚠️ Có <b>' + unread + '</b> tin chưa đọc cũng sẽ bị xoá.' : '') +
+                '<br><br>Hành động này <b>không thể khôi phục</b>.';
+        }
+
+        $id('acmConfirmDelete').classList.add('show');
+    };
+
+    function hideDeleteConfirm() {
+        $id('acmConfirmDelete').classList.remove('show');
+        ACM.pendingDelete = null;
+    }
+
+    async function doDeleteHistory() {
+        if (!ACM.pendingDelete) return;
+        var db = getDb();
+        if (!db) return;
+
+        var btn = $id('acmConfirmOk');
+        var originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang xoá...';
+
+        try {
+            var email = ACM.pendingDelete.email;
+            var userName = ACM.pendingDelete.userName;
+            var threadRef = db.collection('chat_threads').doc(email);
+
+            // ⭐ Ghi Firestore
+            await threadRef.set({
+                messages: [],
+                lastMessage: '',
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastMessageFrom: '',
+                unreadByAdmin: 0,
+                unreadByUser: 0,
+                userTypingAt: null,
+                adminTypingAt: null,
+                historyClearedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                historyClearedBy: (getCu() && getCu().email) || 'admin'
+            }, { merge: true });
+
+            console.log('✅ Đã xoá lịch sử chat:', email);
+
+            // ⭐ Cập nhật LOCAL state NGAY — UI phản hồi tức thì
+            if (ACM.threadsMap && ACM.threadsMap[email]) {
+                ACM.threadsMap[email].lastMessage = '';
+                ACM.threadsMap[email].lastMessageAt = null;
+                ACM.threadsMap[email].lastMessageFrom = '';
+                ACM.threadsMap[email].unreadByAdmin = 0;
+            }
+
+            // ⭐ Bỏ khỏi danh sách đã chọn (nếu đang bulk mode)
+            var selIdx = ACM.selectedUsers.indexOf(email);
+            if (selIdx !== -1) ACM.selectedUsers.splice(selIdx, 1);
+            updateBulkCount();
+
+            // ⭐ Xoá cache
+            try { localStorage.removeItem('admin_users_cache'); } catch(e) {}
+
+            // ⭐ Render lại NGAY (dùng local state đã cập nhật)
+            rebuildList();
+            updateStats();
+
+            // ⭐ Đóng confirm + đóng chat nếu đang mở với user này
+            hideDeleteConfirm();
+
+            // ⭐ Nếu chat đang mở với user này → reset chat body
+            try {
+                var chatBox = document.querySelector('.chat-box');
+                var chatBody = $id('chatBody');
+                if (chatBody && chatBody.offsetParent !== null) {
+                    // Kiểm tra xem có đang mở chat với user này không
+                    var headerInfo = $id('chatHeaderInfo');
+                    if (headerInfo && headerInfo.textContent && headerInfo.textContent.indexOf(email) !== -1) {
+                        chatBody.innerHTML = '<div class="chat-empty">' +
+                            '<i class="fas fa-comments"></i>' +
+                            '<div class="title">Đã xoá lịch sử chat</div>' +
+                            '<div class="desc">Bắt đầu cuộc trò chuyện mới.</div>' +
+                        '</div>';
+                    }
+                }
+            } catch(e) {}
+
+            // ⭐ Ghi log admin action
+            try {
+                db.collection('activity_logs').add({
+                    email: email,
+                    type: 'admin',
+                    title: 'Admin đã xoá lịch sử chat',
+                    detail: 'Bởi: ' + ((getCu() && getCu().email) || 'admin'),
+                    at: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch(e) {}
+
+            // ⭐ Sau khi Firestore sync → rebuild lần cuối
+            setTimeout(function() {
+                rebuildList();
+                updateStats();
+            }, 800);
+
+            setTimeout(function() {
+                rebuildList();
+                updateStats();
+            }, 2000);
+
+            showSmallToast('✅ Đã xoá lịch sử chat của ' + userName);
+
+        } catch (err) {
+            console.error('❌ Lỗi xoá lịch sử:', err);
+            alert('❌ Lỗi: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    }
+    function showSmallToast(msg) {
+        var toast = document.getElementById('acmSmallToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'acmSmallToast';
+            toast.style.cssText =
+                'position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);' +
+                'background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;' +
+                'padding:.8rem 1.4rem;border-radius:50px;font-weight:800;font-size:.88rem;' +
+                'box-shadow:0 12px 40px rgba(22,163,74,.5);z-index:99999;' +
+                'transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s;' +
+                'opacity:0;pointer-events:none;max-width:90vw;text-align:center;';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        requestAnimationFrame(function() {
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            toast.style.opacity = '1';
+        });
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(function() {
+            toast.style.transform = 'translateX(-50%) translateY(-100px)';
+            toast.style.opacity = '0';
+        }, 3000);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
        📜 LỊCH SỬ HOẠT ĐỘNG
        ═══════════════════════════════════════════════════════════ */
     function showHistory(email) {
@@ -22089,6 +23099,7 @@ window.favFilterCount = favFilterCount;
         $id('acmHeaderList').style.display = 'none';
         $id('acmStats').style.display = 'none';
         $id('acmSearchBar').style.display = 'none';
+        $id('acmBulkToolbar').style.display = 'none';
         $id('acmList').style.display = 'none';
 
         $id('acmHeaderHistory').style.display = 'flex';
@@ -22144,7 +23155,6 @@ window.favFilterCount = favFilterCount;
         var tierLabel = getTierLabel(role === 'admin' ? 'admin' : tier);
         var isOnline = !!ACM.onlineMap[email];
 
-        // ⭐ Thời gian login gần nhất
         var lastLoginMs = ACM.loginLogsMap[(email || '').toLowerCase()] || 0;
         var lastLoginText = lastLoginMs > 0 ? formatDateTime(lastLoginMs) : '';
 
@@ -22171,7 +23181,6 @@ window.favFilterCount = favFilterCount;
                     '<div class="acm-hist-meta">' +
                         '<span><i class="fas fa-list"></i> ' + activities.length + ' hoạt động</span>' +
                         (threadInfo.userEmail ? '<span><i class="fas fa-comments"></i> Có tin nhắn</span>' : '') +
-                        // ⭐ Hiển thị lần login cuối
                         (lastLoginText ? '<span><i class="fas fa-sign-in-alt"></i> Login cuối: ' + esc(lastLoginText) + '</span>' : '') +
                     '</div>' +
                 '</div>' +
@@ -22286,6 +23295,7 @@ window.favFilterCount = favFilterCount;
         $id('acmHeaderList').style.display = 'flex';
         $id('acmStats').style.display = 'grid';
         $id('acmSearchBar').style.display = 'flex';
+        if (ACM.bulkMode) $id('acmBulkToolbar').style.display = 'flex';
         $id('acmList').style.display = 'block';
 
         if (ACM.historyUnsub) {
@@ -22302,7 +23312,6 @@ window.favFilterCount = favFilterCount;
         var db = getDb();
         if (!db || !isAdmin()) return;
 
-        // 1. Watch allowed_users
         ACM.usersUnsub = db.collection('allowed_users')
             .onSnapshot(function(snap) {
                 ACM.usersMap = {};
@@ -22332,7 +23341,6 @@ window.favFilterCount = favFilterCount;
                 console.error('ACM users watch error:', err);
             });
 
-        // 2. Watch chat_threads
         ACM.threadsUnsub = db.collection('chat_threads')
             .onSnapshot(function(snap) {
                 ACM.threadsMap = {};
@@ -22356,11 +23364,13 @@ window.favFilterCount = favFilterCount;
                 console.error('ACM threads watch error:', err);
             });
 
-        // 3. Watch RTDB presence
         if (typeof firebase !== 'undefined' && firebase.database) {
             try {
                 var presenceRef = firebase.database().ref('presence');
-                var PRESENCE_CUTOFF = 3 * 60 * 1000;
+
+                // ⭐ CUTOFF 20 PHÚT — user được coi là online nếu
+                // timestamp presence trong vòng 20 phút gần nhất.
+                var PRESENCE_CUTOFF = ACM_PRESENCE_CUTOFF_MS;
 
                 var handler = presenceRef.on('value', function(snap) {
                     var val = snap.val() || {};
@@ -22375,7 +23385,8 @@ window.favFilterCount = favFilterCount;
                         }
                     });
 
-                    console.log('👥 ACM: Online users:', Object.keys(ACM.onlineMap).length);
+                    console.log('👥 ACM: Online users (cutoff ' + (PRESENCE_CUTOFF / 60000) + ' phút):',
+                                Object.keys(ACM.onlineMap).length);
                     rebuildList();
                 }, function(err) {
                     console.error('ACM presence watch error:', err);
@@ -22389,7 +23400,6 @@ window.favFilterCount = favFilterCount;
             }
         }
 
-        // ⭐ 4. Watch login_logs — lần đăng nhập cuối
         ACM.loginLogsUnsub = db.collection('login_logs')
             .orderBy('time', 'desc')
             .limit(500)
@@ -22399,7 +23409,6 @@ window.favFilterCount = favFilterCount;
                     var d = doc.data() || {};
                     var email = (d.email || '').toLowerCase();
                     if (!email) return;
-                    // Chỉ lấy log mới nhất của mỗi user
                     if (!ACM.loginLogsMap[email] && d.time) {
                         var ts = d.time.toMillis ? d.time.toMillis() : 
                                  (d.time.seconds ? d.time.seconds * 1000 : 0);
@@ -22439,6 +23448,16 @@ window.favFilterCount = favFilterCount;
         $id('acmModal').classList.remove('show');
         document.body.style.overflow = '';
         if (ACM.view === 'history') hideHistory();
+        // Reset bulk mode khi đóng
+        if (ACM.bulkMode) {
+            ACM.bulkMode = false;
+            document.body.classList.remove('acm-bulk-mode');
+            var toolbar = $id('acmBulkToolbar');
+            if (toolbar) toolbar.classList.remove('show');
+            var btn = $id('acmBulkToggle');
+            if (btn) btn.classList.remove('active');
+            ACM.selectedUsers = [];
+        }
     }
 
     function toggleModal() {
@@ -22492,8 +23511,15 @@ window.favFilterCount = favFilterCount;
 
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && ACM.isOpen) {
-                if (ACM.view === 'history') hideHistory();
-                else closeModal();
+                if ($id('acmBulkCompose').classList.contains('show')) {
+                    closeBulkCompose();
+                } else if ($id('acmConfirmDelete').classList.contains('show')) {
+                    hideDeleteConfirm();
+                } else if (ACM.view === 'history') {
+                    hideHistory();
+                } else {
+                    closeModal();
+                }
             }
         });
 
@@ -22532,7 +23558,147 @@ window.favFilterCount = favFilterCount;
             });
         });
 
-        console.log('✅ Admin Chat Manager: init');
+        /* ⭐ Bind confirm xoá lịch sử */
+        var confirmCancel = $id('acmConfirmCancel');
+        if (confirmCancel) confirmCancel.addEventListener('click', hideDeleteConfirm);
+
+        var confirmOk = $id('acmConfirmOk');
+        if (confirmOk) confirmOk.addEventListener('click', doDeleteHistory);
+
+        var confirmOverlay = $id('acmConfirmDelete');
+        if (confirmOverlay) confirmOverlay.addEventListener('click', function(e) {
+            if (e.target === this) hideDeleteConfirm();
+        });
+
+        /* ⭐ BULK MODE */
+        var bulkToggle = $id('acmBulkToggle');
+        if (bulkToggle) bulkToggle.addEventListener('click', toggleBulkMode);
+
+        var bulkSelectAll = $id('acmBulkSelectAll');
+        if (bulkSelectAll) bulkSelectAll.addEventListener('click', function() {
+            window.__acmToggleSelectAll(true);
+        });
+
+        var bulkClear = $id('acmBulkClear');
+        if (bulkClear) bulkClear.addEventListener('click', function() {
+            ACM.selectedUsers = [];
+            updateBulkCount();
+            scheduleRender();
+        });
+
+        var bulkSend = $id('acmBulkSend');
+        if (bulkSend) bulkSend.addEventListener('click', openBulkCompose);
+
+        var bulkComposeClose = $id('acmBulkComposeClose');
+        if (bulkComposeClose) bulkComposeClose.addEventListener('click', closeBulkCompose);
+
+        var bulkComposeCancel = $id('acmBulkComposeCancel');
+        if (bulkComposeCancel) bulkComposeCancel.addEventListener('click', closeBulkCompose);
+
+        var bulkComposeOverlay = $id('acmBulkCompose');
+        if (bulkComposeOverlay) bulkComposeOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeBulkCompose();
+        });
+
+        var bulkComposeSend = $id('acmBulkComposeSend');
+        if (bulkComposeSend) bulkComposeSend.addEventListener('click', sendBulkMessage);
+
+        var bulkTextarea = $id('acmBulkTextarea');
+        if (bulkTextarea) {
+            bulkTextarea.addEventListener('input', function() {
+                var len = this.value.length;
+                var cc = $id('acmBulkCharCount');
+                if (cc) cc.textContent = len;
+                var sendBtn = $id('acmBulkComposeSend');
+                if (sendBtn) sendBtn.disabled = len === 0;
+            });
+        }
+
+        document.querySelectorAll('.acm-bulk-template').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var text = this.getAttribute('data-text') || this.textContent.trim();
+                var ta = $id('acmBulkTextarea');
+                if (ta) {
+                    ta.value = text;
+                    ta.dispatchEvent(new Event('input'));
+                    ta.focus();
+                }
+            });
+        });
+
+        /* ⭐ Auto-open chat khi URL có ?admin_chat=email (từ nút Telegram) */
+        handleAutoOpenFromUrl();
+
+        console.log('✅ Admin Chat Manager: init (presence cutoff = ' +
+                    (ACM_PRESENCE_CUTOFF_MS / 60000) + ' phút)');
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ AUTO-OPEN CHAT TỪ URL (link Telegram copy)
+       - Nếu admin đã login → mở chat ngay
+       - Nếu chưa login → lưu email vào localStorage, đợi login xong
+       ═══════════════════════════════════════════════════════════ */
+    function handleAutoOpenFromUrl() {
+        try {
+            var urlParams = new URLSearchParams(window.location.search);
+            var targetEmail = urlParams.get('admin_chat');
+
+            if (!targetEmail) return;
+
+            console.log('🎯 Phát hiện ?admin_chat=', targetEmail);
+
+            // ⭐ Lưu email vào localStorage (không mất khi đóng WebView)
+            try { localStorage.setItem('acm_pending_email', targetEmail); } catch(e) {}
+
+            // Đợi 2s cho Firebase init
+            setTimeout(function() {
+                if (isAdmin()) {
+                    openAutoChat(targetEmail);
+                }
+                // Nếu chưa login → để checkPendingEmail() xử lý sau
+            }, 2000);
+
+        } catch(e) {
+            console.warn('handleAutoOpenFromUrl error:', e);
+        }
+    }
+
+    function openAutoChat(targetEmail) {
+        console.log('🎯 Auto-open chat cho:', targetEmail);
+
+        // Mở modal admin chat manager
+        openModal();
+
+        // Đợi data load xong rồi mở thread
+        setTimeout(function() {
+            if (typeof window.__acmOpenThread === 'function') {
+                window.__acmOpenThread(targetEmail);
+            }
+
+            // Xoá param khỏi URL để không mở lại khi F5
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('admin_chat');
+                window.history.replaceState({}, '', url.pathname + url.hash);
+            } catch(e) {}
+
+            // Xoá pending email
+            try { localStorage.removeItem('acm_pending_email'); } catch(e) {}
+
+        }, 1500);
+    }
+
+    /* ⭐ Sau khi login admin xong → kiểm tra pending email */
+    function checkPendingEmail() {
+        try {
+            var pending = localStorage.getItem('acm_pending_email');
+            if (pending && isAdmin()) {
+                console.log('🎯 Có pending email sau login:', pending);
+                setTimeout(function() {
+                    openAutoChat(pending);
+                }, 1000);
+            }
+        } catch(e) {}
     }
 
     var _lastRole = null;
@@ -22550,6 +23716,8 @@ window.favFilterCount = favFilterCount;
             if (!ACM.usersUnsub && !ACM.threadsUnsub) {
                 startWatchers();
             }
+            // ⭐ Kiểm tra pending email sau khi login admin
+            checkPendingEmail();
         } else {
             fab.classList.remove('show');
             stopWatchers();
