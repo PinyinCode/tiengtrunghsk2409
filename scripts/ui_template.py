@@ -4361,7 +4361,7 @@ function maybeShowOnboarding() {
 
     var cfg = getOnboardingConfig();
     if (!cfg) return;
-
+}
 function showOnboardingModal() {
     var cfg = getOnboardingConfig();
     if (!cfg) return;
