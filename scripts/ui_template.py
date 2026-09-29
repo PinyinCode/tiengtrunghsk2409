@@ -5152,6 +5152,12 @@ function initApp() {
     if (typeof initSocial === 'function') initSocial();
     if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
     if (typeof initAuthUI === 'function') initAuthUI();
+
+    /* ⭐ INTRO: Banner "Chào mừng" + Modal hướng dẫn */
+    if (typeof initIntroModal === 'function') initIntroModal();
+    if (typeof initQuickIntroBanner === 'function') initQuickIntroBanner();
+    if (typeof maybeAutoOpenIntro === 'function') maybeAutoOpenIntro();
+
     initScrollDetection();
     initFabGroup();
     initTheme();
@@ -5256,6 +5262,9 @@ function initApp() {
     try { buildFilters(); applyFilter(); }
     catch(e) { console.error('Init error:', e); }
 }
+
+/* ⭐ Expose initApp để module intro hook vào (nếu cần) */
+window.initApp = initApp;
 /* ═══════════════════════════════════════════════════════════ */
 /* SỬA: REFRESH APP — VẼ LẠI BANNER SAU LOGIN/RELOAD            */
 /* ═══════════════════════════════════════════════════════════ */
