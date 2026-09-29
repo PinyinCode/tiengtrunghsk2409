@@ -3,10 +3,15 @@ name: Convert Excel to HTML
 on:
   push:
     paths:
+      # ⭐ File Excel: input.xlsx + 1060.xlsx (đặt trong data/)
+      - 'data/**'
+      # File chuyên ngành
       - 'scripts/data/**'
+      # Code Python
       - 'scripts/**/*.py'
       - 'scripts/config.json'
       - 'requirements.txt'
+      # Workflow tự nó
       - '.github/workflows/convert.yml'
   workflow_dispatch:
 
@@ -50,6 +55,9 @@ jobs:
           echo "=== Root ==="
           ls -la
           echo ""
+          echo "=== data/ ==="
+          ls -la data/ || echo "No data folder"
+          echo ""
           echo "=== scripts/ ==="
           ls -la scripts/
           echo ""
@@ -88,6 +96,24 @@ jobs:
               echo "  ❌ MISSING $el"
             fi
           done
+
+      - name: Verify datasets loaded
+        run: |
+          echo "=== Kiểm tra bộ dữ liệu trong index.html ==="
+          for ds in tonghop giaotiep; do
+            if grep -q "\"$ds\"" index.html; then
+              echo "  ✅ dataset '$ds' found"
+            else
+              echo "  ⚠️  dataset '$ds' MISSING"
+            fi
+          done
+          echo ""
+          echo "=== Kiểm tra tab Giao tiếp ==="
+          if grep -q "dsGiaotiepBtn" index.html; then
+            echo "  ✅ Nút Giao tiếp (dsGiaotiepBtn) found"
+          else
+            echo "  ❌ Nút Giao tiếp MISSING"
+          fi
 
       - name: Verify numbers converted
         run: |
