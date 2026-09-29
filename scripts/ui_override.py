@@ -4,22 +4,27 @@ ui_override.py
 ═══════════════════════════════════════════════════════════════════
 OVERRIDE UI — không đụng vào ui_template.py gốc.
 
-Cách dùng trong main.py:
+Cách dùng trong convert.py:
 
     from ui_template import build_ui_css, build_ui_html, build_ui_js
     from ui_override import (
-        override_ui_css, override_ui_html, override_ui_js
+        override_ui_css, override_ui_html, override_ui_js,
+        override_fullwidth_css,
     )
-    full_css  = override_ui_css(build_ui_css())
-    ui_html   = override_ui_html(build_ui_html())
-    full_js   = override_ui_js(build_ui_js())
+
+    full_css = override_ui_css(build_ui_css()) + ...
+    ui_html  = override_ui_html(build_ui_html())
+    full_js  = override_ui_js(build_ui_js()) + ...
 
 Cơ chế:
-  • CSS:   Thay block "DATASET SELECTOR" cũ bằng block mới (layout dọc)
-           Fix 2 bug CSS (.fav-btn.locked + .ds-fav-badge)
-  • HTML:  Đổi <div class="ds-main-row">...</div> → <div class="ds-list" id="dsList"></div>
-  • JS:    Thay hàm initDatasetSelector() + markCurrentDatasetActive()
-           Sửa switchDataset() + pfBuildDatasetSelect()
+  • CSS:   Thay block "DATASET SELECTOR" cũ (layout ngang)
+           bằng block mới (layout dọc).
+           Fix 2 bug CSS trong ui_template.py gốc.
+  • HTML:  Đổi <div class="ds-main-row">...</div>
+           → <div class="ds-list" id="dsList"></div>
+  • JS:    Chèn OVERRIDE cuối file JS để ghi đè
+           initDatasetSelector() + markCurrentDatasetActive().
+  • FULLWIDTH_CSS: Xóa block .ds-main-row nếu còn.
 ═══════════════════════════════════════════════════════════════════
 """
 import re
@@ -510,7 +515,7 @@ NEW_DATASET_CSS = r"""/* =======================================================
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  CSS MỚI — HTML cho Dataset Selector
+#  HTML MỚI cho Dataset Selector
 # ═══════════════════════════════════════════════════════════════════
 NEW_DATASET_HTML = r"""<!-- DATASET SELECTOR — LAYOUT DỌC -->
 <div class="dataset-selector" id="datasetSelector">
@@ -532,12 +537,14 @@ NEW_DATASET_HTML = r"""<!-- DATASET SELECTOR — LAYOUT DỌC -->
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  JS MỚI — 4 hàm thay thế
+#  JS MỚI — override 4 hàm
 # ═══════════════════════════════════════════════════════════════════
-NEW_JS_INIT_DATASET = r"""
+NEW_JS_OVERRIDE = r"""
 /* ═══════════════════════════════════════════════════════════════ */
-/* OVERRIDE: initDatasetSelector — render dọc từ DATASET_REGISTRY */
+/* ⚡ UI OVERRIDE — layout dọc cho Dataset Selector              */
+/* (chèn SAU định nghĩa gốc → tự động ghi đè)                    */
 /* ═══════════════════════════════════════════════════════════════ */
+
 function initDatasetSelector() {
     if (typeof DATASET_REGISTRY === 'undefined' || !DATASET_REGISTRY) return;
 
@@ -557,7 +564,8 @@ function initDatasetSelector() {
     mainDss.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
     specDss.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
 
-    var canAccessSpec = canAccessChuyenNganh();
+    var canAccessSpec = (typeof canAccessChuyenNganh === 'function')
+                        ? canAccessChuyenNganh() : true;
 
     /* ─── 1. TAB CHÍNH ─── */
     mainDss.forEach(function(ds) {
@@ -602,9 +610,6 @@ function initDatasetSelector() {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* HELPER: Tạo 1 tab dọc                                          */
-/* ═══════════════════════════════════════════════════════════════ */
 function buildRowTab(opts) {
     var ds = opts.dataset;
     var btn = document.createElement('button');
@@ -626,19 +631,14 @@ function buildRowTab(opts) {
     label.textContent = txt.normalize ? txt.normalize('NFC') : txt;
     btn.appendChild(label);
 
-    if (opts.meta) {
-        var meta = document.createElement('span');
-        meta.className = 'ds-row-meta';
-        meta.textContent = opts.meta;
-        btn.appendChild(meta);
-    }
-
     btn.addEventListener('click', function() {
         if (this.dataset.locked === '1') {
-            showChuyenNganhLockMessage();
+            if (typeof showChuyenNganhLockMessage === 'function') {
+                showChuyenNganhLockMessage();
+            }
             return;
         }
-        switchDataset(ds.id);
+        if (typeof switchDataset === 'function') switchDataset(ds.id);
         var wrap = $('dsSubWrap');
         if (wrap) wrap.style.display = 'none';
         var specRow = document.querySelector('.ds-row-spec');
@@ -649,9 +649,6 @@ function buildRowTab(opts) {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* HELPER: Tab "Chuyên ngành"                                     */
-/* ═══════════════════════════════════════════════════════════════ */
 function buildSpecRowTab(specCount, canAccess) {
     var btn = document.createElement('button');
     btn.type = 'button';
@@ -705,9 +702,6 @@ function buildSpecRowTab(specCount, canAccess) {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* HELPER: Sub-button chuyên ngành                                */
-/* ═══════════════════════════════════════════════════════════════ */
 function buildSpecSubBtn(ds, canAccess) {
     var btn = document.createElement('button');
     btn.className = 'ds-sub-btn' + (canAccess ? '' : ' locked');
@@ -734,10 +728,12 @@ function buildSpecSubBtn(ds, canAccess) {
         if (this.dataset.locked === '1') {
             e.preventDefault();
             e.stopPropagation();
-            showChuyenNganhLockMessage();
+            if (typeof showChuyenNganhLockMessage === 'function') {
+                showChuyenNganhLockMessage();
+            }
             return;
         }
-        switchDataset(ds.id);
+        if (typeof switchDataset === 'function') switchDataset(ds.id);
         var subGrid = $('dsSubGrid');
         if (subGrid) {
             subGrid.querySelectorAll('.ds-sub-btn').forEach(function(b) {
@@ -753,9 +749,6 @@ function buildSpecSubBtn(ds, canAccess) {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* OVERRIDE: markCurrentDatasetActive                             */
-/* ═══════════════════════════════════════════════════════════════ */
 function markCurrentDatasetActive() {
     var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : '';
     var isFav = (typeof favState !== 'undefined' && favState && favState.currentView);
@@ -804,20 +797,13 @@ function markCurrentDatasetActive() {
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  API PUBLIC: override_ui_css / override_ui_html / override_ui_js
+#  HÀM PUBLIC
 # ═══════════════════════════════════════════════════════════════════
 def override_ui_css(css_original):
-    """
-    Áp đè CSS mới lên CSS gốc:
-      1. Thay block DATASET SELECTOR cũ bằng block MỚI (layout dọc)
-      2. Fix bug .fav-btn.locked
-      3. Fix bug .ds-fav-badge
-    """
+    """Áp đè CSS mới lên CSS gốc."""
     css = css_original
 
-    # ─── 1. Tìm và thay block DATASET SELECTOR ───
-    #     Pattern: từ comment "DATASET SELECTOR - 2 CAP" 
-    #     đến hết block .ds-fav-row ... [data-theme="dark"] ... .active
+    # ─── 1. Thay block DATASET SELECTOR ───
     pattern = re.compile(
         r'/\* =+\s*\*/\s*'
         r'/\* DATASET SELECTOR - 2 CAP.*?'
@@ -829,7 +815,6 @@ def override_ui_css(css_original):
         print("✅ override_ui_css: Đã thay block DATASET SELECTOR")
     else:
         print("⚠️  override_ui_css: Không tìm thấy block DATASET SELECTOR cũ")
-        print("   → Đảm bảo file ui_template.py chưa bị sửa")
 
     # ─── 2. Fix bug .fav-btn.locked ───
     broken_fav_locked = """.fav-btn.locked{
@@ -856,18 +841,17 @@ def override_ui_css(css_original):
         css = css.replace(broken_fav_locked, fixed_fav_locked, 1)
         print("✅ override_ui_css: Đã fix bug .fav-btn.locked")
     else:
-        # Thử pattern linh hoạt hơn (khoảng trắng)
         pattern2 = re.compile(
             r'\.fav-btn\.locked\{\s*color:#dc2626;\s*\{.*?color:#b91c1c;\s*\}',
             re.DOTALL
         )
         if pattern2.search(css):
             css = pattern2.sub(fixed_fav_locked, css, count=1)
-            print("✅ override_ui_css: Đã fix bug .fav-btn.locked (pattern linh hoạt)")
+            print("✅ override_ui_css: Đã fix bug .fav-btn.locked (pattern 2)")
 
     # ─── 3. Fix bug .ds-fav-badge thiếu { ───
-    broken_badge = ".ds-btn[data-dataset-group=\"favorites\"] .ds-fav-badge    top:-8px;"
-    fixed_badge = ".ds-btn[data-dataset-group=\"favorites\"] .ds-fav-badge{\n    top:-8px;"
+    broken_badge = '.ds-btn[data-dataset-group="favorites"] .ds-fav-badge    top:-8px;'
+    fixed_badge = '.ds-btn[data-dataset-group="favorites"] .ds-fav-badge{\n    top:-8px;'
     if broken_badge in css:
         css = css.replace(broken_badge, fixed_badge, 1)
         print("✅ override_ui_css: Đã fix bug .ds-fav-badge")
@@ -876,63 +860,77 @@ def override_ui_css(css_original):
 
 
 def override_ui_html(html_original):
-    """
-    Thay block <div class="ds-main-row">...</div> 
-    bằng <div class="ds-list" id="dsList"></div>
-    """
+    """Thay block .ds-main-row bằng .ds-list."""
     html = html_original
 
-    # Pattern: từ comment "<!-- DATASET SELECTOR -->" 
-    #          đến hết </div> đóng của .ds-main-row
+    # Pattern A: từ comment DATASET SELECTOR → hết .ds-main-row
     pattern = re.compile(
         r'<!-- DATASET SELECTOR[^>]*-->.*?'
         r'<div class="ds-main-row">.*?</div>\s*'
-        r'<div class="ds-sub-wrap" id="dsSubWrap"',
+        r'(?=<div class="ds-sub-wrap" id="dsSubWrap")',
         re.DOTALL
     )
-    new_html_block = NEW_DATASET_HTML + "\n" + '<div class="ds-sub-wrap" id="dsSubWrap"'
-
     if pattern.search(html):
-        html = pattern.sub(new_html_block, html, count=1)
+        html = pattern.sub(NEW_DATASET_HTML + "\n\n", html, count=1)
         print("✅ override_ui_html: Đã thay block DATASET SELECTOR HTML")
-    else:
-        # Fallback: thay thế trực tiếp .ds-main-row
-        old_inner = re.compile(
-            r'<div class="ds-main-row">.*?(<!-- __FAV_DATASET_TAB__ -->).*?</div>',
-            re.DOTALL
-        )
-        if old_inner.search(html):
-            html = old_inner.sub(
-                '<div class="ds-list" id="dsList" role="tablist">\n'
-                '        \\1\n'
-                '    </div>',
-                html,
-                count=1
-            )
-            print("✅ override_ui_html: Đã thay .ds-main-row → .ds-list (fallback)")
+        return html
 
+    # Pattern B: chỉ thay .ds-main-row → .ds-list
+    old_inner = re.compile(
+        r'<div class="ds-main-row">.*?(<!-- __FAV_DATASET_TAB__ -->).*?</div>',
+        re.DOTALL
+    )
+    if old_inner.search(html):
+        html = old_inner.sub(
+            '<div class="ds-list" id="dsList" role="tablist">\n'
+            '        \\1\n'
+            '    </div>',
+            html,
+            count=1
+        )
+        print("✅ override_ui_html: Đã thay .ds-main-row → .ds-list (pattern B)")
+        return html
+
+    # Pattern C: tìm .ds-main-row bất kỳ
+    old_simple = re.compile(
+        r'<div class="ds-main-row">(.*?)</div>',
+        re.DOTALL
+    )
+    if old_simple.search(html):
+        html = old_simple.sub(
+            '<div class="ds-list" id="dsList" role="tablist">\n        \\1\n    </div>',
+            html,
+            count=1
+        )
+        print("✅ override_ui_html: Đã thay .ds-main-row → .ds-list (pattern C)")
+        return html
+
+    print("⚠️  override_ui_html: Không tìm thấy .ds-main-row")
     return html
 
 
 def override_ui_js(js_original):
-    """
-    Thay hàm initDatasetSelector() + markCurrentDatasetActive()
-    bằng phiên bản mới (layout dọc).
-    
-    Sử dụng cách an toàn: chèn OVERRIDE ở CUỐI file JS.
-    Vì JS cho phép redefine function → phiên bản sau đè phiên bản trước.
-    """
-    js = js_original
-
-    # Chèn ở cuối — JS function declaration sẽ override function cũ
-    override_block = (
-        "\n/* ═══════════════════════════════════════════════════════ */\n"
-        "/* ⚡ UI OVERRIDE — layout dọc cho Dataset Selector        */\n"
-        "/* (chèn SAU định nghĩa gốc → tự động ghi đè)              */\n"
-        "/* ═══════════════════════════════════════════════════════ */\n"
-        + NEW_JS_INIT_DATASET
-    )
-    js = js + override_block
+    """Chèn OVERRIDE cuối file JS (function declaration tự ghi đè)."""
+    js = js_original + "\n" + NEW_JS_OVERRIDE
     print("✅ override_ui_js: Đã chèn OVERRIDE cuối file JS")
-
     return js
+
+
+def override_fullwidth_css(css_original):
+    """Xóa block .ds-main-row khỏi FULLWIDTH_CSS (nếu có)."""
+    css = css_original
+
+    pattern = re.compile(
+        r'/\* ═+\s*\*/\s*'
+        r'/\* ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★ \*/\s*'
+        r'/\* ═+\s*\*/\s*'
+        r'.*?(?=/\* ═+\s*\*/\s*/\* ★★★ HEADER DESIGN)',
+        re.DOTALL
+    )
+    if pattern.search(css):
+        css = pattern.sub("", css, count=1)
+        print("✅ override_fullwidth_css: Đã xóa block .ds-main-row")
+    else:
+        print("ℹ️  override_fullwidth_css: Không có .ds-main-row (OK)")
+
+    return css
