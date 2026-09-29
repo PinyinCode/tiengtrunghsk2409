@@ -10341,6 +10341,21 @@ function initDatasetSelector() {
             }
         });
     }
+    /* ⭐ NÚT GIAO TIẾP — Cấp 1, KHÔNG KHOÁ (giống tonghop) */
+    var gtBtn = $('dsGiaotiepBtn');
+    if (gtBtn && !gtBtn.__boundToggle) {
+        gtBtn.__boundToggle = true;
+        gtBtn.title = '1060 câu giao tiếp tiếng Trung';
+        gtBtn.addEventListener('click', function() {
+            switchDataset('giaotiep');
+            var sub = $('dsSubWrap');
+            if (sub) sub.style.display = 'none';
+            document.querySelectorAll('.ds-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            gtBtn.classList.add('active');
+        });
+    }
 
     /* ═══════════════════════════════════════════════════════════
        SUB-BUTTONS CHUYÊN NGÀNH — Click để chuyển dataset
@@ -10374,19 +10389,32 @@ function initDatasetSelector() {
 }
 function markCurrentDatasetActive() {
     var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
         b.classList.toggle('active', b.dataset.dataset === current);
     });
-    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
-        b.classList.toggle('active', current === 'tonghop');
+
+    /* ⭐ Nút cấp 1 KHÔNG KHOÁ: Tổng hợp + Giao tiếp */
+    document.querySelectorAll('.ds-btn[data-dataset="tonghop"], .ds-btn[data-dataset="giaotiep"]').forEach(function(b) {
+        b.classList.toggle('active', current === b.dataset.dataset);
     });
-    if (current !== 'tonghop') {
+
+    /* Giao tiếp / Tổng hợp → ẩn dropdown chuyên ngành */
+    if (current === 'giaotiep' || current === 'tonghop') {
         var wrap = $('dsSubWrap');
-        if (wrap) wrap.style.display = 'block';
+        if (wrap) wrap.style.display = 'none';
         document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
-            b.classList.add('active');
+            b.classList.remove('active');
         });
+        return;
     }
+
+    /* Chuyên ngành → mở dropdown */
+    var wrap2 = $('dsSubWrap');
+    if (wrap2) wrap2.style.display = 'block';
+    document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
+        b.classList.add('active');
+    });
 }
 
 function switchDataset(datasetId) {
@@ -10397,7 +10425,10 @@ function switchDataset(datasetId) {
         favState.currentView = false;
     }
 
-    if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
+    /* ⭐ Dataset cấp 1 KHÔNG KHOÁ: tonghop + giaotiep */
+    var FREE_PRIMARY = ['tonghop', 'giaotiep'];
+
+    if (FREE_PRIMARY.indexOf(datasetId) === -1 && !canAccessChuyenNganh()) {
         showChuyenNganhLockMessage();
         return;
     }
@@ -10407,6 +10438,10 @@ function switchDataset(datasetId) {
     }
 
     window.__onboardingOverride = null;
+
+    /* ⭐ Xóa banner onboarding CŨ (của tab trước) */
+    var oldBanner = $('onboardingActiveBanner');
+    if (oldBanner) oldBanner.remove();
 
     state = { search:'', hsk:'', subject:'' };
     if ($('searchInput')) $('searchInput').value = '';
@@ -10422,16 +10457,21 @@ function switchDataset(datasetId) {
     /* ❤️ Cập nhật lock state cho tab (bao gồm tab Yêu thích) */
     if (typeof favUpdateLockState === 'function') favUpdateLockState();
 
-    /* Khôi phục banner chủ đề sau khi đổi dataset */
+    /* ⭐ Load onboarding RIÊNG của tab MỚI (nếu đã chọn trước đó) */
     var saved = loadOnboardingSelection();
     if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
         var cfg = getOnboardingConfig();
         if (cfg) {
-            if (datasetId === 'tonghop') {
-                window.__onboardingAutoPicked = !!saved.auto_picked;
-                applyOnboardingSelection(saved.topics, false);
-            }
+            window.__onboardingAutoPicked = !!saved.auto_picked;
+            applyOnboardingSelection(saved.topics, false);
         }
+    } else {
+        /* ⭐ Chưa chọn cho tab này → hiện modal hỏi */
+        setTimeout(function() {
+            if (typeof maybeShowOnboarding === 'function') {
+                maybeShowOnboarding();
+            }
+        }, 300);
     }
 }
 
@@ -13923,7 +13963,15 @@ function pfBuildDatasetSelect() {
     Object.keys(DATASET_REGISTRY).forEach(function(id) {
         var ds = DATASET_REGISTRY[id];
         var isTonghop = (id === 'tonghop');
-        var isLocked = !isTonghop && !canAccessAll;
+        var isGiaotiep = (id === 'giaotiep');
+
+        /* ⭐ tonghop + giaotiep: KHÔNG KHOÁ */
+        var isLocked;
+        if (isTonghop || isGiaotiep) {
+            isLocked = false;
+        } else {
+            isLocked = !canAccessAll;
+        }
 
         var opt = document.createElement('option');
         opt.value = id;
@@ -13935,6 +13983,8 @@ function pfBuildDatasetSelect() {
         var dsName = ds.name && ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
         if (isTonghop) {
             opt.textContent = (ds.count || 0) + ' câu - Tổng hợp VPCX';
+        } else if (isGiaotiep) {
+            opt.textContent = (ds.count || 0) + ' câu - Giao tiếp';
         } else {
             opt.textContent = (isLocked ? '[Khoá] ' : '') +
                               dsName + ' (' + (ds.count || 0) + ' câu)';
@@ -13942,7 +13992,6 @@ function pfBuildDatasetSelect() {
 
         sel.appendChild(opt);
     });
-
     sel.value = (current !== 'tonghop' && !canAccessAll) ? 'tonghop' : current;
 
     if (row) {
