@@ -24591,7 +24591,7 @@ window.favFilterCount = favFilterCount;
     }
 })();
 
-/* ==== 📊 QUOTA INIT (bind buttons) ==== */
+/* ==== 📊 QUOTA INIT ==== */
 
 (function() {
     'use strict';
@@ -24645,6 +24645,18 @@ window.favFilterCount = favFilterCount;
     bindQuotaButtons();
     setTimeout(bindQuotaButtons, 1000);
     setTimeout(bindQuotaButtons, 3000);
+})();
+
+/* ==== ★ DATA TABS BIND ==== */
+(function() {
+    function bindDataTabs() {
+
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { setTimeout(bindDataTabs, 800); });
+    } else {
+        setTimeout(bindDataTabs, 800);
+    }
 })();
 
 
