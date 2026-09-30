@@ -879,7 +879,7 @@ _fav_html = build_favorites_html()
 # ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
 ui_html = ui_html.replace(
     '<!-- __FAV_DATASET_TAB__ -->',
-    _fav_html["dataset_tab"]
+    _fav_html["dataset_tab"] + '\n' + build_data_tabs_html(DATASET_REGISTRY)
 )
 if 'data-dataset-group="favorites"' not in ui_html:
     print("⚠️  Chưa chèn được tab Yêu thích — kiểm tra placeholder")
@@ -955,6 +955,7 @@ full_js = (
     + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
     + "\n/* ==== 📋 ADMIN CHAT MANAGER JS ==== */\n" + build_admin_chat_js()
     + "\n/* ==== 🎯 DRAGGABLE FAB JS ==== */\n" + build_draggable_fab_js()
+    + "\n/* ==== ★ DATA TABS JS (auto) ==== */\n" + build_data_tabs_js()
     + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
     + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
