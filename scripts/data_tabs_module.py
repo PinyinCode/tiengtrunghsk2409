@@ -1,36 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-data_tabs_module.py
-═══════════════════════════════════════════════════════════════════
-Tự động sinh TAB ngoài trang chủ cho mỗi file Excel trong data/.
-
-⚠️ KHÔNG ĐỤNG VÀO:
-   - dsChuyenNganhBtn (dropdown chuyên ngành cũ)
-   - Nút Yêu thích (favorites_module)
-   - Chat support, Admin chat, Draggable FAB
-
-✅ CHỈ THÊM:
-   - Nút tab mới ngang hàng 3 tab cũ
-   - CSS riêng (prefix .dt- để không đè)
-   - JS riêng (IIFE, không pollute global)
-═══════════════════════════════════════════════════════════════════
-"""
-
 import html as _html
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  HELPER
-# ═══════════════════════════════════════════════════════════════════
 def _esc(s):
-    """Escape HTML an toàn."""
     if s is None:
         return ""
     return _html.escape(str(s), quote=True)
 
-
 def _esc_js(s):
-    """Escape string để nhúng vào JS (giữa 2 dấu ')."""
     if s is None:
         return ""
     return (str(s)
@@ -41,86 +17,56 @@ def _esc_js(s):
             .replace('\r', '')
             .replace('</', '<\\/'))
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  BUILD HTML — sinh nút tab cho mỗi dataset chuyên ngành
-# ═══════════════════════════════════════════════════════════════════
 def build_data_tabs_html(dataset_registry):
-    """
-    Trả về HTML chứa các nút tab cho từng dataset chuyên ngành.
-    Nút Tổng hợp + Chuyên ngành + Yêu thích ĐÃ CÓ SẴN trong ui_template.
-    Hàm này CHỈ sinh thêm nút cho từng file Excel trong data/.
-    """
     if not dataset_registry:
         return ""
-
-    chuyen_nganh = [
-        ds for ds_id, ds in dataset_registry.items()
-        if ds_id != "tonghop"
-    ]
-
-    if not chuyen_nganh:
-        return "<!-- data_tabs: khong co chuyen nganh nao -->"
-
-    chuyen_nganh.sort(key=lambda d: d.get("name", "").lower())
+    items = [ds for k, ds in dataset_registry.items() if k != "tonghop"]
+    if not items:
+        return "<!-- data_tabs empty -->"
+    items.sort(key=lambda d: d.get("name", "").lower())
 
     buttons = []
-    for ds in chuyen_nganh:
-        ds_id    = _esc(ds.get("id", ""))
-        ds_id_js = _esc_js(ds.get("id", ""))
-        name     = _esc(ds.get("name", ""))
-        name_js  = _esc_js(ds.get("name", ""))
-        icon     = _esc(ds.get("icon", "fa-folder"))
-        count    = int(ds.get("count", 0))
+    for ds in items:
+        did = _esc(ds.get("id", ""))
+        did_js = _esc_js(ds.get("id", ""))
+        name = _esc(ds.get("name", ""))
+        name_js = _esc_js(ds.get("name", ""))
+        icon = _esc(ds.get("icon", "fa-folder"))
+        cnt = int(ds.get("count", 0))
+        title = "{} ({} cau)".format(ds.get("name", ""), cnt)
 
-        title = "{} ({} cau)".format(ds.get("name", ""), count)
-
-        buttons.append(
+        btn = (
             '<button class="ds-btn dt-tab" '
-            'data-dataset="{}" '
-            'data-dataset-name="{}" '
-            'title="{}" '
-            'onclick="window.__dtOnTabClick(event, \'{}\', \'{}\')">'
-            '<i class="fas {}"></i>'
-            '<span class="dt-tab-label">{}</span>'
-            '<span class="dt-tab-count">{}</span>'
+            'data-dataset="' + did + '" '
+            'data-dataset-name="' + name + '" '
+            'title="' + _esc(title) + '" '
+            'onclick="window.__dtOnTabClick(event, \'' + did_js + '\', \'' + name_js + '\')">'
+            '<i class="fas ' + icon + '"></i>'
+            '<span class="dt-tab-label">' + name + '</span>'
+            '<span class="dt-tab-count">' + str(cnt) + '</span>'
             '<i class="fas fa-lock dt-tab-lock" style="display:none"></i>'
-            '</button>'.format(
-                ds_id, name, _esc(title),
-                ds_id_js, name_js,
-                icon, name, count
-            )
+            '</button>'
         )
+        buttons.append(btn)
 
-    html = (
-        '<!-- DATA TABS (auto-generated) -->\n'
+    return (
+        '<!-- DATA TABS auto -->\n'
         '<div class="dt-tabs-wrap" id="dtTabsWrap">\n'
         + "\n".join(buttons) +
         '\n</div>\n'
         '<!-- /DATA TABS -->'
     )
-    return html
+   # -*- coding: utf-8 -*-
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  BUILD CSS — prefix .dt- để không đè style cũ
-# ═══════════════════════════════════════════════════════════════════
 def build_data_tabs_css():
-    return r"""
+    return """
 
-/* DATA TABS (auto-generated) - prefix .dt- */
-
-.dt-tabs-wrap {
-    display: contents;
-}
+.dt-tabs-wrap { display: contents; }
 
 .ds-btn.dt-tab {
     position: relative;
     overflow: visible;
-    transition: transform .25s cubic-bezier(.34,1.56,.64,1),
-                box-shadow .25s ease,
-                border-color .2s ease,
-                background .2s ease;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .2s ease;
 }
 
 .ds-btn.dt-tab .dt-tab-label {
@@ -137,20 +83,10 @@ def build_data_tabs_css():
     font-weight: 800;
     padding: .12rem .45rem;
     border-radius: 50px;
-    background: linear-gradient(135deg,
-        rgba(99,102,241,.15),
-        rgba(139,92,246,.12));
+    background: rgba(139,92,246,.12);
     color: #5b21b6;
     border: 1px solid rgba(139,92,246,.3);
-    letter-spacing: .02em;
     margin-left: .15rem;
-}
-[data-theme="dark"] .ds-btn.dt-tab .dt-tab-count {
-    background: linear-gradient(135deg,
-        rgba(139,92,246,.25),
-        rgba(167,139,250,.15));
-    color: #c4b5fd;
-    border-color: rgba(167,139,250,.4);
 }
 
 .ds-btn.dt-tab:hover:not(.dt-locked):not(.active) {
@@ -162,6 +98,7 @@ def build_data_tabs_css():
 .ds-btn.dt-tab.active {
     box-shadow: 0 6px 20px rgba(124,58,237,.45);
 }
+
 .ds-btn.dt-tab.active .dt-tab-count {
     background: rgba(255,255,255,.25);
     color: #fff;
@@ -173,11 +110,13 @@ def build_data_tabs_css():
     cursor: not-allowed;
     filter: grayscale(.35);
 }
+
 .ds-btn.dt-tab.dt-locked:hover {
     transform: none;
     border-color: var(--border);
     box-shadow: var(--shadow-sm);
 }
+
 .ds-btn.dt-tab.dt-locked .dt-tab-lock {
     display: inline-flex !important;
     margin-left: .35rem;
@@ -191,59 +130,24 @@ def build_data_tabs_css():
     line-height: 1;
     flex-shrink: 0;
 }
-[data-theme="dark"] .ds-btn.dt-tab.dt-locked .dt-tab-lock {
-    color: #fca5a5;
-    background: rgba(220,38,38,.28);
-}
 
 @media (max-width: 768px) {
-    .ds-btn.dt-tab .dt-tab-count {
-        font-size: .6rem;
-        padding: .1rem .35rem;
-    }
-    .ds-btn.dt-tab .dt-tab-label {
-        font-size: .78rem;
-    }
-}
-@media (max-width: 500px) {
-    .ds-btn.dt-tab {
-        padding: .55rem .75rem;
-    }
-    .ds-btn.dt-tab .dt-tab-label {
-        font-size: .74rem;
-    }
-    .ds-btn.dt-tab .dt-tab-count {
-        font-size: .58rem;
-        padding: .08rem .3rem;
-    }
+    .ds-btn.dt-tab .dt-tab-count { font-size: .6rem; }
+    .ds-btn.dt-tab .dt-tab-label { font-size: .78rem; }
 }
 
-@keyframes dtFadeIn {
-    from { opacity: 0; transform: translateY(-3px); }
-    to   { opacity: 1; transform: translateY(0); }
+@media (max-width: 500px) {
+    .ds-btn.dt-tab { padding: .55rem .75rem; }
+    .ds-btn.dt-tab .dt-tab-label { font-size: .74rem; }
+    .ds-btn.dt-tab .dt-tab-count { font-size: .58rem; }
 }
-.ds-btn.dt-tab {
-    animation: dtFadeIn .3s ease-out backwards;
-}
-.ds-btn.dt-tab:nth-child(1) { animation-delay: .02s; }
-.ds-btn.dt-tab:nth-child(2) { animation-delay: .04s; }
-.ds-btn.dt-tab:nth-child(3) { animation-delay: .06s; }
-.ds-btn.dt-tab:nth-child(4) { animation-delay: .08s; }
-.ds-btn.dt-tab:nth-child(5) { animation-delay: .10s; }
-.ds-btn.dt-tab:nth-child(6) { animation-delay: .12s; }
 """
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  BUILD JS — IIFE độc lập, KHÔNG đè hàm cũ
-# ═══════════════════════════════════════════════════════════════════
 def build_data_tabs_js():
-    return r"""
+    return """
 
-/* DATA TABS JS (auto-generated) - IIFE doc lap */
 (function() {
     'use strict';
-
     if (window.__dtModuleLoaded) { return; }
     window.__dtModuleLoaded = true;
 
@@ -264,11 +168,9 @@ def build_data_tabs_js():
     function refreshLocks() {
         var canAccess = _canAccessDataset();
         var tabs = document.querySelectorAll('.ds-btn.dt-tab');
-
         tabs.forEach(function(btn) {
             var isLocked = !canAccess;
             btn.classList.toggle('dt-locked', isLocked);
-
             var lockIcon = btn.querySelector('.dt-tab-lock');
             if (lockIcon) {
                 if (isLocked) {
@@ -276,20 +178,6 @@ def build_data_tabs_js():
                 } else {
                     lockIcon.style.display = 'none';
                 }
-            }
-
-            var name = btn.getAttribute('data-dataset-name') || '';
-            if (isLocked) {
-                var info = _getTierInfo();
-                var hint = 'Can dang nhap + gia han de mo khoa';
-                if (info.tier === 'active') {
-                    hint = 'Can kich hoat chuyen nganh';
-                } else if (info.tier === 'trial') {
-                    hint = 'Can gia han de mo khoa';
-                }
-                btn.title = name + ' - [Lock] ' + hint;
-            } else {
-                btn.title = name;
             }
         });
     }
@@ -302,7 +190,6 @@ def build_data_tabs_js():
                 datasetId = 'tonghop';
             }
         }
-
         var allTabs = document.querySelectorAll('.ds-btn.dt-tab');
         allTabs.forEach(function(btn) {
             if (btn.dataset.dataset === datasetId) {
@@ -325,7 +212,6 @@ def build_data_tabs_js():
                 others.forEach(function(b) {
                     b.classList.remove('active');
                 });
-
                 var subWrap = document.getElementById('dsSubWrap');
                 if (subWrap) {
                     subWrap.style.display = 'none';
@@ -346,16 +232,16 @@ def build_data_tabs_js():
             if (typeof window.showChuyenNganhLockMessage === 'function') {
                 window.showChuyenNganhLockMessage();
             } else {
-                var msg = 'Bo du lieu "' + (datasetName || datasetId) + '"\n\n' +
-                          'Ban can DANG NHAP va GIA HAN de mo khoa.';
+                var msg = 'Bo du lieu "' + (datasetName || datasetId) + '"\\n\\n' +
+                          'Ban can dang nhap va gia han de mo khoa.';
                 if (typeof window.currentUser !== 'undefined' && window.currentUser) {
-                    if (confirm(msg + '\n\nGia han ngay?')) {
+                    if (confirm(msg + '\\n\\nGia han ngay?')) {
                         if (typeof window.openRenewalModal === 'function') {
                             window.openRenewalModal();
                         }
                     }
                 } else {
-                    if (confirm(msg + '\n\nDang nhap ngay?')) {
+                    if (confirm(msg + '\\n\\nDang nhap ngay?')) {
                         if (typeof window.showLoginModal === 'function') {
                             window.showLoginModal();
                         }
@@ -391,7 +277,6 @@ def build_data_tabs_js():
         var btn = e.target.closest ? e.target.closest('.ds-btn') : null;
         if (!btn) { return; }
         if (btn.classList.contains('dt-tab')) { return; }
-
         var dtTabs = document.querySelectorAll('.ds-btn.dt-tab.active');
         dtTabs.forEach(function(t) {
             t.classList.remove('active');
@@ -430,8 +315,5 @@ def build_data_tabs_js():
 
     window.__dtRefreshLocks = refreshLocks;
     window.__dtMarkActive   = markActive;
-
-    console.log('Data tabs module loaded: ' +
-        document.querySelectorAll('.ds-btn.dt-tab').length + ' tabs');
 })();
 """
