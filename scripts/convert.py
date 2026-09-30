@@ -143,35 +143,9 @@ OUTPUT_HTML = CONFIG["output_html"]
 SHEET_INDEX = CONFIG["sheet_index"]
 DATA_DIR = CONFIG.get("data_dir", "data")
 
-# ═══════════════════════════════════════════════════════════════════
-#  ⭐ TAB 2: "1000 câu giao tiếp" — file 1605.xlsx
-#     Đặt CÙNG THƯ MỤC với file Excel tổng hợp
-# ═══════════════════════════════════════════════════════════════════
-EXCEL_FILE_2 = os.path.join(
-    os.path.dirname(os.path.abspath(EXCEL_FILE)),
-    "1605.xlsx"
-)
-TAB2_ID    = "giaotiep"
-TAB2_LABEL = "1000 câu giao tiếp"
-TAB2_ICON  = "fa-comments"
-print(f"📂 File tab 2 dự kiến: {EXCEL_FILE_2}")
-
 # ─── 1. Đọc dataset gốc ───
 data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
-
-# ─── 1b. Đọc dataset tab 2 (1000 câu giao tiếp) ───
-data_giaotiep = []
-if os.path.isfile(EXCEL_FILE_2):
-    try:
-        data_giaotiep = read_excel(EXCEL_FILE_2, SHEET_INDEX) or []
-        print(f"💬 {TAB2_LABEL}: {len(data_giaotiep)} câu (từ {os.path.basename(EXCEL_FILE_2)})")
-    except Exception as e:
-        print(f"❌ Lỗi đọc {EXCEL_FILE_2}: {e}")
-        data_giaotiep = []
-else:
-    print(f"⚠️  Không tìm thấy file: {EXCEL_FILE_2}")
-    print(f"   → Tab '{TAB2_LABEL}' sẽ trống.")
 
 # ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
 ICON_MAP = {
@@ -341,7 +315,6 @@ else:
 # ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
 json_data = _json_blob(data_tonghop)
-json_data_2 = _json_blob(data_giaotiep)
 firebase_config_json = _json_blob(CONFIG["firebase_config"])
 synonyms_json = _json_blob(CONFIG["synonyms"])
 fillers_json = _json_blob(CONFIG["filler_words"])
@@ -1022,7 +995,6 @@ __BODY__
 <script>
 /* ============ DỮ LIỆU + CONFIG ============ */
 var RAW_DATA = __DATA__;
-var RAW_DATA_2 = __DATA_2__;
 var DATASET_REGISTRY = __DATASET_REGISTRY__;
 var CURRENT_DATASET = 'tonghop';
 
@@ -1057,22 +1029,6 @@ window.__switchRawData = function(datasetId) {
     if (!DATASET_REGISTRY || !DATASET_REGISTRY[datasetId]) return false;
     RAW_DATA = DATASET_REGISTRY[datasetId].data || [];
     CURRENT_DATASET = datasetId;
-    return true;
-};
-
-/* ⭐ Switch sang tab 2 (1000 câu giao tiếp) */
-window.__switchToTab2 = function() {
-    RAW_DATA = RAW_DATA_2 || [];
-    CURRENT_DATASET = 'giaotiep';
-    return true;
-};
-
-/* ⭐ Switch về tab tổng hợp */
-window.__switchToTab1 = function() {
-    RAW_DATA = (DATASET_REGISTRY && DATASET_REGISTRY['tonghop'])
-        ? DATASET_REGISTRY['tonghop'].data
-        : [];
-    CURRENT_DATASET = 'tonghop';
     return true;
 };
 </script>
@@ -1169,7 +1125,6 @@ html_output = (HTML_SHELL
 
     # 2. Data blobs (đã escape "</" qua _json_blob)
     .replace("__DATA__",              json_data)
-    .replace("__DATA_2__",            json_data_2)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
     .replace("__SYNONYMS__",          synonyms_json)
@@ -1216,7 +1171,6 @@ print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
 print(f"💬 Chat Support: đã thêm (user ↔ admin)")
 print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")
 print(f"👥 User Online (RTDB): đã thêm section vào Admin Panel")
-print(f"💬 Tab 2 ({TAB2_LABEL}): {len(data_giaotiep)} câu")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
