@@ -8576,7 +8576,6 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
             <i class="fas fa-star"></i>
             <span>Tên tab mới</span>
         </button>
-        
         <button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">
             <i class="far fa-heart"></i>
             <span>Yêu thích</span>
@@ -24591,7 +24590,7 @@ window.favFilterCount = favFilterCount;
     }
 })();
 
-/* ==== 📊 QUOTA INIT ==== */
+/* ==== 📊 QUOTA INIT (bind buttons) ==== */
 
 (function() {
     'use strict';
@@ -24645,18 +24644,6 @@ window.favFilterCount = favFilterCount;
     bindQuotaButtons();
     setTimeout(bindQuotaButtons, 1000);
     setTimeout(bindQuotaButtons, 3000);
-})();
-
-/* ==== ★ DATA TABS BIND ==== */
-(function() {
-    function bindDataTabs() {
-
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { setTimeout(bindDataTabs, 800); });
-    } else {
-        setTimeout(bindDataTabs, 800);
-    }
 })();
 
 
