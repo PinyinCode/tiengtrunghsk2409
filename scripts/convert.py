@@ -989,9 +989,9 @@ full_body = (
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
-    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
+    # ⭐ 1. Config
     build_config_js(CONFIG)
-    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
+    # ⭐ 2. Telegram
     + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
     # 3. Các module còn lại
     + "\n/* ==== UI JS ==== */\n" + build_ui_js()
@@ -1003,9 +1003,20 @@ full_js = (
     + "\n/* ==== 📋 ADMIN CHAT MANAGER JS ==== */\n" + build_admin_chat_js()
     + "\n/* ==== 🎯 DRAGGABLE FAB JS ==== */\n" + build_draggable_fab_js()
     + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
-    + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
+    + "\n/* ==== 📊 QUOTA INIT ==== */\n" + build_quota_init_js()
+    # ⭐ THÊM: JS bind click cho các tab động
+    + "\n/* ==== ★ DATA TABS BIND ==== */\n"
+    + "(function() {\n"
+    + "    function bindDataTabs() {\n"
+    + DATA_TABS_JS + "\n"
+    + "    }\n"
+    + "    if (document.readyState === 'loading') {\n"
+    + "        document.addEventListener('DOMContentLoaded', function() { setTimeout(bindDataTabs, 800); });\n"
+    + "    } else {\n"
+    + "        setTimeout(bindDataTabs, 800);\n"
+    + "    }\n"
+    + "})();\n"
 )
-
 # ═══════════════════════════════════════════════════════════════════
 #  ⭐⭐⭐ FIX (2026-09-28): LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
 #  Lý do: build_config_js() và build_telegram_notify_js() trả về chuỗi
