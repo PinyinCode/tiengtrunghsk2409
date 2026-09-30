@@ -3217,10 +3217,6 @@ def build_ui_html():
             <i class="fas fa-book-open"></i>
             <span id="dsTonghopLabel">1700 câu phản xạ tổng hợp VPCX</span>
         </button>
-        <button class="ds-btn ds-btn-primary" data-dataset="giaotiep" id="dsGiaotiepBtn">
-            <i class="fas fa-comments"></i>
-            <span id="dsGiaotiepLabel">1000 câu giao tiếp</span>
-        </button>
         <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">
             <i class="fas fa-industry"></i>
             <span>Chuyên ngành</span>
@@ -3572,10 +3568,6 @@ function initDatasetSelector() {
                  || (DATASET_REGISTRY.tonghop.data || []).length;
         labelEl.textContent = count + ' câu phản xạ tổng hợp VPCX';
     }
-    var gtLabel = $('dsGiaotiepLabel');
-    if (gtLabel && typeof RAW_DATA_2 !== 'undefined' && Array.isArray(RAW_DATA_2)) {
-        gtLabel.textContent = RAW_DATA_2.length + ' câu giao tiếp';
-    }
 
     var chuyenNganhKeys = Object.keys(DATASET_REGISTRY).filter(function(id) {
         return id !== 'tonghop';
@@ -3656,26 +3648,7 @@ function initDatasetSelector() {
             });
             btn.classList.add('active');
         });
-    }
-    /* ═══════════════════════════════════════════════════════════
-       NÚT TAB 2 (1000 câu giao tiếp) — Click để về tab giao tiếp
-       ═══════════════════════════════════════════════════════════ */
-    document.querySelectorAll('.ds-btn[data-dataset="giaotiep"]').forEach(function(btn) {
-        if (btn.__boundDataset2) return;
-        btn.__boundDataset2 = true;
-        btn.addEventListener('click', function() {
-            switchDataset('giaotiep');
-            var sub = $('dsSubWrap');
-            if (sub) sub.style.display = 'none';
-
-            /* Bỏ active TẤT CẢ tab */
-            document.querySelectorAll('.ds-btn').forEach(function(b) {
-                b.classList.remove('active');
-            });
-            btn.classList.add('active');
-        });
     });
-);
 
     /* ═══════════════════════════════════════════════════════════
        NÚT CHUYÊN NGÀNH — Click để mở/đóng dropdown
@@ -3741,9 +3714,6 @@ function markCurrentDatasetActive() {
     document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
         b.classList.toggle('active', current === 'tonghop');
     });
-    document.querySelectorAll('.ds-btn[data-dataset="giaotiep"]').forEach(function(b) {
-        b.classList.toggle('active', current === 'giaotiep');
-    });
     if (current !== 'tonghop') {
         var wrap = $('dsSubWrap');
         if (wrap) wrap.style.display = 'block';
@@ -3755,34 +3725,6 @@ function markCurrentDatasetActive() {
 
 function switchDataset(datasetId) {
     if (!DATASET_REGISTRY[datasetId]) return;
-    /* ⭐ TAB 2: 1000 câu giao tiếp */
-    if (datasetId === 'giaotiep') {
-        if (typeof window.__switchToTab2 === 'function') {
-            window.__switchToTab2();
-        } else {
-            console.warn('__switchToTab2 chưa được load');
-            return;
-        }
-
-        window.__onboardingOverride = null;
-
-        state = { search:'', hsk:'', subject:'' };
-        if ($('searchInput')) $('searchInput').value = '';
-        if ($('hskFilter')) $('hskFilter').value = '';
-        if ($('subjectFilter')) $('subjectFilter').value = '';
-
-        buildFilters();
-        applyFilter();
-        updateResultCount();
-
-        if ($('fabGroup')) $('fabGroup').classList.remove('open');
-
-        /* Cập nhật trạng thái Yêu thích */
-        if (typeof favUpdateLockState === 'function') favUpdateLockState();
-
-        return;
-    }
-
 
     /* ❤️ Nếu rời tab Yêu thích → reset cờ */
     if (typeof favState !== 'undefined' && favState.currentView) {
