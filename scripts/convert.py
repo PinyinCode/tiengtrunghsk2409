@@ -104,6 +104,12 @@ from draggable_fab import (
     build_draggable_fab_css,
     build_draggable_fab_js,
 )
+# ⬇️⬇️⬇️ Module Data Tabs (auto-generated)
+from data_tabs_module import (
+    build_data_tabs_html,
+    build_data_tabs_css,
+    build_data_tabs_js,
+)
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
 # ═══════════════════════════════════════════════════════════════════
@@ -856,6 +862,7 @@ full_css = (
     + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
     + "\n/* ==== 📋 ADMIN CHAT MANAGER CSS ==== */\n" + build_admin_chat_css()
     + "\n/* ==== 🎯 DRAGGABLE FAB CSS ==== */\n" + build_draggable_fab_css()
+    + "\n/* ==== ★ DATA TABS CSS (auto) ==== */\n" + build_data_tabs_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
