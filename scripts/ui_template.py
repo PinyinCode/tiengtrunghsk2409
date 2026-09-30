@@ -3223,6 +3223,10 @@ def build_ui_html():
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
+        <button class="ds-btn ds-btn-primary" data-dataset="ten-tab-moi" id="dsTabMoiBtn">
+            <i class="fas fa-star"></i>
+            <span>Tên tab mới</span>
+        </button>
         <!-- __FAV_DATASET_TAB__ -->
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
