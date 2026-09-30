@@ -250,9 +250,16 @@ DATASET_REGISTRY = {
     }
 }
 
-# ─── 4. Quét thư mục data/ ───
+# ─── 4. Quét thư mục data/ — mỗi file Excel = 1 tab riêng ───
 _tonghop_abs = os.path.abspath(EXCEL_FILE)
 _chuyen_nganh_count = 0
+
+# ═══════════════════════════════════════════════════════════════════
+#  ⭐ TỰ ĐỘNG SINH TAB CHO MỖI FILE EXCEL TRONG data/
+#  Không cần module riêng — chỉ cần sửa DATASET_REGISTRY
+# ═══════════════════════════════════════════════════════════════════
+_tab_buttons_html = []   # HTML của các nút tab sẽ được chèn vào ds-main-row
+_tab_bind_js = []        # JS bind click cho từng tab
 
 if os.path.isdir(DATA_DIR):
     excel_files = []
@@ -301,6 +308,36 @@ if os.path.isdir(DATA_DIR):
             }
             _chuyen_nganh_count += 1
             print(f"🏭 {display_name:25s} ({filename}) — {len(sub_data)} câu")
+
+            # ═══ Sinh HTML nút tab — escape đúng để không vỡ ═══
+            name_html = display_name.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+            name_js   = display_name.replace('\\', '\\\\').replace("'", "\\'").replace('"', '\\"').replace('\n', '')
+            icon_safe = icon if icon.replace('-', '').replace('_', '').isalnum() else 'fa-folder'
+
+            _tab_buttons_html.append(
+                '<button class="ds-btn ds-btn-primary" '
+                f'data-dataset="{dataset_id}" '
+                f'title="{name_html} ({len(sub_data)} câu)">'
+                f'<i class="fas {icon_safe}"></i>'
+                f'<span>{name_html}</span>'
+                '</button>'
+            )
+
+            # ═══ Sinh JS bind click cho tab này ═══
+            _tab_bind_js.append(
+                f'    document.querySelectorAll(\'.ds-btn[data-dataset="{dataset_id}"]\').forEach(function(btn) {{'
+                f'        if (btn.__boundDataset) return;'
+                f'        btn.__boundDataset = true;'
+                f'        btn.addEventListener(\'click\', function() {{'
+                f'            switchDataset(\'{dataset_id}\');'
+                f'            var sub = document.getElementById(\'dsSubWrap\');'
+                f'            if (sub) sub.style.display = \'none\';'
+                f'            document.querySelectorAll(\'.ds-btn\').forEach(function(b) {{ b.classList.remove(\'active\'); }});'
+                f'            btn.classList.add(\'active\');'
+                f'        }});'
+                f'    }});'
+            )
+
         except Exception as e:
             print(f"❌ Lỗi đọc {filename}: {e}")
             continue
@@ -312,6 +349,23 @@ else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
     print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
+# ═══════════════════════════════════════════════════════════════════
+#  GỘP HTML + JS để chèn sau này
+# ═══════════════════════════════════════════════════════════════════
+DATA_TABS_HTML = "\n        ".join(_tab_buttons_html)   # HTML các nút tab
+DATA_TABS_JS   = "\n".join(_tab_bind_js)                 # JS bind click
+
+if _chuyen_nganh_count > 0:
+    print(f"\n✅ Đã sinh {_chuyen_nganh_count} tab động trong ds-main-row")
+
+# ═══════════════════════════════════════════════════════════════════
+#  GỘP HTML + JS để chèn sau này
+# ═══════════════════════════════════════════════════════════════════
+DATA_TABS_HTML = "\n        ".join(_tab_buttons_html)   # HTML các nút tab
+DATA_TABS_JS   = "\n".join(_tab_bind_js)                 # JS bind click
+
+if _chuyen_nganh_count > 0:
+    print(f"\n✅ Đã sinh {_chuyen_nganh_count} tab động trong ds-main-row")
 # ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
 json_data = _json_blob(data_tonghop)
@@ -872,7 +926,7 @@ _fav_html = build_favorites_html()
 # ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
 ui_html = ui_html.replace(
     '<!-- __FAV_DATASET_TAB__ -->',
-    _fav_html["dataset_tab"]
+    DATA_TABS_HTML + '\n        ' + _fav_html["dataset_tab"]
 )
 if 'data-dataset-group="favorites"' not in ui_html:
     print("⚠️  Chưa chèn được tab Yêu thích — kiểm tra placeholder")
