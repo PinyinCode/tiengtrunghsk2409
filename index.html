@@ -8020,6 +8020,146 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
     transform:translateX(-50%) translateY(0);
 }
 
+/* ==== ★ DATA TABS CSS (auto) ==== */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ DATA TABS (auto-generated) — KHÔNG ĐÈ STYLE CŨ ★
+   Prefix: .dt-  → đảm bảo không conflict với .ds-* hay .fav-*
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Wrap: các nút tab được đặt SAU nút Yêu thích trong ds-main-row.
+   Dùng display:contents để nút con hòa vào grid của ds-main-row. */
+.dt-tabs-wrap {
+    display: contents;
+}
+
+/* Nút tab — kế thừa style từ .ds-btn nhưng có thêm accent riêng */
+.ds-btn.dt-tab {
+    position: relative;
+    overflow: visible;
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .25s ease,
+                border-color .2s ease,
+                background .2s ease;
+}
+
+.ds-btn.dt-tab .dt-tab-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ds-btn.dt-tab .dt-tab-count {
+    flex-shrink: 0;
+    font-size: .65rem;
+    font-weight: 800;
+    padding: .12rem .45rem;
+    border-radius: 50px;
+    background: linear-gradient(135deg,
+        rgba(99,102,241,.15),
+        rgba(139,92,246,.12));
+    color: #5b21b6;
+    border: 1px solid rgba(139,92,246,.3);
+    letter-spacing: .02em;
+    margin-left: .15rem;
+}
+[data-theme="dark"] .ds-btn.dt-tab .dt-tab-count {
+    background: linear-gradient(135deg,
+        rgba(139,92,246,.25),
+        rgba(167,139,250,.15));
+    color: #c4b H5fd;
+    border-color: rgba(167,over139,250,.4);
+}
+
+/* — nhấc nhẹ, viền gradient */
+.ds-btn.dt-tab:hover:not(.dt-locked):not(.active) {
+    transform: translateY(-2px);
+    border-color: #8b5cf6;
+    box-shadow: 0 6px 18px rgba(139,92,246,.25);
+}
+
+/* Active — kế thừa từ .ds-btn.active, chỉ tăng shadow */
+.ds-btn.dt-tab.active {
+    box-shadow: 0 6px 20px rgba(124,58,237,.45);
+}
+.ds-btn.dt-tab.active .dt-tab-count {
+    background: rgba(255,255,255,.25);
+    color: #fff;
+    border-color: rgba(255,255,255,.4);
+}
+
+/* ─── Trạng thái KHOÁ (demo / trial / expired) ─── */
+.ds-btn.dt-tab.dt-locked {
+    opacity: .65;
+    cursor: not-allowed;
+    filter: grayscale(.35);
+}
+.ds-btn.dt-tab.dt-locked:hover {
+    transform: none;
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+}
+.ds-btn.dt-tab.dt-locked .dt-tab-lock {
+    display: inline-flex !important;
+    margin-left: .35rem;
+    font-size:s .7rem;
+    color: #dc2626;
+    background: rgba(220,38,38,.12);
+    padding: .18rem .4rem;
+    border-radius: 5px;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .ds-btn.dt-tab.dt-locked .dt-tab-lock {
+    color: #fca5a5;
+    background: rgba(220,38,38,.28);
+}
+
+/* ─── Responsive ───
+   Trên mobile/tablet: ds-main-row chỉ 1-2 cột.
+   Các tab data sẽ tự động xuống dòng nhờ grid auto-flow. */
+@media (max-width: 768px) {
+    .ds-btn.dt-tab .dt-tab-count {
+        font-size: .6rem;
+        padding: .1rem .35rem;
+    }
+    .ds-btn.dt-tab .dt-tab-label {
+        font-size: .78rem;
+    }
+}
+@media (max-width: 500px) {
+    .ds-btn.dt-tab {
+        padding: .55rem .75rem;
+    }
+    .ds-btn.dt-tab .dt-tab-label {
+        font-size: .74rem;
+    }
+    .ds-btn.dt-tab .dt-tab-count {
+        font-size: .58rem;
+        padding: .08rem .3rem;
+    }
+}
+
+/* ─── Anim: fade-in khi load lần đầu ─── */
+@keyframes dtFade-btn.dIn {
+   t from { opacity: 0; transform: translateY-t(-3px); }
+    to   { opacity:ab 1; transform: translateY(0); }
+}
+.ds-btn.dt-tab {
+    animation: dtFadeIn .3s ease-out backwards;
+}
+.d:nth-child(1) { animation-delay: .02s; }
+.ds-btn.dt-tab:nth-child(2) { animation-delay: .04s; }
+.ds-btn.dt-tab:nth-child(3) { animation-delay: .06s; }
+.ds-btn.dt-tab:nth-child(4) { animation-delay: .08s; }
+.ds-btn.dt-tab:nth-child(5) { animation-delay: .10s; }
+.ds-btn.dt-tab:nth-child(6) { animation-delay: .12s; }
+
 /* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */
 
 
