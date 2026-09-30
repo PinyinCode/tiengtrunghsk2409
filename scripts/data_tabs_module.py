@@ -50,26 +50,18 @@ def build_data_tabs_html(dataset_registry):
     Trả về HTML chứa các nút tab cho từng dataset chuyên ngành.
     Nút Tổng hợp + Chuyên ngành + Yêu thích ĐÃ CÓ SẴN trong ui_template.
     Hàm này CHỈ sinh thêm nút cho từng file Excel trong data/.
-
-    Args:
-        dataset_registry (dict): DATASET_REGISTRY từ main.py
-
-    Returns:
-        str: HTML fragment, các nút <button class="ds-btn dt-tab" ...>
     """
     if not dataset_registry:
         return ""
 
-    # Chỉ lấy dataset chuyên ngành (bỏ tonghop)
     chuyen_nganh = [
         ds for ds_id, ds in dataset_registry.items()
         if ds_id != "tonghop"
     ]
 
     if not chuyen_nganh:
-        return "<!-- data_tabs: không có chuyên ngành nào -->"
+        return "<!-- data_tabs: khong co chuyen nganh nao -->"
 
-    # Sắp xếp theo tên alphabet để vị trí ổn định
     chuyen_nganh.sort(key=lambda d: d.get("name", "").lower())
 
     buttons = []
@@ -81,27 +73,31 @@ def build_data_tabs_html(dataset_registry):
         icon     = _esc(ds.get("icon", "fa-folder"))
         count    = int(ds.get("count", 0))
 
-        title = f"{ds.get('name', '')} ({count} câu)"
+        title = "{} ({} cau)".format(ds.get("name", ""), count)
 
         buttons.append(
-            f'<button class="ds-btn dt-tab" '
-            f'data-dataset="{ds_id}" '
-            f'data-dataset-name="{name}" '
-            f'title="{_esc(title)}" '
-            f'onclick="window.__dtOnTabClick(event, \'{ds_id_js}\', \'{name_js}\')">'
-            f'<i class="fas {icon}"></i>'
-            f'<span class="dt-tab-label">{name}</span>'
-            f'<span class="dt-tab-count">{count}</span>'
-            f'<i class="fas fa-lock dt-tab-lock" style="display:none"></i>'
-            f'</button>'
+            '<button class="ds-btn dt-tab" '
+            'data-dataset="{}" '
+            'data-dataset-name="{}" '
+            'title="{}" '
+            'onclick="window.__dtOnTabClick(event, \'{}\', \'{}\')">'
+            '<i class="fas {}"></i>'
+            '<span class="dt-tab-label">{}</span>'
+            '<span class="dt-tab-count">{}</span>'
+            '<i class="fas fa-lock dt-tab-lock" style="display:none"></i>'
+            '</button>'.format(
+                ds_id, name, _esc(title),
+                ds_id_js, name_js,
+                icon, name, count
+            )
         )
 
     html = (
-        '<!-- ═══ DATA TABS (auto-generated) ═══ -->\n'
+        '<!-- DATA TABS (auto-generated) -->\n'
         '<div class="dt-tabs-wrap" id="dtTabsWrap">\n'
         + "\n".join(buttons) +
         '\n</div>\n'
-        '<!-- ═══ /DATA TABS ═══ -->'
+        '<!-- /DATA TABS -->'
     )
     return html
 
@@ -112,18 +108,12 @@ def build_data_tabs_html(dataset_registry):
 def build_data_tabs_css():
     return r"""
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★ DATA TABS (auto-generated) — KHÔNG ĐÈ STYLE CŨ ★
-   Prefix: .dt-  → đảm bảo không conflict với .ds-* hay .fav-*
-   ═══════════════════════════════════════════════════════════════════ */
+/* DATA TABS (auto-generated) - prefix .dt- */
 
-/* Wrap: các nút tab được đặt SAU nút Yêu thích trong ds-main-row.
-   Dùng display:contents để nút con hòa vào grid của ds-main-row. */
 .dt-tabs-wrap {
     display: contents;
 }
 
-/* Nút tab — kế thừa style từ .ds-btn nhưng có thêm accent riêng */
 .ds-btn.dt-tab {
     position: relative;
     overflow: visible;
@@ -159,18 +149,16 @@ def build_data_tabs_css():
     background: linear-gradient(135deg,
         rgba(139,92,246,.25),
         rgba(167,139,250,.15));
-    color: #c4b H5fd;
-    border-color: rgba(167,over139,250,.4);
+    color: #c4b5fd;
+    border-color: rgba(167,139,250,.4);
 }
 
-/* — nhấc nhẹ, viền gradient */
 .ds-btn.dt-tab:hover:not(.dt-locked):not(.active) {
     transform: translateY(-2px);
     border-color: #8b5cf6;
     box-shadow: 0 6px 18px rgba(139,92,246,.25);
 }
 
-/* Active — kế thừa từ .ds-btn.active, chỉ tăng shadow */
 .ds-btn.dt-tab.active {
     box-shadow: 0 6px 20px rgba(124,58,237,.45);
 }
@@ -180,7 +168,6 @@ def build_data_tabs_css():
     border-color: rgba(255,255,255,.4);
 }
 
-/* ─── Trạng thái KHOÁ (demo / trial / expired) ─── */
 .ds-btn.dt-tab.dt-locked {
     opacity: .65;
     cursor: not-allowed;
@@ -194,7 +181,7 @@ def build_data_tabs_css():
 .ds-btn.dt-tab.dt-locked .dt-tab-lock {
     display: inline-flex !important;
     margin-left: .35rem;
-    font-size:s .7rem;
+    font-size: .7rem;
     color: #dc2626;
     background: rgba(220,38,38,.12);
     padding: .18rem .4rem;
@@ -209,9 +196,6 @@ def build_data_tabs_css():
     background: rgba(220,38,38,.28);
 }
 
-/* ─── Responsive ───
-   Trên mobile/tablet: ds-main-row chỉ 1-2 cột.
-   Các tab data sẽ tự động xuống dòng nhờ grid auto-flow. */
 @media (max-width: 768px) {
     .ds-btn.dt-tab .dt-tab-count {
         font-size: .6rem;
@@ -234,15 +218,14 @@ def build_data_tabs_css():
     }
 }
 
-/* ─── Anim: fade-in khi load lần đầu ─── */
-@keyframes dtFade-btn.dIn {
-   t from { opacity: 0; transform: translateY-t(-3px); }
-    to   { opacity:ab 1; transform: translateY(0); }
+@keyframes dtFadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 .ds-btn.dt-tab {
     animation: dtFadeIn .3s ease-out backwards;
 }
-.d:nth-child(1) { animation-delay: .02s; }
+.ds-btn.dt-tab:nth-child(1) { animation-delay: .02s; }
 .ds-btn.dt-tab:nth-child(2) { animation-delay: .04s; }
 .ds-btn.dt-tab:nth-child(3) { animation-delay: .06s; }
 .ds-btn.dt-tab:nth-child(4) { animation-delay: .08s; }
@@ -257,44 +240,27 @@ def build_data_tabs_css():
 def build_data_tabs_js():
     return r"""
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★ DATA TABS JS (auto-generated) — KHÔNG ĐÈ HÀM CŨ ★
-   Chỉ bổ sung:
-     - window.__dtOnTabClick   → handler cho nút tab mới
-     - window.__dtRefreshLocks → cập nhật trạng thái lock khi tier đổi
-     - window.__dtMarkActive   → đánh dấu tab active (đồng bộ với dataset)
-   KHÔNG redefine: switchDataset, markCurrentDatasetActive, fav*, chat*
-   ═══════════════════════════════════════════════════════════════════ */
+/* DATA TABS JS (auto-generated) - IIFE doc lap */
 (function() {
     'use strict';
 
-    if (window.__dtModuleLoaded) return;
+    if (window.__dtModuleLoaded) { return; }
     window.__dtModuleLoaded = true;
 
-    /* ──────────────────────────────────────────────────────────
-       1. HELPERS — đọc thông tin tier, không sửa state cũ
-       ────────────────────────────────────────────────────────── */
     function _canAccessDataset() {
-        try {
-            if (typeof window.canAccessChuyenNganh === 'function') {
-                return window.canAccessChuyenNganh();
-            }
-        } catch(e) {}
+        if (typeof window.canAccessChuyenNganh === 'function') {
+            return window.canAccessChuyenNganh();
+        }
         return false;
     }
 
     function _getTierInfo() {
-        try {
-            if (typeof window.getTierInfo === 'function') {
-                return window.getTierInfo();
-            }
-        } catch(e) {}
+        if (typeof window.getTierInfo === 'function') {
+            return window.getTierInfo();
+        }
         return { tier: 'demo' };
     }
 
-    /* ──────────────────────────────────────────────────────────
-       2. REFRESH LOCK STATE — gọi khi tier đổi (login/logout/renew)
-       ────────────────────────────────────────────────────────── */
     function refreshLocks() {
         var canAccess = _canAccessDataset();
         var tabs = document.querySelectorAll('.ds-btn.dt-tab');
@@ -305,40 +271,47 @@ def build_data_tabs_js():
 
             var lockIcon = btn.querySelector('.dt-tab-lock');
             if (lockIcon) {
-                lockIcon.style.display = isLocked ? 'inline-flex' : 'none';
+                if (isLocked) {
+                    lockIcon.style.display = 'inline-flex';
+                } else {
+                    lockIcon.style.display = 'none';
+                }
             }
 
-            /* Cập nhật title động */
             var name = btn.getAttribute('data-dataset-name') || '';
             if (isLocked) {
                 var info = _getTierInfo();
-                var hint = info.tier === 'active'
-                    ? 'Cần kích hoạt chuyên ngành'
-                    : (info.tier === 'trial'
-                        ? 'Cần gia hạn để mở khoá'
-                        : 'Cần đăng nhập + gia hạn để mở khoá');
-                btn.title = name + ' — 🔒 ' + hint;
+                var hint = 'Can dang nhap + gia han de mo khoa';
+                if (info.tier === 'active') {
+                    hint = 'Can kich hoat chuyen nganh';
+                } else if (info.tier === 'trial') {
+                    hint = 'Can gia han de mo khoa';
+                }
+                btn.title = name + ' - [Lock] ' + hint;
             } else {
                 btn.title = name;
             }
         });
     }
 
-    /* ──────────────────────────────────────────────────────────
-       3. MARK ACTIVE — đánh dấu tab đang được chọn
-       Đồng bộ khi user bấm tab, khi đổi dataset, hoặc khi load lại
-       ────────────────────────────────────────────────────────── */
     function markActive(datasetId) {
         if (!datasetId) {
-            try {
-                datasetId = window.CURRENT_DATASET || 'tonghop';
-            } catch(e) { datasetId = 'tonghop'; }
+            if (typeof window.CURRENT_DATASET !== 'undefined') {
+                datasetId = window.CURRENT_DATASET;
+            } else {
+                datasetId = 'tonghop';
+            }
         }
-        document.querySelectorAll('.ds-btn.dt-tab').forEach(function(btn) {
-            btn.classList.toggle('active', btn.dataset.dataset === datasetId);
+
+        var allTabs = document.querySelectorAll('.ds-btn.dt-tab');
+        allTabs.forEach(function(btn) {
+            if (btn.dataset.dataset === datasetId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
         });
 
-        /* Nếu là 1 trong các tab data → bỏ active ở Tổng hợp + Chuyên ngành + Yêu thích */
         if (datasetId !== 'tonghop') {
             var isDataTab = document.querySelector(
                 '.ds-btn.dt-tab[data-dataset="' + datasetId + '"]'
@@ -349,39 +322,40 @@ def build_data_tabs_js():
                     '.ds-btn[data-dataset-group="chuyen-nganh"], ' +
                     '.ds-btn[data-dataset-group="favorites"]'
                 );
-                others.forEach(function(b) { b.classList.remove('active'); });
-                /* Đóng dropdown chuyên ngành nếu đang mở */
-                var sub = document.getElementById('dsSubWrap');
-                if (sub) và sub.style.display = 'none G';
+                others.forEach(function(b) {
+                    b.classList.remove('active');
+                });
+
+                var subWrap = document.getElementById('dsSubWrap');
+                if (subWrap) {
+                    subWrap.style.display = 'none';
+                }
             }
         }
     }
 
-    /*IA ──────────────────────────────────────────────────────────
-       4. TAB CLICK HANDLER — dùng switchDataset cũ, không tự viết
-       ────────────────────────────────────────────────────────── */
     window.__dtOnTabClick = function(evt, datasetId, datasetName) {
-        if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
+        if (evt) {
+            evt.stopPropagation();
+            if (evt.preventDefault) {
+                evt.preventDefault();
+            }
+        }
 
-        var btn = evt && evt.currentTarget ? evt.currentTarget : null;
-
-        /* Check lock */
         if (!_canAccessDataset()) {
-            /* Gọi hàm thông báo CÓ SẴN trong ui_template.js */
             if (typeof window.showChuyenNganhLockMessage === 'function') {
                 window.showChuyenNganhLockMessage();
             } else {
-                /* Fallback nếu hàm cũ chưa load */
-                var msg = 'Bộ dữ liệu "' + (datasetName || datasetId) + '"\n\n' +
-                          'Bạn cần ĐĂNG NHẬP HẠN để mở khoá.';
+                var msg = 'Bo du lieu "' + (datasetName || datasetId) + '"\n\n' +
+                          'Ban can DANG NHAP va GIA HAN de mo khoa.';
                 if (typeof window.currentUser !== 'undefined' && window.currentUser) {
-                    if (confirm(msg + '\n\nGia hạn ngay?')) {
+                    if (confirm(msg + '\n\nGia han ngay?')) {
                         if (typeof window.openRenewalModal === 'function') {
                             window.openRenewalModal();
                         }
                     }
                 } else {
-                    if (confirm(msg + '\n\nĐăng nhập ngay?')) {
+                    if (confirm(msg + '\n\nDang nhap ngay?')) {
                         if (typeof window.showLoginModal === 'function') {
                             window.showLoginModal();
                         }
@@ -391,89 +365,73 @@ def build_data_tabs_js():
             return;
         }
 
-        /* Gọi hàm switch CÓ SẴN — không tự viết logic chuyển dataset */
         if (typeof window.switchDataset === 'function') {
             window.switchDataset(datasetId);
         } else {
-            /* Fallback tối thiểu nếu switchDataset chưa có */
             if (typeof window.__switchRawData === 'function') {
                 window.__switchRawData(datasetId);
             }
-            if (typeof window.applyFilter === 'function') window.applyFilter();
-            if (typeof window.buildFilters === 'function') window.buildFilters();
+            if (typeof window.applyFilter === 'function') {
+                window.applyFilter();
+            }
+            if (typeof window.buildFilters === 'function') {
+                window.buildFilters();
+            }
         }
 
-        /* Đánh dấu active */
         markActive(datasetId);
 
-        /* Đóng FAB group nếu đang mở */
         var fabGroup = document.getElementById('fabGroup');
-        if (fabGroup) fabGroup.classList.remove('open');
+        if (fabGroup) {
+            fabGroup.classList.remove('open');
+        }
     };
 
-    /* ──────────────────────────────────────────────────────────
-       5. ĐỒNG BỘ KHI CÁC TAB CŨ ĐƯỢC BẤM
-       Hook nhẹ vào document click để bắt sự kiện click tab cũ,
-       rồi gỡ active khỏi tab data → KHÔNG sửa code cũ.
-       ────────────────────────────────────────────────────────── */
     document.addEventListener('click', function(e) {
-        var btn = e.target.closest && e.target.closest('.ds-btn');
-        if (!btn) return;
-        if (btn.classList.contains('dt-tab')) return; /* tab mới → đã xử lý */
+        var btn = e.target.closest ? e.target.closest('.ds-btn') : null;
+        if (!btn) { return; }
+        if (btn.classList.contains('dt-tab')) { return; }
 
-        /* Nếu user bấm tab Tổng hợp / Chuyên ngành / Yêu thích
-           → bỏ active ở tất cả tab data */
-        document.querySelectorAll('.ds-btn.dt-tab.active').forEach(function(t) {
+        var dtTabs = document.querySelectorAll('.ds-btn.dt-tab.active');
+        dtTabs.forEach(function(t) {
             t.classList.remove('active');
         });
     }, true);
 
-    /* ──────────────────────────────────────────────────────────
-       6. INIT — chạy sau khi DOM + module cũ load xong
-       ────────────────────────────────────────────────────────── */
     function init() {
         refreshLocks();
-        var current = (typeof window.CURRENT_DATASET !== 'undefined')
-                      ? window.CURRENT_DATASET
-                      : 'tonghop';
+        var current = 'tonghop';
+        if (typeof window.CURRENT_DATASET !== 'undefined') {
+            current = window.CURRENT_DATASET;
+        }
         markActive(current);
     }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
-        /* DOM đã sẵn sàng → chờ 1 tick để ui_template init xong */
         setTimeout(init, 0);
     }
 
-    /* ──────────────────────────────────────────────────────────
-       7. THEO DÕI THAY ĐỔI TIER (login/logout/renew)
-       Poll nhẹ mỗi 2s — chỉ khi tier khác lần trước.
-       ────────────────────────────────────────────────────────── */
     var _lastTierSig = '';
     setInterval(function() {
-        try {
-            var info = _getTierInfo();
-            var sig = info.tier + '|' + (info.email || '');
-            if (sig !== _lastTierSig) {
-                _lastTierSig = sig;
-                refreshLocks();
-                /* Re-apply active sau khi tier đổi */
-                var current = (typeof window.CURRENT_DATASET !== 'undefined')
-                              ? window.CURRENT_DATASET
-                              : 'tonghop';
-                markActive(current);
+        var info = _getTierInfo();
+        var sig = info.tier + '|' + (info.email || '');
+        if (sig !== _lastTierSig) {
+            _lastTierSig = sig;
+            refreshLocks();
+            var current = 'tonghop';
+            if (typeof window.CURRENT_DATASET !== 'undefined') {
+                current = window.CURRENT_DATASET;
             }
-        } catch(e) {}
+            markActive(current);
+        }
     }, 2000);
 
-    /* ──────────────────────────────────────────────────────────
-       8. EXPORT
-       ────────────────────────────────────────────────────────── */
     window.__dtRefreshLocks = refreshLocks;
     window.__dtMarkActive   = markActive;
 
-    console.log('✅ Data tabs module loaded (' +
-        document.querySelectorAll('.ds-btn.dt-tab').length + ' tabs)');
+    console.log('Data tabs module loaded: ' +
+        document.querySelectorAll('.ds-btn.dt-tab').length + ' tabs');
 })();
 """
